@@ -5,6 +5,13 @@ import {
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
   ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown
 } from 'lucide-react';
+import bakoImg from '@/assets/bako.png';
+import partOilImg    from '@/assets/part-oil.jpg';
+import partBrakesImg from '@/assets/part-brakes.jpg';
+import partAirImg    from '@/assets/part-airfilter.jpg';
+import partSparksImg from '@/assets/part-sparks.jpg';
+import partBatImg    from '@/assets/part-battery.jpg';
+import partSuspImg   from '@/assets/part-suspension.jpg';
 
 /* ─── BRAND COLORS (matching RenoPack mascot) ──────────────────── */
 const STYLES = `
@@ -92,12 +99,12 @@ const READY_PACKAGES = [
 ];
 
 const PARTS_SHOWCASE = [
-  { name:'زيت موبيل 1',     emoji:'🛢️', bg:'#1A2C20', border:'#3DA882', price:'320 ج.م', badge:'أصلي' },
-  { name:'طقم فرامل Brembo', emoji:'⚙️', bg:'#1A1F30', border:'var(--sky)', price:'680 ج.م', badge:'إيطالي' },
-  { name:'فلتر هواء',        emoji:'💨', bg:'#251E30', border:'var(--lav)', price:'95 ج.م',  badge:'أصلي' },
-  { name:'شمعات إشعال',      emoji:'⚡', bg:'#241E10', border:'var(--gold)', price:'320 ج.م', badge:'أصلي' },
-  { name:'مساعد أمامي',      emoji:'🔩', bg:'#1C2028', border:'var(--text-dim)', price:'550 ج.م', badge:'تركي' },
-  { name:'بطارية ٦٠ أمبير',  emoji:'🔋', bg:'#1A2015', border:'var(--sage)', price:'850 ج.م', badge:'أصلي' },
+  { name:'زيت موبيل 1',      img: partOilImg,    border:'#3DA882',          price:'320 ج.م', badge:'أصلي', badgeColor:'var(--sage)' },
+  { name:'طقم فرامل Brembo', img: partBrakesImg, border:'var(--sky)',        price:'680 ج.م', badge:'إيطالي', badgeColor:'var(--sky)' },
+  { name:'فلتر هواء',         img: partAirImg,    border:'var(--lav)',        price:'95 ج.م',  badge:'أصلي', badgeColor:'var(--lav)' },
+  { name:'شمعات إشعال',       img: partSparksImg, border:'var(--gold)',       price:'320 ج.م', badge:'أصلي', badgeColor:'var(--gold)' },
+  { name:'مساعد أمامي',       img: partSuspImg,   border:'rgba(255,255,255,.2)', price:'550 ج.م', badge:'تركي', badgeColor:'var(--text-dim)' },
+  { name:'بطارية ٦٠ أمبير',   img: partBatImg,    border:'var(--sage)',       price:'850 ج.م', badge:'أصلي', badgeColor:'var(--sage)' },
 ];
 
 const PUZZLE_PARTS = [
@@ -217,7 +224,7 @@ function BakoChat() {
     <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(200,151,74,0.18)', borderRadius:22, overflow:'hidden', display:'flex', flexDirection:'column', height:420 }}>
       {/* Header */}
       <div style={{ background:'linear-gradient(135deg,var(--navy),var(--navy-lt))', padding:'14px 18px', display:'flex', alignItems:'center', gap:12, borderBottom:'1px solid rgba(200,151,74,0.15)' }}>
-        <img src="/bako.png" alt="باكو" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:'2px solid var(--gold)', background:'var(--navy)' }} />
+        <img src={bakoImg} alt="باكو" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:'2px solid var(--gold)', background:'var(--navy)' }} />
         <div>
           <div style={{ fontFamily:"'Almarai',sans-serif", fontWeight:800, fontSize:14, color:'#fff' }}>باكو 🤖</div>
           <div style={{ fontSize:10, color:'rgba(200,151,74,0.8)', fontWeight:700 }}>مساعد RenoPack الذكي — بيكلم عربي!</div>
@@ -243,7 +250,7 @@ function BakoChat() {
         {msgs.map((m, i) => (
           <div key={i} className={m.from==='bako'?'chat-bubble-in':'chat-bubble-out'} style={{ display:'flex', gap:8, alignItems:'flex-end', flexDirection: m.from==='bako'?'row':'row-reverse' }}>
             {m.from==='bako' && (
-              <img src="/bako.png" alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
+              <img src={bakoImg} alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
             )}
             <div style={{
               maxWidth:'78%', padding:'10px 14px', borderRadius: m.from==='bako'?'4px 16px 16px 16px':'16px 4px 16px 16px',
@@ -257,7 +264,7 @@ function BakoChat() {
         ))}
         {typing && (
           <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
-            <img src="/bako.png" alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
+            <img src={bakoImg} alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
             <div style={{ padding:'12px 16px', borderRadius:'4px 16px 16px 16px', background:'rgba(26,35,86,0.7)', border:'1px solid rgba(200,151,74,0.12)', display:'flex', gap:5, alignItems:'center' }}>
               <div className="dot1" style={{ width:6, height:6, borderRadius:'50%', background:'var(--gold)' }} />
               <div className="dot2" style={{ width:6, height:6, borderRadius:'50%', background:'var(--gold)' }} />
@@ -396,7 +403,7 @@ export function AlexandriaBlend() {
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
               {/* Bako mascot */}
               <div style={{ textAlign:'center', animation:'floatBako 5s ease-in-out infinite', position:'relative' }}>
-                <img src="/bako.png" alt="باكو — مساعد RenoPack" style={{ width:220, height:220, objectFit:'contain', objectPosition:'top', filter:'drop-shadow(0 20px 40px rgba(200,151,74,0.3))', margin:'0 auto', display:'block' }} />
+                <img src={bakoImg} alt="باكو — مساعد RenoPack" style={{ width:220, height:220, objectFit:'contain', objectPosition:'top', filter:'drop-shadow(0 20px 40px rgba(200,151,74,0.3))', margin:'0 auto', display:'block' }} />
                 <div style={{ position:'absolute', top:20, left:'50%', transform:'translateX(-120%)', background:'rgba(26,35,86,0.9)', border:'1.5px solid rgba(200,151,74,0.3)', borderRadius:'16px 16px 16px 4px', padding:'8px 14px', whiteSpace:'nowrap', animation:'glowBlink 3s infinite' }}>
                   <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700 }}>أنا باكو! 👋 هساعدك تختار</span>
                 </div>
@@ -454,14 +461,25 @@ export function AlexandriaBlend() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:12 }}>
               {PARTS_SHOWCASE.map((p,i)=>(
-                <div key={i} className="part-tile" style={{ background:p.bg, border:`1.5px solid ${p.border}22`, borderRadius:16, padding:'16px 12px', textAlign:'center', position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:p.border, opacity:.4 }} />
-                  <div style={{ fontSize:32, marginBottom:8 }}>{p.emoji}</div>
-                  <div style={{ fontSize:12, fontWeight:700, color:'var(--text)', marginBottom:6, lineHeight:1.3 }}>{p.name}</div>
-                  <div style={{ fontSize:13, fontWeight:800, color:'var(--gold)', marginBottom:8 }}>{p.price}</div>
-                  <div style={{ display:'inline-block', background:`${p.border}18`, border:`1px solid ${p.border}35`, borderRadius:999, padding:'2px 10px', fontSize:9, fontWeight:700, color:p.border }}>
-                    {p.badge}
+                <div key={i} className="part-tile" style={{ background:'var(--bg3)', border:`1.5px solid ${p.border}30`, borderRadius:16, overflow:'hidden', position:'relative' }}>
+                  {/* Real part photo */}
+                  <div style={{ height:110, overflow:'hidden', position:'relative' }}>
+                    <img src={p.img} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s ease', display:'block' }}
+                      onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')}
+                      onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
+                    />
+                    {/* gradient overlay */}
+                    <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom, transparent 40%, var(--bg3) 100%)` }} />
+                    {/* badge top-right */}
+                    <div style={{ position:'absolute', top:8, left:8, background:`${p.badgeColor}22`, border:`1px solid ${p.badgeColor}50`, borderRadius:999, padding:'2px 8px', fontSize:9, fontWeight:800, color:p.badgeColor }}>
+                      {p.badge}
+                    </div>
                   </div>
+                  <div style={{ padding:'10px 12px 14px' }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:'var(--text)', marginBottom:5, lineHeight:1.3 }}>{p.name}</div>
+                    <div style={{ fontSize:14, fontWeight:800, color:'var(--gold)' }}>{p.price}</div>
+                  </div>
+                  <div style={{ position:'absolute', top:0, right:0, left:0, height:2, background:p.border, opacity:.4 }} />
                 </div>
               ))}
             </div>
