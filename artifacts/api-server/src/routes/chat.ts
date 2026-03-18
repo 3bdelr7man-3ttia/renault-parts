@@ -1,16 +1,17 @@
 import { Router, type IRouter } from "express";
 import { db, chatSessionsTable, packagesTable, partsTable, packagePartsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { SendChatMessageBody } from "@workspace/api-zod";
+import { optionalAuth, type OptionalAuthRequest } from "../lib/auth";
 import OpenAI from "openai";
 import crypto from "crypto";
+
+const router: IRouter = Router();
 
 const openrouter = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
   apiKey: process.env.AI_INTEGRATIONS_OPENROUTER_API_KEY || "dummy",
 });
-
-const router: IRouter = Router();
 
 const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324";
 
@@ -47,7 +48,7 @@ async function buildPackagesInfo(): Promise<string> {
   return lines.join("\n");
 }
 
-router.post("/chat", async (req, res): Promise<void> => {
+router.post("/chat", optionalAuth, async (req, res): Promise<void> => {
   const parsed = SendChatMessageBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -55,6 +56,8 @@ router.post("/chat", async (req, res): Promise<void> => {
   }
 
   const { message, sessionId, carModel, carYear, mileage } = parsed.data;
+  const authReq = req as OptionalAuthRequest;
+  const userId = authReq.user?.id ?? null;
 
   const sessionKey = sessionId || crypto.randomUUID();
 
@@ -64,7 +67,14 @@ router.post("/chat", async (req, res): Promise<void> => {
       .select()
       .from(chatSessionsTable)
       .where(eq(chatSessionsTable.sessionKey, sessionId));
-    session = existing || null;
+
+    if (existing) {
+      if (existing.userId !== null && existing.userId !== userId) {
+        res.status(403).json({ error: "غير مصرح بالوصول لهذه المحادثة" });
+        return;
+      }
+      session = existing;
+    }
   }
 
   const history: Array<{ role: "user" | "assistant"; content: string }> = session
@@ -109,28 +119,42 @@ ${packagesInfo}
     { role: "user", content: message },
   ];
 
-  let reply = "عذراً، حدث خطأ. حاول مرة أخرى.";
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  let fullReply = "";
 
   try {
-    const completion = await openrouter.chat.completions.create({
+    const stream = await openrouter.chat.completions.create({
       model: DEEPSEEK_MODEL,
       max_tokens: 500,
       messages: chatMessages,
+      stream: true,
     });
 
-    reply = completion.choices[0]?.message?.content ?? reply;
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        fullReply += content;
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
   } catch (err) {
-    console.error("DeepSeek chat error:", err);
-    reply = "عذراً، البوت مش متاح دلوقتي. جرب بعد شوية أو تواصل معنا مباشرة.";
+    console.error("DeepSeek streaming error:", err);
+    fullReply = "عذراً، البوت مش متاح دلوقتي. جرب بعد شوية أو تواصل معنا مباشرة.";
+    res.write(`data: ${JSON.stringify({ content: fullReply })}\n\n`);
   }
 
-  const slugMatch = reply.match(/\[PACKAGE_SLUG:\s*([^\]]+)\]/);
+  const slugMatch = fullReply.match(/\[PACKAGE_SLUG:\s*([^\]]+)\]/);
   let suggestedPackageSlug: string | null = null;
   let suggestedPackageName: string | null = null;
+  let cleanReply = fullReply;
 
   if (slugMatch) {
     suggestedPackageSlug = slugMatch[1].trim();
-    reply = reply.replace(/\[PACKAGE_SLUG:[^\]]+\]/g, "").trim();
+    cleanReply = fullReply.replace(/\[PACKAGE_SLUG:[^\]]+\]/g, "").trim();
     const [pkg] = await db
       .select()
       .from(packagesTable)
@@ -141,7 +165,7 @@ ${packagesInfo}
   const updatedMessages = [
     ...history,
     { role: "user", content: message },
-    { role: "assistant", content: reply },
+    { role: "assistant", content: cleanReply },
   ];
 
   if (session) {
@@ -152,16 +176,20 @@ ${packagesInfo}
   } else {
     await db.insert(chatSessionsTable).values({
       sessionKey,
+      userId,
       messages: updatedMessages,
     });
   }
 
-  res.json({
-    reply,
-    sessionId: sessionKey,
-    suggestedPackageSlug,
-    suggestedPackageName,
-  });
+  res.write(
+    `data: ${JSON.stringify({
+      done: true,
+      sessionId: sessionKey,
+      suggestedPackageSlug,
+      suggestedPackageName,
+    })}\n\n`
+  );
+  res.end();
 });
 
 export default router;

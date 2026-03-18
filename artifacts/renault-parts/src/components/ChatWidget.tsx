@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useSendChatMessage } from "@workspace/api-client-react";
 import { MessageCircle, X, Send, Bot, User, Package2, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/lib/auth-context";
 
 type Message = {
   id: string;
@@ -9,6 +9,7 @@ type Message = {
   content: string;
   suggestedPackageSlug?: string | null;
   suggestedPackageName?: string | null;
+  streaming?: boolean;
 };
 
 const WELCOME: Message = {
@@ -17,16 +18,17 @@ const WELCOME: Message = {
   content: "أهلاً! أنا رينو مساعد 🔧\nسأساعدك تختار باكدج الصيانة المناسب لسيارتك.\n\nأخبرني: إيه موديل سيارتك وكام كيلومتر عداد؟",
 };
 
+const CHAT_URL = `${import.meta.env.BASE_URL}api/chat`.replace(/\/\//g, "/");
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const { mutateAsync: sendMessage } = useSendChatMessage();
+  const { getAuthHeaders } = useAuth();
 
   useEffect(() => {
     if (open) {
@@ -36,51 +38,96 @@ export default function ChatWidget() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, isStreaming]);
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isTyping) return;
+    if (!text || isStreaming) return;
 
-    const userMsg: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: text,
-    };
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: text };
+    const botMsgId = crypto.randomUUID();
+    const botMsg: Message = { id: botMsgId, role: "assistant", content: "", streaming: true };
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg, botMsg]);
     setInput("");
-    setIsTyping(true);
+    setIsStreaming(true);
 
     try {
-      const res = await sendMessage({
-        data: {
-          message: text,
-          sessionId: sessionId,
+      const authHeaders = getAuthHeaders();
+      const response = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeaders.headers ?? {}),
         },
+        body: JSON.stringify({ message: text, sessionId }),
       });
 
-      const assistantMsg: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: res.reply,
-        suggestedPackageSlug: res.suggestedPackageSlug,
-        suggestedPackageName: res.suggestedPackageName,
-      };
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
-      setSessionId(res.sessionId);
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "حدث خطأ. حاول مرة أخرى.",
-        },
-      ]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullContent = "";
+      let doneMeta: { sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null } = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+
+          let evt: { content?: string; done?: boolean; sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null };
+          try { evt = JSON.parse(jsonStr); } catch { continue; }
+
+          if (evt.content) {
+            fullContent += evt.content;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === botMsgId ? { ...m, content: fullContent } : m))
+            );
+          }
+
+          if (evt.done) {
+            doneMeta = { sessionId: evt.sessionId, suggestedPackageSlug: evt.suggestedPackageSlug, suggestedPackageName: evt.suggestedPackageName };
+          }
+        }
+      }
+
+      const cleanContent = fullContent.replace(/\[PACKAGE_SLUG:[^\]]+\]/g, "").trim();
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === botMsgId
+            ? {
+                ...m,
+                content: cleanContent,
+                streaming: false,
+                suggestedPackageSlug: doneMeta.suggestedPackageSlug ?? null,
+                suggestedPackageName: doneMeta.suggestedPackageName ?? null,
+              }
+            : m
+        )
+      );
+
+      if (doneMeta.sessionId) setSessionId(doneMeta.sessionId);
+    } catch (err) {
+      console.error("Chat stream error:", err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === botMsgId ? { ...m, content: "حدث خطأ. حاول مرة أخرى.", streaming: false } : m
+        )
+      );
     } finally {
-      setIsTyping(false);
+      setIsStreaming(false);
     }
   };
 
@@ -144,12 +191,22 @@ export default function ChatWidget() {
                         : "bg-white text-foreground shadow-sm border border-border/50 rounded-tl-sm"
                     }`}
                   >
-                    {msg.content}
+                    {msg.content || (msg.streaming && (
+                      <span className="flex gap-1 items-center py-0.5">
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0ms]" />
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:150ms]" />
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:300ms]" />
+                      </span>
+                    ))}
+                    {msg.streaming && msg.content && (
+                      <span className="inline-block w-0.5 h-3.5 bg-primary/50 animate-pulse ml-0.5 align-middle" />
+                    )}
                   </div>
-                  {msg.suggestedPackageSlug && msg.suggestedPackageName && (
+                  {!msg.streaming && msg.suggestedPackageSlug && msg.suggestedPackageName && (
                     <Link
                       href={`/packages/${msg.suggestedPackageSlug}`}
                       className="flex items-center gap-1.5 bg-accent text-primary text-xs font-bold px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
+                      onClick={() => setOpen(false)}
                     >
                       <Package2 size={12} />
                       اطلب: {msg.suggestedPackageName}
@@ -158,22 +215,6 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
-
-            {isTyping && (
-              <div className="flex gap-2 flex-row">
-                <div className="w-7 h-7 rounded-full bg-accent/20 flex-shrink-0 flex items-center justify-center">
-                  <Bot size={14} className="text-accent" />
-                </div>
-                <div className="bg-white border border-border/50 shadow-sm rounded-2xl rounded-tl-sm px-4 py-2.5">
-                  <div className="flex gap-1 items-center">
-                    <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:300ms]" />
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div ref={bottomRef} />
           </div>
 
@@ -185,13 +226,13 @@ export default function ChatWidget() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="اكتب رسالتك..."
-              disabled={isTyping}
+              disabled={isStreaming}
               className="flex-1 bg-slate-50 border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 text-right"
               dir="rtl"
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isStreaming}
               className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
             >
               <Send size={16} className="rotate-180" />
