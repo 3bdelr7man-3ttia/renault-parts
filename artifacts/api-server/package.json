@@ -16,7 +16,8 @@
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "openai": "^6.31.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

@@ -1,42 +1,51 @@
 import { Router, type IRouter } from "express";
-import { db, chatSessionsTable, packagesTable } from "@workspace/db";
+import { db, chatSessionsTable, packagesTable, partsTable, packagePartsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { SendChatMessageBody, SendChatMessageResponse } from "@workspace/api-zod";
+import { SendChatMessageBody } from "@workspace/api-zod";
+import OpenAI from "openai";
 import crypto from "crypto";
+
+const openrouter = new OpenAI({
+  baseURL: process.env.AI_INTEGRATIONS_OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
+  apiKey: process.env.AI_INTEGRATIONS_OPENROUTER_API_KEY || "dummy",
+});
 
 const router: IRouter = Router();
 
-const PACKAGES_INFO = `
-الباكدجات المتاحة في منصة رينو بارتس الإسكندرية:
+const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324";
 
-1. باكدج 20,000 كم (صيانة عادية) - السعر: 1,040 جنيه - ضمان: 3 شهور
-   يشمل: فلتر زيت + فلتر هواء + زيت محرك
-   مناسب لـ: كل 20,000 كيلومتر أو كل سنة
+async function buildPackagesInfo(): Promise<string> {
+  const packages = await db.select().from(packagesTable);
+  const lines: string[] = ["الباكدجات المتاحة في منصة رينو بارتس الإسكندرية:\n"];
 
-2. باكدج 40,000 كم (صيانة متوسطة) - السعر: 1,950 جنيه - ضمان: 6 شهور
-   يشمل: فلتر زيت + فلتر هواء + زيت محرك + فلتر بنزين + شمعات إشعال
-   مناسب لـ: كل 40,000 كيلومتر
+  for (const pkg of packages) {
+    const parts = await db
+      .select({ part: partsTable })
+      .from(packagePartsTable)
+      .innerJoin(partsTable, eq(packagePartsTable.partId, partsTable.id))
+      .where(eq(packagePartsTable.packageId, pkg.id));
 
-3. باكدج 60,000 كم (صيانة شاملة) - السعر: 3,750 جنيه - ضمان: 9 شهور
-   يشمل: كل باكدج 40,000 + سير كاتينة + فلتر مكيف + زيت فرامل
-   مناسب لـ: كل 60,000 كيلومتر
+    const partNames = parts.map((p) => p.part.name).join("، ");
+    lines.push(
+      `• ${pkg.name} (slug: ${pkg.slug})` +
+      ` — السعر: ${Number(pkg.sellPrice).toLocaleString("ar-EG")} جنيه` +
+      ` — ضمان: ${pkg.warrantyMonths} شهور` +
+      (pkg.kmService ? ` — عند: ${pkg.kmService.toLocaleString("ar-EG")} كم` : "") +
+      (partNames ? `\n  يشمل: ${partNames}` : "")
+    );
+  }
 
-4. باكدج 100,000 كم (صيانة كبرى) - السعر: 7,500 جنيه - ضمان: 12 شهر
-   يشمل: كل باكدج 60,000 + ديسكات فرامل + تيل فرامل + مساعدين
-   مناسب لـ: كل 100,000 كيلومتر أو عند الإحساس بمشاكل في الفرامل والتعليق
-
-5. باكدج الطوارئ - السعر: 3,250 جنيه - ضمان: 6 شهور
-   يشمل: بطارية جديدة + إطار احتياطي + كشافات جديدة
-   مناسب لـ: الأعطال الطارئة والاستعداد لرحلات طويلة
-
+  lines.push(`
 الخدمات المشمولة مع كل الباكدجات:
 - التركيب المجاني عبر شبكة ورش شريكة في الإسكندرية
 - الضمان على كل القطع
 - توصيل لحد البيت أو لأقرب مركز صيانة شريك
 - إمكانية اختيار القطع (أصلي / بديل تركي / بديل صيني)
 
-مناطق الخدمة: العجمي، سيدي بشر، السيوف، المنتزه، العصافرة، سموحة، كليوباترا، محطة الرمل
-`;
+مناطق الخدمة: العجمي، سيدي بشر، السيوف، المنتزه، العصافرة، سموحة، كليوباترا، محطة الرمل`);
+
+  return lines.join("\n");
+}
 
 router.post("/chat", async (req, res): Promise<void> => {
   const parsed = SendChatMessageBody.safeParse(req.body);
@@ -47,7 +56,7 @@ router.post("/chat", async (req, res): Promise<void> => {
 
   const { message, sessionId, carModel, carYear, mileage } = parsed.data;
 
-  let sessionKey = sessionId || crypto.randomUUID();
+  const sessionKey = sessionId || crypto.randomUUID();
 
   let session = null;
   if (sessionId) {
@@ -58,126 +67,101 @@ router.post("/chat", async (req, res): Promise<void> => {
     session = existing || null;
   }
 
-  const messages: Array<{ role: string; content: string }> = session
-    ? (session.messages as Array<{ role: string; content: string }>)
+  const history: Array<{ role: "user" | "assistant"; content: string }> = session
+    ? (session.messages as Array<{ role: "user" | "assistant"; content: string }>)
     : [];
 
   const userContext = [
     carModel ? `موديل السيارة: ${carModel}` : "",
     carYear ? `سنة الصنع: ${carYear}` : "",
     mileage ? `عداد الكيلومترات: ${mileage.toLocaleString("ar-EG")} كم` : "",
-  ].filter(Boolean).join(" | ");
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  const packagesInfo = await buildPackagesInfo();
 
   const systemPrompt = `أنت مساعد صيانة سيارات رينو في الإسكندرية، مصر. اسمك "رينو مساعد".
 مهمتك الأساسية هي مساعدة العملاء في اختيار باكدج الصيانة المناسب لسيارتهم.
 
-${PACKAGES_INFO}
+${packagesInfo}
 
 قواعد التواصل:
 - تكلم بالعربية دائماً (عربي مصري بسيط أو فصحى بسيطة)
-- كن ودوداً ومهنياً
-- اسأل عن موديل السيارة، سنة الصنع، وعدد الكيلومترات إذا لم تعرفها
-- اقترح الباكدج المناسب بوضوح مع شرح سبب اختيارك
-- عند اقتراح باكدج، اذكر slug الباكدج بهذا الشكل: [PACKAGE_SLUG: pkg-20k] أو [PACKAGE_SLUG: pkg-40k] أو [PACKAGE_SLUG: pkg-60k] أو [PACKAGE_SLUG: pkg-100k] أو [PACKAGE_SLUG: emergency]
-${userContext ? `\nمعلومات عن سيارة العميل: ${userContext}` : ""}`;
+- كن ودوداً ومهنياً وإيجابياً
+- اسأل عن موديل السيارة وسنة الصنع وعدد الكيلومترات إذا لم تعرفها
+- اقترح الباكدج المناسب بوضوح مع شرح مختصر لسبب اختيارك
+- لو السؤال مش عن صيانة رينو أو السيارات، وجّه العميل بأدب
 
-  messages.push({ role: "user", content: message });
+عند اقتراح باكدج بشكل واضح ومحدد، ضع هذا المعرف في نهاية ردك بالضبط: [PACKAGE_SLUG: <slug>]
+مثال: [PACKAGE_SLUG: pkg-40k]
 
-  let reply = "عذراً، حدث خطأ في الاتصال. حاول مرة أخرى.";
-  let suggestedPackageSlug: string | null = null;
-  let suggestedPackageName: string | null = null;
+أسلاق الباكدجات المتاحة:
+- pkg-20k → صيانة 20,000 كم
+- pkg-40k → صيانة 40,000 كم
+- pkg-60k → صيانة 60,000 كم
+- pkg-100k → صيانة 100,000 كم
+- emergency → باكدج الطوارئ${userContext ? `\n\nبيانات العميل الحالي: ${userContext}` : ""}`;
+
+  const chatMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-10),
+    { role: "user", content: message },
+  ];
+
+  let reply = "عذراً، حدث خطأ. حاول مرة أخرى.";
 
   try {
-    const openaiKey = process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY;
-    const baseURL = process.env.DEEPSEEK_API_KEY
-      ? "https://api.deepseek.com/v1"
-      : "https://api.openai.com/v1";
+    const completion = await openrouter.chat.completions.create({
+      model: DEEPSEEK_MODEL,
+      max_tokens: 500,
+      messages: chatMessages,
+    });
 
-    if (openaiKey) {
-      const response = await fetch(`${baseURL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiKey}`,
-        },
-        body: JSON.stringify({
-          model: process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-          max_tokens: 500,
-        }),
-      });
-
-      if (response.ok) {
-        const data = (await response.json()) as {
-          choices: Array<{ message: { content: string } }>;
-        };
-        reply = data.choices[0]?.message?.content || reply;
-      }
-    } else {
-      const lowerMsg = message.toLowerCase();
-      const allPackages = await db.select().from(packagesTable).orderBy(packagesTable.kmService);
-
-      if (lowerMsg.includes("20") || lowerMsg.includes("زيت") || lowerMsg.includes("عادية")) {
-        const pkg = allPackages.find((p) => p.slug === "pkg-20k");
-        if (pkg) {
-          reply = `بناءً على احتياجك، أنصحك بـ ${pkg.name} بسعر ${Number(pkg.sellPrice).toLocaleString("ar-EG")} جنيه. يشمل التغيير الدوري للزيت والفلاتر مع ضمان ${pkg.warrantyMonths} شهور. [PACKAGE_SLUG: ${pkg.slug}]`;
-          suggestedPackageSlug = pkg.slug;
-          suggestedPackageName = pkg.name;
-        }
-      } else if (lowerMsg.includes("100") || lowerMsg.includes("كبرى") || lowerMsg.includes("فرامل")) {
-        const pkg = allPackages.find((p) => p.slug === "pkg-100k");
-        if (pkg) {
-          reply = `للصيانة الكبرى أو مشاكل الفرامل، أنصحك بـ ${pkg.name} بسعر ${Number(pkg.sellPrice).toLocaleString("ar-EG")} جنيه مع ضمان سنة كاملة. [PACKAGE_SLUG: ${pkg.slug}]`;
-          suggestedPackageSlug = pkg.slug;
-          suggestedPackageName = pkg.name;
-        }
-      } else if (lowerMsg.includes("طوارئ") || lowerMsg.includes("بطارية") || lowerMsg.includes("إطار")) {
-        const pkg = allPackages.find((p) => p.slug === "emergency");
-        if (pkg) {
-          reply = `لحالات الطوارئ، لدينا ${pkg.name} بسعر ${Number(pkg.sellPrice).toLocaleString("ar-EG")} جنيه يشمل بطارية جديدة وإطار احتياطي وكشافات. [PACKAGE_SLUG: ${pkg.slug}]`;
-          suggestedPackageSlug = pkg.slug;
-          suggestedPackageName = pkg.name;
-        }
-      } else {
-        reply = `أهلاً! أنا مساعد صيانة رينو في الإسكندرية. عندنا ${allPackages.length} باكدجات صيانة تبدأ من 1,040 جنيه. محتاج أعرف موديل سيارتك وعداد الكيلومترات عشان أنصحك بالباكدج المناسب.`;
-      }
-    }
+    reply = completion.choices[0]?.message?.content ?? reply;
   } catch (err) {
-    console.error("Chat error:", err);
+    console.error("DeepSeek chat error:", err);
+    reply = "عذراً، البوت مش متاح دلوقتي. جرب بعد شوية أو تواصل معنا مباشرة.";
   }
 
   const slugMatch = reply.match(/\[PACKAGE_SLUG:\s*([^\]]+)\]/);
+  let suggestedPackageSlug: string | null = null;
+  let suggestedPackageName: string | null = null;
+
   if (slugMatch) {
     suggestedPackageSlug = slugMatch[1].trim();
-    reply = reply.replace(/\[PACKAGE_SLUG:[^\]]+\]/, "").trim();
-    const allPackages = await db.select().from(packagesTable);
-    const pkg = allPackages.find((p) => p.slug === suggestedPackageSlug);
+    reply = reply.replace(/\[PACKAGE_SLUG:[^\]]+\]/g, "").trim();
+    const [pkg] = await db
+      .select()
+      .from(packagesTable)
+      .where(eq(packagesTable.slug, suggestedPackageSlug));
     if (pkg) suggestedPackageName = pkg.name;
   }
 
-  messages.push({ role: "assistant", content: reply });
+  const updatedMessages = [
+    ...history,
+    { role: "user", content: message },
+    { role: "assistant", content: reply },
+  ];
 
   if (session) {
     await db
       .update(chatSessionsTable)
-      .set({ messages, updatedAt: new Date() })
+      .set({ messages: updatedMessages, updatedAt: new Date() })
       .where(eq(chatSessionsTable.sessionKey, sessionKey));
   } else {
     await db.insert(chatSessionsTable).values({
       sessionKey,
-      messages,
+      messages: updatedMessages,
     });
   }
 
-  res.json(SendChatMessageResponse.parse({
+  res.json({
     reply,
     sessionId: sessionKey,
     suggestedPackageSlug,
     suggestedPackageName,
-  }));
+  });
 });
 
 export default router;

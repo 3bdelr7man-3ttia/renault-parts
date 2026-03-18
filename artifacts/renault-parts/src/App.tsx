@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { CarProvider } from "@/lib/car-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import ChatWidget from "@/components/ChatWidget";
 
 // Pages
 import Home from "@/pages/Home";
@@ -93,6 +94,7 @@ function App() {
           <AuthProvider>
             <CarProvider>
               <Router />
+              <ChatWidget />
             </CarProvider>
           </AuthProvider>
         </WouterRouter>
