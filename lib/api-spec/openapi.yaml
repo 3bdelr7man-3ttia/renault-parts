@@ -447,7 +447,8 @@ components:
         phone:
           type: string
         email:
-          type: string
+          type: ["string", "null"]
+          description: Optional email (may be null for phone-only users)
         carModel:
           type: ["string", "null"]
         carYear:
@@ -465,7 +466,6 @@ components:
         - id
         - name
         - phone
-        - email
         - role
         - createdAt
 

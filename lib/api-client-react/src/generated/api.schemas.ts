@@ -49,7 +49,11 @@ export interface User {
   id: number;
   name: string;
   phone: string;
-  email: string;
+  /**
+   * Optional email (may be null for phone-only users)
+   * @nullable
+   */
+  email?: string | null;
   /** @nullable */
   carModel?: string | null;
   /** @nullable */

@@ -4,10 +4,11 @@ import type { Request, Response, NextFunction } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
+const _jwtSecret = process.env.JWT_SECRET;
+if (!_jwtSecret) {
   throw new Error("JWT_SECRET environment variable is required but was not set.");
 }
+const JWT_SECRET: string = _jwtSecret;
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -23,7 +24,8 @@ export function signToken(userId: number): string {
 
 export function verifyToken(token: string): { userId: number } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as { userId: number };
+    return decoded;
   } catch {
     return null;
   }

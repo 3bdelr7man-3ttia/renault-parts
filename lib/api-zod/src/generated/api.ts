@@ -47,7 +47,10 @@ export const LoginUserResponse = zod.object({
     id: zod.number(),
     name: zod.string(),
     phone: zod.string(),
-    email: zod.string(),
+    email: zod
+      .string()
+      .nullish()
+      .describe("Optional email (may be null for phone-only users)"),
     carModel: zod.string().nullish(),
     carYear: zod.number().nullish(),
     address: zod.string().nullish(),
@@ -72,7 +75,10 @@ export const GetCurrentUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   phone: zod.string(),
-  email: zod.string(),
+  email: zod
+    .string()
+    .nullish()
+    .describe("Optional email (may be null for phone-only users)"),
   carModel: zod.string().nullish(),
   carYear: zod.number().nullish(),
   address: zod.string().nullish(),
@@ -101,7 +107,10 @@ export const UpdateUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   phone: zod.string(),
-  email: zod.string(),
+  email: zod
+    .string()
+    .nullish()
+    .describe("Optional email (may be null for phone-only users)"),
   carModel: zod.string().nullish(),
   carYear: zod.number().nullish(),
   address: zod.string().nullish(),

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useGetCurrentUser, type User } from "@workspace/api-client-react";
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useGetCurrentUser, getGetCurrentUserQueryKey, type User } from "@workspace/api-client-react";
 
 interface AuthContextType {
   token: string | null;
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // We pass the token explicitly to the query to ensure it authenticates
   const { data: user, isLoading, refetch } = useGetCurrentUser({
     query: {
+      queryKey: getGetCurrentUserQueryKey(),
       enabled: !!token,
       retry: false,
     },

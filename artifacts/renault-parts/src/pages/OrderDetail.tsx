@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRoute, Link } from 'wouter';
-import { useGetOrder } from '@workspace/api-client-react';
+import { useGetOrder, getGetOrderQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { ArrowRight, MapPin, Package, CarFront, Banknote, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,7 +12,7 @@ export default function OrderDetail() {
   const { getAuthHeaders } = useAuth();
 
   const { data: order, isLoading } = useGetOrder(orderId, {
-    query: { enabled: !!orderId },
+    query: { queryKey: getGetOrderQueryKey(orderId), enabled: !!orderId },
     request: getAuthHeaders()
   });
 

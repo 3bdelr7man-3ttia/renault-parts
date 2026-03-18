@@ -43,7 +43,7 @@ export default function Register() {
         toast({
           variant: "destructive",
           title: "خطأ في التسجيل",
-          description: error.error?.error || "حدث خطأ أثناء إنشاء الحساب",
+          description: (error as { error?: { error?: string } })?.error?.error || "حدث خطأ أثناء إنشاء الحساب",
         });
       }
     }
