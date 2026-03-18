@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
-import { useListPackages, useCreateOrder, useListWorkshops, useInitiatePayment } from '@workspace/api-client-react';
+import { useListPackages, useCreateOrder, useListWorkshops, useInitiatePayment, getListWorkshopsQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,8 @@ interface FormData {
   carYear: number;
   installationType: 'workshop' | 'home';
   workshopId: number | null;
+  workshopName: string;
+  workshopArea: string;
   deliveryAddress: string;
   deliveryArea: string;
   paymentMethod: 'cash' | 'card';
@@ -40,7 +42,6 @@ export default function Checkout() {
   const { toast } = useToast();
 
   const { data: packages, isLoading: isLoadingPackages } = useListPackages();
-  const { data: workshops } = useListWorkshops();
   const pkg = packages?.find(p => p.id === packageId);
 
   const [step, setStep] = useState<Step>(1);
@@ -52,6 +53,8 @@ export default function Checkout() {
     carYear: user?.carYear ?? new Date().getFullYear(),
     installationType: 'workshop',
     workshopId: null,
+    workshopName: '',
+    workshopArea: '',
     deliveryAddress: '',
     deliveryArea: '',
     paymentMethod: 'cash',
@@ -127,8 +130,6 @@ export default function Checkout() {
     (formData.installationType === 'workshop' && formData.workshopId !== null) ||
     (formData.installationType === 'home' && formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
 
-  const selectedWorkshop = workshops?.find(w => w.id === formData.workshopId);
-
   const handleConfirmOrder = () => {
     createOrder({
       data: {
@@ -175,7 +176,6 @@ export default function Checkout() {
                 <Step3Installation
                   formData={formData}
                   onChange={setFormData}
-                  workshops={workshops ?? []}
                   onNext={() => setStep(4)}
                   onBack={() => setStep(2)}
                   canAdvance={canAdvanceStep3}
@@ -202,7 +202,7 @@ export default function Checkout() {
           </div>
 
           <div className="md:col-span-1">
-            <OrderSummary pkg={pkg} formData={formData} selectedWorkshop={selectedWorkshop} />
+            <OrderSummary pkg={pkg} formData={formData} />
           </div>
         </div>
       </div>
@@ -317,21 +317,34 @@ function Step2Package({ pkg, onNext, onBack }: {
   );
 }
 
-function Step3Installation({ formData, onChange, workshops, onNext, onBack, canAdvance }: {
+type WorkshopRow = { id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null; rating?: number | null; partnershipStatus?: string | null };
+
+function Step3Installation({ formData, onChange, onNext, onBack, canAdvance }: {
   formData: FormData;
   onChange: (f: FormData) => void;
-  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null }>;
   onNext: () => void;
   onBack: () => void;
   canAdvance: boolean;
 }) {
+  const [filterArea, setFilterArea] = useState('');
+
+  const workshopParams = filterArea ? { area: filterArea } : undefined;
+  const { data: workshops, isLoading: isLoadingWorkshops } = useListWorkshops(
+    workshopParams,
+    { query: { queryKey: getListWorkshopsQueryKey(workshopParams) } }
+  );
+
+  const handleSelectWorkshop = (workshop: WorkshopRow) => {
+    onChange({ ...formData, workshopId: workshop.id, workshopName: workshop.name, workshopArea: workshop.area });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <h2 className="text-2xl font-bold text-foreground">طريقة التركيب</h2>
 
       <div className="grid grid-cols-2 gap-4">
         <button
-          onClick={() => onChange({ ...formData, installationType: 'workshop' })}
+          onClick={() => onChange({ ...formData, installationType: 'workshop', workshopId: null, workshopName: '', workshopArea: '' })}
           className={`p-4 rounded-2xl border-2 text-center transition-all ${
             formData.installationType === 'workshop'
               ? 'border-primary bg-primary/5 text-primary'
@@ -342,7 +355,7 @@ function Step3Installation({ formData, onChange, workshops, onNext, onBack, canA
           <span className="font-bold text-sm">في الورشة</span>
         </button>
         <button
-          onClick={() => onChange({ ...formData, installationType: 'home' })}
+          onClick={() => onChange({ ...formData, installationType: 'home', workshopId: null, workshopName: '', workshopArea: '' })}
           className={`p-4 rounded-2xl border-2 text-center transition-all ${
             formData.installationType === 'home'
               ? 'border-primary bg-primary/5 text-primary'
@@ -355,7 +368,14 @@ function Step3Installation({ formData, onChange, workshops, onNext, onBack, canA
       </div>
 
       {formData.installationType === 'workshop' ? (
-        <WorkshopPicker workshops={workshops} selected={formData.workshopId} onSelect={id => onChange({ ...formData, workshopId: id })} />
+        <WorkshopPicker
+          workshops={workshops ?? []}
+          isLoading={isLoadingWorkshops}
+          selected={formData.workshopId}
+          filterArea={filterArea}
+          onFilterAreaChange={setFilterArea}
+          onSelect={handleSelectWorkshop}
+        />
       ) : (
         <HomePicker
           address={formData.deliveryAddress}
@@ -388,26 +408,45 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function WorkshopPicker({ workshops, selected, onSelect }: {
-  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null; rating?: number | null; partnershipStatus?: string | null }>;
+function WorkshopPicker({ workshops, isLoading, selected, filterArea, onFilterAreaChange, onSelect }: {
+  workshops: WorkshopRow[];
+  isLoading: boolean;
   selected: number | null;
-  onSelect: (id: number) => void;
+  filterArea: string;
+  onFilterAreaChange: (area: string) => void;
+  onSelect: (workshop: WorkshopRow) => void;
 }) {
   return (
     <div className="space-y-4">
-      <Label className="font-bold">اختر الورشة الأقرب لك</Label>
-      <p className="text-xs text-muted-foreground">الورش المعروضة متاحة وشريكة معنا</p>
+      <div className="flex items-center justify-between">
+        <Label className="font-bold">اختر الورشة الأقرب لك</Label>
+        <span className="text-xs text-green-600 font-medium">الورش المتاحة فقط</span>
+      </div>
 
-      <WorkshopMap workshops={workshops} selected={selected} onSelect={onSelect} />
+      <div>
+        <select
+          value={filterArea}
+          onChange={e => onFilterAreaChange(e.target.value)}
+          className="w-full h-10 rounded-xl border border-border px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+        >
+          <option value="">جميع مناطق الإسكندرية</option>
+          {ALEX_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
 
-      <div className="grid gap-3 max-h-64 overflow-y-auto">
-        {workshops.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">لا توجد ورش متاحة حالياً في منطقتك</p>
+      <WorkshopMap workshops={workshops} selected={selected} onSelect={w => onSelect(w)} />
+
+      <div className="grid gap-3 max-h-56 overflow-y-auto">
+        {isLoading && (
+          <div className="text-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" /></div>
+        )}
+        {!isLoading && workshops.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">لا توجد ورش متاحة في هذه المنطقة</p>
         )}
         {workshops.map(w => (
           <div
             key={w.id}
-            onClick={() => onSelect(w.id)}
+            onClick={() => onSelect(w)}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selected === w.id
                 ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
@@ -422,10 +461,8 @@ function WorkshopPicker({ workshops, selected, onSelect }: {
                   <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">متاحة</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">{w.area} — {w.address}</p>
-                {w.rating && w.rating > 0 && (
-                  <div className="mt-1">
-                    <StarRating rating={w.rating} />
-                  </div>
+                {w.rating != null && w.rating > 0 && (
+                  <div className="mt-1"><StarRating rating={w.rating} /></div>
                 )}
               </div>
               {selected === w.id && <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />}
@@ -438,23 +475,28 @@ function WorkshopPicker({ workshops, selected, onSelect }: {
 }
 
 function WorkshopMap({ workshops, selected, onSelect }: {
-  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null }>;
+  workshops: WorkshopRow[];
   selected: number | null;
-  onSelect: (id: number) => void;
+  onSelect: (workshop: WorkshopRow) => void;
 }) {
   const mapRef = React.useRef<HTMLDivElement>(null);
-  const mapInstanceRef = React.useRef<unknown>(null);
+  const mapInstanceRef = React.useRef<import('leaflet').Map | null>(null);
+  const markersLayerRef = React.useRef<import('leaflet').LayerGroup | null>(null);
+  const LRef = React.useRef<typeof import('leaflet') | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    let map: unknown;
+    let cancelled = false;
 
     async function initMap() {
       if (!mapRef.current || mapInstanceRef.current) return;
 
       const L = (await import('leaflet')).default;
       await import('leaflet/dist/leaflet.css');
+      if (cancelled || !mapRef.current) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      LRef.current = L;
+
       delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -463,7 +505,6 @@ function WorkshopMap({ workshops, selected, onSelect }: {
       });
 
       const leafletMap = L.map(mapRef.current).setView([31.2001, 29.9187], 12);
-      map = leafletMap;
       mapInstanceRef.current = leafletMap;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -471,24 +512,39 @@ function WorkshopMap({ workshops, selected, onSelect }: {
         maxZoom: 18,
       }).addTo(leafletMap);
 
-      workshops.forEach(w => {
-        if (w.lat && w.lng) {
-          const marker = L.marker([w.lat, w.lng]).addTo(leafletMap);
-          marker.bindPopup(`<b>${w.name}</b><br>${w.area}`);
-          marker.on('click', () => onSelect(w.id));
-        }
-      });
+      const layer = L.layerGroup().addTo(leafletMap);
+      markersLayerRef.current = layer;
+
+      if (!cancelled) setMapReady(true);
     }
 
     initMap();
 
     return () => {
+      cancelled = true;
       if (mapInstanceRef.current) {
-        (mapInstanceRef.current as { remove: () => void }).remove();
+        mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markersLayerRef.current = null;
       }
     };
   }, []);
+
+  useEffect(() => {
+    const L = LRef.current;
+    const layer = markersLayerRef.current;
+    if (!mapReady || !L || !layer) return;
+
+    layer.clearLayers();
+
+    workshops.forEach(w => {
+      if (w.lat && w.lng) {
+        const marker = L.marker([Number(w.lat), Number(w.lng)]).addTo(layer);
+        marker.bindPopup(`<b>${w.name}</b><br>${w.area}`);
+        marker.on('click', () => onSelect(w));
+      }
+    });
+  }, [workshops, onSelect, mapReady]);
 
   return (
     <div className="rounded-xl overflow-hidden border border-border h-48">
@@ -631,11 +687,10 @@ function Step5Confirmation({ orderId, paymentMethod }: { orderId: number; paymen
 }
 
 function OrderSummary({
-  pkg, formData, selectedWorkshop
+  pkg, formData
 }: {
   pkg: { name: string; sellPrice: string | number; warrantyMonths: number };
   formData: FormData;
-  selectedWorkshop?: { name: string; area: string } | undefined;
 }) {
   return (
     <div className="bg-primary text-white rounded-3xl p-6 shadow-xl sticky top-28 border border-white/10">
@@ -643,8 +698,8 @@ function OrderSummary({
       <div className="space-y-4 mb-6">
         <SummaryRow label="الباكدج" value={pkg.name} />
         {formData.carModel && <SummaryRow label="السيارة" value={`${formData.carModel} (${formData.carYear})`} />}
-        {formData.installationType === 'workshop' && selectedWorkshop && (
-          <SummaryRow label="الورشة" value={`${selectedWorkshop.name} — ${selectedWorkshop.area}`} />
+        {formData.installationType === 'workshop' && formData.workshopName && (
+          <SummaryRow label="الورشة" value={`${formData.workshopName} — ${formData.workshopArea}`} />
         )}
         {formData.installationType === 'home' && formData.deliveryArea && (
           <SummaryRow label="التوصيل" value={formData.deliveryArea} />
