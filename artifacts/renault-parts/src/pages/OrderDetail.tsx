@@ -9,13 +9,14 @@ import { ar } from 'date-fns/locale';
 export default function OrderDetail() {
   const [, params] = useRoute('/orders/:id');
   const orderId = params?.id ? parseInt(params.id, 10) : 0;
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, user } = useAuth();
 
   const { data: order, isLoading } = useGetOrder(orderId, {
-    query: { queryKey: getGetOrderQueryKey(orderId), enabled: !!orderId },
+    query: { queryKey: getGetOrderQueryKey(orderId), enabled: !!orderId && !!user },
     request: getAuthHeaders()
   });
 
+  if (!user) return <div className="min-h-screen flex flex-col justify-center items-center gap-4"><p className="text-xl font-bold text-primary">يجب تسجيل الدخول لعرض هذا الطلب</p><Link href="/auth" className="bg-primary text-white px-6 py-2 rounded-xl font-bold">تسجيل الدخول</Link></div>;
   if (isLoading) return <div className="min-h-screen flex justify-center items-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-accent rounded-full" /></div>;
   if (!order) return <div className="text-center py-20 font-bold text-xl text-primary">الطلب غير موجود</div>;
 

@@ -779,6 +779,7 @@ components:
           type: ["string", "null"]
         paymentMethod:
           type: string
+          enum: [cash, card]
         carModel:
           type: string
         carYear:
@@ -806,6 +807,7 @@ components:
           type: string
         paymentMethod:
           type: string
+          enum: [cash, card]
         paymentStatus:
           type: string
         total:
@@ -988,6 +990,7 @@ components:
           type: string
         paymentMethod:
           type: string
+          enum: [cash, card]
         paymentStatus:
           type: string
         total:

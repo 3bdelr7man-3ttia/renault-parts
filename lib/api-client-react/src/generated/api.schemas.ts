@@ -144,6 +144,14 @@ export interface Workshop {
   partnershipStatus: string;
 }
 
+export type CreateOrderBodyPaymentMethod =
+  (typeof CreateOrderBodyPaymentMethod)[keyof typeof CreateOrderBodyPaymentMethod];
+
+export const CreateOrderBodyPaymentMethod = {
+  cash: "cash",
+  card: "card",
+} as const;
+
 export interface CreateOrderBody {
   packageId: number;
   /** @nullable */
@@ -152,12 +160,20 @@ export interface CreateOrderBody {
   deliveryAddress?: string | null;
   /** @nullable */
   deliveryArea?: string | null;
-  paymentMethod: string;
+  paymentMethod: CreateOrderBodyPaymentMethod;
   carModel: string;
   carYear: number;
   /** @nullable */
   notes?: string | null;
 }
+
+export type OrderPaymentMethod =
+  (typeof OrderPaymentMethod)[keyof typeof OrderPaymentMethod];
+
+export const OrderPaymentMethod = {
+  cash: "cash",
+  card: "card",
+} as const;
 
 export interface Order {
   id: number;
@@ -166,7 +182,7 @@ export interface Order {
   /** @nullable */
   workshopId?: number | null;
   status: string;
-  paymentMethod: string;
+  paymentMethod: OrderPaymentMethod;
   paymentStatus: string;
   total: number;
   /** @nullable */
@@ -246,6 +262,14 @@ export interface AdminStats {
   revenueToday: number;
 }
 
+export type AdminOrderPaymentMethod =
+  (typeof AdminOrderPaymentMethod)[keyof typeof AdminOrderPaymentMethod];
+
+export const AdminOrderPaymentMethod = {
+  cash: "cash",
+  card: "card",
+} as const;
+
 export interface AdminOrder {
   id: number;
   userId: number;
@@ -259,7 +283,7 @@ export interface AdminOrder {
   /** @nullable */
   workshopName?: string | null;
   status: string;
-  paymentMethod: string;
+  paymentMethod: AdminOrderPaymentMethod;
   paymentStatus: string;
   total: number;
   /** @nullable */
