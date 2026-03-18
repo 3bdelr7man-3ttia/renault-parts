@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For premium page transitions and interactive animations"
+  "react-hook-form": "For robust form handling in auth and checkout"
+  "@hookform/resolvers": "For Zod validation integration with forms"
+  "date-fns": "For formatting order dates elegantly"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes without conflicts"
+
+images:
+  - path: "artifacts/renault-parts/public/images/hero-renault.png"
+    description: "A sleek, cinematic wide shot of a modern Renault car in a dramatic dark studio lighting, with subtle glowing gold accents. High-end automotive photography style."
+    aspect_ratio: "16:9"
+  - path: "artifacts/renault-parts/public/images/pattern-bg.png"
+    description: "Subtle abstract geometric pattern in very dark navy blue, suitable for a premium background texture."
+    aspect_ratio: "16:9"
+
+notes:
+  - "The app relies on @workspace/api-client-react for all API interactions."
+  - "JWT is stored in localStorage as 'renault_token' and passed in the headers of API calls."
+  - "The entire UI is built RTL (Right-to-Left) with Arabic as the primary language."

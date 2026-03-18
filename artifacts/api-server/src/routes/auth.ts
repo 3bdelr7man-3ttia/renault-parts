@@ -1,0 +1,124 @@
+import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
+import { db, usersTable } from "@workspace/db";
+import {
+  RegisterUserBody,
+  LoginUserBody,
+  LoginUserResponse,
+  GetCurrentUserResponse,
+} from "@workspace/api-zod";
+import { hashPassword, comparePassword, signToken, requireAuth, type AuthenticatedRequest } from "../lib/auth";
+
+const router: IRouter = Router();
+
+router.post("/auth/register", async (req, res): Promise<void> => {
+  const parsed = RegisterUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { name, phone, email, password, carModel, carYear, address, area } = parsed.data;
+
+  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (existing) {
+    res.status(409).json({ error: "البريد الإلكتروني مسجل بالفعل" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  const [user] = await db.insert(usersTable).values({
+    name,
+    phone,
+    email,
+    passwordHash,
+    carModel: carModel ?? null,
+    carYear: carYear ?? null,
+    address: address ?? null,
+    area: area ?? null,
+    role: "customer",
+  }).returning();
+
+  const token = signToken(user.id);
+
+  const userOut = {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    carModel: user.carModel,
+    carYear: user.carYear,
+    address: user.address,
+    area: user.area,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
+
+  res.status(201).json(LoginUserResponse.parse({ user: userOut, token }));
+});
+
+router.post("/auth/login", async (req, res): Promise<void> => {
+  const parsed = LoginUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { email, password } = parsed.data;
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (!user) {
+    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    return;
+  }
+
+  const valid = await comparePassword(password, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    return;
+  }
+
+  const token = signToken(user.id);
+
+  const userOut = {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    carModel: user.carModel,
+    carYear: user.carYear,
+    address: user.address,
+    area: user.area,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
+
+  res.json(LoginUserResponse.parse({ user: userOut, token }));
+});
+
+router.post("/auth/logout", (_req, res): void => {
+  res.json({ message: "تم تسجيل الخروج" });
+});
+
+router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const user = authReq.user;
+
+  const userOut = {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    carModel: user.carModel,
+    carYear: user.carYear,
+    address: user.address,
+    area: user.area,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
+
+  res.json(GetCurrentUserResponse.parse(userOut));
+});
+
+export default router;

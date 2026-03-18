@@ -48,6 +48,43 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## Project: رينو بارتس - منصة قطع غيار رينو الإسكندرية
+
+### Product Overview
+B2C platform for selling Renault car maintenance packages in Alexandria, Egypt.
+- 5 packages: 20k km, 40k km, 60k km, 100k km, Emergency (prices: 1040–7500 EGP)
+- Free installation via partner workshops in Alexandria
+- RTL Arabic UI, brand colors: navy #1E2761 + gold #F9E795
+
+### Auth
+JWT-based auth using `bcryptjs` + `jsonwebtoken`. Token stored in localStorage by frontend.
+- `artifacts/api-server/src/lib/auth.ts` — hashPassword, comparePassword, signToken, verifyToken, requireAuth middleware
+
+### Database Schema (lib/db/src/schema/)
+- `users.ts` — id, name, phone, email, passwordHash, carModel, carYear, address, area, role
+- `packages.ts` — id, name, slug, description, kmService, basePrice, sellPrice, warrantyMonths
+- `parts.ts` — id, name, oemCode, type, priceOriginal, priceTurkish, priceChinese + packagePartsTable (junction)
+- `workshops.ts` — id, name, area, address, phone, lat, lng, rating, partnershipStatus
+- `orders.ts` — id, userId, packageId, workshopId, status, paymentMethod, paymentStatus, total, deliveryAddress, carModel, carYear
+- `reviews.ts` — id, orderId, userId, workshopId, rating, comment
+- `chatSessions.ts` — id, sessionKey, userId, messages (jsonb)
+
+### API Routes (artifacts/api-server/src/routes/)
+- `auth.ts` — POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me
+- `users.ts` — PATCH /users/:id
+- `packages.ts` — GET /packages, GET /packages/:slug
+- `workshops.ts` — GET /workshops?area=
+- `orders.ts` — GET /orders, POST /orders, GET /orders/:id
+- `reviews.ts` — POST /reviews
+- `chat.ts` — POST /chat (AI assistant, uses DEEPSEEK_API_KEY or OPENAI_API_KEY, fallback rule-based)
+
+### Frontend (artifacts/renault-parts/)
+React + Vite, full RTL Arabic, Cairo font, navy/gold brand.
+Pages: Home, /packages, /packages/:slug, /login, /register, /my-orders, /orders/:id, /checkout
+
+### Seeding
+`pnpm --filter @workspace/scripts run seed` — seeds packages, parts, package-parts links, workshops
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
