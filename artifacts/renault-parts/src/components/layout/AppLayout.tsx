@@ -34,9 +34,9 @@ export function RenoPackLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 
 /* ── Static nav links (always visible) ── */
 const STATIC_NAV = [
-  { href: '/packages', label: 'الباكدجات', Icon: PackageSearch },
-  { href: '/packages', label: 'القطع',     Icon: Settings     },
-  { href: '/',         label: 'الورش',     Icon: Building2    },
+  { href: '/packages',  label: 'الباكدجات', Icon: PackageSearch },
+  { href: '/parts',     label: 'القطع',     Icon: Settings     },
+  { href: '/workshops', label: 'الورش',     Icon: Building2    },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

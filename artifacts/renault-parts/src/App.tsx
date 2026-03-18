@@ -14,6 +14,8 @@ import ChatWidget from "@/components/ChatWidget";
 import Home from "@/pages/Home";
 import Packages from "@/pages/Packages";
 import PackageDetail from "@/pages/PackageDetail";
+import Parts from "@/pages/Parts";
+import Workshops from "@/pages/Workshops";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Checkout from "@/pages/Checkout";
@@ -79,6 +81,8 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/packages" component={Packages} />
         <Route path="/packages/:slug" component={PackageDetail} />
+        <Route path="/parts" component={Parts} />
+        <Route path="/workshops" component={Workshops} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/checkout/:id" component={Checkout} />
