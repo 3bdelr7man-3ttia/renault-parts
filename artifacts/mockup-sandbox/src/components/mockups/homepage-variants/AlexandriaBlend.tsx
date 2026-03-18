@@ -1,423 +1,586 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Wrench, ShieldCheck, Star, Phone, MapPin, ChevronLeft,
-  Zap, Droplets, Wind, Settings, Disc, Battery,
-  CheckCircle2, ArrowLeftRight, BadgeCheck, Package, Building2, User, ChevronDown
+  Search, Wrench, ShieldCheck, Star, Phone, MapPin, ChevronLeft,
+  Zap, Droplets, Wind, Settings, Disc, Battery, Package,
+  Building2, Gift, Sparkles, CheckCircle2, X, BadgeCheck, ArrowLeftRight
 } from 'lucide-react';
 
-// ─── BRAND ────────────────────────────────────────────────────────────────
-// Deep ocean #0B1F3A · Teal glow #00C9B1 · Amber #F59E0B · Coral #F05454
-// Alexandrian dialect · Marketplace / platform concept
-// ──────────────────────────────────────────────────────────────────────────
+/* ─── KEYFRAME ANIMATIONS ─────────────────────────────────────────── */
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 
-const NAV = ['الباكدجات', 'قطع الغيار', 'الورش', 'ازاي بنشتغل'];
+  * { box-sizing: border-box; }
 
-const STEPS = [
-  { n: '01', icon: Package, color: '#00C9B1', title: 'اختار الباكدج', desc: 'أصلي ولا تركي؟ 20 ألف ولا 100 ألف؟ إحنا عندنا كل حاجة ومعاها الفرق في السعر والجودة.' },
-  { n: '02', icon: Building2, color: '#F59E0B', title: 'إحنا بنختار الورشة', desc: 'من شبكة ورشنا المعتمدة في الإسكندرية — بنبعتلك الأقرب والأحسن تقييماً.' },
-  { n: '03', icon: BadgeCheck, color: '#F05454', title: 'الضمان علينا', desc: 'ادفع لينا إحنا. لو في أي مشكلة في القطعة أو التركيب — إحنا المسؤولين مش الورشة.' },
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes neonPulse {
+    0%, 100% { box-shadow: 0 0 8px currentColor; }
+    50% { box-shadow: 0 0 24px currentColor, 0 0 48px currentColor; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  @keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -30; }
+  }
+  .pill-btn {
+    font-family: 'Almarai', sans-serif;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .pill-btn:hover { transform: translateY(-2px) scale(1.03); }
+  .service-pill {
+    font-family: 'Almarai', sans-serif;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.65);
+  }
+  .service-pill:hover, .service-pill.active {
+    transform: translateY(-3px) scale(1.06);
+  }
+  .card-hover { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .card-hover:hover { transform: translateY(-4px); }
+  .glow-teal { color: #00E5D0; }
+  .glow-orange { color: #FF7A3D; }
+  .glow-purple { color: #B06EF7; }
+  .neon-line {
+    stroke-dasharray: 8, 6;
+    animation: dash 1.5s linear infinite;
+  }
+`;
+
+/* ─── DATA ─────────────────────────────────────────────────────────── */
+const SERVICES = [
+  { icon: Droplets, label: 'تغيير زيت', color: '#FF7A3D', glow: 'rgba(255,122,61,0.4)' },
+  { icon: Disc, label: 'فرامل', color: '#00E5D0', glow: 'rgba(0,229,208,0.4)' },
+  { icon: Wind, label: 'فلتر هواء', color: '#B06EF7', glow: 'rgba(176,110,247,0.4)' },
+  { icon: Zap, label: 'كهرباء وبطارية', color: '#F59E0B', glow: 'rgba(245,158,11,0.4)' },
+  { icon: Settings, label: 'تروس وعفشة', color: '#22D3EE', glow: 'rgba(34,211,238,0.4)' },
+  { icon: Wrench, label: 'عمرة كاملة', color: '#34D399', glow: 'rgba(52,211,153,0.4)' },
 ];
 
-const PARTS_ORIGINAL = [
-  { icon: Droplets, name: 'زيت موبيل أصلي', brand: 'Mobil 1 Original', price: 320, img: '#1B4F72' },
-  { icon: Disc, name: 'طقم فرامل أصلي', brand: 'Brembo Renault', price: 680, img: '#1A5276' },
-  { icon: Wind, name: 'فلتر هواء أصلي', brand: 'Renault Original', price: 180, img: '#154360' },
-  { icon: Zap, name: 'شمعة NGK أصلي', brand: 'NGK Japan', price: 95, img: '#1B2631' },
-];
-
-const PARTS_TURKISH = [
-  { icon: Droplets, name: 'زيت سيليكون', brand: 'Silicon Turkish', price: 180, img: '#4A235A' },
-  { icon: Disc, name: 'طقم فرامل تركي', brand: 'Beral Turkey', price: 340, img: '#6C3483' },
-  { icon: Wind, name: 'فلتر هواء تركي', brand: 'Knecht Turkey', price: 90, img: '#5B2C6F' },
-  { icon: Zap, name: 'شمعة تركي', brand: 'Beru Turkey', price: 55, img: '#4A235A' },
-];
-
-const WORKSHOPS = [
-  { name: 'ورشة الميناء', area: 'ميناء الإسكندرية', rating: 4.9, jobs: 847, color: '#00C9B1', tag: 'الأسرع' },
-  { name: 'سنتر المنتزه', area: 'المنتزه', rating: 4.8, jobs: 1204, color: '#F59E0B', tag: 'الأعلى تقييماً' },
-  { name: 'ورشة العجمي', area: 'العجمي – سيدي بشر', rating: 4.7, jobs: 632, color: '#F05454', tag: '' },
-  { name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980, color: '#7C3AED', tag: 'الأقرب' },
+const AI_PARTS = [
+  { name: 'زيت موبيل 1', origPrice: 320, turkPrice: 160, origBrand: 'Mobil 1 Germany', turkBrand: 'Selenia Turkey', origScore: 98, turkScore: 74, winner: 'orig' },
+  { name: 'طقم فرامل', origPrice: 680, turkPrice: 320, origBrand: 'Brembo Italy', turkBrand: 'Beral Turkey', origScore: 96, turkScore: 79, winner: 'orig' },
+  { name: 'فلتر زيت', origPrice: 95, turkPrice: 48, origBrand: 'Renault Original', turkBrand: 'Knecht Turkey', origScore: 99, turkScore: 82, winner: 'orig' },
 ];
 
 const PACKAGES = [
-  { id: 'emergency', name: 'طوارئ', badge: '', price: 299, km: 'عند الحاجة', color: '#F05454', items: ['كشف عطل سريع', 'تبديل زيت', 'فحص شامل 20 بند'] },
-  { id: '20k', name: '20,000 كم', badge: '', price: 1499, km: '20,000 كم', color: '#00C9B1', items: ['تبديل زيت + فلتر', 'فحص فرامل', 'ضبط إطارات', '+8 خدمات تانية'] },
-  { id: '40k', name: '40,000 كم', badge: 'الأكثر طلباً', price: 2199, km: '40,000 كم', color: '#F59E0B', items: ['كل خدمات 20k', 'تبديل شمعات', 'فحص تروس', '+12 خدمة'] },
-  { id: '60k', name: '60,000 كم', badge: '', price: 3499, km: '60,000 كم', color: '#7C3AED', items: ['كل خدمات 40k', 'تبديل بواجي', 'تنظيف حقن وقود', '+15 خدمة'] },
-  { id: '100k', name: '100,000 كم', badge: 'الأشمل', price: 5999, km: '100,000 كم', color: '#0EA5E9', items: ['عمرة كاملة', 'كل السوائل', 'فحص كهربائي كامل', '+20 خدمة'] },
+  { id: 'lite', name: 'باكدج لايت', badge: '', price: 999, color: '#00E5D0', services: ['تغيير زيت + فلتر', 'فحص فرامل', 'ضبط الإطارات'], gift: 'فرشاة عجلات' },
+  { id: 'standard', name: 'باكدج ستاندرد', badge: '⭐ الأكثر طلباً', price: 2199, color: '#FF7A3D', services: ['كل خدمات لايت', 'تبديل شمعات', 'فحص كهرباء كامل', 'غسيل ثروتل'], gift: 'قسيمة تخفيض 20%' },
+  { id: 'pro', name: 'باكدج برو', badge: '🔥 الأشمل', price: 3999, color: '#B06EF7', services: ['كل خدمات ستاندرد', 'فحص تروس + عفشة', 'تغيير بواجي', 'تقرير صحة شامل', '+5 خدمات'], gift: '🎁 فلتر هواء مجاناً' },
 ];
 
-// ─── COMPONENT ────────────────────────────────────────────────────────────
+const WORKSHOPS = [
+  { name: 'ورشة الميناء', area: 'الميناء', rating: 4.9, jobs: 847, accent: '#00E5D0' },
+  { name: 'سنتر المنتزه', area: 'المنتزه', rating: 4.8, jobs: 1204, accent: '#FF7A3D' },
+  { name: 'ورشة العجمي', area: 'العجمي', rating: 4.7, jobs: 632, accent: '#B06EF7' },
+  { name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980, accent: '#F59E0B' },
+];
+
+/* ─── COMPONENT ────────────────────────────────────────────────────── */
 export function AlexandriaBlend() {
-  const [partTab, setPartTab] = useState<'original' | 'turkish'>('original');
-  const [activePkg, setActivePkg] = useState('40k');
-  const currentPkg = PACKAGES.find(p => p.id === activePkg)!;
-  const parts = partTab === 'original' ? PARTS_ORIGINAL : PARTS_TURKISH;
+  const [activeService, setActiveService] = useState<number | null>(null);
+  const [selectedPkg, setSelectedPkg] = useState('standard');
+  const [aiPart, setAiPart] = useState(0);
+  const [aiMode, setAiMode] = useState<'orig' | 'turk'>('orig');
+  const [searchVal, setSearchVal] = useState('');
+  const [showAiResult, setShowAiResult] = useState(false);
+  const currentPkg = PACKAGES.find(p => p.id === selectedPkg)!;
+  const part = AI_PARTS[aiPart];
+
+  useEffect(() => {
+    if (showAiResult) return;
+    const t = setTimeout(() => setShowAiResult(true), 300);
+    return () => clearTimeout(t);
+  }, [aiPart, showAiResult]);
+
+  const handlePartChange = (i: number) => {
+    setShowAiResult(false);
+    setAiPart(i);
+  };
 
   return (
-    <div dir="rtl" style={{ fontFamily: "'Cairo','Tajawal',sans-serif", background: '#0B1F3A', color: '#fff', minHeight: '100vh' }}>
+    <>
+      <style>{STYLES}</style>
+      <div dir="rtl" style={{ fontFamily: "'Almarai', 'Cairo', sans-serif", background: '#080D18', color: '#fff', minHeight: '100vh' }}>
 
-      {/* ═══════ NAV ═══════ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 99, background: 'rgba(11,31,58,0.96)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(0,201,177,0.15)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,#00C9B1,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(0,201,177,0.3)' }}>
-              <Wrench size={20} color="#0B1F3A" strokeWidth={2.5} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 900, fontSize: 18, letterSpacing: -0.5, lineHeight: 1 }}>رينو بارتس</div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#00C9B1', letterSpacing: 1 }}>الإسكندرية</div>
-            </div>
-          </div>
-          {/* Nav links */}
-          <div style={{ display: 'flex', gap: 28 }}>
-            {NAV.map(n => <span key={n} style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{n}</span>)}
-          </div>
-          {/* CTA */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>دخول</span>
-            <button style={{ background: 'linear-gradient(135deg,#00C9B1,#0EA5E9)', color: '#0B1F3A', border: 'none', borderRadius: 32, padding: '9px 22px', fontWeight: 900, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(0,201,177,0.3)' }}>
-              احجز دلوقتي
-            </button>
-          </div>
-        </div>
-      </nav>
+        {/* ═══ NAV ═══ */}
+        <nav style={{ position: 'sticky', top: 0, zIndex: 99, background: 'rgba(8,13,24,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,229,208,0.1)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', height: 64, display: 'flex', alignItems: 'center', gap: 24 }}>
 
-      {/* ═══════ HERO ═══════ */}
-      <section style={{ position: 'relative', padding: '72px 28px 56px', overflow: 'hidden' }}>
-        {/* BG decor */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -200, right: -200, width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,201,177,0.07) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', bottom: -100, left: -100, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)' }} />
-          {/* Grid lines */}
-          {[...Array(6)].map((_, i) => (
-            <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${i * 20}%`, width: 1, background: 'rgba(255,255,255,0.02)' }} />
-          ))}
-        </div>
-
-        <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
-
-          {/* LEFT: Headline */}
-          <div>
-            {/* Tag */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,201,177,0.1)', border: '1px solid rgba(0,201,177,0.25)', borderRadius: 32, padding: '6px 14px', marginBottom: 28 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00C9B1', boxShadow: '0 0 6px #00C9B1' }} />
-              <span style={{ color: '#00C9B1', fontSize: 12, fontWeight: 700 }}>فكرة جديدة في صيانة الرينو</span>
+            {/* Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#00E5D0,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(0,229,208,0.35)' }}>
+                <Wrench size={19} color="#080D18" strokeWidth={2.5} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1, letterSpacing: -0.3 }}>رينو بارتس</div>
+                <div style={{ color: '#00E5D0', fontSize: 9, fontWeight: 700, letterSpacing: 2 }}>ALEXANDRIA</div>
+              </div>
             </div>
 
-            <h1 style={{ fontSize: 54, fontWeight: 900, lineHeight: 1.15, margin: '0 0 20px', letterSpacing: -1 }}>
-              إحنا مش ورشة،<br />
-              <span style={{ background: 'linear-gradient(135deg,#00C9B1,#0EA5E9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>إحنا الضمان.</span>
-            </h1>
-
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 16, lineHeight: 1.85, margin: '0 0 12px', maxWidth: 460 }}>
-              زي أوبر بالظبط — بس بين مراكز قطع الغيار والورش المتخصصة في رينو.
-            </p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, lineHeight: 1.7, margin: '0 0 36px', maxWidth: 440 }}>
-              إنت بتاختار الباكدج وبتدفع لينا إحنا. إحنا بنجيبلك القطعة — أصلي أو تركي — وبنبعتلك الورشة الأقرب المعتمدة. ولو أي حاجة مش تمام، الضمان علينا إحنا.
-            </p>
-
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <button style={{ background: 'linear-gradient(135deg,#00C9B1,#0EA5E9)', color: '#0B1F3A', border: 'none', borderRadius: 36, padding: '14px 32px', fontWeight: 900, fontSize: 15, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 28px rgba(0,201,177,0.25)' }}>
-                شوف الباكدجات
-              </button>
-              <button style={{ background: 'transparent', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 36, padding: '14px 28px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: 'inherit' }}>
-                ازاي بنشتغل؟
-              </button>
+            {/* Search bar — center, prominent */}
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Search size={16} color="rgba(255,255,255,0.35)" style={{ position: 'absolute', top: '50%', right: 14, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                value={searchVal}
+                onChange={e => setSearchVal(e.target.value)}
+                placeholder="دور على قطعة أو خدمة... مثال: فلتر زيت رينو كليو"
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.1)',
+                  borderRadius: 999, padding: '9px 42px 9px 18px', color: '#fff', fontSize: 13, fontFamily: "'Almarai',sans-serif",
+                  outline: 'none', transition: 'border-color 0.2s',
+                }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(0,229,208,0.5)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
             </div>
 
-            {/* Stats */}
-            <div style={{ display: 'flex', gap: 40, marginTop: 44, paddingTop: 36, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-              {[['1,247+', 'عميل اتخدم'], ['4.9 ⭐', 'متوسط التقييم'], ['32', 'ورشة شريكة']].map(([n, l]) => (
-                <div key={l}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#00C9B1', lineHeight: 1 }}>{n}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginTop: 4 }}>{l}</div>
-                </div>
+            {/* Nav + CTA */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }}>
+              {['الباكدجات', 'قطع الغيار', 'الورش'].map(n => (
+                <span key={n} style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{n}</span>
               ))}
+              <button className="pill-btn" style={{ background: 'linear-gradient(135deg,#00E5D0,#0EA5E9)', color: '#080D18', padding: '8px 20px', fontWeight: 800, fontSize: 13, border: 'none', boxShadow: '0 4px 18px rgba(0,229,208,0.3)' }}>
+                احجز دلوقتي
+              </button>
             </div>
           </div>
+        </nav>
 
-          {/* RIGHT: Marketplace diagram */}
-          <div style={{ position: 'relative' }}>
-            {/* Central hub */}
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(0,201,177,0.2)', borderRadius: 28, padding: 32 }}>
-              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 700, textAlign: 'center', marginBottom: 28, letterSpacing: 1 }}>كيف بنشتغل</p>
-
-              {/* 3-node diagram */}
-              <div style={{ position: 'relative', height: 260 }}>
-                {/* Center: Platform */}
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(0,201,177,0.2),rgba(14,165,233,0.2))', border: '2px solid rgba(0,201,177,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 3, boxShadow: '0 0 32px rgba(0,201,177,0.15)' }}>
-                  <Wrench size={24} color="#00C9B1" />
-                  <span style={{ color: '#00C9B1', fontSize: 11, fontWeight: 900, marginTop: 4 }}>رينو بارتس</span>
-                </div>
-
-                {/* SVG connecting lines */}
-                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
-                  {/* Line to top-left (parts) */}
-                  <line x1="50%" y1="50%" x2="18%" y2="18%" stroke="rgba(0,201,177,0.3)" strokeWidth="1.5" strokeDasharray="6,4" />
-                  {/* Line to top-right (workshop) */}
-                  <line x1="50%" y1="50%" x2="82%" y2="18%" stroke="rgba(245,158,11,0.3)" strokeWidth="1.5" strokeDasharray="6,4" />
-                  {/* Line to bottom (customer) */}
-                  <line x1="50%" y1="50%" x2="50%" y2="90%" stroke="rgba(240,84,84,0.3)" strokeWidth="1.5" strokeDasharray="6,4" />
-                </svg>
-
-                {/* Node: Parts supplier */}
-                <div style={{ position: 'absolute', top: 0, right: '62%', transform: 'translateX(50%)', background: 'rgba(0,201,177,0.08)', border: '1px solid rgba(0,201,177,0.3)', borderRadius: 16, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-                  <Package size={20} color="#00C9B1" style={{ margin: '0 auto 6px' }} />
-                  <div style={{ color: '#00C9B1', fontSize: 12, fontWeight: 800 }}>مراكز القطع</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 600, marginTop: 2 }}>أصلي + تركي</div>
-                </div>
-
-                {/* Node: Workshop */}
-                <div style={{ position: 'absolute', top: 0, left: '62%', transform: 'translateX(-50%)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 16, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-                  <Building2 size={20} color="#F59E0B" style={{ margin: '0 auto 6px' }} />
-                  <div style={{ color: '#F59E0B', fontSize: 12, fontWeight: 800 }}>ورش التركيب</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 600, marginTop: 2 }}>32 ورشة معتمدة</div>
-                </div>
-
-                {/* Node: Customer */}
-                <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', background: 'rgba(240,84,84,0.08)', border: '1px solid rgba(240,84,84,0.3)', borderRadius: 16, padding: '12px 16px', textAlign: 'center', minWidth: 110 }}>
-                  <User size={20} color="#F05454" style={{ margin: '0 auto 6px' }} />
-                  <div style={{ color: '#F05454', fontSize: 12, fontWeight: 800 }}>العميل</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 600, marginTop: 2 }}>بيدفع لينا إحنا</div>
-                </div>
-              </div>
-
-              {/* Guarantee banner */}
-              <div style={{ marginTop: 20, background: 'rgba(0,201,177,0.06)', border: '1px solid rgba(0,201,177,0.2)', borderRadius: 14, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <BadgeCheck size={18} color="#00C9B1" style={{ flexShrink: 0 }} />
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, lineHeight: 1.4 }}>
-                  الضمان يغطي القطعة <strong style={{ color: '#00C9B1' }}>والتركيب</strong> — ادفع مرة وخليك مطمن
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ HOW IT WORKS ═══════ */}
-      <section style={{ padding: '56px 28px', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <h2 style={{ fontSize: 30, fontWeight: 900, margin: '0 0 8px' }}>ازاي بنشتغل؟</h2>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 600, margin: 0 }}>بسيطة زي أوبر — بس للرينو</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 28, position: 'relative' }}>
-            {/* Connector line */}
-            <div style={{ position: 'absolute', top: 36, right: '16.5%', left: '16.5%', height: 1, background: 'linear-gradient(to left, rgba(240,84,84,0.3), rgba(245,158,11,0.3), rgba(0,201,177,0.3))', pointerEvents: 'none' }} />
-            {STEPS.map((s, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${s.color}25`, borderRadius: 22, padding: '28px 24px', position: 'relative', zIndex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-                  <div style={{ width: 56, height: 56, borderRadius: '50%', background: `${s.color}15`, border: `1.5px solid ${s.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <s.icon size={24} color={s.color} />
-                  </div>
-                  <span style={{ color: `${s.color}60`, fontWeight: 900, fontSize: 36, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.n}</span>
-                </div>
-                <h3 style={{ color: '#fff', fontSize: 18, fontWeight: 800, margin: '0 0 10px' }}>{s.title}</h3>
-                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.8, margin: 0 }}>{s.desc}</p>
-              </div>
+        {/* ═══ HERO — Service-first ═══ */}
+        <section style={{ position: 'relative', padding: '72px 28px 56px', overflow: 'hidden' }}>
+          {/* Animated background orbs */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -120, right: -80, width: 520, height: 520, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,229,208,0.08) 0%, transparent 65%)', animation: 'pulseGlow 4s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', bottom: -80, left: 60, width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,61,0.07) 0%, transparent 65%)', animation: 'pulseGlow 5s ease-in-out infinite 1s' }} />
+            <div style={{ position: 'absolute', top: '30%', left: '40%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(176,110,247,0.06) 0%, transparent 65%)', animation: 'pulseGlow 6s ease-in-out infinite 2s' }} />
+            {/* Grid */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${i * 14.3}%`, width: 1, background: 'rgba(255,255,255,0.018)' }} />
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ═══════ PARTS: ORIGINAL vs TURKISH ═══════ */}
-      <section style={{ padding: '64px 28px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 36, flexWrap: 'wrap', gap: 20 }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 56, alignItems: 'center' }}>
+
+            {/* LEFT */}
             <div>
-              <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 6px' }}>إحنا بتوع الأصلي 💪</h2>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}>وعندنا التركي كمان — وهنقولك الفرق بالسعر والجودة بكل صدق</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,229,208,0.08)', border: '1px solid rgba(0,229,208,0.2)', borderRadius: 999, padding: '6px 16px', marginBottom: 28 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00E5D0', boxShadow: '0 0 8px #00E5D0', animation: 'pulseGlow 2s infinite' }} />
+                <span style={{ color: '#00E5D0', fontSize: 12, fontWeight: 700 }}>منصة قطع الغيار الأولى — الإسكندرية</span>
+              </div>
+
+              <h1 style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.2, margin: '0 0 18px', letterSpacing: -0.5 }}>
+                إحنا مش بنبيع قطع،<br />
+                <span style={{ background: 'linear-gradient(135deg,#00E5D0,#0EA5E9,#B06EF7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block' }}>
+                  إحنا بنبيع باكدج.
+                </span>
+              </h1>
+
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, lineHeight: 1.9, margin: '0 0 10px', maxWidth: 480 }}>
+                زي أوبر — إحنا الوسيط بين مراكز قطع غيار رينو وورش التركيب المعتمدة في الإسكندرية.
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }}>
+                إنت بتدفع لينا، إحنا بنجيب القطعة — أصلي أو تركي وانت اللي بتختار — وبنبعتلك الورشة الأقرب. والضمان على القطعة والتركيب علينا إحنا.
+              </p>
+
+              {/* Service pills */}
+              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 700, marginBottom: 14, letterSpacing: 1 }}>ابدأ من اللي محتاجه:</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                {SERVICES.map((s, i) => {
+                  const isActive = activeService === i;
+                  return (
+                    <button
+                      key={i}
+                      className="service-pill"
+                      onClick={() => setActiveService(isActive ? null : i)}
+                      style={{
+                        borderColor: isActive ? s.color : undefined,
+                        background: isActive ? `${s.color}15` : undefined,
+                        color: isActive ? s.color : undefined,
+                        boxShadow: isActive ? `0 0 14px ${s.glow}` : undefined,
+                      }}
+                    >
+                      <s.icon size={14} style={{ marginLeft: 6, display: 'inline', verticalAlign: 'middle' }} />
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeService !== null && (
+                <div style={{ marginTop: 20, animation: 'slideUp 0.3s ease', background: `${SERVICES[activeService].color}10`, border: `1px solid ${SERVICES[activeService].color}30`, borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 700 }}>
+                    عندنا باكدج بيشمل <strong style={{ color: SERVICES[activeService].color }}>{SERVICES[activeService].label}</strong> — هنوفرلك أصلي وتركي ومعاه الورشة
+                  </span>
+                  <button className="pill-btn" style={{ background: SERVICES[activeService].color, color: '#080D18', padding: '7px 18px', fontWeight: 800, fontSize: 12, border: 'none', flexShrink: 0 }}>
+                    اختار الباكدج
+                  </button>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div style={{ display: 'flex', gap: 36, marginTop: 40, paddingTop: 32, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                {[['1,247+', 'عميل تخدم'], ['4.9 ★', 'تقييم'], ['32', 'ورشة شريكة']].map(([n, l]) => (
+                  <div key={l}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#00E5D0' }}>{n}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginTop: 3 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            {/* Toggle */}
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 32, padding: 4, gap: 4 }}>
-              {(['original', 'turkish'] as const).map(t => {
-                const isActive = partTab === t;
-                const labels = { original: '✅ أصلي', turkish: '🇹🇷 تركي' };
-                const colors = { original: '#00C9B1', turkish: '#7C3AED' };
+
+            {/* RIGHT — Neon engine diagram style */}
+            <div style={{ position: 'relative', animation: 'float 5s ease-in-out infinite' }}>
+              <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 28, padding: 32, position: 'relative', overflow: 'hidden' }}>
+                {/* Animated corner accent */}
+                <div style={{ position: 'absolute', top: -1, right: -1, width: 100, height: 100, background: 'linear-gradient(135deg,rgba(0,229,208,0.15),transparent)', borderRadius: '0 28px 0 80%' }} />
+
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, letterSpacing: 2, textAlign: 'center', marginBottom: 28 }}>كيف بنشتغل</p>
+
+                {/* SVG marketplace diagram with neon lines */}
+                <div style={{ position: 'relative', height: 240 }}>
+                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
+                    <defs>
+                      <filter id="glow-teal">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                        <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                      <filter id="glow-orange">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                        <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                    </defs>
+                    {/* Lines from center to nodes */}
+                    <line x1="50%" y1="50%" x2="16%" y2="15%" stroke="#00E5D0" strokeWidth="1.5" strokeOpacity="0.5" className="neon-line" filter="url(#glow-teal)" />
+                    <line x1="50%" y1="50%" x2="84%" y2="15%" stroke="#FF7A3D" strokeWidth="1.5" strokeOpacity="0.5" className="neon-line" filter="url(#glow-orange)" />
+                    <line x1="50%" y1="50%" x2="50%" y2="92%" stroke="#B06EF7" strokeWidth="1.5" strokeOpacity="0.5" className="neon-line" />
+                  </svg>
+
+                  {/* Center node */}
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-53%)', width: 86, height: 86, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(0,229,208,0.15),rgba(14,165,233,0.15))', border: '2px solid rgba(0,229,208,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 3, boxShadow: '0 0 30px rgba(0,229,208,0.2), inset 0 0 20px rgba(0,229,208,0.05)' }}>
+                    <Wrench size={22} color="#00E5D0" />
+                    <span style={{ color: '#00E5D0', fontSize: 10, fontWeight: 800, marginTop: 5, textAlign: 'center', lineHeight: 1.2 }}>رينو<br />بارتس</span>
+                  </div>
+
+                  {/* Node: Parts */}
+                  <div style={{ position: 'absolute', top: 0, right: '68%', transform: 'translateX(50%)', background: 'rgba(0,229,208,0.07)', border: '1px solid rgba(0,229,208,0.25)', borderRadius: 16, padding: '11px 14px', textAlign: 'center', boxShadow: '0 0 16px rgba(0,229,208,0.1)' }}>
+                    <Package size={18} color="#00E5D0" style={{ margin: '0 auto 5px' }} />
+                    <div style={{ color: '#00E5D0', fontSize: 11, fontWeight: 800 }}>مراكز القطع</div>
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginTop: 2 }}>أصلي + تركي</div>
+                  </div>
+
+                  {/* Node: Workshop */}
+                  <div style={{ position: 'absolute', top: 0, left: '68%', transform: 'translateX(-50%)', background: 'rgba(255,122,61,0.07)', border: '1px solid rgba(255,122,61,0.25)', borderRadius: 16, padding: '11px 14px', textAlign: 'center', boxShadow: '0 0 16px rgba(255,122,61,0.1)' }}>
+                    <Building2 size={18} color="#FF7A3D" style={{ margin: '0 auto 5px' }} />
+                    <div style={{ color: '#FF7A3D', fontSize: 11, fontWeight: 800 }}>ورش التركيب</div>
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginTop: 2 }}>32 ورشة</div>
+                  </div>
+
+                  {/* Node: Customer */}
+                  <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', background: 'rgba(176,110,247,0.07)', border: '1px solid rgba(176,110,247,0.25)', borderRadius: 16, padding: '11px 14px', textAlign: 'center', boxShadow: '0 0 16px rgba(176,110,247,0.1)' }}>
+                    <BadgeCheck size={18} color="#B06EF7" style={{ margin: '0 auto 5px' }} />
+                    <div style={{ color: '#B06EF7', fontSize: 11, fontWeight: 800 }}>العميل + ضمان</div>
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginTop: 2 }}>بيدفع لينا</div>
+                  </div>
+                </div>
+
+                {/* Guarantee strip */}
+                <div style={{ marginTop: 20, background: 'rgba(0,229,208,0.05)', border: '1px solid rgba(0,229,208,0.15)', borderRadius: 12, padding: '11px 14px', display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <ShieldCheck size={16} color="#00E5D0" style={{ flexShrink: 0 }} />
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700, lineHeight: 1.4 }}>الضمان على القطعة <strong style={{ color: '#00E5D0' }}>والتركيب</strong> — ادفع مرة وخليك مطمن</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ PACKAGES — Builder with Gift ═══ */}
+        <section style={{ padding: '64px 28px', background: 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+              <h2 style={{ fontSize: 30, fontWeight: 800, margin: '0 0 8px' }}>ابني باكدجك 🛠️</h2>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}>مش بنبيع قطع منفردة — كل باكدج = قطعة + تركيب + ضمان + هدية</p>
+            </div>
+
+            {/* Package selector pills */}
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 36, flexWrap: 'wrap' }}>
+              {PACKAGES.map(p => {
+                const isActive = selectedPkg === p.id;
                 return (
-                  <button key={t} onClick={() => setPartTab(t)} style={{ padding: '8px 20px', borderRadius: 28, border: 'none', fontFamily: 'inherit', fontWeight: 800, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s', background: isActive ? colors[t] : 'transparent', color: isActive ? (t === 'original' ? '#0B1F3A' : '#fff') : 'rgba(255,255,255,0.5)' }}>
-                    {labels[t]}
+                  <button key={p.id} className="pill-btn" onClick={() => setSelectedPkg(p.id)} style={{
+                    padding: '10px 24px', background: isActive ? `${p.color}18` : 'rgba(255,255,255,0.04)',
+                    border: `1.5px solid ${isActive ? p.color : 'rgba(255,255,255,0.1)'}`,
+                    color: isActive ? p.color : 'rgba(255,255,255,0.45)', fontWeight: 800, fontSize: 14,
+                    boxShadow: isActive ? `0 0 20px ${p.color}25` : 'none',
+                  }}>
+                    {p.name}
+                    {p.badge && <span style={{ display: 'block', fontSize: 9, opacity: 0.8, fontWeight: 700, marginTop: 2 }}>{p.badge}</span>}
                   </button>
                 );
               })}
             </div>
-          </div>
 
-          {/* Comparison note */}
-          {partTab === 'turkish' && (
-            <div style={{ marginBottom: 24, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 14, padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 18 }}>💡</span>
-              <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 700 }}>
-                التركي <strong style={{ color: '#A78BFA' }}>مش وحش</strong> — بس لازم تعرف الفرق. هنا السعر أقل، الضمان أقل، ومناسب للعربيات الأقدم. والاختيار ليك.
-              </span>
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18 }}>
-            {parts.map(({ icon: Icon, name, brand, price, img }) => {
-              const accent = partTab === 'original' ? '#00C9B1' : '#7C3AED';
-              return (
-                <div key={name} style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid ${accent}20`, background: 'rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.borderColor = `${accent}50`; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.borderColor = `${accent}20`; }}
-                >
-                  {/* Part image placeholder */}
-                  <div style={{ height: 110, background: `linear-gradient(135deg, ${img}, ${img}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                    <Icon size={44} color="rgba(255,255,255,0.25)" />
-                    {partTab === 'original' && (
-                      <div style={{ position: 'absolute', top: 10, right: 10, background: '#00C9B1', color: '#0B1F3A', fontSize: 9, fontWeight: 900, borderRadius: 12, padding: '3px 8px' }}>أصلي 100%</div>
-                    )}
-                    {partTab === 'turkish' && (
-                      <div style={{ position: 'absolute', top: 10, right: 10, background: '#7C3AED', color: '#fff', fontSize: 9, fontWeight: 900, borderRadius: 12, padding: '3px 8px' }}>🇹🇷 تركي</div>
-                    )}
-                  </div>
-                  <div style={{ padding: '16px 14px' }}>
-                    <p style={{ color: accent, fontSize: 10, fontWeight: 700, margin: '0 0 4px' }}>{brand}</p>
-                    <h4 style={{ color: '#fff', fontSize: 14, fontWeight: 800, margin: '0 0 12px' }}>{name}</h4>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ color: accent, fontWeight: 900, fontSize: 18 }}>{price} <span style={{ fontSize: 11 }}>ج.م</span></span>
-                      <button style={{ background: `${accent}15`, border: `1px solid ${accent}30`, color: accent, borderRadius: 10, padding: '5px 12px', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>أضف</button>
-                    </div>
+            {/* Active package */}
+            <div style={{ maxWidth: 600, margin: '0 auto', background: `linear-gradient(145deg, ${currentPkg.color}0D, rgba(8,13,24,0.8))`, border: `1.5px solid ${currentPkg.color}30`, borderRadius: 28, padding: 36, animation: 'slideUp 0.3s ease', boxShadow: `0 20px 60px ${currentPkg.color}15` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+                <div>
+                  <h3 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px' }}>{currentPkg.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: `${currentPkg.color}15`, border: `1px solid ${currentPkg.color}30`, borderRadius: 999, padding: '5px 14px', width: 'fit-content' }}>
+                    <Gift size={13} color={currentPkg.color} />
+                    <span style={{ color: currentPkg.color, fontSize: 12, fontWeight: 700 }}>هديتك: {currentPkg.gift}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ PACKAGES ═══════ */}
-      <section style={{ padding: '64px 28px', background: 'rgba(0,201,177,0.03)', borderTop: '1px solid rgba(0,201,177,0.08)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 8px' }}>باكدجات الصيانة</h2>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>قطعة أصلية + ورشة معتمدة + ضمان = باكدج واحد بسعر واحد</p>
-          </div>
-
-          {/* Selector tabs */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 32, flexWrap: 'wrap' }}>
-            {PACKAGES.map(p => (
-              <button key={p.id} onClick={() => setActivePkg(p.id)} style={{ padding: '8px 18px', borderRadius: 28, border: `1.5px solid ${activePkg === p.id ? p.color : 'rgba(255,255,255,0.12)'}`, background: activePkg === p.id ? `${p.color}15` : 'transparent', color: activePkg === p.id ? p.color : 'rgba(255,255,255,0.45)', fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
-                {p.name}
-                {p.badge && <span style={{ marginRight: 6, fontSize: 9, background: p.color, color: p.id === '40k' ? '#0B1F3A' : '#fff', borderRadius: 10, padding: '1px 6px' }}>{p.badge}</span>}
-              </button>
-            ))}
-          </div>
-
-          {/* Active package detail */}
-          <div style={{ maxWidth: 640, margin: '0 auto', background: `linear-gradient(135deg, ${currentPkg.color}10, rgba(255,255,255,0.02))`, border: `1.5px solid ${currentPkg.color}35`, borderRadius: 28, padding: 36 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-              <div>
-                <p style={{ color: `${currentPkg.color}99`, fontSize: 12, fontWeight: 700, margin: '0 0 4px' }}>{currentPkg.km}</p>
-                <h3 style={{ color: '#fff', fontSize: 26, fontWeight: 900, margin: 0 }}>باكدج {currentPkg.name}</h3>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ color: currentPkg.color, fontSize: 38, fontWeight: 800, lineHeight: 1 }}>{currentPkg.price.toLocaleString()}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, fontWeight: 700 }}>ج.م شامل التركيب</div>
+                </div>
               </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ color: currentPkg.color, fontSize: 36, fontWeight: 900, lineHeight: 1 }}>{currentPkg.price.toLocaleString()}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontWeight: 700 }}>ج.م</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 24 }}>
+                {currentPkg.services.map(s => (
+                  <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CheckCircle2 size={14} color={currentPkg.color} style={{ flexShrink: 0 }} />
+                    <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 700 }}>{s}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '10px 14px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2 }}>نوع القطعة</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#00E5D0' }}>✅ أصلي (الافتراضي)</div>
+                </div>
+                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '10px 14px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2 }}>الضمان</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#B06EF7' }}>🛡️ 12 شهر</div>
+                </div>
+              </div>
+
+              <button className="pill-btn" style={{ width: '100%', background: `linear-gradient(135deg,${currentPkg.color},${currentPkg.color}bb)`, color: currentPkg.id === 'standard' ? '#080D18' : '#fff', border: 'none', padding: '14px', fontWeight: 800, fontSize: 16, marginTop: 8, boxShadow: `0 8px 28px ${currentPkg.color}35` }}>
+                احجز الباكدج + استلم هديتك <ChevronLeft size={18} style={{ display: 'inline', verticalAlign: 'middle' }} />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ AI COMPARISON ═══ */}
+        <section style={{ padding: '64px 28px' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 36, flexWrap: 'wrap', gap: 20 }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(176,110,247,0.1)', border: '1px solid rgba(176,110,247,0.25)', borderRadius: 999, padding: '5px 14px', marginBottom: 12 }}>
+                  <Sparkles size={13} color="#B06EF7" />
+                  <span style={{ color: '#B06EF7', fontSize: 11, fontWeight: 700 }}>مقارنة بالذكاء الاصطناعي</span>
+                </div>
+                <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px' }}>أصلي ولا تركي؟ هنقولك الفرق 🤖</h2>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, margin: 0 }}>بالسعر والجودة والضمان — بكل صراحة بدون دعاية</p>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-              {currentPkg.items.map(item => (
-                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle2 size={14} color={currentPkg.color} style={{ flexShrink: 0 }} />
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600 }}>{item}</span>
+
+            {/* Part selector */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
+              {AI_PARTS.map((p, i) => (
+                <button key={i} className="pill-btn" onClick={() => handlePartChange(i)} style={{
+                  padding: '8px 20px', background: aiPart === i ? 'rgba(176,110,247,0.12)' : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${aiPart === i ? '#B06EF7' : 'rgba(255,255,255,0.1)'}`,
+                  color: aiPart === i ? '#B06EF7' : 'rgba(255,255,255,0.45)', fontWeight: 700, fontSize: 13,
+                }}>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Comparison card */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'start', maxWidth: 860, margin: '0 auto', animation: showAiResult ? 'slideUp 0.35s ease' : 'none' }}>
+
+              {/* Original */}
+              <div style={{ background: 'rgba(0,229,208,0.05)', border: '1.5px solid rgba(0,229,208,0.2)', borderRadius: 22, padding: 26 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                  <div>
+                    <div style={{ color: '#00E5D0', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>✅ أصلي</div>
+                    <div style={{ fontSize: 16, fontWeight: 800 }}>{part.origBrand}</div>
+                  </div>
+                  {part.winner === 'orig' && <div style={{ background: '#00E5D0', color: '#080D18', fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 10px' }}>الأحسن</div>}
+                </div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: '#00E5D0', marginBottom: 16 }}>{part.origPrice} <span style={{ fontSize: 14, fontWeight: 700 }}>ج.م</span></div>
+                {/* Score bar */}
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700 }}>تقييم الجودة</span>
+                    <span style={{ color: '#00E5D0', fontWeight: 800, fontSize: 12 }}>{part.origScore}%</span>
+                  </div>
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 999 }}>
+                    <div style={{ height: '100%', width: `${part.origScore}%`, background: 'linear-gradient(90deg,#00E5D0,#0EA5E9)', borderRadius: 999, transition: 'width 0.8s ease' }} />
+                  </div>
+                </div>
+                {[['الضمان', '24 شهر'], ['المصدر', 'أوروبا'], ['مناسب لـ', 'كل السيارات']].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>{k}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* VS */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 40 }}>
+                <ArrowLeftRight size={20} color="rgba(255,255,255,0.2)" />
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, fontWeight: 800 }}>مقارنة</span>
+                <div style={{ background: 'rgba(176,110,247,0.1)', border: '1px solid rgba(176,110,247,0.2)', borderRadius: 999, padding: '4px 10px' }}>
+                  <Sparkles size={11} color="#B06EF7" />
+                </div>
+              </div>
+
+              {/* Turkish */}
+              <div style={{ background: 'rgba(176,110,247,0.05)', border: '1.5px solid rgba(176,110,247,0.2)', borderRadius: 22, padding: 26 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                  <div>
+                    <div style={{ color: '#B06EF7', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>🇹🇷 تركي</div>
+                    <div style={{ fontSize: 16, fontWeight: 800 }}>{part.turkBrand}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: '#B06EF7', marginBottom: 16 }}>{part.turkPrice} <span style={{ fontSize: 14, fontWeight: 700 }}>ج.م</span></div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700 }}>تقييم الجودة</span>
+                    <span style={{ color: '#B06EF7', fontWeight: 800, fontSize: 12 }}>{part.turkScore}%</span>
+                  </div>
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 999 }}>
+                    <div style={{ height: '100%', width: `${part.turkScore}%`, background: 'linear-gradient(90deg,#B06EF7,#7C3AED)', borderRadius: 999, transition: 'width 0.8s ease' }} />
+                  </div>
+                </div>
+                {[['الضمان', '12 شهر'], ['المصدر', 'تركيا'], ['مناسب لـ', 'السيارات +5 سنين']].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>{k}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700 }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI recommendation */}
+            {showAiResult && (
+              <div style={{ maxWidth: 860, margin: '20px auto 0', background: 'rgba(176,110,247,0.06)', border: '1px solid rgba(176,110,247,0.2)', borderRadius: 16, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.35s ease' }}>
+                <Sparkles size={16} color="#B06EF7" style={{ flexShrink: 0 }} />
+                <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 700, lineHeight: 1.5 }}>
+                  <strong style={{ color: '#B06EF7' }}>الذكاء الاصطناعي:</strong> لو سيارتك أقل من 5 سنين خد الأصلي — الفرق في الجودة يستاهل فلوسه. لو أكبر، التركي كافي وهيوفر عليك {part.origPrice - part.turkPrice} ج.م.
+                </span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ═══ WORKSHOPS ═══ */}
+        <section style={{ padding: '64px 28px', background: 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
+              <div>
+                <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px' }}>ورشنا في الإسكندرية</h2>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>كل ورشة اتاختارت بمعايير صارمة — مش أي حد بيدخل معانا</p>
+              </div>
+              <button style={{ color: '#00E5D0', background: 'none', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>
+                كل الورش <ChevronLeft size={15} />
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18 }}>
+              {WORKSHOPS.map(w => (
+                <div key={w.name} className="card-hover" style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid ${w.accent}18`, background: 'rgba(255,255,255,0.025)', cursor: 'pointer' }}>
+                  {/* Photo placeholder with neon accent */}
+                  <div style={{ height: 110, background: `linear-gradient(145deg, rgba(8,13,24,0.9), ${w.accent}18)`, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `2px solid ${w.accent}40`, position: 'relative' }}>
+                    <Building2 size={36} color={`${w.accent}50`} />
+                    <div style={{ position: 'absolute', bottom: -12, right: 14, background: '#080D18', border: `1px solid ${w.accent}40`, borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Star size={11} color={w.accent} fill={w.accent} />
+                      <span style={{ color: w.accent, fontSize: 12, fontWeight: 800 }}>{w.rating}</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '20px 16px 16px' }}>
+                    <h4 style={{ color: '#fff', fontSize: 15, fontWeight: 800, margin: '0 0 5px' }}>{w.name}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                      <MapPin size={11} color="rgba(255,255,255,0.3)" />
+                      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 700 }}>{w.area}</span>
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11, fontWeight: 700 }}>{w.jobs.toLocaleString()} سيارة اتصلحت</div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: '12px 16px' }}>
-              <ShieldCheck size={16} color={currentPkg.color} />
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 700 }}>يشمل التركيب في ورشة معتمدة + ضمان 12 شهر</span>
-            </div>
-            <button style={{ width: '100%', background: `linear-gradient(135deg, ${currentPkg.color}, ${currentPkg.color}bb)`, color: currentPkg.id === '40k' ? '#0B1F3A' : '#fff', border: 'none', borderRadius: 16, padding: '15px', fontWeight: 900, fontSize: 16, cursor: 'pointer', fontFamily: 'inherit', boxShadow: `0 8px 24px ${currentPkg.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              احجز الباكدج دلوقتي <ChevronLeft size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
 
-      {/* ═══════ WORKSHOPS ═══════ */}
-      <section style={{ padding: '64px 28px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 36 }}>
-            <div>
-              <h2 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 6px' }}>ورشنا الشريكة في الإسكندرية</h2>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}>كل ورشة اتاختارت بعد تقييم دقيق — مش أي حد بيدخل معانا</p>
+            {/* CTA: Join as workshop */}
+            <div style={{ marginTop: 32, background: 'rgba(255,122,61,0.06)', border: '1px dashed rgba(255,122,61,0.25)', borderRadius: 18, padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 4 }}>عندك ورشة في الإسكندرية؟ 🔧</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>انضم لشبكتنا واحصل على عملاء مضمونين كل يوم</div>
+              </div>
+              <button className="pill-btn" style={{ background: 'rgba(255,122,61,0.12)', border: '1.5px solid rgba(255,122,61,0.35)', color: '#FF7A3D', padding: '10px 24px', fontWeight: 800, fontSize: 14 }}>
+                انضم كورشة شريكة
+              </button>
             </div>
-            <button style={{ color: '#00C9B1', background: 'none', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'inherit' }}>
-              كل الورش <ChevronLeft size={16} />
-            </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18 }}>
-            {WORKSHOPS.map(w => (
-              <div key={w.name} style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid ${w.color}20`, background: 'rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'transform 0.2s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.transform = 'none'}
-              >
-                {/* Workshop photo placeholder */}
-                <div style={{ height: 120, background: `linear-gradient(135deg, rgba(11,31,58,0.9), ${w.color}20)`, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `3px solid ${w.color}` }}>
-                  <Building2 size={40} color={`${w.color}60`} />
-                  {w.tag && (
-                    <div style={{ position: 'absolute', top: 10, right: 10, background: w.color, color: '#0B1F3A', fontSize: 10, fontWeight: 900, borderRadius: 12, padding: '3px 10px' }}>{w.tag}</div>
-                  )}
-                  <div style={{ position: 'absolute', bottom: -14, right: 16, background: '#0B1F3A', border: `1.5px solid ${w.color}50`, borderRadius: 10, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Star size={11} color={w.color} fill={w.color} />
-                    <span style={{ color: w.color, fontSize: 12, fontWeight: 900 }}>{w.rating}</span>
-                  </div>
+        </section>
+
+        {/* ═══ FOOTER ═══ */}
+        <footer style={{ background: '#04080F', borderTop: '1px solid rgba(0,229,208,0.08)', padding: '48px 28px 24px' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 40 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#00E5D0,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Wrench size={17} color="#04080F" />
                 </div>
-                <div style={{ padding: '22px 16px 16px' }}>
-                  <h4 style={{ color: '#fff', fontSize: 15, fontWeight: 800, margin: '0 0 4px' }}>{w.name}</h4>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
-                    <MapPin size={12} color="rgba(255,255,255,0.35)" />
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 600 }}>{w.area}</span>
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700 }}>{w.jobs.toLocaleString()} سيارة اتخدمت</div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 16 }}>رينو بارتس</div>
+                  <div style={{ color: '#00E5D0', fontSize: 9, letterSpacing: 2, fontWeight: 700 }}>ALEXANDRIA</div>
                 </div>
+              </div>
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, lineHeight: 1.75, maxWidth: 260, fontWeight: 300 }}>المنصة الأولى بين مراكز قطع غيار رينو والورش المعتمدة في الإسكندرية. باكدج واحد يشمل كل حاجة.</p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                <Phone size={13} color="#00E5D0" />
+                <span style={{ color: '#00E5D0', fontWeight: 800, fontSize: 13 }}>01000000000</span>
+              </div>
+            </div>
+            {[
+              { title: 'الخدمات', items: ['الباكدجات', 'قطع غيار أصلية', 'قطع تركي', 'مقارنة بالذكاء الاصطناعي'] },
+              { title: 'الشركة', items: ['ازاي بنشتغل', 'انضم كورشة', 'انضم كمورد', 'تواصل معنا'] },
+              { title: 'مناطق الإسكندرية', items: ['المنتزه', 'سيدي جابر', 'العجمي', 'الميناء'] },
+            ].map(col => (
+              <div key={col.title}>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 700, fontSize: 12, marginBottom: 16, letterSpacing: 1 }}>{col.title}</p>
+                {col.items.map(i => <div key={i} style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, marginBottom: 10, cursor: 'pointer', fontWeight: 300 }}>{i}</div>)}
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ═══════ FOOTER ═══════ */}
-      <footer style={{ background: '#060F1A', borderTop: '1px solid rgba(0,201,177,0.1)', padding: '48px 28px 28px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 40 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#00C9B1,#0EA5E9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Wrench size={18} color="#060F1A" />
-              </div>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: 17 }}>رينو بارتس</div>
-                <div style={{ color: '#00C9B1', fontSize: 10, fontWeight: 700 }}>الإسكندرية</div>
-              </div>
-            </div>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, lineHeight: 1.75, maxWidth: 260 }}>منصة الوساطة الأولى بين مراكز قطع غيار رينو وورش التركيب المعتمدة في الإسكندرية.</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 18 }}>
-              <Phone size={14} color="#00C9B1" />
-              <span style={{ color: '#00C9B1', fontWeight: 800, fontSize: 14 }}>01000000000</span>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 12 }}>© 2026 رينو بارتس الإسكندرية</span>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {[1,2,3,4,5].map(i => <Star key={i} size={11} color="#FF7A3D" fill="#FF7A3D" />)}
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11, marginRight: 6 }}>4.9 من 1,247 تقييم</span>
             </div>
           </div>
-          {[
-            { title: 'الخدمات', items: ['الباكدجات', 'قطع الغيار الأصلية', 'القطع التركية', 'الورش الشريكة'] },
-            { title: 'الشركة', items: ['ازاي بنشتغل', 'انضم كورشة', 'انضم كمورد', 'تواصل معنا'] },
-            { title: 'الإسكندرية', items: ['المنتزه', 'سيدي جابر', 'العجمي', 'ميناء الإسكندرية'] },
-          ].map(col => (
-            <div key={col.title}>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: 13, marginBottom: 18 }}>{col.title}</p>
-              {col.items.map(i => <div key={i} style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginBottom: 12, cursor: 'pointer' }}>{i}</div>)}
-            </div>
-          ))}
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>© 2026 رينو بارتس الإسكندرية</span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[1,2,3,4,5].map(i => <Star key={i} size={12} color="#F59E0B" fill="#F59E0B" />)}
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, marginRight: 6 }}>4.9 / 5</span>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 }
