@@ -1,0 +1,39 @@
+•	أنت مطور Full-Stack تبني MVP لمنصة إلكترونية متخصصة في بيع باكدجات قطع غيار سيارات رينو في الإسكندرية، مصر.
+•	نموذج العمل:
+•	- B2C: نبيع باكدجات صيانة جاهزة مباشرة للعميل (مش قطع فردية)
+•	- التركيب مجاني عبر شبكة ورش شريكة في كل الإسكندرية
+•	- ضمان على كل القطع (3-12 شهر حسب الباكدج)
+•	- توصيل لحد البيت أو لأقرب مركز صيانة شريك
+•	- مقارنة بين قطع الغيار (أصلي / بديل تركي / بديل صيني)
+•	- AI مساعد يقترح الباكدج المناسب للعميل
+•	الباكدجات المتاحة:
+•	1. باكدج 20,000 كم (صيانة عادية) - ~1,040 جنيه: فلتر زيت + فلتر هواء + زيت محرك
+•	2. باكدج 40,000 كم (صيانة متوسطة) - ~1,950 جنيه: + فلتر بنزين + شمعات إشعال
+•	3. باكدج 60,000 كم (صيانة شاملة) - ~3,750 جنيه: + سير كاتينة + فلتر مكيف + زيت فرامل
+•	4. باكدج 100,000 كم (صيانة كبرى) - ~7,500 جنيه: + ديسكات فرامل + تيل فرامل + مساعدين
+•	5. باكدج الطوارئ - ~3,250 جنيه: بطارية + إطار احتياطي + كشافات
+•	الشركاء:
+•	- مصطفى (أوتوشوب): توريد قطع الغيار
+•	- مركز ثمانية سلندر (م. علاء): الصيانة والتركيب
+•	- عبدالرحمن: التسويق والتقنية وإدارة المشروع
+•	المتطلبات التقنية:
+•	- Tech Stack: Next.js 14 (App Router) + TypeScript + Tailwind CSS + Shadcn/UI
+•	- Database: PostgreSQL (via Supabase أو Neon)
+•	- Auth: Supabase Auth أو NextAuth.js
+•	- AI: DeepSeek API للشات بوت المساعد
+•	- Payment: فوري أو PayMob (دفع إلكتروني مصري) + كاش عند الاستلام
+•	- Font: خط Tajawal أو Cairo من Google Fonts للعربي
+•	- Direction: RTL بالكامل
+•	- Design: تصميم عصري، ألوان البراند (أزرق داكن #1E2761 + ذهبي #F9E795 + أبيض)
+•	- Mobile-first responsive design
+•	- Hosting: سيتم نشره على VPS عبر Coolify (Docker containers)
+•	قاعدة البيانات (الجداول الأساسية):
+•	- users: id, name, phone, email, car_model, car_year, address, area, created_at
+•	- packages: id, name, slug, description, parts_included, km_service, base_price, sell_price
+•	- parts: id, name, oem_code, type, price, compatible_models, supplier
+•	- orders: id, user_id, package_id, workshop_id, status, payment_method, payment_status, total
+•	- workshops: id, name, area, address, phone, lat, lng, rating, partnership_status
+•	- reviews: id, order_id, user_id, workshop_id, rating, comment, created_at
+•	- chat_sessions: id, user_id, messages, created_at
+•	مناطق الإسكندرية المستهدفة:
+•	العجمي، سيدي بشر، السيوف، المنتزه، العصافرة، سموحة، كليوباترا، محطة الرمل
