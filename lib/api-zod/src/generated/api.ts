@@ -56,7 +56,10 @@ export const LoginUserResponse = zod.object({
   user: zod.object({
     id: zod.number(),
     name: zod.string(),
-    phone: zod.string(),
+    phone: zod
+      .string()
+      .nullish()
+      .describe("Mobile phone (null for email-only users)"),
     email: zod
       .string()
       .nullish()
@@ -84,7 +87,10 @@ export const LogoutUserResponse = zod.object({
 export const GetCurrentUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
-  phone: zod.string(),
+  phone: zod
+    .string()
+    .nullish()
+    .describe("Mobile phone (null for email-only users)"),
   email: zod
     .string()
     .nullish()
@@ -116,7 +122,10 @@ export const UpdateUserBody = zod.object({
 export const UpdateUserResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
-  phone: zod.string(),
+  phone: zod
+    .string()
+    .nullish()
+    .describe("Mobile phone (null for email-only users)"),
   email: zod
     .string()
     .nullish()

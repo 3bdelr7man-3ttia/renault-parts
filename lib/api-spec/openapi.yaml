@@ -447,7 +447,8 @@ components:
         name:
           type: string
         phone:
-          type: string
+          type: ["string", "null"]
+          description: Mobile phone (null for email-only users)
         email:
           type: ["string", "null"]
           description: Optional email (may be null for phone-only users)
@@ -467,7 +468,6 @@ components:
       required:
         - id
         - name
-        - phone
         - role
         - createdAt
 

@@ -58,7 +58,11 @@ export interface LoginBody {
 export interface User {
   id: number;
   name: string;
-  phone: string;
+  /**
+   * Mobile phone (null for email-only users)
+   * @nullable
+   */
+  phone?: string | null;
   /**
    * Optional email (may be null for phone-only users)
    * @nullable
