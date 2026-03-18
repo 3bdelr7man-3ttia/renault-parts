@@ -329,6 +329,204 @@ function BakoChat({ context }: { context: ComparePart }) {
   );
 }
 
+/* ─── 3D PACKAGE BOX ──────────────────────────────────────────── */
+const PKG_META: Record<string, {
+  topColor:string; sideColor:string; accent:string;
+  frontGrad:string; glow:string; kmNum:string;
+}> = {
+  km20: { topColor:'#1A5A84', sideColor:'#0E3A56', accent:'#4AABCA', frontGrad:'linear-gradient(160deg,#1A3A52,#0D1220 85%)', glow:'rgba(74,171,202,0.5)', kmNum:'20' },
+  km40: { topColor:'#7A4B0E', sideColor:'#4E3005', accent:'#C8974A', frontGrad:'linear-gradient(160deg,#3A2100,#0D1220 85%)', glow:'rgba(200,151,74,0.5)', kmNum:'40' },
+  km60: { topColor:'#3A2A86', sideColor:'#241870', accent:'#7B72B8', frontGrad:'linear-gradient(160deg,#1E1448,#0D1220 85%)', glow:'rgba(123,114,184,0.5)', kmNum:'60' },
+};
+
+function PackageBox3D({ pkg, selected, onClick, boxIdx }: {
+  pkg: typeof READY_PACKAGES[0]; selected: boolean; onClick: ()=>void; boxIdx: number;
+}) {
+  const m = PKG_META[pkg.id];
+  const W = 210, H = 310, D = 40;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={e=>{ if(!selected)(e.currentTarget as HTMLElement).style.transform=`translateY(-10px) scale(1.02)`; }}
+      onMouseLeave={e=>{ if(!selected)(e.currentTarget as HTMLElement).style.transform=`translateY(0) scale(1)`; }}
+      style={{
+        position:'relative',
+        width: W + D,
+        cursor:'pointer',
+        zIndex: selected ? 10 : 1,
+        transform: selected ? 'translateY(-30px) scale(1.06)' : 'translateY(0) scale(1)',
+        transition:'transform .5s cubic-bezier(.34,1.4,.64,1), filter .3s ease',
+        filter: selected
+          ? `drop-shadow(0 32px 42px ${m.glow})`
+          : 'drop-shadow(0 10px 22px rgba(0,0,0,0.6))',
+      }}
+    >
+      {/* ── TOP FACE ── */}
+      <div style={{
+        width: W,
+        height: D,
+        background:`linear-gradient(135deg,${m.topColor}ff,${m.topColor}99)`,
+        borderRadius:'10px 10px 0 0',
+        marginLeft: D,
+        transformOrigin:'bottom center',
+        transform:'perspective(250px) rotateX(58deg)',
+        position:'relative',
+        overflow:'hidden',
+      }}>
+        {/* top shine */}
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg,rgba(255,255,255,0.08),transparent 60%)', pointerEvents:'none' }}/>
+        <div style={{ position:'absolute', bottom:4, left:0, right:0, textAlign:'center', fontSize:8, letterSpacing:2.5, fontWeight:800, color:'rgba(255,255,255,0.3)' }}>RENOPACK</div>
+      </div>
+
+      <div style={{ display:'flex' }}>
+        {/* ── SIDE FACE (left) ── */}
+        <div style={{
+          width: D,
+          height: H,
+          background:`linear-gradient(180deg,${m.sideColor}ff,${m.sideColor}66)`,
+          borderRadius:'0 0 0 10px',
+          transformOrigin:'right center',
+          transform:'perspective(250px) rotateY(55deg)',
+          flexShrink:0,
+          position:'relative',
+          overflow:'hidden',
+        }}>
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(255,255,255,0.05),transparent 50%)', pointerEvents:'none' }}/>
+          {/* vertical text on spine */}
+          <div style={{ position:'absolute', top:0, bottom:0, left:0, right:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ writingMode:'vertical-rl', fontSize:9, fontWeight:800, color:`${m.accent}55`, letterSpacing:3, transform:'rotate(180deg)' }}>{pkg.name}</div>
+          </div>
+        </div>
+
+        {/* ── FRONT FACE ── */}
+        <div style={{
+          width: W,
+          height: H,
+          background: m.frontGrad,
+          border:`1.5px solid ${m.accent}28`,
+          borderTop:`3px solid ${m.accent}55`,
+          borderLeft:'none',
+          borderRadius:'0 0 12px 0',
+          overflow:'hidden',
+          position:'relative',
+          padding:'18px 16px 16px',
+          display:'flex', flexDirection:'column',
+        }}>
+          {/* glass sheen */}
+          <div style={{ position:'absolute',top:0,left:0,width:'45%',height:'100%',background:'linear-gradient(to right,rgba(255,255,255,0.04),transparent)',pointerEvents:'none' }}/>
+          {/* top accent line */}
+          <div style={{ position:'absolute',top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${m.accent}88,${m.accent}22)`,pointerEvents:'none' }}/>
+
+          {/* Brand label */}
+          <div style={{ fontSize:9, fontWeight:800, color:`${m.accent}aa`, letterSpacing:2.5, marginBottom:10 }}>RENOPACK ■</div>
+
+          {/* BIG KM Number */}
+          <div style={{ position:'relative', marginBottom:4, lineHeight:1 }}>
+            <div style={{ fontSize:72, fontWeight:900, color:m.accent, opacity:0.12, position:'absolute', top:-8, left:-4, fontFamily:'monospace', letterSpacing:-4 }}>{m.kmNum}</div>
+            <div style={{ fontSize:52, fontWeight:900, color:m.accent, letterSpacing:-3, position:'relative' }}>{m.kmNum}</div>
+          </div>
+          <div style={{ fontSize:13, fontWeight:700, color:'rgba(255,255,255,0.45)', marginBottom:14, letterSpacing:.5 }}>ألف كيلومتر</div>
+
+          {/* Tier badge */}
+          <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:`${m.accent}12`, border:`1px solid ${m.accent}28`, borderRadius:999, padding:'3px 10px', marginBottom:12, width:'fit-content' }}>
+            <span style={{ fontSize:10, fontWeight:700, color:m.accent }}>{pkg.sub}</span>
+          </div>
+
+          {/* Package name */}
+          <div style={{ fontSize:13, fontWeight:800, color:'#D0DCE8', marginBottom:'auto' }}>{pkg.name}</div>
+
+          {/* Price block */}
+          <div style={{ marginTop:12 }}>
+            <div style={{ fontSize:28, fontWeight:800, color:'#E8F0F8', letterSpacing:-1.5, lineHeight:1 }}>
+              {pkg.price.toLocaleString()}
+              <span style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.35)', marginRight:4 }}> ج.م</span>
+            </div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,0.3)', fontWeight:700, marginTop:2 }}>شامل التركيب والضمان</div>
+          </div>
+
+          {/* Gift */}
+          <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:6, background:'rgba(200,151,74,0.07)', border:'1px solid rgba(200,151,74,0.15)', borderRadius:8, padding:'5px 9px' }}>
+            <Gift size={10} color="var(--gold)"/><span style={{ fontSize:9, fontWeight:700, color:'var(--gold)' }}>🎁 {pkg.gift}</span>
+          </div>
+
+          {/* Selected glow line */}
+          {selected && <div style={{ position:'absolute', bottom:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${m.accent},transparent)`, animation:'glowBlink 2s infinite' }}/>}
+        </div>
+      </div>
+
+      {/* Shelf shadow */}
+      <div style={{ position:'absolute', bottom:-20, left:'8%', right:'8%', height:20, background:`radial-gradient(ellipse at 50% 0%,${m.glow},transparent 70%)`, filter:'blur(5px)' }}/>
+    </div>
+  );
+}
+
+function ReadyPackages3D() {
+  const [active, setActive] = useState('km40');
+  const pkg = READY_PACKAGES.find(p=>p.id===active)!;
+  const m   = PKG_META[active];
+
+  return (
+    <section style={{ padding:'72px 28px 80px', borderTop:'1px solid var(--border)', background:'var(--bg)', overflow:'hidden' }}>
+      <div style={{ maxWidth:1280, margin:'0 auto' }}>
+
+        {/* Heading */}
+        <div style={{ textAlign:'center', marginBottom:56 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:999, padding:'5px 18px', marginBottom:16 }}>
+            <Package size={13} color="var(--gold)"/><span style={{ color:'var(--gold)', fontSize:12, fontWeight:700 }}>باكدجات جاهزة</span>
+          </div>
+          <h2 style={{ fontSize:28, fontWeight:800, color:'#E8F0F8', marginBottom:8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
+          <p style={{ color:'var(--text-dim)', fontSize:14 }}>كل باكدج بيشمل القطع + التركيب + الضمان + هدية</p>
+        </div>
+
+        {/* ── Shelf Scene ── */}
+        <div style={{ position:'relative', display:'flex', justifyContent:'center', gap:24, alignItems:'flex-end', paddingBottom:50 }}>
+          {/* Shelf surface line */}
+          <div style={{ position:'absolute', bottom:22, left:'4%', right:'4%', height:2, background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.09) 20%,rgba(255,255,255,0.14) 50%,rgba(255,255,255,0.09) 80%,transparent)', borderRadius:999 }}/>
+          {/* Shelf ambient glow */}
+          <div style={{ position:'absolute', bottom:0, left:'15%', right:'15%', height:40, background:'radial-gradient(ellipse at 50% 0%,rgba(200,151,74,0.06),transparent 70%)', filter:'blur(8px)' }}/>
+
+          {READY_PACKAGES.map((p,i)=>(
+            <PackageBox3D key={p.id} pkg={p} selected={active===p.id} onClick={()=>setActive(p.id)} boxIdx={i} />
+          ))}
+        </div>
+
+        {/* ── Expanded details panel ── */}
+        <div style={{ maxWidth:700, margin:'32px auto 0', background:`linear-gradient(145deg,${m.accent}0a,var(--bg3) 60%)`, border:`1.5px solid ${m.accent}22`, borderRadius:22, padding:'28px 32px', position:'relative', overflow:'hidden', transition:'all .4s ease' }}>
+          <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${m.accent}66,transparent)` }}/>
+          {/* top row */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22 }}>
+            <div>
+              <h3 style={{ fontSize:19, fontWeight:800, color:'#E8F0F8', marginBottom:6 }}>{pkg.name}</h3>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:`${m.accent}12`, border:`1px solid ${m.accent}28`, borderRadius:999, padding:'4px 12px' }}>
+                <Gift size={11} color={m.accent}/><span style={{ color:m.accent, fontSize:11, fontWeight:700 }}>هديتك: {pkg.gift}</span>
+              </div>
+            </div>
+            <div style={{ textAlign:'left' }}>
+              <div style={{ fontSize:34, fontWeight:800, color:m.accent, lineHeight:1, letterSpacing:-1.5 }}>{pkg.price.toLocaleString()}</div>
+              <div style={{ color:'rgba(255,255,255,0.35)', fontSize:11, fontWeight:700 }}>ج.م شامل التركيب</div>
+            </div>
+          </div>
+          {/* includes grid */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px 24px', marginBottom:22 }}>
+            {pkg.includes.map(s=>(
+              <div key={s} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <CheckCircle2 size={13} color={m.accent} style={{ flexShrink:0 }}/>
+                <span style={{ color:'var(--text)', fontSize:12, fontWeight:700 }}>{s}</span>
+              </div>
+            ))}
+          </div>
+          {/* CTA */}
+          <button className="pill" style={{ width:'100%', background:`linear-gradient(135deg,${m.accent},${m.accent}bb)`, color:'#0D1220', border:'none', padding:'13px', fontWeight:800, fontSize:14, boxShadow:`0 8px 26px ${m.glow}` }}>
+            احجز الباكدج واستلم الهدية ←
+          </button>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
 /* ─── AI COMPARE SECTION ─────────────────────────────────────── */
 function ScoreBar({ score, color }: { score:number; color:string }) {
   return (
@@ -451,10 +649,8 @@ function AiCompareSection() {
 /* ─── MAIN ────────────────────────────────────────────────────── */
 export function AlexandriaBlend() {
   const [activeService, setActiveService] = useState<number|null>(null);
-  const [readyPkg, setReadyPkg]           = useState('km40');
   const [selected, setSelected]           = useState<Set<string>>(new Set());
   const [searchVal, setSearchVal]         = useState('');
-  const rPkg = READY_PACKAGES.find(p=>p.id===readyPkg)!;
   const total = [...selected].reduce((s,id)=>{ const p=PUZZLE_PARTS.find(x=>x.id===id); return s+(p?.price??0); },0);
   const currentGift = [...GIFT_TIERS].reverse().find(t=>total>=t.min);
   const nextGift    = GIFT_TIERS.find(t=>t.min>total);
@@ -490,198 +686,258 @@ export function AlexandriaBlend() {
           </div>
         </nav>
 
-        {/* ═══ HERO ═══ */}
-        <section style={{ position:'relative', padding:'60px 28px 50px', overflow:'hidden' }}>
-          {/* Fluid blobs */}
-          <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
-            <div style={{ position:'absolute', top:'-20%', right:'-6%', width:560, height:560, background:'radial-gradient(circle at 45% 45%, rgba(74,171,202,0.09) 0%, transparent 65%)', animation:'blobMorph 10s ease-in-out infinite' }} />
-            <div style={{ position:'absolute', bottom:'-18%', left:'-4%', width:460, height:460, background:'radial-gradient(circle at 55% 55%, rgba(200,151,74,0.08) 0%, transparent 65%)', animation:'blobMorph2 12s ease-in-out infinite 3s' }} />
-            <div style={{ position:'absolute', top:'30%', left:'32%', width:320, height:320, background:'radial-gradient(circle at 50% 50%, rgba(123,114,184,0.07) 0%, transparent 65%)', animation:'blobMorph 15s ease-in-out infinite 6s' }} />
-            {[{top:'12%',right:'20%',c:'var(--gold)',d:'0s'},{top:'50%',right:'6%',c:'var(--sky)',d:'1.5s'},{top:'72%',right:'38%',c:'var(--lav)',d:'3s'},{top:'22%',left:'12%',c:'var(--sage)',d:'0.8s'},{top:'65%',left:'6%',c:'var(--gold)',d:'2.2s'}].map((p,i)=>(
-              <div key={i} style={{ position:'absolute', top:p.top, right:p.right, left:p.left, width:4, height:4, borderRadius:'50%', background:p.c, boxShadow:`0 0 8px ${p.c}`, animation:`particleDrift ${4+i}s ease-in-out infinite ${p.d}` }} />
+        {/* ═══ HERO — CINEMATIC ═══ */}
+        <section style={{ position:'relative', minHeight:580, overflow:'hidden', display:'flex', alignItems:'center' }}>
+          {/* ── Background layers ── */}
+          <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
+            {/* Base deep gradient */}
+            <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse 120% 100% at 70% 50%, rgba(26,35,86,0.5) 0%, var(--bg) 70%)' }}/>
+            {/* Gold corona behind Bako */}
+            <div style={{ position:'absolute', top:'50%', left:'62%', transform:'translate(-50%,-50%)', width:560, height:560, background:'radial-gradient(circle,rgba(200,151,74,0.13) 0%,rgba(200,151,74,0.05) 40%,transparent 70%)', borderRadius:'50%', animation:'blobMorph 8s ease-in-out infinite' }}/>
+            {/* Sky halo */}
+            <div style={{ position:'absolute', top:'-10%', left:'-5%', width:500, height:500, background:'radial-gradient(circle,rgba(74,171,202,0.07) 0%,transparent 65%)', animation:'blobMorph2 12s ease-in-out infinite 4s' }}/>
+            {/* Perspective grid floor */}
+            <svg style={{ position:'absolute', bottom:0, left:0, right:0, width:'100%', height:220, opacity:0.07 }} viewBox="0 0 1280 220" preserveAspectRatio="none">
+              {[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1].map((t,i)=>{
+                const y=220-t*220;
+                return <line key={i} x1={640-640*t} y1={220} x2={640+640*t} y2={y} stroke="rgba(200,151,74,1)" strokeWidth=".8"/>;
+              })}
+              {[...Array(9)].map((_,i)=>{
+                const p=(i+1)/10;const y=220-p*220;const xL=640-640*p;const xR=640+640*p;
+                return <line key={i} x1={xL} y1={y} x2={xR} y2={y} stroke="rgba(200,151,74,1)" strokeWidth=".6"/>;
+              })}
+            </svg>
+            {/* Speed lines */}
+            {[15,30,50,70,85].map((left,i)=>(
+              <div key={i} style={{ position:'absolute', top:0, bottom:0, left:`${left}%`, width:1, background:`linear-gradient(to bottom,transparent,rgba(255,255,255,0.03) 40%,rgba(255,255,255,0.05) 60%,transparent)` }}/>
             ))}
-            {[...Array(7)].map((_,i)=><div key={i} style={{ position:'absolute', top:0, bottom:0, left:`${i*16.6}%`, width:1, background:'rgba(255,255,255,0.02)' }} />)}
+            {/* Floating particles */}
+            {[
+              {top:'18%',left:'8%', c:'var(--gold)',d:'0s',sz:5},{top:'72%',left:'14%',c:'var(--sky)',d:'1.8s',sz:4},
+              {top:'40%',left:'28%',c:'var(--lav)',d:'3.2s',sz:3},{top:'12%',left:'44%',c:'var(--sage)',d:'.6s',sz:4},
+              {top:'80%',left:'52%',c:'var(--gold)',d:'2.1s',sz:3},{top:'25%',left:'76%',c:'var(--sky)',d:'1.2s',sz:5},
+            ].map((p,i)=>(
+              <div key={i} style={{ position:'absolute', top:p.top, left:p.left, width:p.sz, height:p.sz, borderRadius:'50%', background:p.c, boxShadow:`0 0 ${p.sz*2}px ${p.c}`, animation:`particleDrift ${4+i}s ease-in-out infinite ${p.d}` }}/>
+            ))}
           </div>
 
-          <div style={{ maxWidth:1280, margin:'0 auto', position:'relative', display:'grid', gridTemplateColumns:'1.1fr 0.9fr', gap:52, alignItems:'center' }}>
+          <div style={{ maxWidth:1280, margin:'0 auto', padding:'60px 28px', position:'relative', display:'grid', gridTemplateColumns:'1.15fr 0.85fr', gap:0, alignItems:'center', width:'100%' }}>
 
-            {/* Left text */}
+            {/* ── LEFT: Text ── */}
             <div style={{ animation:'fadeUp .7s ease both' }}>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:999, padding:'5px 16px', marginBottom:24 }}>
-                <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--gold)', animation:'glowBlink 2s infinite' }} />
-                <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700 }}>منصة قطع الغيار الأولى — الإسكندرية</span>
+              {/* Platform badge */}
+              <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(200,151,74,0.07)', border:'1px solid rgba(200,151,74,0.22)', borderRadius:999, padding:'6px 18px', marginBottom:28 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--gold)', boxShadow:'0 0 8px var(--gold)', animation:'glowBlink 2s infinite' }}/>
+                <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700, letterSpacing:.3 }}>منصة قطع الغيار الأولى — الإسكندرية</span>
               </div>
 
-              <h1 style={{ fontSize:48, fontWeight:800, lineHeight:1.25, letterSpacing:-0.5, marginBottom:16, color:'#E8F0F8' }}>
-                مش بنبيع قطع —<br/>
-                <span style={{ background:'linear-gradient(125deg,var(--gold),var(--gold-lt),var(--sky))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-                  بنبيع باكدج كامل.
-                </span>
+              {/* BIG headline */}
+              <h1 style={{ fontSize:52, fontWeight:800, lineHeight:1.2, letterSpacing:-1, marginBottom:10, color:'#E8F0F8' }}>
+                مش بنبيع<br/>
+                <span style={{ fontSize:62, background:'linear-gradient(130deg,var(--gold) 30%,var(--gold-lt) 60%,var(--sky))', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', letterSpacing:-2 }}>قطعة.</span>
               </h1>
-              <p style={{ color:'var(--text-dim)', fontSize:15, lineHeight:1.85, marginBottom:36, maxWidth:480 }}>
-                زي أوبر — إحنا الوسيط بين مراكز قطع الغيار وورش التركيب في الإسكندرية. إنت بتدفع لينا مرة واحدة، القطعة والتركيب والضمان علينا.
+              <h2 style={{ fontSize:26, fontWeight:700, color:'rgba(255,255,255,0.38)', marginBottom:28, letterSpacing:-.5 }}>بنبيع <span style={{ color:'rgba(200,151,74,0.75)', fontWeight:800 }}>باكدج كامل.</span></h2>
+
+              <p style={{ color:'var(--text-dim)', fontSize:14, lineHeight:1.9, marginBottom:32, maxWidth:500, borderRight:'3px solid rgba(200,151,74,0.25)', paddingRight:16 }}>
+                زي أوبر — إحنا الوسيط بين مراكز قطع الغيار وورش التركيب في الإسكندرية.<br/>
+                إنت بتدفع <strong style={{ color:'var(--gold)' }}>مرة واحدة</strong> — القطعة، التركيب، والضمان علينا.
               </p>
 
-              <p style={{ color:'var(--text-dim)', fontSize:11, fontWeight:700, marginBottom:12, letterSpacing:1 }}>ابدأ من اللي محتاجه:</p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:20 }}>
+              {/* Service pills */}
+              <p style={{ color:'rgba(255,255,255,0.25)', fontSize:10, fontWeight:700, marginBottom:12, letterSpacing:2 }}>ابدأ من اللي محتاجه:</p>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:9, marginBottom:18 }}>
                 {SERVICES.map((s,i)=>{
                   const on=activeService===i;
                   return (
                     <button key={i} className="pill" onClick={()=>setActiveService(on?null:i)} style={{
-                      padding:'9px 18px', background:on?`${s.color}15`:'rgba(255,255,255,0.04)',
-                      border:`1.5px solid ${on?s.color:'rgba(255,255,255,0.08)'}`,
-                      color:on?s.color:'var(--text-dim)', fontSize:13, fontWeight:700,
-                      boxShadow:on?`0 0 14px ${s.color}28`:'none',
+                      padding:'10px 20px',
+                      background: on ? `${s.color}18` : 'rgba(255,255,255,0.03)',
+                      border: `1.5px solid ${on?s.color:'rgba(255,255,255,0.07)'}`,
+                      color: on ? s.color : 'var(--text-dim)',
+                      fontSize:13, fontWeight:700,
+                      boxShadow: on ? `0 0 18px ${s.color}30, inset 0 0 12px ${s.color}08` : 'none',
+                      transform: on ? 'translateY(-2px)' : 'none',
                     }}>
-                      <s.icon size={13} style={{ marginLeft:6, display:'inline', verticalAlign:'middle' }}/>{s.label}
+                      <s.icon size={13} style={{ marginLeft:7, display:'inline', verticalAlign:'middle' }}/>{s.label}
                     </button>
                   );
                 })}
               </div>
               {activeService!==null&&(
-                <div style={{ animation:'fadeUp .3s ease', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
+                <div style={{ animation:'fadeUp .25s ease', background:`${SERVICES[activeService].color}08`, border:`1px solid ${SERVICES[activeService].color}22`, borderRadius:14, padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:4 }}>
                   <span style={{ color:'var(--text)', fontSize:13, fontWeight:700 }}>
-                    عندنا باكدج بيشمل <strong style={{ color:SERVICES[activeService].color }}>{SERVICES[activeService].label}</strong> — قطعة + تركيب + ضمان
+                    عندنا باكدج شامل <strong style={{ color:SERVICES[activeService].color }}>{SERVICES[activeService].label}</strong> — قطعة + تركيب + ضمان
                   </span>
-                  <button className="pill" style={{ background:SERVICES[activeService].color, color:'var(--bg)', padding:'6px 14px', fontWeight:800, fontSize:12, flexShrink:0 }}>اختار الباكدج</button>
+                  <button className="pill" style={{ background:SERVICES[activeService].color, color:'var(--bg)', padding:'7px 16px', fontWeight:800, fontSize:12, flexShrink:0, boxShadow:`0 4px 14px ${SERVICES[activeService].color}40` }}>اختار الباكدج</button>
                 </div>
               )}
 
-              <div style={{ display:'flex', gap:28, marginTop:36, paddingTop:24, borderTop:'1px solid var(--border)' }}>
-                {[['1,247+','عميل تخدم'],['4.9 ★','تقييم'],['32','ورشة']].map(([n,l])=>(
-                  <div key={l}><div style={{ fontSize:22, fontWeight:800, color:'var(--gold)' }}>{n}</div><div style={{ fontSize:11, color:'var(--text-dim)', fontWeight:700, marginTop:2 }}>{l}</div></div>
+              {/* Stats row */}
+              <div style={{ display:'flex', gap:0, marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+                {[
+                  { n:'1,247+', l:'عميل تخدمناه', c:'var(--gold)' },
+                  { n:'4.9★',   l:'متوسط التقييم', c:'var(--sky)' },
+                  { n:'32',     l:'ورشة معتمدة',   c:'var(--sage)' },
+                  { n:'98%',    l:'رضا العملاء',   c:'var(--lav)' },
+                ].map(({n,l,c},i)=>(
+                  <div key={l} style={{ flex:1, textAlign:'center', padding:'0 8px', borderLeft: i>0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    <div style={{ fontSize:22, fontWeight:800, color:c, lineHeight:1 }}>{n}</div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', fontWeight:700, marginTop:4 }}>{l}</div>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Right: Bako + 3D diagram */}
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              {/* Bako mascot */}
-              <div style={{ textAlign:'center', animation:'floatBako 5s ease-in-out infinite', position:'relative' }}>
-                <img src={bakoImg} alt="باكو — مساعد RenoPack" style={{ width:220, height:220, objectFit:'contain', objectPosition:'top', filter:'drop-shadow(0 20px 40px rgba(200,151,74,0.3))', margin:'0 auto', display:'block' }} />
-                <div style={{ position:'absolute', top:20, left:'50%', transform:'translateX(-120%)', background:'rgba(26,35,86,0.9)', border:'1.5px solid rgba(200,151,74,0.3)', borderRadius:'16px 16px 16px 4px', padding:'8px 14px', whiteSpace:'nowrap', animation:'glowBlink 3s infinite' }}>
-                  <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700 }}>أنا باكو! 👋 هساعدك تختار</span>
+            {/* ── RIGHT: Bako cinematic ── */}
+            <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              {/* Outer ring */}
+              <div style={{ position:'absolute', width:340, height:340, borderRadius:'50%', border:'1px solid rgba(200,151,74,0.08)', animation:'blobMorph 6s ease-in-out infinite' }}/>
+              <div style={{ position:'absolute', width:280, height:280, borderRadius:'50%', border:'1px dashed rgba(200,151,74,0.1)', animation:'blobMorph2 8s ease-in-out infinite 2s' }}/>
+
+              {/* Bako */}
+              <div style={{ position:'relative', zIndex:5, animation:'floatBako 5s ease-in-out infinite' }}>
+                <img src={bakoImg} alt="باكو" style={{ width:260, height:260, objectFit:'contain', objectPosition:'top', filter:'drop-shadow(0 24px 48px rgba(200,151,74,0.4)) drop-shadow(0 0 80px rgba(200,151,74,0.15))', display:'block', margin:'0 auto' }} />
+                {/* Speech bubble */}
+                <div style={{ position:'absolute', top:22, right:260, background:'rgba(13,18,32,0.92)', backdropFilter:'blur(12px)', border:'1.5px solid rgba(200,151,74,0.35)', borderRadius:'16px 16px 4px 16px', padding:'10px 16px', whiteSpace:'nowrap', boxShadow:'0 8px 24px rgba(0,0,0,0.4)', animation:'glowBlink 3s infinite' }}>
+                  <div style={{ color:'var(--gold)', fontSize:12, fontWeight:800, marginBottom:2 }}>أهلاً! أنا باكو 👋</div>
+                  <div style={{ color:'rgba(255,255,255,0.5)', fontSize:10, fontWeight:700 }}>هساعدك تختار أحسن قطعة</div>
                 </div>
               </div>
 
-              {/* 3D diagram card */}
-              <Card3D style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:22, padding:22, position:'relative', overflow:'hidden' }}>
-                <div style={{ position:'absolute', top:0, right:0, width:100, height:100, background:'radial-gradient(circle at top right, rgba(200,151,74,0.1), transparent)', pointerEvents:'none' }} />
-                <p style={{ color:'var(--text-dim)', fontSize:10, fontWeight:700, letterSpacing:2, textAlign:'center', marginBottom:18 }}>كيف بنشتغل</p>
-                <div style={{ position:'relative', height:180 }}>
-                  <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', overflow:'visible' }}>
-                    <defs>
-                      {['sky','gold','lav'].map(id=>(
-                        <filter key={id} id={`gf-${id}`}><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                      ))}
-                    </defs>
-                    <line x1="50%" y1="44%" x2="18%" y2="12%" stroke="#4AABCA" strokeWidth="1.5" strokeOpacity=".55" strokeDasharray="7,5" style={{animation:'dashFlow 1.8s linear infinite'}} filter="url(#gf-sky)" />
-                    <line x1="50%" y1="44%" x2="82%" y2="12%" stroke="#C8974A" strokeWidth="1.5" strokeOpacity=".55" strokeDasharray="7,5" style={{animation:'dashFlow 2.2s linear infinite'}} filter="url(#gf-gold)" />
-                    <line x1="50%" y1="44%" x2="50%" y2="88%" stroke="#7B72B8" strokeWidth="1.5" strokeOpacity=".55" strokeDasharray="7,5" style={{animation:'dashFlow 2s linear infinite'}} filter="url(#gf-lav)" />
-                  </svg>
-                  <div style={{ position:'absolute', top:'44%', left:'50%', transform:'translate(-50%,-50%)', width:70, height:70, borderRadius:'50%', background:'rgba(200,151,74,0.08)', border:'2px solid rgba(200,151,74,0.35)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:3, boxShadow:'0 0 24px rgba(200,151,74,0.18)' }}>
-                    <span style={{ fontSize:20 }}>🤖</span>
-                    <span style={{ color:'var(--gold)', fontSize:8, fontWeight:800, marginTop:3, textAlign:'center' }}>RenoPack</span>
-                  </div>
-                  {[
-                    { label:'مراكز القطع', sub:'أصلي + تركي', Icon:Package, color:'#4AABCA', top:'0%', right:'68%' },
-                    { label:'ورش التركيب', sub:'32 ورشة',      Icon:Building2, color:'#C8974A', top:'0%', left:'68%' },
-                    { label:'عميل + ضمان', sub:'ادفع لينا',    Icon:BadgeCheck, color:'#7B72B8', bottom:'0%', left:'50%', tx:'-50%' },
-                  ].map((n,i)=>(
-                    <div key={i} style={{ position:'absolute', top:n.top, left:n.left, right:n.right, bottom:n.bottom, transform:n.tx?`translateX(${n.tx})`:'', background:`${n.color}0A`, border:`1px solid ${n.color}22`, borderRadius:12, padding:'8px 10px', textAlign:'center', minWidth:88 }}>
-                      <n.Icon size={14} color={n.color} style={{ margin:'0 auto 4px', display:'block' }}/>
-                      <div style={{ color:n.color, fontSize:10, fontWeight:800 }}>{n.label}</div>
-                      <div style={{ color:'rgba(255,255,255,0.25)', fontSize:8, marginTop:1 }}>{n.sub}</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop:14, background:'rgba(200,151,74,0.05)', border:'1px solid rgba(200,151,74,0.13)', borderRadius:10, padding:'9px 12px', display:'flex', gap:8, alignItems:'center' }}>
-                  <ShieldCheck size={13} color="var(--gold)" style={{ flexShrink:0 }}/>
-                  <span style={{ color:'var(--text-dim)', fontSize:11, fontWeight:700 }}>الضمان على القطعة <strong style={{ color:'var(--gold)' }}>والتركيب</strong> — معانا</span>
-                </div>
-              </Card3D>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══ PARTS SHOWCASE ═══ */}
-        <section style={{ padding:'48px 28px', borderTop:'1px solid var(--border)', background:'rgba(255,255,255,0.01)' }}>
-          <div style={{ maxWidth:1280, margin:'0 auto' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
-              <div>
-                <h2 style={{ fontSize:24, fontWeight:800, color:'#E8F0F8', marginBottom:4 }}>قطع رينو الأصيلة 🔧</h2>
-                <p style={{ color:'var(--text-dim)', fontSize:13 }}>أصلي وتركي — كلهم عندنا بضمان</p>
-              </div>
-              <span style={{ color:'var(--gold)', fontSize:13, fontWeight:700, cursor:'pointer' }}>كل القطع ←</span>
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:12 }}>
-              {PARTS_SHOWCASE.map((p,i)=>(
-                <div key={i} className="part-tile" style={{ background:'var(--bg3)', border:`1.5px solid ${p.border}30`, borderRadius:16, overflow:'hidden', position:'relative' }}>
-                  {/* Real part photo */}
-                  <div style={{ height:110, overflow:'hidden', position:'relative' }}>
-                    <img src={p.img} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s ease', display:'block' }}
-                      onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')}
-                      onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
-                    />
-                    {/* gradient overlay */}
-                    <div style={{ position:'absolute', inset:0, background:`linear-gradient(to bottom, transparent 40%, var(--bg3) 100%)` }} />
-                    {/* badge top-right */}
-                    <div style={{ position:'absolute', top:8, left:8, background:`${p.badgeColor}22`, border:`1px solid ${p.badgeColor}50`, borderRadius:999, padding:'2px 8px', fontSize:9, fontWeight:800, color:p.badgeColor }}>
-                      {p.badge}
+              {/* Floating stat cards */}
+              {[
+                { top:30, left:-40, c:'var(--sky)',  icon:'🛡️', t:'ضمان 24 شهر', s:'على كل القطع' },
+                { bottom:40, right:-30, c:'var(--sage)', icon:'⚡', t:'تركيب سريع', s:'خلال 24 ساعة' },
+              ].map(({top,bottom,left,right,c,icon,t,s},i)=>(
+                <div key={i} style={{
+                  position:'absolute', top, bottom, left, right,
+                  background:'rgba(13,18,32,0.88)', backdropFilter:'blur(12px)',
+                  border:`1px solid ${c}25`, borderRadius:14, padding:'10px 14px',
+                  boxShadow:`0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px ${c}12`,
+                  animation:`floatBako ${5+i}s ease-in-out infinite ${i}s`,
+                  zIndex:4,
+                }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:20 }}>{icon}</span>
+                    <div>
+                      <div style={{ color:'#E8F0F8', fontSize:12, fontWeight:800 }}>{t}</div>
+                      <div style={{ color:'rgba(255,255,255,0.35)', fontSize:10, fontWeight:700 }}>{s}</div>
                     </div>
                   </div>
-                  <div style={{ padding:'10px 12px 14px' }}>
-                    <div style={{ fontSize:12, fontWeight:700, color:'var(--text)', marginBottom:5, lineHeight:1.3 }}>{p.name}</div>
-                    <div style={{ fontSize:14, fontWeight:800, color:'var(--gold)' }}>{p.price}</div>
-                  </div>
-                  <div style={{ position:'absolute', top:0, right:0, left:0, height:2, background:p.border, opacity:.4 }} />
                 </div>
               ))}
+
+              {/* How it works — compact */}
+              <div style={{ position:'absolute', bottom:-20, left:'50%', transform:'translateX(-50%)', display:'flex', gap:10, background:'rgba(13,18,32,0.9)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:'12px 20px', whiteSpace:'nowrap', zIndex:6 }}>
+                {[
+                  {Icon:Package,   c:'#4AABCA', l:'مراكز القطع'},
+                  {Icon:ArrowLeftRight, c:'var(--gold)', l:'RenoPack'},
+                  {Icon:Wrench,    c:'#C8974A', l:'ورش التركيب'},
+                  {Icon:BadgeCheck,c:'#3DA882', l:'ضمان كامل'},
+                ].map(({Icon,c,l},i)=>(
+                  <React.Fragment key={l}>
+                    {i>0&&<div style={{ width:1, background:'rgba(255,255,255,0.07)', alignSelf:'stretch' }}/>}
+                    <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 4px' }}>
+                      <Icon size={13} color={c}/><span style={{ color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:700 }}>{l}</span>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ═══ READY PACKAGES ═══ */}
-        <section style={{ padding:'64px 28px', borderTop:'1px solid var(--border)' }}>
+        {/* ═══ PARTS SHOWCASE — MAGAZINE ═══ */}
+        <section style={{ padding:'52px 28px', borderTop:'1px solid var(--border)', background:'linear-gradient(180deg,var(--bg2),var(--bg))' }}>
           <div style={{ maxWidth:1280, margin:'0 auto' }}>
-            <div style={{ textAlign:'center', marginBottom:36 }}>
-              <h2 style={{ fontSize:28, fontWeight:800, color:'#E8F0F8', marginBottom:8 }}>باكدجات جاهزة حسب الصيانة 🛠️</h2>
-              <p style={{ color:'var(--text-dim)', fontSize:14 }}>اختار باكدج جاهز على حسب كيلومترات سيارتك</p>
-            </div>
-            <div style={{ display:'flex', gap:10, justifyContent:'center', marginBottom:32, flexWrap:'wrap' }}>
-              {READY_PACKAGES.map(p=>{const on=readyPkg===p.id;return(
-                <button key={p.id} className="pill" onClick={()=>setReadyPkg(p.id)} style={{ padding:'10px 22px', background:on?`${p.color}14`:'rgba(255,255,255,0.03)', border:`1.5px solid ${on?p.color:'rgba(255,255,255,0.08)'}`, color:on?p.color:'var(--text-dim)', fontWeight:800, fontSize:13, boxShadow:on?`0 0 18px ${p.color}18`:'none' }}>
-                  {p.name}<span style={{ display:'block', fontSize:9, opacity:.7, fontWeight:700, marginTop:1 }}>{p.sub}</span>
-                </button>
-              );})}
-            </div>
-            <div style={{ maxWidth:560, margin:'0 auto', background:`linear-gradient(150deg,${rPkg.color}08,rgba(13,18,32,0.8))`, border:`1.5px solid ${rPkg.color}22`, borderRadius:24, padding:32, animation:'fadeUp .3s ease', boxShadow:`0 14px 44px ${rPkg.color}10` }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:22 }}>
-                <div>
-                  <h3 style={{ fontSize:20, fontWeight:800, color:'#E8F0F8', marginBottom:8 }}>{rPkg.name}</h3>
-                  <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:`${rPkg.color}10`, border:`1px solid ${rPkg.color}25`, borderRadius:999, padding:'5px 12px' }}>
-                    <Gift size={12} color={rPkg.color}/><span style={{ color:rPkg.color, fontSize:11, fontWeight:700 }}>هديتك: {rPkg.gift}</span>
-                  </div>
-                </div>
-                <div style={{ textAlign:'left' }}>
-                  <div style={{ color:rPkg.color, fontSize:34, fontWeight:800, lineHeight:1 }}>{rPkg.price.toLocaleString()}</div>
-                  <div style={{ color:'var(--text-dim)', fontSize:11, fontWeight:700 }}>ج.م شامل التركيب</div>
-                </div>
+            {/* Header */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
+              <div>
+                <h2 style={{ fontSize:22, fontWeight:800, color:'#E8F0F8', marginBottom:4 }}>قطع رينو — أصلي وتركي 🔧</h2>
+                <p style={{ color:'var(--text-dim)', fontSize:13 }}>كل القطع متاحة بخيارين — الأصلي بضمان 24 شهر، التركي بضمان 12 شهر</p>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:20 }}>
-                {rPkg.includes.map(s=>(
-                  <div key={s} style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <CheckCircle2 size={12} color={rPkg.color} style={{ flexShrink:0 }}/>
-                    <span style={{ color:'var(--text)', fontSize:12, fontWeight:700 }}>{s}</span>
+              <button style={{ display:'flex', alignItems:'center', gap:6, color:'var(--gold)', background:'rgba(200,151,74,0.07)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:999, padding:'7px 16px', fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
+                كل القطع <ChevronLeft size={13}/>
+              </button>
+            </div>
+
+            {/* Magazine layout */}
+            <div style={{ display:'grid', gridTemplateColumns:'1.1fr 1fr', gap:16 }}>
+
+              {/* LEFT: Featured large card */}
+              {(() => {
+                const p = PARTS_SHOWCASE[0];
+                return (
+                  <div style={{ background:'var(--bg3)', border:`1.5px solid ${p.border}28`, borderRadius:22, overflow:'hidden', position:'relative', cursor:'pointer', display:'flex', flexDirection:'column' }}
+                    onMouseEnter={e=>(e.currentTarget as HTMLElement).style.transform='translateY(-3px)'}
+                    onMouseLeave={e=>(e.currentTarget as HTMLElement).style.transform=''}
+                  >
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${p.border},${p.border}44,transparent)` }}/>
+                    {/* Big image */}
+                    <div style={{ height:230, overflow:'hidden', position:'relative', flexShrink:0 }}>
+                      <img src={p.img} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .5s ease' }}
+                        onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.06)')}
+                        onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
+                      />
+                      <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,transparent 35%,var(--bg3) 100%)' }}/>
+                      <div style={{ position:'absolute', top:14, right:14, background:'rgba(13,18,32,0.85)', backdropFilter:'blur(8px)', border:`1px solid ${p.badgeColor}40`, borderRadius:999, padding:'4px 12px', fontSize:10, fontWeight:800, color:p.badgeColor }}>
+                        ⭐ الأكثر طلباً
+                      </div>
+                    </div>
+                    {/* Content */}
+                    <div style={{ padding:'18px 20px 20px', flex:1, display:'flex', flexDirection:'column' }}>
+                      <div style={{ fontSize:16, fontWeight:800, color:'#E8F0F8', marginBottom:6 }}>{p.name}</div>
+                      {/* Two price options */}
+                      <div style={{ display:'flex', gap:10, marginBottom:14 }}>
+                        <div style={{ flex:1, background:'rgba(61,168,130,0.07)', border:'1px solid rgba(61,168,130,0.2)', borderRadius:12, padding:'8px 12px' }}>
+                          <div style={{ fontSize:9, fontWeight:700, color:'var(--sage)', marginBottom:2 }}>✅ أصلي أوروبي</div>
+                          <div style={{ fontSize:18, fontWeight:800, color:'var(--sage)' }}>{p.price}</div>
+                        </div>
+                        <div style={{ flex:1, background:'rgba(74,171,202,0.07)', border:'1px solid rgba(74,171,202,0.2)', borderRadius:12, padding:'8px 12px' }}>
+                          <div style={{ fontSize:9, fontWeight:700, color:'var(--sky)', marginBottom:2 }}>🇹🇷 تركي كفاءة</div>
+                          <div style={{ fontSize:18, fontWeight:800, color:'var(--sky)' }}>160 ج.م</div>
+                        </div>
+                      </div>
+                      <button className="pill" style={{ width:'100%', background:`linear-gradient(135deg,${p.border},${p.border}99)`, color:'#0D1220', border:'none', padding:'11px', fontWeight:800, fontSize:13, marginTop:'auto', boxShadow:`0 6px 20px ${p.border}35` }}>
+                        أضف للباكدج ←
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* RIGHT: 2×3 smaller cards */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                {PARTS_SHOWCASE.slice(1).map((p,i)=>(
+                  <div key={i} style={{ background:'var(--bg3)', border:`1.5px solid ${p.border}22`, borderRadius:16, overflow:'hidden', position:'relative', cursor:'pointer', display:'flex', flexDirection:'column', transition:'transform .25s ease, box-shadow .25s ease' }}
+                    onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.transform='translateY(-3px)';(e.currentTarget as HTMLElement).style.boxShadow=`0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px ${p.border}20`;}}
+                    onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.transform='';(e.currentTarget as HTMLElement).style.boxShadow='';}}
+                  >
+                    <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,${p.border},transparent)` }}/>
+                    <div style={{ height:96, overflow:'hidden', position:'relative', flexShrink:0 }}>
+                      <img src={p.img} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s ease' }}
+                        onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')}
+                        onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}
+                      />
+                      <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,transparent 40%,var(--bg3) 100%)' }}/>
+                      <div style={{ position:'absolute', top:7, left:7, background:`${p.badgeColor}20`, border:`1px solid ${p.badgeColor}45`, borderRadius:999, padding:'2px 7px', fontSize:8, fontWeight:800, color:p.badgeColor }}>{p.badge}</div>
+                    </div>
+                    <div style={{ padding:'9px 12px 12px', flex:1, display:'flex', flexDirection:'column' }}>
+                      <div style={{ fontSize:11, fontWeight:700, color:'var(--text)', marginBottom:6, lineHeight:1.35 }}>{p.name}</div>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'auto' }}>
+                        <div style={{ fontSize:14, fontWeight:800, color:'var(--gold)' }}>{p.price}</div>
+                        <div style={{ background:`${p.border}14`, border:`1px solid ${p.border}28`, borderRadius:6, padding:'3px 8px', fontSize:9, fontWeight:700, color:p.border }}>+ أضف</div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-              <button className="pill" style={{ width:'100%', background:`linear-gradient(135deg,${rPkg.color},${rPkg.color}bb)`, color:'var(--bg)', border:'none', padding:'12px', fontWeight:800, fontSize:14, boxShadow:`0 6px 22px ${rPkg.color}28` }}>
-                احجز الباكدج + استلم الهدية ←
-              </button>
             </div>
           </div>
         </section>
+
+        {/* ═══ READY PACKAGES 3D ═══ */}
+        <ReadyPackages3D />
 
         {/* ═══ PUZZLE BUILDER ═══ */}
         <section style={{ padding:'64px 28px', background:'var(--bg2)', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)' }}>
