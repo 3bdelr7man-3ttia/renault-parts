@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -126,6 +125,68 @@
     @apply font-bold tracking-tight;
   }
 }
+
+/* ═══ RENOPACK BRAND DESIGN SYSTEM ═══ */
+:root {
+  --rp-navy:     #1A2356;
+  --rp-navy-lt:  #243070;
+  --rp-bg:       #0D1220;
+  --rp-bg2:      #111826;
+  --rp-bg3:      #161E30;
+  --rp-gold:     #C8974A;
+  --rp-gold-lt:  #DEB06C;
+  --rp-sky:      #4AABCA;
+  --rp-lav:      #7B72B8;
+  --rp-sage:     #3DA882;
+  --rp-text:     #D4E0EC;
+  --rp-text-dim: #7A95AA;
+  --rp-border:   rgba(255,255,255,0.10);
+  --rp-card:     rgba(255,255,255,0.055);
+}
+
+@keyframes rp-blob1 {
+  0%,100% { border-radius:60% 40% 70% 30%/50% 60% 40% 70%; transform:translate(0,0) scale(1); }
+  25%     { border-radius:40% 60% 30% 70%/60% 40% 70% 30%; transform:translate(-18px,12px) scale(1.05); }
+  50%     { border-radius:70% 30% 60% 40%/30% 70% 40% 60%; transform:translate(14px,-10px) scale(0.96); }
+  75%     { border-radius:30% 70% 40% 60%/70% 30% 60% 40%; transform:translate(-6px,16px) scale(1.03); }
+}
+@keyframes rp-blob2 {
+  0%,100% { border-radius:40% 60% 50% 50%/60% 40% 60% 40%; transform:translate(0,0) scale(1); }
+  33%     { border-radius:60% 40% 40% 60%/40% 60% 50% 50%; transform:translate(22px,-14px) scale(1.07); }
+  66%     { border-radius:50% 50% 60% 40%/50% 50% 40% 60%; transform:translate(-12px,20px) scale(0.95); }
+}
+@keyframes rp-float {
+  0%,100% { transform:translateY(0) rotate(-1deg); }
+  50%     { transform:translateY(-14px) rotate(1.5deg); }
+}
+@keyframes rp-glow-blink { 0%,100%{opacity:.45;} 50%{opacity:1;} }
+@keyframes rp-fade-up { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+@keyframes rp-typing { 0%,60%,100%{opacity:.3;} 30%{opacity:1;} }
+@keyframes rp-particle {
+  0%,100%{transform:translateY(0) translateX(0);opacity:.3;}
+  50%{transform:translateY(-22px) translateX(10px);opacity:.7;}
+}
+@keyframes rp-box-shine {
+  0%   { transform:perspective(600px) rotateX(12deg) rotateY(-10deg); }
+  50%  { transform:perspective(600px) rotateX(10deg) rotateY(-8deg) translateY(-6px); }
+  100% { transform:perspective(600px) rotateX(12deg) rotateY(-10deg); }
+}
+
+.rp-pill {
+  font-family:'Almarai',sans-serif;
+  border-radius:999px;
+  cursor:pointer;
+  border:none;
+  outline:none;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);
+}
+.rp-pill:hover { transform:translateY(-2px) scale(1.04); }
+.rp-card3d { transition:transform .12s ease,box-shadow .12s ease; transform-style:preserve-3d; }
+.rp-part-tile { transition:all .25s cubic-bezier(.34,1.56,.64,1); cursor:pointer; }
+.rp-part-tile:hover { transform:translateY(-3px) scale(1.02); }
+.rp-dot1{animation:rp-typing 1.2s .0s infinite;}
+.rp-dot2{animation:rp-typing 1.2s .2s infinite;}
+.rp-dot3{animation:rp-typing 1.2s .4s infinite;}
 
 /* Custom premium utilities */
 @layer utilities {

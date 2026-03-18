@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
-import { Button } from '@/components/ui/button';
-import { Wrench, User, LogOut, PackageSearch, ClipboardList, Home, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch } from 'lucide-react';
 import { motion } from 'framer-motion';
+import bakoLogoImg from '@/assets/bako-logo.png';
+
+/* ── Logo ── */
+function RenoPackLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const s = size === 'sm' ? { img: 36, ar: 14, en: 9 } : { img: 46, ar: 18, en: 10 };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <img src={bakoLogoImg} alt="باكو" style={{ width: s.img, height: s.img, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(200,151,74,0.4))', mixBlendMode: 'screen' }} />
+      <div style={{ fontFamily: "'Almarai',sans-serif" }}>
+        <div style={{ fontWeight: 800, fontSize: s.ar, lineHeight: 1, letterSpacing: -0.3 }}>
+          <span style={{ color: '#D4E0EC' }}>رينو </span>
+          <span style={{ color: '#C8974A' }}>باك</span>
+        </div>
+        <div style={{ fontWeight: 700, fontSize: s.en, letterSpacing: 1.5, color: '#7A95AA', marginTop: 1 }}>
+          Reno<span style={{ color: '#C8974A' }}>Pack</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -13,147 +32,114 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     logout();
-    toast({
-      title: "تم تسجيل الخروج",
-      description: "نراك قريباً!",
-    });
+    toast({ title: 'تم تسجيل الخروج', description: 'نراك قريباً!' });
     setLocation('/');
   };
 
-  const navLinks = [
-    { href: '/', label: 'الرئيسية', icon: Home },
-    { href: '/packages', label: 'الباكدجات', icon: PackageSearch },
+  const navLinks: Array<{ href: string; label: string; Icon: React.ElementType }> = [
+    { href: '/packages', label: 'الباكدجات', Icon: PackageSearch },
+  ];
+  if (user) navLinks.push({ href: '/my-orders', label: 'طلباتي', Icon: ClipboardList });
+  if (user?.role === 'admin') navLinks.push({ href: '/admin', label: 'الإدارة', Icon: ShieldCheck });
+
+  const isActive = (href: string) => location === href;
+
+  const footerLinks = [
+    { t: 'الخدمات', items: [{ label: 'الباكدجات الجاهزة', href: '/packages' }, { label: 'ابني باكدجك', href: '/packages' }, { label: 'قطع أصلية', href: '/packages' }, { label: 'قطع تركية', href: '/packages' }] },
+    { t: 'الحساب',  items: [{ label: 'تسجيل الدخول', href: '/login' }, { label: 'حساب جديد', href: '/register' }, { label: 'طلباتي', href: '/my-orders' }] },
+    { t: 'مناطق',   items: [{ label: 'المنتزه', href: '/' }, { label: 'سيدي جابر', href: '/' }, { label: 'العجمي', href: '/' }, { label: 'الميناء', href: '/' }] },
   ];
 
-  if (user) {
-    navLinks.push({ href: '/my-orders', label: 'طلباتي', icon: ClipboardList });
-  }
-  if (user?.role === 'admin') {
-    navLinks.push({ href: '/admin', label: 'الإدارة', icon: ShieldCheck });
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans relative overflow-hidden">
-      {/* Decorative background blur */}
-      <div className="fixed top-[-10%] left-[-10%] w-1/2 h-[400px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-1/2 h-[400px] bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: location === '/' ? '#0D1220' : 'hsl(var(--background))', fontFamily: "'Almarai','Cairo',sans-serif", direction: 'rtl' }}>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full glass-panel border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-900 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-accent/50 transition-all duration-300">
-                <Wrench className="w-6 h-6 text-accent" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-black text-primary leading-tight">رينو بارتس</span>
-                <span className="text-xs text-muted-foreground font-medium">الإسكندرية</span>
-              </div>
-            </Link>
+      {/* ── NAVBAR ── */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(13,18,32,0.93)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,151,74,0.12)', boxShadow: '0 2px 24px rgba(0,0,0,0.4)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-8">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.href} 
-                  href={link.href}
-                  className={`text-sm font-bold transition-colors hover:text-primary flex items-center gap-2 ${
-                    location === link.href ? 'text-primary border-b-2 border-accent pb-1' : 'text-muted-foreground'
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.label}
+          {/* Logo */}
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <RenoPackLogo size="md" />
+          </Link>
+
+          {/* Nav links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+            {navLinks.map(n => (
+              <Link key={n.href} href={n.href} style={{
+                fontFamily: "'Almarai',sans-serif",
+                color: isActive(n.href) ? '#C8974A' : '#7A95AA',
+                fontSize: 14, fontWeight: 700,
+                textDecoration: 'none',
+                borderBottom: isActive(n.href) ? '2px solid #C8974A' : '2px solid transparent',
+                paddingBottom: 2,
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}>
+                <n.Icon size={14} />{n.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Auth */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {user ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.18)', borderRadius: 999, padding: '6px 14px', fontSize: 13, fontWeight: 700, color: '#D4E0EC' }}>
+                  <User size={13} color="#C8974A" />أهلاً، {user.name.split(' ')[0]}
+                </div>
+                <button onClick={handleLogout} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <LogOut size={16} color="#EF4444" />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>دخول</Link>
+                <Link href="/register" style={{ fontFamily: "'Almarai',sans-serif", background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', fontWeight: 800, fontSize: 13, borderRadius: 999, padding: '8px 20px', textDecoration: 'none', boxShadow: '0 4px 14px rgba(200,151,74,0.3)' }}>
+                  احجز دلوقتي
                 </Link>
-              ))}
-            </nav>
-
-            {/* Auth Actions */}
-            <div className="flex items-center gap-4">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <div className="hidden sm:flex items-center gap-2 text-sm font-semibold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-                    <User className="w-4 h-4 text-accent" />
-                    أهلاً، {user.name.split(' ')[0]}
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={handleLogout} className="text-destructive hover:bg-destructive/10">
-                    <LogOut className="w-5 h-5" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link href="/login">
-                    <Button variant="ghost" className="font-bold text-primary">دخول</Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button className="font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 rounded-full px-6">
-                      حساب جديد
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Main Content */}
-      <main className="flex-grow relative z-10">
-        <motion.div
-          key={location}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-        >
+      {/* ── MAIN ── */}
+      <main style={{ flexGrow: 1 }}>
+        <motion.div key={location} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           {children}
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-primary text-primary-foreground mt-20 border-t-4 border-accent relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      {/* ── FOOTER ── */}
+      <footer style={{ background: 'rgba(7,9,20,0.9)', borderTop: '1px solid rgba(255,255,255,0.04)', padding: '40px 28px 20px', fontFamily: "'Almarai',sans-serif" }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 32 }}>
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-                  <Wrench className="w-6 h-6 text-primary" />
-                </div>
-                <span className="text-2xl font-black text-white">رينو بارتس</span>
+              <RenoPackLogo size="sm" />
+              <p style={{ color: '#7A95AA', fontSize: 12, lineHeight: 1.75, maxWidth: 230, fontWeight: 300, margin: '14px 0' }}>المنصة الأولى بين مراكز قطع غيار رينو والورش المعتمدة في الإسكندرية.</p>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3DA882', animation: 'rp-glow-blink 2s infinite' }} />
+                <span style={{ color: '#3DA882', fontWeight: 700, fontSize: 11 }}>متاح ٢٤/٧</span>
               </div>
-              <p className="text-primary-foreground/70 leading-relaxed max-w-sm">
-                المنصة الأولى المتخصصة في تقديم باكدجات صيانة سيارات رينو في الإسكندرية. قطع غيار مضمونة، تركيب احترافي، وتوصيل لحد باب البيت.
-              </p>
             </div>
-            
-            <div>
-              <h3 className="text-lg font-bold text-accent mb-6">روابط سريعة</h3>
-              <ul className="space-y-3">
-                <li><Link href="/" className="text-primary-foreground/80 hover:text-accent transition-colors">الرئيسية</Link></li>
-                <li><Link href="/packages" className="text-primary-foreground/80 hover:text-accent transition-colors">تصفح الباكدجات</Link></li>
-                <li><Link href="/login" className="text-primary-foreground/80 hover:text-accent transition-colors">تسجيل الدخول</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-bold text-accent mb-6">تواصل معنا</h3>
-              <ul className="space-y-3 text-primary-foreground/80">
-                <li className="flex items-center gap-2">
-                  <span className="font-semibold text-white">العنوان:</span> الإسكندرية، سموحة
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="font-semibold text-white">هاتف:</span> 01001234567
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="font-semibold text-white">أوقات العمل:</span> يومياً 10ص - 10م
-                </li>
-              </ul>
-            </div>
+            {footerLinks.map(col => (
+              <div key={col.t}>
+                <p style={{ color: '#7A95AA', fontWeight: 700, fontSize: 10, marginBottom: 12, letterSpacing: 1.5 }}>{col.t}</p>
+                {col.items.map(item => (
+                  <Link key={item.label} href={item.href} style={{ display: 'block', color: 'rgba(122,149,170,0.55)', fontSize: 11, marginBottom: 8, fontWeight: 400, textDecoration: 'none' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = '#C8974A')}
+                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = 'rgba(122,149,170,0.55)')}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            ))}
           </div>
-          
-          <div className="border-t border-white/10 mt-12 pt-8 text-center text-primary-foreground/50 text-sm">
-            © {new Date().getFullYear()} رينو بارتس الإسكندرية. جميع الحقوق محفوظة.
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <span style={{ color: 'rgba(122,149,170,0.3)', fontSize: 10 }}>© 2026 RenoPack — الإسكندرية</span>
+            <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              {'★★★★★'.split('').map((s, i) => <span key={i} style={{ color: '#C8974A', fontSize: 11 }}>{s}</span>)}
+              <span style={{ color: 'rgba(122,149,170,0.35)', fontSize: 9, marginRight: 5 }}>4.9 من 1,247 تقييم</span>
+            </div>
           </div>
         </div>
       </footer>
