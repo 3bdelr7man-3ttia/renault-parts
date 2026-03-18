@@ -5,7 +5,7 @@ import {
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
   ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown
 } from 'lucide-react';
-import bakoImg from '@/assets/bako.png';
+import bakoImg from '@/assets/bako-new.png';
 import partOilImg    from '@/assets/part-oil.jpg';
 import partBrakesImg from '@/assets/part-brakes.jpg';
 import partAirImg    from '@/assets/part-airfilter.jpg';
@@ -260,7 +260,7 @@ function BakoChat({ context }: { context: ComparePart }) {
     <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(200,151,74,0.18)', borderRadius:22, overflow:'hidden', display:'flex', flexDirection:'column', height:340 }}>
       {/* Header */}
       <div style={{ background:'linear-gradient(135deg,var(--navy),var(--navy-lt))', padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(200,151,74,0.15)' }}>
-        <img src={bakoImg} alt="باكو" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:'2px solid var(--gold)', background:'var(--navy)' }} />
+        <img src={bakoImg} alt="باكو" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', objectPosition:'50% 22%', border:'2px solid var(--gold)', background:'var(--navy)' }} />
         <div>
           <div style={{ fontFamily:"'Almarai',sans-serif", fontWeight:800, fontSize:13, color:'#fff' }}>باكو 🤖 — بيكلمك عن {context.label}</div>
           <div style={{ fontSize:10, color:'rgba(200,151,74,0.75)', fontWeight:700 }}>اسأله أي سؤال عن القطعتين فوق</div>
@@ -286,7 +286,7 @@ function BakoChat({ context }: { context: ComparePart }) {
         {msgs.map((m, i) => (
           <div key={i} className={m.from==='bako'?'chat-bubble-in':'chat-bubble-out'} style={{ display:'flex', gap:7, alignItems:'flex-end', flexDirection: m.from==='bako'?'row':'row-reverse' }}>
             {m.from==='bako' && (
-              <img src={bakoImg} alt="" style={{ width:24, height:24, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
+              <img src={bakoImg} alt="" style={{ width:24, height:24, borderRadius:'50%', objectFit:'cover', objectPosition:'50% 22%', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
             )}
             <div style={{
               maxWidth:'78%', padding:'10px 14px', borderRadius: m.from==='bako'?'4px 16px 16px 16px':'16px 4px 16px 16px',
@@ -300,7 +300,7 @@ function BakoChat({ context }: { context: ComparePart }) {
         ))}
         {typing && (
           <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
-            <img src={bakoImg} alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
+            <img src={bakoImg} alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'50% 22%', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
             <div style={{ padding:'12px 16px', borderRadius:'4px 16px 16px 16px', background:'rgba(26,35,86,0.7)', border:'1px solid rgba(200,151,74,0.12)', display:'flex', gap:5, alignItems:'center' }}>
               <div className="dot1" style={{ width:6, height:6, borderRadius:'50%', background:'var(--gold)' }} />
               <div className="dot2" style={{ width:6, height:6, borderRadius:'50%', background:'var(--gold)' }} />
@@ -796,7 +796,7 @@ export function AlexandriaBlend() {
 
               {/* Bako */}
               <div style={{ position:'relative', zIndex:5, animation:'floatBako 5s ease-in-out infinite' }}>
-                <img src={bakoImg} alt="باكو" style={{ width:260, height:260, objectFit:'contain', objectPosition:'top', filter:'drop-shadow(0 24px 48px rgba(200,151,74,0.4)) drop-shadow(0 0 80px rgba(200,151,74,0.15))', display:'block', margin:'0 auto' }} />
+                <img src={bakoImg} alt="باكو" style={{ width:320, height:320, objectFit:'contain', filter:'drop-shadow(0 28px 55px rgba(200,151,74,0.45)) drop-shadow(0 0 100px rgba(200,151,74,0.2))', display:'block', margin:'0 auto' }} />
                 {/* Speech bubble */}
                 <div style={{ position:'absolute', top:22, right:260, background:'rgba(13,18,32,0.92)', backdropFilter:'blur(12px)', border:'1.5px solid rgba(200,151,74,0.35)', borderRadius:'16px 16px 4px 16px', padding:'10px 16px', whiteSpace:'nowrap', boxShadow:'0 8px 24px rgba(0,0,0,0.4)', animation:'glowBlink 3s infinite' }}>
                   <div style={{ color:'var(--gold)', fontSize:12, fontWeight:800, marginBottom:2 }}>أهلاً! أنا باكو 👋</div>
