@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useLocation } from 'wouter';
-import { useLoginUser } from '@workspace/api-client-react';
+import { useLoginUser, type LoginUserMutationError } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -37,11 +37,11 @@ export default function Login() {
         const redirect = params.get('redirect') || '/';
         setLocation(redirect);
       },
-      onError: (error) => {
+      onError: (error: LoginUserMutationError) => {
         toast({
           variant: "destructive",
           title: "خطأ في تسجيل الدخول",
-          description: (error as any)?.error?.error || "بيانات الدخول غير صحيحة",
+          description: error.data?.error ?? "بيانات الدخول غير صحيحة",
         });
       }
     }

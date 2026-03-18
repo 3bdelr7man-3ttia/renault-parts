@@ -390,14 +390,16 @@ components:
 
     RegisterBody:
       type: object
+      description: At least one of phone or email is required
       properties:
         name:
           type: string
         phone:
-          type: string
+          type: ["string", "null"]
+          description: Mobile phone number (Egyptian format). At least one of phone or email required.
         email:
           type: ["string", "null"]
-          description: Optional email address (phone is mandatory)
+          description: Email address. At least one of phone or email required.
         password:
           type: string
         carModel:
@@ -408,9 +410,9 @@ components:
           type: ["string", "null"]
         area:
           type: ["string", "null"]
+          description: Customer area in Alexandria (e.g. سموحة, ميامي, المنتزه)
       required:
         - name
-        - phone
         - password
 
     LoginBody:

@@ -17,11 +17,18 @@ export interface SuccessResponse {
   message: string;
 }
 
+/**
+ * At least one of phone or email is required
+ */
 export interface RegisterBody {
   name: string;
-  phone: string;
   /**
-   * Optional email address (phone is mandatory)
+   * Mobile phone number (Egyptian format). At least one of phone or email required.
+   * @nullable
+   */
+  phone?: string | null;
+  /**
+   * Email address. At least one of phone or email required.
    * @nullable
    */
   email?: string | null;
@@ -32,7 +39,10 @@ export interface RegisterBody {
   carYear?: number | null;
   /** @nullable */
   address?: string | null;
-  /** @nullable */
+  /**
+   * Customer area in Alexandria (e.g. سموحة, ميامي, المنتزه)
+   * @nullable
+   */
   area?: string | null;
 }
 

@@ -35,10 +35,14 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { name, phone, email, password, carModel, carYear, address, area } = parsed.data;
 
-  const conditions = [eq(usersTable.phone, phone)];
-  if (email) {
-    conditions.push(eq(usersTable.email, email));
+  if (!phone && !email) {
+    res.status(400).json({ error: "يجب تقديم رقم الهاتف أو البريد الإلكتروني على الأقل" });
+    return;
   }
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (phone) conditions.push(eq(usersTable.phone, phone));
+  if (email) conditions.push(eq(usersTable.email, email));
   const [existing] = await db.select().from(usersTable).where(or(...conditions));
   if (existing) {
     res.status(409).json({ error: "رقم الهاتف أو البريد الإلكتروني مسجل بالفعل" });
@@ -49,7 +53,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const [user] = await db.insert(usersTable).values({
     name,
-    phone,
+    phone: phone ?? null,
     email: email ?? null,
     passwordHash,
     carModel: carModel ?? null,

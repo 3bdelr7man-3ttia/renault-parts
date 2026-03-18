@@ -18,19 +18,29 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Register a new user
  */
-export const RegisterUserBody = zod.object({
-  name: zod.string(),
-  phone: zod.string(),
-  email: zod
-    .string()
-    .nullish()
-    .describe("Optional email address (phone is mandatory)"),
-  password: zod.string(),
-  carModel: zod.string().nullish(),
-  carYear: zod.number().nullish(),
-  address: zod.string().nullish(),
-  area: zod.string().nullish(),
-});
+export const RegisterUserBody = zod
+  .object({
+    name: zod.string(),
+    phone: zod
+      .string()
+      .nullish()
+      .describe(
+        "Mobile phone number (Egyptian format). At least one of phone or email required.",
+      ),
+    email: zod
+      .string()
+      .nullish()
+      .describe("Email address. At least one of phone or email required."),
+    password: zod.string(),
+    carModel: zod.string().nullish(),
+    carYear: zod.number().nullish(),
+    address: zod.string().nullish(),
+    area: zod
+      .string()
+      .nullish()
+      .describe("Customer area in Alexandria (e.g. سموحة, ميامي, المنتزه)"),
+  })
+  .describe("At least one of phone or email is required");
 
 /**
  * @summary Login user
