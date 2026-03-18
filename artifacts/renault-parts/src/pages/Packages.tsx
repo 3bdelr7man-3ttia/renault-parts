@@ -28,9 +28,23 @@ export default function Packages() {
     }
   }, []);
 
-  const filteredPackages = packages?.filter(pkg =>
-    activeFilter !== null ? pkg.kmService === activeFilter : true
-  );
+  const filteredPackages = packages?.filter(pkg => {
+    const kmMatch = activeFilter !== null ? pkg.kmService === activeFilter : true;
+    if (!kmMatch) return false;
+
+    if (car && pkg.parts && pkg.parts.length > 0) {
+      const hasCompatiblePart = pkg.parts.some(part => {
+        if (!part.compatibleModels) return true;
+        return (
+          part.compatibleModels.includes(car.model) ||
+          part.compatibleModels.includes('جميع موديلات رينو')
+        );
+      });
+      if (!hasCompatiblePart) return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background pb-24">

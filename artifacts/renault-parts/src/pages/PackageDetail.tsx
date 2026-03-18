@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import { useGetPackageBySlug, getGetPackageBySlugQueryKey } from '@workspace/api-client-react';
-import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Tag, Car, Info } from 'lucide-react';
+import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Tag, Car, Info, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
@@ -217,7 +217,7 @@ export default function PackageDetail() {
             {/* Included Services */}
             <div className="bg-white rounded-3xl p-8 shadow-xl shadow-black/5 border border-border/50">
               <h2 className="text-2xl font-black text-foreground mb-6">ماذا تشمل الخدمة؟</h2>
-              <div className="grid sm:grid-cols-3 gap-5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-primary/5 border border-primary/10">
                   <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-3">
                     <Wrench className="w-6 h-6 text-white" />
@@ -231,6 +231,13 @@ export default function PackageDetail() {
                   </div>
                   <h4 className="font-black text-foreground mb-1">ضمان {pkg.warrantyMonths} شهور</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">ضمان حقيقي على القطع والتركيب لراحة بالك</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-blue-50 border border-blue-200/60">
+                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-3">
+                    <Truck className="w-6 h-6 text-white" />
+                  </div>
+                  <h4 className="font-black text-foreground mb-1">توصيل للبيت</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">نوصل القطع والفني لحد باب بيتك في الإسكندرية</p>
                 </div>
                 <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-green-50 border border-green-200/60">
                   <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-3">
