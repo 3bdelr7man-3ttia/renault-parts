@@ -540,7 +540,210 @@ export const UpdateUserRoleResponse = zod.object({
 });
 
 /**
- * @summary Send message to AI assistant
+ * @summary List all packages (admin)
+ */
+export const ListAdminPackagesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  description: zod.string(),
+  kmService: zod.number(),
+  basePrice: zod.number(),
+  sellPrice: zod.number(),
+  warrantyMonths: zod.number(),
+  parts: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      oemCode: zod.string().nullish(),
+      type: zod.string(),
+      priceOriginal: zod.number().nullish(),
+      priceTurkish: zod.number().nullish(),
+      priceChinese: zod.number().nullish(),
+      compatibleModels: zod.string().nullish(),
+      supplier: zod.string().nullish(),
+    }),
+  ),
+  createdAt: zod.date(),
+});
+export const ListAdminPackagesResponse = zod.array(
+  ListAdminPackagesResponseItem,
+);
+
+/**
+ * @summary Update package price/content (admin)
+ */
+export const UpdatePackageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePackageBody = zod.object({
+  name: zod.string().optional(),
+  description: zod.string().optional(),
+  sellPrice: zod.number().optional(),
+  basePrice: zod.number().optional(),
+  warrantyMonths: zod.number().optional(),
+});
+
+export const UpdatePackageResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  slug: zod.string(),
+  description: zod.string(),
+  kmService: zod.number(),
+  basePrice: zod.number(),
+  sellPrice: zod.number(),
+  warrantyMonths: zod.number(),
+  parts: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      oemCode: zod.string().nullish(),
+      type: zod.string(),
+      priceOriginal: zod.number().nullish(),
+      priceTurkish: zod.number().nullish(),
+      priceChinese: zod.number().nullish(),
+      compatibleModels: zod.string().nullish(),
+      supplier: zod.string().nullish(),
+    }),
+  ),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary List all workshops (admin)
+ */
+export const ListAdminWorkshopsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  area: zod.string(),
+  address: zod.string(),
+  phone: zod.string(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
+  rating: zod.number().nullish(),
+  partnershipStatus: zod.string(),
+});
+export const ListAdminWorkshopsResponse = zod.array(
+  ListAdminWorkshopsResponseItem,
+);
+
+/**
+ * @summary Create a new workshop (admin)
+ */
+export const CreateWorkshopBody = zod.object({
+  name: zod.string(),
+  area: zod.string(),
+  address: zod.string(),
+  phone: zod.string(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
+  partnershipStatus: zod.string().optional(),
+});
+
+/**
+ * @summary Update workshop data (admin)
+ */
+export const UpdateWorkshopParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateWorkshopBody = zod.object({
+  name: zod.string().optional(),
+  area: zod.string().optional(),
+  address: zod.string().optional(),
+  phone: zod.string().optional(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
+  partnershipStatus: zod.string().optional(),
+});
+
+export const UpdateWorkshopResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  area: zod.string(),
+  address: zod.string(),
+  phone: zod.string(),
+  lat: zod.number().nullish(),
+  lng: zod.number().nullish(),
+  rating: zod.number().nullish(),
+  partnershipStatus: zod.string(),
+});
+
+/**
+ * @summary Delete a workshop (admin)
+ */
+export const DeleteWorkshopParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteWorkshopResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary List all reviews (admin)
+ */
+export const ListAdminReviewsResponseItem = zod.object({
+  id: zod.number(),
+  orderId: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  userPhone: zod.string().nullish(),
+  workshopId: zod.number().nullish(),
+  workshopName: zod.string().nullish(),
+  rating: zod.number(),
+  comment: zod.string().nullish(),
+  adminReply: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+export const ListAdminReviewsResponse = zod.array(ListAdminReviewsResponseItem);
+
+/**
+ * @summary Add admin reply to review
+ */
+export const ReplyToReviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ReplyToReviewBody = zod.object({
+  reply: zod.string(),
+});
+
+export const ReplyToReviewResponse = zod.object({
+  id: zod.number(),
+  orderId: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  userPhone: zod.string().nullish(),
+  workshopId: zod.number().nullish(),
+  workshopName: zod.string().nullish(),
+  rating: zod.number(),
+  comment: zod.string().nullish(),
+  adminReply: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Get weekly sales data for chart/export (admin)
+ */
+export const GetAdminSalesResponse = zod.object({
+  weeks: zod.array(
+    zod.object({
+      week: zod.string(),
+      total: zod.number(),
+      count: zod.number(),
+    }),
+  ),
+  totalRevenue: zod.number(),
+  totalOrders: zod.number(),
+  exportCsv: zod.string().optional().describe("CSV string for download"),
+});
+
+/**
+ * Streams the AI response as Server-Sent Events (text/event-stream). Each chunk is a `data: {...}` line with a `content` field. The final event has `done: true` plus `sessionId`, `suggestedPackageSlug`, `suggestedPackageName`, and `suggestedPackageId` (when a package is recommended).
+
+ * @summary Send message to AI assistant (streaming SSE)
  */
 export const SendChatMessageBody = zod.object({
   message: zod.string(),
@@ -548,11 +751,4 @@ export const SendChatMessageBody = zod.object({
   carModel: zod.string().nullish(),
   carYear: zod.number().nullish(),
   mileage: zod.number().nullish(),
-});
-
-export const SendChatMessageResponse = zod.object({
-  reply: zod.string(),
-  sessionId: zod.string(),
-  suggestedPackageSlug: zod.string().nullish(),
-  suggestedPackageName: zod.string().nullish(),
 });

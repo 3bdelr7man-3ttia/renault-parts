@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
-import { eq, count, sum, sql, gte } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable } from "@workspace/db";
+import { eq, count, sum, sql, gte, desc } from "drizzle-orm";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
-import { UpdateOrderStatusBody, UpdateUserRoleBody } from "@workspace/api-zod";
+import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -88,7 +88,7 @@ router.get("/admin/orders", requireAuth, requireAdmin, async (req, res): Promise
 
 // PATCH /admin/orders/:id/status
 router.patch("/admin/orders/:id/status", requireAuth, requireAdmin, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const parsed = UpdateOrderStatusBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -163,7 +163,7 @@ router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<
 
 // PATCH /admin/users/:id/role
 router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const parsed = UpdateUserRoleBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -194,6 +194,224 @@ router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res
     area: user.area,
     orderCount: countRow.count,
     createdAt: user.createdAt,
+  });
+});
+
+// GET /admin/packages
+router.get("/admin/packages", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const packages = await db.select().from(packagesTable).orderBy(packagesTable.kmService);
+  res.json(packages.map(p => ({
+    ...p,
+    basePrice: Number(p.basePrice),
+    sellPrice: Number(p.sellPrice),
+    parts: [],
+  })));
+});
+
+// PATCH /admin/packages/:id
+router.patch("/admin/packages/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const parsed = UpdatePackageBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.name !== undefined) updates.name = parsed.data.name;
+  if (parsed.data.description !== undefined) updates.description = parsed.data.description;
+  if (parsed.data.sellPrice !== undefined) updates.sellPrice = parsed.data.sellPrice;
+  if (parsed.data.basePrice !== undefined) updates.basePrice = parsed.data.basePrice;
+  if (parsed.data.warrantyMonths !== undefined) updates.warrantyMonths = parsed.data.warrantyMonths;
+
+  const [pkg] = await db.update(packagesTable).set(updates).where(eq(packagesTable.id, id)).returning();
+  if (!pkg) {
+    res.status(404).json({ error: "الباكدج غير موجود" });
+    return;
+  }
+  res.json({ ...pkg, basePrice: Number(pkg.basePrice), sellPrice: Number(pkg.sellPrice), parts: [] });
+});
+
+// GET /admin/workshops
+router.get("/admin/workshops", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const workshops = await db.select().from(workshopsTable).orderBy(workshopsTable.name);
+  res.json(workshops.map(w => ({
+    ...w,
+    lat: w.lat !== null ? Number(w.lat) : null,
+    lng: w.lng !== null ? Number(w.lng) : null,
+    rating: w.rating !== null ? Number(w.rating) : null,
+  })));
+});
+
+// POST /admin/workshops
+router.post("/admin/workshops", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const parsed = CreateWorkshopBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [workshop] = await db.insert(workshopsTable).values({
+    name: parsed.data.name,
+    area: parsed.data.area,
+    address: parsed.data.address,
+    phone: parsed.data.phone,
+    lat: parsed.data.lat !== undefined ? String(parsed.data.lat) : null,
+    lng: parsed.data.lng !== undefined ? String(parsed.data.lng) : null,
+    partnershipStatus: parsed.data.partnershipStatus ?? "active",
+  }).returning();
+
+  res.status(201).json({
+    ...workshop,
+    lat: workshop.lat !== null ? Number(workshop.lat) : null,
+    lng: workshop.lng !== null ? Number(workshop.lng) : null,
+    rating: workshop.rating !== null ? Number(workshop.rating) : null,
+  });
+});
+
+// PATCH /admin/workshops/:id
+router.patch("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const parsed = UpdateWorkshopBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.name !== undefined) updates.name = parsed.data.name;
+  if (parsed.data.area !== undefined) updates.area = parsed.data.area;
+  if (parsed.data.address !== undefined) updates.address = parsed.data.address;
+  if (parsed.data.phone !== undefined) updates.phone = parsed.data.phone;
+  if (parsed.data.lat !== undefined) updates.lat = parsed.data.lat !== null ? String(parsed.data.lat) : null;
+  if (parsed.data.lng !== undefined) updates.lng = parsed.data.lng !== null ? String(parsed.data.lng) : null;
+  if (parsed.data.partnershipStatus !== undefined) updates.partnershipStatus = parsed.data.partnershipStatus;
+
+  const [workshop] = await db.update(workshopsTable).set(updates).where(eq(workshopsTable.id, id)).returning();
+  if (!workshop) {
+    res.status(404).json({ error: "الورشة غير موجودة" });
+    return;
+  }
+  res.json({
+    ...workshop,
+    lat: workshop.lat !== null ? Number(workshop.lat) : null,
+    lng: workshop.lng !== null ? Number(workshop.lng) : null,
+    rating: workshop.rating !== null ? Number(workshop.rating) : null,
+  });
+});
+
+// DELETE /admin/workshops/:id
+router.delete("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const [workshop] = await db.delete(workshopsTable).where(eq(workshopsTable.id, id)).returning();
+  if (!workshop) {
+    res.status(404).json({ error: "الورشة غير موجودة" });
+    return;
+  }
+  res.json({ message: "تم حذف الورشة بنجاح" });
+});
+
+// GET /admin/reviews
+router.get("/admin/reviews", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      review: reviewsTable,
+      userName: usersTable.name,
+      userPhone: usersTable.phone,
+      workshopName: workshopsTable.name,
+    })
+    .from(reviewsTable)
+    .innerJoin(usersTable, eq(reviewsTable.userId, usersTable.id))
+    .leftJoin(workshopsTable, eq(reviewsTable.workshopId, workshopsTable.id))
+    .orderBy(desc(reviewsTable.createdAt));
+
+  res.json(rows.map(r => ({
+    id: r.review.id,
+    orderId: r.review.orderId,
+    userId: r.review.userId,
+    userName: r.userName,
+    userPhone: r.userPhone,
+    workshopId: r.review.workshopId,
+    workshopName: r.workshopName ?? null,
+    rating: r.review.rating,
+    comment: r.review.comment,
+    adminReply: r.review.adminReply,
+    createdAt: r.review.createdAt,
+  })));
+});
+
+// PATCH /admin/reviews/:id/reply
+router.patch("/admin/reviews/:id/reply", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const parsed = ReplyToReviewBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [review] = await db
+    .update(reviewsTable)
+    .set({ adminReply: parsed.data.reply })
+    .where(eq(reviewsTable.id, id))
+    .returning();
+
+  if (!review) {
+    res.status(404).json({ error: "التقييم غير موجود" });
+    return;
+  }
+
+  const [userRow] = await db.select({ name: usersTable.name, phone: usersTable.phone })
+    .from(usersTable).where(eq(usersTable.id, review.userId));
+  let workshopName = null;
+  if (review.workshopId) {
+    const [wsRow] = await db.select({ name: workshopsTable.name })
+      .from(workshopsTable).where(eq(workshopsTable.id, review.workshopId));
+    workshopName = wsRow?.name ?? null;
+  }
+
+  res.json({
+    id: review.id,
+    orderId: review.orderId,
+    userId: review.userId,
+    userName: userRow?.name ?? "",
+    userPhone: userRow?.phone ?? null,
+    workshopId: review.workshopId,
+    workshopName,
+    rating: review.rating,
+    comment: review.comment,
+    adminReply: review.adminReply,
+    createdAt: review.createdAt,
+  });
+});
+
+// GET /admin/sales
+router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      week: sql<string>`to_char(date_trunc('week', ${ordersTable.createdAt}), 'YYYY-MM-DD')`,
+      total: sum(ordersTable.total),
+      count: count(),
+    })
+    .from(ordersTable)
+    .groupBy(sql`date_trunc('week', ${ordersTable.createdAt})`)
+    .orderBy(sql`date_trunc('week', ${ordersTable.createdAt})`);
+
+  const [totals] = await db.select({ revenue: sum(ordersTable.total), orders: count() }).from(ordersTable);
+
+  const weeks = rows.map(r => ({
+    week: r.week,
+    total: Number(r.total ?? 0),
+    count: r.count,
+  }));
+
+  const csvLines = ["الأسبوع,الإيرادات,عدد الطلبات", ...weeks.map(w => `${w.week},${w.total},${w.count}`)];
+  const exportCsv = csvLines.join("\n");
+
+  res.json({
+    weeks,
+    totalRevenue: Number(totals.revenue ?? 0),
+    totalOrders: totals.orders,
+    exportCsv,
   });
 });
 

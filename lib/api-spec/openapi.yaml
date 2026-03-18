@@ -523,6 +523,227 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/packages:
+    get:
+      operationId: listAdminPackages
+      tags: [admin]
+      summary: List all packages (admin)
+      responses:
+        "200":
+          description: All packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Package"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/packages/{id}:
+    patch:
+      operationId: updatePackage
+      tags: [admin]
+      summary: Update package price/content (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePackageBody"
+      responses:
+        "200":
+          description: Package updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+        "404":
+          description: Package not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/workshops:
+    get:
+      operationId: listAdminWorkshops
+      tags: [admin]
+      summary: List all workshops (admin)
+      responses:
+        "200":
+          description: All workshops
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workshop"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createWorkshop
+      tags: [admin]
+      summary: Create a new workshop (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkshopBody"
+      responses:
+        "201":
+          description: Workshop created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workshop"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/workshops/{id}:
+    patch:
+      operationId: updateWorkshop
+      tags: [admin]
+      summary: Update workshop data (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkshopBody"
+      responses:
+        "200":
+          description: Workshop updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workshop"
+        "404":
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteWorkshop
+      tags: [admin]
+      summary: Delete a workshop (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Workshop deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Workshop not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/reviews:
+    get:
+      operationId: listAdminReviews
+      tags: [admin]
+      summary: List all reviews (admin)
+      responses:
+        "200":
+          description: All reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminReview"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/reviews/{id}/reply:
+    patch:
+      operationId: replyToReview
+      tags: [admin]
+      summary: Add admin reply to review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyToReviewBody"
+      responses:
+        "200":
+          description: Reply added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReview"
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/sales:
+    get:
+      operationId: getAdminSales
+      tags: [admin]
+      summary: Get weekly sales data for chart/export (admin)
+      responses:
+        "200":
+          description: Weekly sales data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSalesReport"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /chat:
     post:
       operationId: sendChatMessage
@@ -1086,3 +1307,130 @@ components:
           enum: [customer, admin]
       required:
         - role
+
+    UpdatePackageBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sellPrice:
+          type: number
+        basePrice:
+          type: number
+        warrantyMonths:
+          type: integer
+
+    CreateWorkshopBody:
+      type: object
+      properties:
+        name:
+          type: string
+        area:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
+        partnershipStatus:
+          type: string
+      required:
+        - name
+        - area
+        - address
+        - phone
+
+    UpdateWorkshopBody:
+      type: object
+      properties:
+        name:
+          type: string
+        area:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        lat:
+          type: ["number", "null"]
+        lng:
+          type: ["number", "null"]
+        partnershipStatus:
+          type: string
+
+    AdminReview:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        userPhone:
+          type: ["string", "null"]
+        workshopId:
+          type: ["integer", "null"]
+        workshopName:
+          type: ["string", "null"]
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        adminReply:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - orderId
+        - userId
+        - userName
+        - rating
+        - createdAt
+
+    ReplyToReviewBody:
+      type: object
+      properties:
+        reply:
+          type: string
+      required:
+        - reply
+
+    AdminSalesReport:
+      type: object
+      properties:
+        weeks:
+          type: array
+          items:
+            type: object
+            properties:
+              week:
+                type: string
+              total:
+                type: number
+              count:
+                type: integer
+            required:
+              - week
+              - total
+              - count
+        totalRevenue:
+          type: number
+        totalOrders:
+          type: integer
+        exportCsv:
+          type: string
+          description: CSV string for download
+      required:
+        - weeks
+        - totalRevenue
+        - totalOrders

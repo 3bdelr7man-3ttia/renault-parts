@@ -10,11 +10,18 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Package2,
+  Star,
+  BarChart2,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true },
   { href: '/admin/orders', label: 'الطلبات', icon: ClipboardList },
+  { href: '/admin/packages', label: 'الباكدجات', icon: Package2 },
+  { href: '/admin/workshops', label: 'الورش', icon: Wrench },
+  { href: '/admin/reviews', label: 'التقييمات', icon: Star },
+  { href: '/admin/sales', label: 'تقرير المبيعات', icon: BarChart2 },
   { href: '/admin/users', label: 'المستخدمون', icon: Users },
 ];
 

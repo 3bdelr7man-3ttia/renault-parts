@@ -12,6 +12,7 @@ export const reviewsTable = pgTable("reviews", {
   workshopId: integer("workshop_id").references(() => workshopsTable.id),
   rating: integer("rating").notNull(),
   comment: text("comment"),
+  adminReply: text("admin_reply"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

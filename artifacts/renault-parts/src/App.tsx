@@ -25,6 +25,10 @@ import PaymentResult from "@/pages/PaymentResult";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminPackages from "@/pages/admin/AdminPackages";
+import AdminWorkshops from "@/pages/admin/AdminWorkshops";
+import AdminReviews from "@/pages/admin/AdminReviews";
+import AdminSales from "@/pages/admin/AdminSales";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +58,10 @@ function Router() {
           <Switch>
             <Route path="/admin" component={AdminDashboard} />
             <Route path="/admin/orders" component={AdminOrders} />
+            <Route path="/admin/packages" component={AdminPackages} />
+            <Route path="/admin/workshops" component={AdminWorkshops} />
+            <Route path="/admin/reviews" component={AdminReviews} />
+            <Route path="/admin/sales" component={AdminSales} />
             <Route path="/admin/users" component={AdminUsers} />
             <Route component={NotFound} />
           </Switch>

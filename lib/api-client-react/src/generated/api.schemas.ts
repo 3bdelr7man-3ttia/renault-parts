@@ -342,6 +342,75 @@ export interface UpdateUserRoleBody {
   role: UpdateUserRoleBodyRole;
 }
 
+export interface UpdatePackageBody {
+  name?: string;
+  description?: string;
+  sellPrice?: number;
+  basePrice?: number;
+  warrantyMonths?: number;
+}
+
+export interface CreateWorkshopBody {
+  name: string;
+  area: string;
+  address: string;
+  phone: string;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
+  partnershipStatus?: string;
+}
+
+export interface UpdateWorkshopBody {
+  name?: string;
+  area?: string;
+  address?: string;
+  phone?: string;
+  /** @nullable */
+  lat?: number | null;
+  /** @nullable */
+  lng?: number | null;
+  partnershipStatus?: string;
+}
+
+export interface AdminReview {
+  id: number;
+  orderId: number;
+  userId: number;
+  userName: string;
+  /** @nullable */
+  userPhone?: string | null;
+  /** @nullable */
+  workshopId?: number | null;
+  /** @nullable */
+  workshopName?: string | null;
+  rating: number;
+  /** @nullable */
+  comment?: string | null;
+  /** @nullable */
+  adminReply?: string | null;
+  createdAt: string;
+}
+
+export interface ReplyToReviewBody {
+  reply: string;
+}
+
+export type AdminSalesReportWeeksItem = {
+  week: string;
+  total: number;
+  count: number;
+};
+
+export interface AdminSalesReport {
+  weeks: AdminSalesReportWeeksItem[];
+  totalRevenue: number;
+  totalOrders: number;
+  /** CSV string for download */
+  exportCsv?: string;
+}
+
 export type ListPartsParams = {
   packageId?: number;
   /**
