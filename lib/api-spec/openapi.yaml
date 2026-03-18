@@ -527,7 +527,12 @@ paths:
     post:
       operationId: sendChatMessage
       tags: [chat]
-      summary: Send message to AI assistant
+      summary: Send message to AI assistant (streaming SSE)
+      description: >
+        Streams the AI response as Server-Sent Events (text/event-stream).
+        Each chunk is a `data: {...}` line with a `content` field.
+        The final event has `done: true` plus `sessionId`, `suggestedPackageSlug`,
+        `suggestedPackageName`, and `suggestedPackageId` (when a package is recommended).
       requestBody:
         required: true
         content:
@@ -536,13 +541,24 @@ paths:
               $ref: "#/components/schemas/ChatMessageBody"
       responses:
         "200":
-          description: AI response
+          description: Streaming SSE — AI response chunks
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >
+                  SSE stream. Chunk events: `{"content": "..."}`.
+                  Terminal event: `{"done": true, "sessionId": "...",
+                  "suggestedPackageSlug": "...", "suggestedPackageName": "...",
+                  "suggestedPackageId": 1}`.
+        "400":
+          description: Validation error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChatResponse"
-        "400":
-          description: Validation error
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Session belongs to another user
           content:
             application/json:
               schema:

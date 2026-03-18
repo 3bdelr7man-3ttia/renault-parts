@@ -96,11 +96,16 @@ router.post("/chat", optionalAuth, async (req, res): Promise<void> => {
 
 ${packagesInfo}
 
+خطوات المساعدة:
+1. اجمع المعلومات الأربعة: موديل السيارة، سنة الصنع، عداد الكيلومترات، أي مشاكل أو أعراض موجودة.
+   - إذا لم تعرف أياً منها اسأل بشكل ودود وواضح.
+2. بعد جمع المعلومات، اقترح الباكدج الأنسب مع شرح لماذا هو الأنسب لحالة السيارة.
+3. إذا كان العميل مترددًا بين باكدجين، قدم مقارنة سريعة بينهم: ما الإضافات، الفرق في السعر، والضمان.
+
 قواعد التواصل:
 - تكلم بالعربية دائماً (عربي مصري بسيط أو فصحى بسيطة)
 - كن ودوداً ومهنياً وإيجابياً
-- اسأل عن موديل السيارة وسنة الصنع وعدد الكيلومترات إذا لم تعرفها
-- اقترح الباكدج المناسب بوضوح مع شرح مختصر لسبب اختيارك
+- لا تقترح باكدجًا قبل أن تعرف على الأقل عدد الكيلومترات
 - لو السؤال مش عن صيانة رينو أو السيارات، وجّه العميل بأدب
 
 عند اقتراح باكدج بشكل واضح ومحدد، ضع هذا المعرف في نهاية ردك بالضبط: [PACKAGE_SLUG: <slug>]
@@ -152,6 +157,7 @@ ${packagesInfo}
   let suggestedPackageName: string | null = null;
   let cleanReply = fullReply;
 
+  let suggestedPackageId: number | null = null;
   if (slugMatch) {
     suggestedPackageSlug = slugMatch[1].trim();
     cleanReply = fullReply.replace(/\[PACKAGE_SLUG:[^\]]+\]/g, "").trim();
@@ -159,7 +165,7 @@ ${packagesInfo}
       .select()
       .from(packagesTable)
       .where(eq(packagesTable.slug, suggestedPackageSlug));
-    if (pkg) suggestedPackageName = pkg.name;
+    if (pkg) { suggestedPackageName = pkg.name; suggestedPackageId = pkg.id; }
   }
 
   const updatedMessages = [
@@ -187,6 +193,7 @@ ${packagesInfo}
       sessionId: sessionKey,
       suggestedPackageSlug,
       suggestedPackageName,
+      suggestedPackageId,
     })}\n\n`
   );
   res.end();

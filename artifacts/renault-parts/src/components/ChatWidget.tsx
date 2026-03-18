@@ -9,6 +9,7 @@ type Message = {
   content: string;
   suggestedPackageSlug?: string | null;
   suggestedPackageName?: string | null;
+  suggestedPackageId?: number | null;
   streaming?: boolean;
 };
 
@@ -71,7 +72,7 @@ export default function ChatWidget() {
       const decoder = new TextDecoder();
       let buffer = "";
       let fullContent = "";
-      let doneMeta: { sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null } = {};
+      let doneMeta: { sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null; suggestedPackageId?: number | null } = {};
 
       while (true) {
         const { done, value } = await reader.read();
@@ -86,7 +87,7 @@ export default function ChatWidget() {
           const jsonStr = line.slice(6).trim();
           if (!jsonStr) continue;
 
-          let evt: { content?: string; done?: boolean; sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null };
+          let evt: { content?: string; done?: boolean; sessionId?: string; suggestedPackageSlug?: string | null; suggestedPackageName?: string | null; suggestedPackageId?: number | null };
           try { evt = JSON.parse(jsonStr); } catch { continue; }
 
           if (evt.content) {
@@ -97,7 +98,7 @@ export default function ChatWidget() {
           }
 
           if (evt.done) {
-            doneMeta = { sessionId: evt.sessionId, suggestedPackageSlug: evt.suggestedPackageSlug, suggestedPackageName: evt.suggestedPackageName };
+            doneMeta = { sessionId: evt.sessionId, suggestedPackageSlug: evt.suggestedPackageSlug, suggestedPackageName: evt.suggestedPackageName, suggestedPackageId: evt.suggestedPackageId };
           }
         }
       }
@@ -113,6 +114,7 @@ export default function ChatWidget() {
                 streaming: false,
                 suggestedPackageSlug: doneMeta.suggestedPackageSlug ?? null,
                 suggestedPackageName: doneMeta.suggestedPackageName ?? null,
+                suggestedPackageId: doneMeta.suggestedPackageId ?? null,
               }
             : m
         )
@@ -202,14 +204,14 @@ export default function ChatWidget() {
                       <span className="inline-block w-0.5 h-3.5 bg-primary/50 animate-pulse ml-0.5 align-middle" />
                     )}
                   </div>
-                  {!msg.streaming && msg.suggestedPackageSlug && msg.suggestedPackageName && (
+                  {!msg.streaming && msg.suggestedPackageId && msg.suggestedPackageName && (
                     <Link
-                      href={`/packages/${msg.suggestedPackageSlug}`}
+                      href={`/checkout/${msg.suggestedPackageId}`}
                       className="flex items-center gap-1.5 bg-accent text-primary text-xs font-bold px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
                       onClick={() => setOpen(false)}
                     >
                       <Package2 size={12} />
-                      اطلب: {msg.suggestedPackageName}
+                      اطلب الآن: {msg.suggestedPackageName}
                     </Link>
                   )}
                 </div>
