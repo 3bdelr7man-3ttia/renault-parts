@@ -204,6 +204,12 @@ export const GetPackageBySlugResponse = zod.object({
  */
 export const ListPartsQueryParams = zod.object({
   packageId: zod.coerce.number().optional(),
+  type: zod.coerce
+    .string()
+    .optional()
+    .describe(
+      "Filter by part type (filter, oil, spark_plug, tire, battery, etc.)",
+    ),
 });
 
 export const ListPartsResponseItem = zod.object({

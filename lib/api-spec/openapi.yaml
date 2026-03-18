@@ -218,6 +218,12 @@ paths:
           required: false
           schema:
             type: integer
+        - name: type
+          in: query
+          required: false
+          description: Filter by part type (filter, oil, spark_plug, tire, battery, etc.)
+          schema:
+            type: string
       responses:
         "200":
           description: List of parts

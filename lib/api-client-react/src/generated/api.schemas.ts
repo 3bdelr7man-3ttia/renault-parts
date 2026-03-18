@@ -226,6 +226,10 @@ export interface ChatResponse {
 
 export type ListPartsParams = {
   packageId?: number;
+  /**
+   * Filter by part type (filter, oil, spark_plug, tire, battery, etc.)
+   */
+  type?: string;
 };
 
 export type ListWorkshopsParams = {
