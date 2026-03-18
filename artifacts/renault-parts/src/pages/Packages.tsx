@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useListPackages } from '@workspace/api-client-react';
 import { PackageCard } from '@/components/PackageCard';
 import { Button } from '@/components/ui/button';
-import { Filter, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Filter, Search, Car, X, Pencil } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CarSelectorModal } from '@/components/CarSelectorModal';
+import { useCar } from '@/lib/car-context';
 
 const KILOMETER_FILTERS = [
   { label: 'الكل', value: null },
@@ -11,18 +13,37 @@ const KILOMETER_FILTERS = [
   { label: '40,000 كم', value: 40000 },
   { label: '60,000 كم', value: 60000 },
   { label: '100,000 كم', value: 100000 },
+  { label: 'طوارئ', value: 0 },
 ];
 
 export default function Packages() {
   const { data: packages, isLoading } = useListPackages();
   const [activeFilter, setActiveFilter] = useState<number | null>(null);
+  const [showCarModal, setShowCarModal] = useState(false);
+  const { car, clearCar } = useCar();
 
-  const filteredPackages = packages?.filter(pkg => 
-    activeFilter ? pkg.kmService === activeFilter : true
+  useEffect(() => {
+    if (!car) {
+      setShowCarModal(true);
+    }
+  }, []);
+
+  const filteredPackages = packages?.filter(pkg =>
+    activeFilter !== null ? pkg.kmService === activeFilter : true
   );
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Car Selector Modal */}
+      <AnimatePresence>
+        {showCarModal && (
+          <CarSelectorModal
+            onComplete={() => setShowCarModal(false)}
+            onSkip={() => setShowCarModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Page Header */}
       <div className="bg-primary py-16 px-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/pattern-bg.png)` }} />
@@ -31,6 +52,37 @@ export default function Packages() {
           <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto font-medium">
             اختر باكدج الصيانة المناسب لسيارتك بناءً على الكيلومترات. نوفر لك أفضل القطع بأنسب الأسعار في السوق.
           </p>
+
+          {/* Car Badge */}
+          {car && (
+            <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-bold">
+              <Car className="w-4 h-4 text-accent" />
+              <span>{car.model} - {car.year}</span>
+              <button
+                onClick={() => setShowCarModal(true)}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="تغيير السيارة"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={clearCar}
+                className="text-white/60 hover:text-white transition-colors"
+                aria-label="إزالة السيارة"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {!car && (
+            <button
+              onClick={() => setShowCarModal(true)}
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent text-primary font-bold text-sm hover:bg-accent/90 transition-colors"
+            >
+              <Car className="w-4 h-4" /> حدد سيارتك للحصول على توصيات مخصصة
+            </button>
+          )}
         </div>
       </div>
 
@@ -48,8 +100,8 @@ export default function Packages() {
                 variant={activeFilter === filter.value ? 'default' : 'outline'}
                 onClick={() => setActiveFilter(filter.value)}
                 className={`rounded-full px-6 font-bold transition-all ${
-                  activeFilter === filter.value 
-                    ? 'bg-primary text-white shadow-md' 
+                  activeFilter === filter.value
+                    ? 'bg-primary text-white shadow-md'
                     : 'bg-transparent text-primary border-primary/20 hover:bg-primary/5'
                 }`}
               >
@@ -73,7 +125,7 @@ export default function Packages() {
             <p className="text-muted-foreground">جرب تغيير فلتر الكيلومترات لرؤية المزيد من الخيارات.</p>
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             layout
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >

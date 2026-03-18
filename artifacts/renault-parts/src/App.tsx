@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/lib/auth-context";
+import { CarProvider } from "@/lib/car-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 // Pages
@@ -56,7 +57,9 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
-            <Router />
+            <CarProvider>
+              <Router />
+            </CarProvider>
           </AuthProvider>
         </WouterRouter>
         <Toaster />

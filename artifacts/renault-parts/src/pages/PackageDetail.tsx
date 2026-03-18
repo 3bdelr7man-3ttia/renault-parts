@@ -1,15 +1,38 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import { useGetPackageBySlug, getGetPackageBySlugQueryKey } from '@workspace/api-client-react';
-import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Tag, Check } from 'lucide-react';
+import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Tag, Car, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { useCar } from '@/lib/car-context';
+
+const PART_TYPE_LABELS: Record<string, string> = {
+  filter: 'فلتر',
+  oil: 'زيت',
+  spark_plugs: 'شمعات إشعال',
+  belt: 'سير',
+  brake: 'فرامل',
+  suspension: 'تعليق',
+  battery: 'بطارية',
+  tire: 'إطار',
+  lights: 'كشافات',
+};
+
+function getPartTypeLabel(type: string): string {
+  return PART_TYPE_LABELS[type] ?? type;
+}
+
+function isCompatible(compatibleModels: string | null | undefined, carModel: string): boolean {
+  if (!compatibleModels) return true;
+  return compatibleModels.includes(carModel) || compatibleModels.includes('جميع موديلات رينو');
+}
 
 export default function PackageDetail() {
   const [, params] = useRoute('/packages/:slug');
   const slug = params?.slug || '';
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { car } = useCar();
 
   const { data: pkg, isLoading, isError } = useGetPackageBySlug(slug, {
     query: { queryKey: getGetPackageBySlugQueryKey(slug), enabled: !!slug }
@@ -51,6 +74,8 @@ export default function PackageDetail() {
     }
   };
 
+  const savings = pkg.basePrice - pkg.sellPrice;
+
   return (
     <div className="bg-background min-h-screen pb-24">
       {/* Header */}
@@ -72,31 +97,65 @@ export default function PackageDetail() {
               </p>
             </div>
           </div>
+
+          {/* Car Banner */}
+          {car && (
+            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white text-sm font-bold">
+              <Car className="w-4 h-4 text-accent" />
+              العرض مخصص لـ {car.model} - {car.year}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-60px] relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+
+            {/* Car compatibility notice */}
+            {car && pkg.parts && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-4">
+                <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-blue-900 mb-1">تخصيص لسيارتك: {car.model}</p>
+                  <p className="text-sm text-blue-700">
+                    {pkg.parts.filter(p => isCompatible(p.compatibleModels, car.model)).length} قطعة من أصل {pkg.parts.length} متوافقة مباشرة مع سيارتك.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Parts List */}
             <div className="bg-white rounded-3xl p-8 shadow-xl shadow-black/5 border border-border/50">
               <div className="flex items-center gap-3 mb-6">
                 <SettingsIcon className="w-8 h-8 text-primary bg-primary/10 p-1.5 rounded-lg" />
                 <h2 className="text-2xl font-black text-foreground">القطع المشمولة في الباكدج</h2>
               </div>
-              
+
               <div className="grid sm:grid-cols-2 gap-4">
-                {pkg.parts?.map((part) => (
-                  <div key={part.id} className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/50 border border-border/50">
-                    <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-bold text-foreground">{part.name}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">النوع: {part.type === 'original' ? 'أصلي' : part.type === 'turkish' ? 'تركي' : 'صيني'}</p>
+                {pkg.parts?.map((part) => {
+                  const compatible = car ? isCompatible(part.compatibleModels, car.model) : true;
+                  return (
+                    <div
+                      key={part.id}
+                      className={`flex items-start gap-3 p-4 rounded-2xl border ${compatible ? 'bg-secondary/50 border-border/50' : 'bg-orange-50/50 border-orange-200/60'}`}
+                    >
+                      <CheckCircle2 className={`w-6 h-6 shrink-0 mt-0.5 ${compatible ? 'text-green-500' : 'text-orange-400'}`} />
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-foreground">{part.name}</h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {getPartTypeLabel(part.type)}
+                          {part.oemCode && <span className="mr-2 text-muted-foreground/60">OEM: {part.oemCode}</span>}
+                        </p>
+                        {!compatible && car && (
+                          <p className="text-xs text-orange-600 mt-1">تحقق من التوافق مع {car.model}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -106,34 +165,80 @@ export default function PackageDetail() {
                 <Tag className="w-8 h-8 text-accent bg-accent/20 p-1.5 rounded-lg" />
                 <h2 className="text-2xl font-black text-foreground">مقارنة الأسعار والجودة</h2>
               </div>
-              
+
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
                   <thead>
                     <tr className="border-b-2 border-border/80">
                       <th className="pb-4 font-bold text-muted-foreground">القطعة</th>
-                      <th className="pb-4 font-bold text-primary text-center">أصلي</th>
-                      <th className="pb-4 font-bold text-foreground text-center">تركي</th>
-                      <th className="pb-4 font-bold text-muted-foreground text-center">صيني</th>
+                      <th className="pb-4 font-bold text-primary text-center">
+                        <span className="inline-flex flex-col items-center">
+                          <span>أصلي</span>
+                          <span className="text-xs text-primary/60 font-normal">الجودة العليا</span>
+                        </span>
+                      </th>
+                      <th className="pb-4 font-bold text-amber-600 text-center">
+                        <span className="inline-flex flex-col items-center">
+                          <span>تركي</span>
+                          <span className="text-xs text-amber-600/60 font-normal">جودة عالية</span>
+                        </span>
+                      </th>
+                      <th className="pb-4 font-bold text-muted-foreground text-center">
+                        <span className="inline-flex flex-col items-center">
+                          <span>صيني</span>
+                          <span className="text-xs text-muted-foreground/60 font-normal">اقتصادي</span>
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {pkg.parts?.map((part) => (
                       <tr key={part.id} className="hover:bg-secondary/30 transition-colors">
-                        <td className="py-4 font-bold text-foreground">{part.name}</td>
-                        <td className="py-4 text-center font-semibold text-primary">
-                          {part.priceOriginal ? `${part.priceOriginal} ج.م` : '-'}
+                        <td className="py-4">
+                          <span className="font-bold text-foreground">{part.name}</span>
+                          <span className="block text-xs text-muted-foreground mt-0.5">{getPartTypeLabel(part.type)}</span>
                         </td>
-                        <td className="py-4 text-center font-medium">
-                          {part.priceTurkish ? `${part.priceTurkish} ج.م` : '-'}
+                        <td className="py-4 text-center font-semibold text-primary">
+                          {part.priceOriginal != null ? `${part.priceOriginal} ج.م` : '—'}
+                        </td>
+                        <td className="py-4 text-center font-medium text-amber-700">
+                          {part.priceTurkish != null ? `${part.priceTurkish} ج.م` : '—'}
                         </td>
                         <td className="py-4 text-center text-muted-foreground">
-                          {part.priceChinese ? `${part.priceChinese} ج.م` : '-'}
+                          {part.priceChinese != null ? `${part.priceChinese} ج.م` : '—'}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* Included Services */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-black/5 border border-border/50">
+              <h2 className="text-2xl font-black text-foreground mb-6">ماذا تشمل الخدمة؟</h2>
+              <div className="grid sm:grid-cols-3 gap-5">
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-primary/5 border border-primary/10">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-3">
+                    <Wrench className="w-6 h-6 text-white" />
+                  </div>
+                  <h4 className="font-black text-foreground mb-1">تركيب مجاني</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">تركيب احترافي في ورشنا الشريكة بدون رسوم إضافية</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-accent/10 border border-accent/20">
+                  <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center mb-3">
+                    <Shield className="w-6 h-6 text-primary" />
+                  </div>
+                  <h4 className="font-black text-foreground mb-1">ضمان {pkg.warrantyMonths} شهور</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">ضمان حقيقي على القطع والتركيب لراحة بالك</p>
+                </div>
+                <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-green-50 border border-green-200/60">
+                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-3">
+                    <CheckCircle2 className="w-6 h-6 text-white" />
+                  </div>
+                  <h4 className="font-black text-foreground mb-1">وفر {savings} ج.م</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">أسعارنا أقل من السوق بضمان أصلية القطع</p>
+                </div>
               </div>
             </div>
           </div>
@@ -142,7 +247,14 @@ export default function PackageDetail() {
           <div className="lg:col-span-1">
             <div className="sticky top-28 bg-primary rounded-3xl p-8 shadow-2xl border border-primary-foreground/10 text-white">
               <h3 className="text-xl font-bold text-accent mb-6">ملخص الطلب</h3>
-              
+
+              {car && (
+                <div className="mb-5 flex items-center gap-2 text-sm text-primary-foreground/80 bg-white/10 rounded-xl px-3 py-2">
+                  <Car className="w-4 h-4 text-accent shrink-0" />
+                  {car.model} — {car.year}
+                </div>
+              )}
+
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center text-primary-foreground/80">
                   <span>سعر القطع في السوق</span>
@@ -154,7 +266,7 @@ export default function PackageDetail() {
                 </div>
                 <div className="pt-4 border-t border-white/10 flex justify-between items-center text-green-400 font-bold">
                   <span>أنت توفر</span>
-                  <span>{pkg.basePrice - pkg.sellPrice} ج.م</span>
+                  <span>{savings} ج.م</span>
                 </div>
               </div>
 
@@ -173,8 +285,8 @@ export default function PackageDetail() {
                 </div>
               </div>
 
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="w-full h-14 text-lg font-bold bg-accent text-primary hover:bg-accent/90 rounded-xl"
                 onClick={handleOrderClick}
               >
@@ -192,7 +304,6 @@ export default function PackageDetail() {
   );
 }
 
-// Small helper component
 function SettingsIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
