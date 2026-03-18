@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, Search, Car, X, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CarSelectorModal } from '@/components/CarSelectorModal';
-import { useCar } from '@/lib/car-context';
+import { useCar, getRecommendedKm } from '@/lib/car-context';
 
 const KILOMETER_FILTERS = [
   { label: 'الكل', value: null },
@@ -21,6 +21,7 @@ export default function Packages() {
   const [activeFilter, setActiveFilter] = useState<number | null>(null);
   const [showCarModal, setShowCarModal] = useState(false);
   const { car, clearCar } = useCar();
+  const recommendedKm = car ? getRecommendedKm(car.year) : null;
 
   useEffect(() => {
     if (!car) {
@@ -68,8 +69,17 @@ export default function Packages() {
           </p>
 
           {/* Car Badge */}
+          {car && recommendedKm && (
+            <div className="mt-4 text-primary-foreground/80 text-sm font-medium">
+              بناءً على سنة سيارتك ({car.year}) نرشح لك{' '}
+              <span className="text-accent font-bold">
+                باكدج {(recommendedKm / 1000).toLocaleString('ar-EG')},000 كم
+              </span>
+            </div>
+          )}
+
           {car && (
-            <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-bold">
+            <div className="mt-3 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-bold">
               <Car className="w-4 h-4 text-accent" />
               <span>{car.model} - {car.year}</span>
               <button
@@ -144,7 +154,11 @@ export default function Packages() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {filteredPackages?.map((pkg) => (
-              <PackageCard key={pkg.id} pkg={pkg} />
+              <PackageCard
+                key={pkg.id}
+                pkg={pkg}
+                recommended={recommendedKm !== null && pkg.kmService === recommendedKm}
+              />
             ))}
           </motion.div>
         )}

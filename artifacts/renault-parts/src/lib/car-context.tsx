@@ -15,6 +15,22 @@ const CarContext = createContext<CarContextType | undefined>(undefined);
 
 const SESSION_KEY = 'renault_car_selection';
 
+/**
+ * Estimate the recommended km service tier based on car age.
+ * Assumes ~15,000 km/year average Egyptian driving.
+ * Returns the kmService value (20000 / 40000 / 60000 / 100000).
+ */
+export function getRecommendedKm(carYear: number): number {
+  const currentYear = new Date().getFullYear();
+  const ageYears = currentYear - carYear;
+  const estimatedKm = ageYears * 15000;
+
+  if (estimatedKm < 30000) return 20000;
+  if (estimatedKm < 50000) return 40000;
+  if (estimatedKm < 80000) return 60000;
+  return 100000;
+}
+
 export const RENAULT_MODELS = [
   'Renault Logan',
   'Renault Symbol',
