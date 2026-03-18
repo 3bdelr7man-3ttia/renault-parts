@@ -185,9 +185,6 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
-      '@workspace/integrations-openrouter-ai':
-        specifier: workspace:*
-        version: link:../../lib/integrations-openrouter-ai
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -422,6 +419,16 @@ importers:
         version: 3.25.76
 
   artifacts/renault-parts:
+    dependencies:
+      '@types/leaflet':
+        specifier: ^1.9.21
+        version: 1.9.21
+      leaflet:
+        specifier: ^1.9.4
+        version: 1.9.4
+      react-leaflet:
+        specifier: ^5.0.0
+        version: 5.0.0(leaflet@1.9.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0

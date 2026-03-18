@@ -49,11 +49,20 @@ function formatPrice(v: number | null | undefined) {
   return `${v.toLocaleString('ar-EG')} ج.م`;
 }
 
+function parseModels(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const s = raw.trim();
+  if (s.startsWith('[')) {
+    try { return JSON.parse(s) as string[]; } catch { /* fall through */ }
+  }
+  return s.split(',').map(m => m.trim()).filter(Boolean);
+}
+
 function PartCard({ part, origin }: {
   part: {
     id: number; name: string; oemCode: string | null; type: string;
     priceOriginal: number | null; priceTurkish: number | null; priceChinese: number | null;
-    compatibleModels: string[] | null; supplier: string | null;
+    compatibleModels: string | null; supplier: string | null;
   };
   origin: string;
 }) {
@@ -116,28 +125,32 @@ function PartCard({ part, origin }: {
         </div>
 
         {/* Compatible models toggle */}
-        {part.compatibleModels && part.compatibleModels.length > 0 && (
-          <>
-            <button
-              onClick={() => setExpanded(x => !x)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: '#7A95AA', fontSize: 12, fontWeight: 600, padding: 0, fontFamily: "'Almarai',sans-serif", marginBottom: 0 }}
-            >
-              الموديلات المتوافقة ({part.compatibleModels.length})
-              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-            <AnimatePresence>
-              {expanded && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                    {part.compatibleModels.map(m => (
-                      <span key={m} style={{ background: 'rgba(74,171,202,0.1)', border: '1px solid rgba(74,171,202,0.2)', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: '#4AABCA', fontWeight: 600 }}>{m}</span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
-        )}
+        {(() => {
+          const models = parseModels(part.compatibleModels);
+          if (models.length === 0) return null;
+          return (
+            <>
+              <button
+                onClick={() => setExpanded(x => !x)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: '#7A95AA', fontSize: 12, fontWeight: 600, padding: 0, fontFamily: "'Almarai',sans-serif", marginBottom: 0 }}
+              >
+                الموديلات المتوافقة ({models.length})
+                {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </button>
+              <AnimatePresence>
+                {expanded && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                      {models.map(m => (
+                        <span key={m} style={{ background: 'rgba(74,171,202,0.1)', border: '1px solid rgba(74,171,202,0.2)', borderRadius: 6, padding: '2px 8px', fontSize: 11, color: '#4AABCA', fontWeight: 600 }}>{m}</span>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          );
+        })()}
       </div>
     </motion.div>
   );

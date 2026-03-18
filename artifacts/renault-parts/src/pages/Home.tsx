@@ -59,16 +59,16 @@ const STATIC_PACKAGES = [
 ];
 
 const PUZZLE_PARTS = [
-  { id: 'oil',   icon: Droplets, label: 'زيت موبيل 1 أصلي',  price: 320, cat: 'سوائل'  },
-  { id: 'oil_f', icon: Settings, label: 'فلتر زيت',           price: 95,  cat: 'سوائل'  },
-  { id: 'air_f', icon: Wind,     label: 'فلتر هواء',          price: 95,  cat: 'فلاتر'  },
-  { id: 'cab_f', icon: Wind,     label: 'فلتر كابينة',        price: 75,  cat: 'فلاتر'  },
-  { id: 'brk',   icon: Disc,     label: 'طقم فرامل أمامي',    price: 680, cat: 'فرامل'  },
-  { id: 'pads',  icon: Disc,     label: 'تيل فرامل خلفي',     price: 420, cat: 'فرامل'  },
-  { id: 'spark', icon: Zap,      label: 'طقم شمعات إشعال',    price: 320, cat: 'كهرباء' },
-  { id: 'bat',   icon: Battery,  label: 'بطارية ٦٠ أمبير',    price: 850, cat: 'كهرباء' },
-  { id: 'tie',   icon: Settings, label: 'روبير كفرات',        price: 180, cat: 'عفشة'   },
-  { id: 'mnt',   icon: Settings, label: 'مساعد أمامي',        price: 550, cat: 'عفشة'   },
+  { id: 'oil',   icon: Droplets, label: 'زيت موبيل 1 أصلي',  price: 320, cat: 'سوائل',  img: partOilImg    },
+  { id: 'oil_f', icon: Settings, label: 'فلتر زيت',           price: 95,  cat: 'سوائل',  img: partOilImg    },
+  { id: 'air_f', icon: Wind,     label: 'فلتر هواء',          price: 95,  cat: 'فلاتر',  img: partAirImg    },
+  { id: 'cab_f', icon: Wind,     label: 'فلتر كابينة',        price: 75,  cat: 'فلاتر',  img: partAirImg    },
+  { id: 'brk',   icon: Disc,     label: 'طقم فرامل أمامي',    price: 680, cat: 'فرامل',  img: partBrakesImg },
+  { id: 'pads',  icon: Disc,     label: 'تيل فرامل خلفي',     price: 420, cat: 'فرامل',  img: partBrakesImg },
+  { id: 'spark', icon: Zap,      label: 'طقم شمعات إشعال',    price: 320, cat: 'كهرباء', img: partSparksImg },
+  { id: 'bat',   icon: Battery,  label: 'بطارية ٦٠ أمبير',    price: 850, cat: 'كهرباء', img: partBatImg    },
+  { id: 'tie',   icon: Settings, label: 'روبير كفرات',        price: 180, cat: 'عفشة',   img: partSuspImg   },
+  { id: 'mnt',   icon: Settings, label: 'مساعد أمامي',        price: 550, cat: 'عفشة',   img: partSuspImg   },
 ];
 
 const GIFT_TIERS = [
@@ -165,7 +165,7 @@ function BakoChat({ context }: { context: ComparePart }) {
   const bubbleOut = `linear-gradient(135deg,${G},${GL})`;
 
   return (
-    <div style={{ background: chatBg, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 340 }}>
+    <div style={{ background: chatBg, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 260 }}>
       <div style={{ background: chatHdr, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid rgba(200,151,74,0.15)` }}>
         <img src={bakoImg} alt="باكو" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV }} />
         <div>
@@ -250,43 +250,51 @@ function AiCompareSection() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
           {/* Original */}
-          <div style={{ background: B3, border: `1.5px solid ${SG}22`, borderRadius: 20, padding: 22, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -10, right: 20, background: SG, borderRadius: 999, padding: '3px 12px', fontSize: 10, fontWeight: 800, color: BG }}>{part.orig.badge}</div>
-            <div style={{ height: 120, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-              <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ background: B3, border: `1.5px solid ${SG}30`, borderRadius: 18, padding: 16, position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -9, right: 14, background: SG, borderRadius: 999, padding: '3px 10px', fontSize: 9, fontWeight: 800, color: BG }}>{part.orig.badge}</div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12, marginTop: 6 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+                <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8', marginBottom: 2, lineHeight: 1.3 }}>{part.orig.name}</div>
+                <div style={{ fontSize: 10, color: TD }}>{part.orig.origin}</div>
+                <div style={{ fontSize: 10, color: TD }}>ضمان {part.orig.warranty}</div>
+              </div>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#E8F0F8', marginBottom: 4 }}>{part.orig.name}</div>
-            <div style={{ fontSize: 10, color: TD, marginBottom: 14 }}>{part.orig.origin} · ضمان {part.orig.warranty}</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>نقاط الجودة</span>
-              <span style={{ color: SG, fontWeight: 800, fontSize: 14 }}>{part.orig.score}/100</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ color: TD, fontSize: 10, fontWeight: 700 }}>الجودة</span>
+              <span style={{ color: SG, fontWeight: 800, fontSize: 12 }}>{part.orig.score}/100</span>
             </div>
             <ScoreBar score={part.orig.score} color={SG} />
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: SG }}>{part.orig.price} ج.م</span>
+            <div style={{ marginTop: 12 }}>
+              <span style={{ fontSize: 20, fontWeight: 900, color: SG }}>{part.orig.price} ج.م</span>
             </div>
           </div>
 
           {/* Turkish */}
-          <div style={{ background: B3, border: `1.5px solid ${SK}22`, borderRadius: 20, padding: 22, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -10, right: 20, background: SK, borderRadius: 999, padding: '3px 12px', fontSize: 10, fontWeight: 800, color: BG }}>{part.turk.badge}</div>
-            <div style={{ position: 'absolute', top: 12, left: 12, background: `rgba(200,151,74,0.9)`, borderRadius: 8, padding: '4px 10px', fontSize: 10, fontWeight: 800, color: BG }}>
-              وفّر {savings} ج.م
+          <div style={{ background: B3, border: `1.5px solid ${SK}30`, borderRadius: 18, padding: 16, position: 'relative' }}>
+            <div style={{ position: 'absolute', top: -9, right: 14, background: SK, borderRadius: 999, padding: '3px 10px', fontSize: 9, fontWeight: 800, color: BG }}>{part.turk.badge}</div>
+            <div style={{ position: 'absolute', top: 10, left: 10, background: `rgba(200,151,74,0.85)`, borderRadius: 7, padding: '3px 7px', fontSize: 9, fontWeight: 800, color: BG }}>وفّر {savings} ج.م</div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12, marginTop: 6 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+                <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'hue-rotate(180deg) saturate(0.7)' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8', marginBottom: 2, lineHeight: 1.3 }}>{part.turk.name}</div>
+                <div style={{ fontSize: 10, color: TD }}>{part.turk.origin}</div>
+                <div style={{ fontSize: 10, color: TD }}>ضمان {part.turk.warranty}</div>
+              </div>
             </div>
-            <div style={{ height: 120, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-              <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'hue-rotate(180deg) saturate(0.7)' }} />
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#E8F0F8', marginBottom: 4 }}>{part.turk.name}</div>
-            <div style={{ fontSize: 10, color: TD, marginBottom: 14 }}>{part.turk.origin} · ضمان {part.turk.warranty}</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>نقاط الجودة</span>
-              <span style={{ color: SK, fontWeight: 800, fontSize: 14 }}>{part.turk.score}/100</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ color: TD, fontSize: 10, fontWeight: 700 }}>الجودة</span>
+              <span style={{ color: SK, fontWeight: 800, fontSize: 12 }}>{part.turk.score}/100</span>
             </div>
             <ScoreBar score={part.turk.score} color={SK} />
-            <div style={{ marginTop: 16 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: SK }}>{part.turk.price} ج.م</span>
+            <div style={{ marginTop: 12 }}>
+              <span style={{ fontSize: 20, fontWeight: 900, color: SK }}>{part.turk.price} ج.م</span>
             </div>
           </div>
         </div>
@@ -732,7 +740,52 @@ export default function Home() {
             </div>
 
             {/* Sidebar */}
-            <div style={{ position: 'sticky', top: 80 }}>
+            <div style={{ position: 'sticky', top: 80, display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* ── Puzzle Visual (shown when ≥2 parts selected) ── */}
+              {selected.size >= 2 && (
+                <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${G},transparent)` }} />
+                  <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8' }}>🧩 باكدجك يتشكّل</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: G, background: 'rgba(200,151,74,0.1)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '2px 8px' }}>{selected.size} قطعة</span>
+                  </div>
+                  <div style={{ padding: '0 14px 14px', display: 'grid', gridTemplateColumns: selected.size >= 4 ? 'repeat(3,1fr)' : 'repeat(2,1fr)', gap: 7 }}>
+                    {[...selected].map((id, idx) => {
+                      const p = PUZZLE_PARTS.find(x => x.id === id)!;
+                      if (!p) return null;
+                      const puzColors = [G, SK, LV, SG, GL, TD];
+                      const borderCol = puzColors[idx % puzColors.length];
+                      return (
+                        <div key={id} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: `2px solid ${borderCol}55`, aspectRatio: '1', cursor: 'pointer', transition: 'transform .2s', boxShadow: `0 4px 14px rgba(0,0,0,0.3), inset 0 0 0 1px ${borderCol}22` }}
+                          onClick={() => togglePart(id)}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = ''}>
+                          <img src={p.img} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85)' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom,transparent 30%,rgba(0,0,0,0.75))` }} />
+                          <div style={{ position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: '50%', background: borderCol, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: BG }}>✓</div>
+                          <div style={{ position: 'absolute', bottom: 4, right: 0, left: 0, padding: '0 6px' }}>
+                            <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1.2, textAlign: 'center', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{p.label.length > 12 ? p.label.slice(0,12) + '…' : p.label}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* Empty placeholder slots */}
+                    {selected.size < 6 && selected.size < 4 && (
+                      <div style={{ borderRadius: 12, border: '2px dashed rgba(200,151,74,0.18)', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 18, opacity: 0.3 }}>🧩</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(200,151,74,0.35)' }}>أضف قطعة</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ borderTop: `1px solid rgba(255,255,255,0.05)`, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: TD }}>القطع بتتكامل مع بعض 🔧</span>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: G }}>{total.toLocaleString()} ج.م</span>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Summary card ── */}
               <div style={{ background: B3, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 20, padding: 22 }}>
                 <h4 style={{ fontSize: 15, fontWeight: 800, color: '#E8F0F8', marginBottom: 18 }}>ملخص الباكدج</h4>
                 <div style={{ marginBottom: 18 }}>
