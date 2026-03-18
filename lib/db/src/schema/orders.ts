@@ -19,6 +19,7 @@ export const ordersTable = pgTable("orders", {
   carModel: text("car_model").notNull(),
   carYear: integer("car_year").notNull(),
   notes: text("notes"),
+  paymobRef: text("paymob_ref"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

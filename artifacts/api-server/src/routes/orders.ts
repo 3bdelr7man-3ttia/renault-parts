@@ -106,15 +106,17 @@ router.post("/orders", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const isCash = paymentMethod === "cash";
+
   const [order] = await db
     .insert(ordersTable)
     .values({
       userId: authReq.user.id,
       packageId,
       workshopId: workshopId ?? null,
-      status: "pending",
+      status: isCash ? "confirmed" : "pending",
       paymentMethod,
-      paymentStatus: "pending",
+      paymentStatus: isCash ? "paid" : "pending",
       total: pkg.sellPrice,
       deliveryAddress: deliveryAddress ?? null,
       deliveryArea: deliveryArea ?? null,

@@ -27,6 +27,8 @@ import type {
   CreateReviewBody,
   ErrorResponse,
   HealthStatus,
+  InitiatePaymentBody,
+  InitiatePaymentResponse,
   ListAdminOrdersParams,
   ListPartsParams,
   ListWorkshopsParams,
@@ -34,6 +36,7 @@ import type {
   Order,
   Package,
   Part,
+  PaymentCallbackBody,
   RegisterBody,
   Review,
   SuccessResponse,
@@ -1220,6 +1223,178 @@ export const useCreateReview = <
   TContext
 > => {
   return useMutation(getCreateReviewMutationOptions(options));
+};
+
+/**
+ * @summary Initiate electronic payment for an order (PayMob)
+ */
+export const getInitiatePaymentUrl = () => {
+  return `/api/payment/initiate`;
+};
+
+export const initiatePayment = async (
+  initiatePaymentBody: InitiatePaymentBody,
+  options?: RequestInit,
+): Promise<InitiatePaymentResponse> => {
+  return customFetch<InitiatePaymentResponse>(getInitiatePaymentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(initiatePaymentBody),
+  });
+};
+
+export const getInitiatePaymentMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof initiatePayment>>,
+    TError,
+    { data: BodyType<InitiatePaymentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof initiatePayment>>,
+  TError,
+  { data: BodyType<InitiatePaymentBody> },
+  TContext
+> => {
+  const mutationKey = ["initiatePayment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof initiatePayment>>,
+    { data: BodyType<InitiatePaymentBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return initiatePayment(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InitiatePaymentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof initiatePayment>>
+>;
+export type InitiatePaymentMutationBody = BodyType<InitiatePaymentBody>;
+export type InitiatePaymentMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Initiate electronic payment for an order (PayMob)
+ */
+export const useInitiatePayment = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof initiatePayment>>,
+    TError,
+    { data: BodyType<InitiatePaymentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof initiatePayment>>,
+  TError,
+  { data: BodyType<InitiatePaymentBody> },
+  TContext
+> => {
+  return useMutation(getInitiatePaymentMutationOptions(options));
+};
+
+/**
+ * @summary PayMob payment webhook callback
+ */
+export const getPaymentCallbackUrl = () => {
+  return `/api/payment/callback`;
+};
+
+export const paymentCallback = async (
+  paymentCallbackBody: PaymentCallbackBody,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getPaymentCallbackUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(paymentCallbackBody),
+  });
+};
+
+export const getPaymentCallbackMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paymentCallback>>,
+    TError,
+    { data: BodyType<PaymentCallbackBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof paymentCallback>>,
+  TError,
+  { data: BodyType<PaymentCallbackBody> },
+  TContext
+> => {
+  const mutationKey = ["paymentCallback"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof paymentCallback>>,
+    { data: BodyType<PaymentCallbackBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return paymentCallback(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PaymentCallbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof paymentCallback>>
+>;
+export type PaymentCallbackMutationBody = BodyType<PaymentCallbackBody>;
+export type PaymentCallbackMutationError = ErrorType<unknown>;
+
+/**
+ * @summary PayMob payment webhook callback
+ */
+export const usePaymentCallback = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paymentCallback>>,
+    TError,
+    { data: BodyType<PaymentCallbackBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof paymentCallback>>,
+  TError,
+  { data: BodyType<PaymentCallbackBody> },
+  TContext
+> => {
+  return useMutation(getPaymentCallbackMutationOptions(options));
 };
 
 /**

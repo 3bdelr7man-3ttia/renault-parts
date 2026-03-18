@@ -395,6 +395,28 @@ export const CreateReviewBody = zod.object({
 });
 
 /**
+ * @summary Initiate electronic payment for an order (PayMob)
+ */
+export const InitiatePaymentBody = zod.object({
+  orderId: zod.number(),
+});
+
+export const InitiatePaymentResponse = zod.object({
+  iframeUrl: zod.string().describe("PayMob payment iframe URL to redirect to"),
+  orderId: zod.number(),
+  paymentToken: zod.string(),
+});
+
+/**
+ * @summary PayMob payment webhook callback
+ */
+export const PaymentCallbackBody = zod.object({}).passthrough();
+
+export const PaymentCallbackResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary Get admin dashboard statistics
  */
 export const GetAdminStatsResponse = zod.object({

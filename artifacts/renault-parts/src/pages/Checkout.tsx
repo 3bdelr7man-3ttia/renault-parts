@@ -1,24 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
-import { useGetPackageBySlug, useCreateOrder, useListWorkshops } from '@workspace/api-client-react';
+import { useListPackages, useCreateOrder, useListWorkshops, useInitiatePayment } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, CreditCard, Banknote, CarFront, Loader2, CheckCircle2 } from 'lucide-react';
-import { z } from 'zod';
+import {
+  MapPin, CreditCard, Banknote, CarFront, Loader2, CheckCircle2,
+  Package2, Home, AlertCircle, Wrench
+} from 'lucide-react';
 
-// We fetch by ID but the hook we have generated is getPackageBySlug.
-// Looking at the OpenAPI, there is no getPackageById, only /packages/{slug}.
-// We will assume the parameter is actually the ID since we linked to /checkout/:id earlier.
-// WAIT. We linked to /checkout/pkg.id. But the API has /packages/{slug}.
-// I should adjust the route to use slug or fetch all and find by ID.
-// Let's use useListPackages to find the package by ID for simplicity if we only have slug endpoint.
-// Actually, let's fix the link in PackageDetail to pass the slug or use listPackages to find it.
-// I'll use the ID from the URL and fetch listPackages, find by ID.
+const ALEX_AREAS = [
+  'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي', 'المنشية',
+  'كليوباترا', 'ميامي', 'الإبراهيمية', 'سيدي بشر', 'الشاطبي',
+  'الدخيلة', 'العامرية', 'بيكوزي', 'مصطفى كامل', 'المزاريطة',
+  'زيزينيا', 'الورديان', 'البيطاش', 'كرموز', 'باب شرق'
+];
 
-import { useListPackages } from '@workspace/api-client-react';
+const STEP_LABELS = ['السيارة', 'الباكدج', 'التركيب', 'الدفع', 'التأكيد'];
+
+type Step = 1 | 2 | 3 | 4 | 5;
+
+interface FormData {
+  carModel: string;
+  carYear: number;
+  installationType: 'workshop' | 'home';
+  workshopId: number | null;
+  deliveryAddress: string;
+  deliveryArea: string;
+  paymentMethod: 'cash' | 'card';
+}
 
 export default function Checkout() {
   const [, params] = useRoute('/checkout/:id');
@@ -28,31 +40,63 @@ export default function Checkout() {
   const { toast } = useToast();
 
   const { data: packages, isLoading: isLoadingPackages } = useListPackages();
+  const { data: workshops } = useListWorkshops();
   const pkg = packages?.find(p => p.id === packageId);
 
-  const { data: workshops } = useListWorkshops();
+  const [step, setStep] = useState<Step>(1);
+  const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
+  const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    carModel: user?.carModel || '',
-    carYear: user?.carYear || new Date().getFullYear(),
-    installationType: 'workshop', // 'workshop' | 'home'
-    workshopId: null as number | null,
-    deliveryAddress: user?.address || '',
-    paymentMethod: 'cash', // 'cash' | 'card'
+  const [formData, setFormData] = useState<FormData>({
+    carModel: user?.carModel ?? '',
+    carYear: user?.carYear ?? new Date().getFullYear(),
+    installationType: 'workshop',
+    workshopId: null,
+    deliveryAddress: '',
+    deliveryArea: '',
+    paymentMethod: 'cash',
   });
 
-  const { mutate: createOrder, isPending } = useCreateOrder({
+  useEffect(() => {
+    if (user?.carModel && !formData.carModel) {
+      setFormData(f => ({ ...f, carModel: user.carModel ?? '' }));
+    }
+  }, [user]);
+
+  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder({
     request: getAuthHeaders(),
     mutation: {
-      onSuccess: () => {
-        toast({ title: "تم تأكيد الطلب!", description: "سنتواصل معك قريباً لتحديد الموعد." });
-        setLocation('/my-orders');
+      onSuccess: async (order) => {
+        setConfirmedOrderId(order.id);
+        if (formData.paymentMethod === 'cash') {
+          setStep(5);
+        } else {
+          setIsRedirectingToPayment(true);
+          try {
+            await initiatePaymentAsync({ data: { orderId: order.id } });
+          } catch {
+            toast({ variant: 'destructive', title: 'خطأ', description: 'تعذّر تهيئة بوابة الدفع. حاول لاحقاً.' });
+            setIsRedirectingToPayment(false);
+          }
+        }
       },
-      onError: (err) => {
-        toast({ variant: "destructive", title: "خطأ", description: "حدث خطأ أثناء تأكيد الطلب" });
-      }
-    }
+      onError: () => {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'حدث خطأ أثناء تأكيد الطلب. حاول مرة أخرى.' });
+      },
+    },
+  });
+
+  const { mutateAsync: initiatePaymentAsync } = useInitiatePayment({
+    request: getAuthHeaders(),
+    mutation: {
+      onSuccess: (data) => {
+        window.location.href = data.iframeUrl;
+      },
+      onError: () => {
+        setIsRedirectingToPayment(false);
+        toast({ variant: 'destructive', title: 'خطأ في بوابة الدفع', description: 'تواصل مع الدعم الفني لإتمام الدفع.' });
+      },
+    },
   });
 
   if (!user) {
@@ -60,19 +104,42 @@ export default function Checkout() {
     return null;
   }
 
-  if (isLoadingPackages) return <div className="min-h-screen flex justify-center items-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!pkg) return <div className="text-center py-20">الباكدج غير موجود</div>;
+  if (isLoadingPackages) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  const handleSubmit = () => {
+  if (!pkg) {
+    return (
+      <div className="text-center py-20">
+        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+        <p className="text-xl font-bold">الباكدج غير موجود</p>
+        <Link href="/packages" className="text-primary underline mt-4 block">تصفح الباكدجات</Link>
+      </div>
+    );
+  }
+
+  const canAdvanceStep1 = formData.carModel.trim().length > 0 && formData.carYear > 1990;
+  const canAdvanceStep3 =
+    (formData.installationType === 'workshop' && formData.workshopId !== null) ||
+    (formData.installationType === 'home' && formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
+
+  const selectedWorkshop = workshops?.find(w => w.id === formData.workshopId);
+
+  const handleConfirmOrder = () => {
     createOrder({
       data: {
         packageId: pkg.id,
         carModel: formData.carModel,
         carYear: Number(formData.carYear),
         paymentMethod: formData.paymentMethod,
-        workshopId: formData.installationType === 'workshop' ? formData.workshopId : null,
-        deliveryAddress: formData.installationType === 'home' ? formData.deliveryAddress : null,
-      }
+        workshopId: formData.installationType === 'workshop' ? formData.workshopId ?? undefined : undefined,
+        deliveryAddress: formData.installationType === 'home' ? formData.deliveryAddress : undefined,
+        deliveryArea: formData.installationType === 'home' ? formData.deliveryArea : undefined,
+      },
     });
   };
 
@@ -81,206 +148,501 @@ export default function Checkout() {
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-3xl font-black text-primary mb-8 text-center">إتمام الطلب</h1>
 
-        {/* Stepper Progress */}
-        <div className="flex justify-between items-center mb-12 relative px-4">
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-border -z-10 -translate-y-1/2" />
-          <div className="absolute top-1/2 right-0 h-1 bg-primary -z-10 -translate-y-1/2 transition-all duration-500" style={{ width: `${((step - 1) / 2) * 100}%` }} />
-          
-          {[
-            { num: 1, label: 'السيارة', icon: CarFront },
-            { num: 2, label: 'التركيب', icon: MapPin },
-            { num: 3, label: 'الدفع', icon: CreditCard }
-          ].map(s => (
-            <div key={s.num} className="flex flex-col items-center gap-2">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
-                step >= s.num ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white text-muted-foreground border-2 border-border'
-              }`}>
-                {step > s.num ? <CheckCircle2 className="w-6 h-6" /> : <s.icon className="w-5 h-5" />}
-              </div>
-              <span className={`text-sm font-bold ${step >= s.num ? 'text-primary' : 'text-muted-foreground'}`}>{s.label}</span>
-            </div>
-          ))}
-        </div>
+        <StepProgress step={step} />
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Main Form Area */}
+        <div className="grid md:grid-cols-3 gap-8 mt-10">
           <div className="md:col-span-2">
             <div className="bg-white rounded-3xl p-8 shadow-xl shadow-black/5 border border-border/50">
-              
-              {/* Step 1: Car Details */}
+
               {step === 1 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">بيانات السيارة</h2>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="font-bold">موديل السيارة</Label>
-                      <Input 
-                        value={formData.carModel} 
-                        onChange={e => setFormData({...formData, carModel: e.target.value})}
-                        className="h-12 rounded-xl mt-1" 
-                        placeholder="مثال: لوجان 2018" 
-                      />
-                    </div>
-                    <div>
-                      <Label className="font-bold">سنة الصنع</Label>
-                      <Input 
-                        type="number"
-                        value={formData.carYear} 
-                        onChange={e => setFormData({...formData, carYear: parseInt(e.target.value) || 2020})}
-                        className="h-12 rounded-xl mt-1" 
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                  <Button 
-                    className="w-full h-14 rounded-xl mt-8 font-bold text-lg" 
-                    onClick={() => formData.carModel && setStep(2)}
-                    disabled={!formData.carModel}
-                  >
-                    متابعة للتركيب
-                  </Button>
-                </div>
+                <Step1Car
+                  formData={formData}
+                  onChange={setFormData}
+                  onNext={() => setStep(2)}
+                  canAdvance={canAdvanceStep1}
+                />
               )}
 
-              {/* Step 2: Installation */}
               {step === 2 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">طريقة التركيب</h2>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <button 
-                      onClick={() => setFormData({...formData, installationType: 'workshop'})}
-                      className={`p-4 rounded-2xl border-2 text-center transition-all ${
-                        formData.installationType === 'workshop' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      <MapPin className="w-8 h-8 mx-auto mb-2" />
-                      <span className="font-bold">في الورشة</span>
-                    </button>
-                    <button 
-                      onClick={() => setFormData({...formData, installationType: 'home'})}
-                      className={`p-4 rounded-2xl border-2 text-center transition-all ${
-                        formData.installationType === 'home' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      <CarFront className="w-8 h-8 mx-auto mb-2" />
-                      <span className="font-bold">توصيل للبيت</span>
-                    </button>
-                  </div>
-
-                  {formData.installationType === 'workshop' ? (
-                    <div className="space-y-4">
-                      <Label className="font-bold">اختر الورشة الأقرب لك</Label>
-                      <div className="grid gap-3">
-                        {workshops?.map(w => (
-                          <div 
-                            key={w.id}
-                            onClick={() => setFormData({...formData, workshopId: w.id})}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${formData.workshopId === w.id ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                          >
-                            <h4 className="font-bold text-foreground">{w.name}</h4>
-                            <p className="text-sm text-muted-foreground">{w.area} - {w.address}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Label className="font-bold">عنوان التوصيل بالتفصيل</Label>
-                      <Input 
-                        value={formData.deliveryAddress}
-                        onChange={e => setFormData({...formData, deliveryAddress: e.target.value})}
-                        className="h-12 rounded-xl mt-1" 
-                        placeholder="المنطقة، الشارع، رقم العمارة..." 
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-4 mt-8">
-                    <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={() => setStep(1)}>رجوع</Button>
-                    <Button 
-                      className="w-2/3 h-14 rounded-xl font-bold text-lg" 
-                      onClick={() => setStep(3)}
-                      disabled={(formData.installationType === 'workshop' && !formData.workshopId) || (formData.installationType === 'home' && !formData.deliveryAddress)}
-                    >
-                      متابعة للدفع
-                    </Button>
-                  </div>
-                </div>
+                <Step2Package
+                  pkg={pkg}
+                  onNext={() => setStep(3)}
+                  onBack={() => setStep(1)}
+                />
               )}
 
-              {/* Step 3: Payment */}
               {step === 3 && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-2xl font-bold text-foreground mb-6">طريقة الدفع</h2>
-                  
-                  <div className="grid gap-4">
-                    <button 
-                      onClick={() => setFormData({...formData, paymentMethod: 'cash'})}
-                      className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
-                        formData.paymentMethod === 'cash' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      <Banknote className="w-8 h-8" />
-                      <div>
-                        <div className="font-bold text-lg">كاش عند الاستلام</div>
-                        <div className="text-sm opacity-80">الدفع نقداً بعد التركيب أو الاستلام</div>
-                      </div>
-                    </button>
+                <Step3Installation
+                  formData={formData}
+                  onChange={setFormData}
+                  workshops={workshops ?? []}
+                  onNext={() => setStep(4)}
+                  onBack={() => setStep(2)}
+                  canAdvance={canAdvanceStep3}
+                />
+              )}
 
-                    <button 
-                      onClick={() => setFormData({...formData, paymentMethod: 'card'})}
-                      className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
-                        formData.paymentMethod === 'card' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      <CreditCard className="w-8 h-8" />
-                      <div>
-                        <div className="font-bold text-lg">دفع إلكتروني (PayMob / فوري)</div>
-                        <div className="text-sm opacity-80">سيتم تحويلك لبوابة الدفع الآمنة</div>
-                      </div>
-                    </button>
-                  </div>
+              {step === 4 && (
+                <Step4Payment
+                  formData={formData}
+                  onChange={setFormData}
+                  onConfirm={handleConfirmOrder}
+                  onBack={() => setStep(3)}
+                  isPending={isCreatingOrder || isRedirectingToPayment}
+                />
+              )}
 
-                  <div className="flex gap-4 mt-8">
-                    <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={() => setStep(2)}>رجوع</Button>
-                    <Button 
-                      className="w-2/3 h-14 rounded-xl font-bold text-lg bg-accent text-primary hover:bg-accent/90 shadow-lg shadow-accent/20" 
-                      onClick={handleSubmit}
-                      disabled={isPending}
-                    >
-                      {isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'تأكيد الطلب نهائياً'}
-                    </Button>
-                  </div>
-                </div>
+              {step === 5 && confirmedOrderId && (
+                <Step5Confirmation
+                  orderId={confirmedOrderId}
+                  paymentMethod={formData.paymentMethod}
+                />
               )}
             </div>
           </div>
 
-          {/* Order Summary Sidebar */}
           <div className="md:col-span-1">
-            <div className="bg-primary text-white rounded-3xl p-6 shadow-xl sticky top-28 border border-white/10">
-              <h3 className="font-bold text-accent mb-6 text-xl">ملخص الطلب</h3>
-              <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-white/60 text-sm mb-1">الباكدج</p>
-                  <p className="font-bold">{pkg.name}</p>
-                </div>
-                <div>
-                  <p className="text-white/60 text-sm mb-1">الضمان</p>
-                  <p className="font-bold">{pkg.warrantyMonths} شهور</p>
-                </div>
-              </div>
-              <div className="pt-6 border-t border-white/20">
-                <div className="flex justify-between items-center text-xl font-black">
-                  <span>الإجمالي</span>
-                  <span className="text-accent">{pkg.sellPrice} ج.م</span>
-                </div>
-              </div>
+            <OrderSummary pkg={pkg} formData={formData} selectedWorkshop={selectedWorkshop} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepProgress({ step }: { step: Step }) {
+  const icons = [CarFront, Package2, Wrench, CreditCard, CheckCircle2];
+  return (
+    <div className="flex justify-between items-center relative px-2">
+      <div className="absolute top-6 left-0 right-0 h-1 bg-border -z-10" />
+      <div
+        className="absolute top-6 right-0 h-1 bg-primary -z-10 transition-all duration-500"
+        style={{ width: `${((step - 1) / (STEP_LABELS.length - 1)) * 100}%` }}
+      />
+      {STEP_LABELS.map((label, i) => {
+        const num = (i + 1) as Step;
+        const Icon = icons[i];
+        const isDone = step > num;
+        const isActive = step === num;
+        return (
+          <div key={num} className="flex flex-col items-center gap-2">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+              isDone ? 'bg-green-500 text-white' :
+              isActive ? 'bg-primary text-white shadow-lg shadow-primary/30' :
+              'bg-white text-muted-foreground border-2 border-border'
+            }`}>
+              {isDone ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-5 h-5" />}
+            </div>
+            <span className={`text-xs font-bold hidden sm:block ${isActive ? 'text-primary' : isDone ? 'text-green-600' : 'text-muted-foreground'}`}>
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Step1Car({ formData, onChange, onNext, canAdvance }: {
+  formData: FormData;
+  onChange: (f: FormData) => void;
+  onNext: () => void;
+  canAdvance: boolean;
+}) {
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <h2 className="text-2xl font-bold text-foreground">بيانات السيارة</h2>
+      <div className="space-y-4">
+        <div>
+          <Label className="font-bold">موديل السيارة</Label>
+          <Input
+            value={formData.carModel}
+            onChange={e => onChange({ ...formData, carModel: e.target.value })}
+            className="h-12 rounded-xl mt-1"
+            placeholder="مثال: رينو لوجان 2018"
+          />
+        </div>
+        <div>
+          <Label className="font-bold">سنة الصنع</Label>
+          <Input
+            type="number"
+            value={formData.carYear}
+            onChange={e => onChange({ ...formData, carYear: parseInt(e.target.value) || 2020 })}
+            className="h-12 rounded-xl mt-1"
+            dir="ltr"
+            min={1990}
+            max={new Date().getFullYear() + 1}
+          />
+        </div>
+      </div>
+      <Button className="w-full h-14 rounded-xl font-bold text-lg" onClick={onNext} disabled={!canAdvance}>
+        متابعة لاختيار الباكدج
+      </Button>
+    </div>
+  );
+}
+
+function Step2Package({ pkg, onNext, onBack }: {
+  pkg: { id: number; name: string; description?: string | null; sellPrice: string | number; warrantyMonths: number };
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <h2 className="text-2xl font-bold text-foreground">الباكدج المختار</h2>
+      <div className="bg-primary/5 border-2 border-primary rounded-2xl p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Package2 className="w-7 h-7 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-black text-primary">{pkg.name}</h3>
+            {pkg.description && (
+              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{pkg.description}</p>
+            )}
+            <div className="flex items-center gap-4 mt-3">
+              <span className="bg-accent/80 text-primary font-black px-3 py-1 rounded-full text-sm">
+                {Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م
+              </span>
+              <span className="text-sm text-muted-foreground">ضمان {pkg.warrantyMonths} شهور</span>
             </div>
           </div>
         </div>
       </div>
+      <div className="flex gap-4 mt-8">
+        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack}>رجوع</Button>
+        <Button className="w-2/3 h-14 rounded-xl font-bold text-lg" onClick={onNext}>متابعة للتركيب</Button>
+      </div>
+    </div>
+  );
+}
+
+function Step3Installation({ formData, onChange, workshops, onNext, onBack, canAdvance }: {
+  formData: FormData;
+  onChange: (f: FormData) => void;
+  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null }>;
+  onNext: () => void;
+  onBack: () => void;
+  canAdvance: boolean;
+}) {
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <h2 className="text-2xl font-bold text-foreground">طريقة التركيب</h2>
+
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={() => onChange({ ...formData, installationType: 'workshop' })}
+          className={`p-4 rounded-2xl border-2 text-center transition-all ${
+            formData.installationType === 'workshop'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/50'
+          }`}
+        >
+          <MapPin className="w-8 h-8 mx-auto mb-2" />
+          <span className="font-bold text-sm">في الورشة</span>
+        </button>
+        <button
+          onClick={() => onChange({ ...formData, installationType: 'home' })}
+          className={`p-4 rounded-2xl border-2 text-center transition-all ${
+            formData.installationType === 'home'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/50'
+          }`}
+        >
+          <Home className="w-8 h-8 mx-auto mb-2" />
+          <span className="font-bold text-sm">توصيل للبيت</span>
+        </button>
+      </div>
+
+      {formData.installationType === 'workshop' ? (
+        <WorkshopPicker workshops={workshops} selected={formData.workshopId} onSelect={id => onChange({ ...formData, workshopId: id })} />
+      ) : (
+        <HomePicker
+          address={formData.deliveryAddress}
+          area={formData.deliveryArea}
+          onAddressChange={v => onChange({ ...formData, deliveryAddress: v })}
+          onAreaChange={v => onChange({ ...formData, deliveryArea: v })}
+        />
+      )}
+
+      <div className="flex gap-4 mt-8">
+        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack}>رجوع</Button>
+        <Button className="w-2/3 h-14 rounded-xl font-bold text-lg" onClick={onNext} disabled={!canAdvance}>
+          متابعة للدفع
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function WorkshopPicker({ workshops, selected, onSelect }: {
+  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null }>;
+  selected: number | null;
+  onSelect: (id: number) => void;
+}) {
+  const selectedWorkshop = workshops.find(w => w.id === selected);
+
+  return (
+    <div className="space-y-4">
+      <Label className="font-bold">اختر الورشة الأقرب لك</Label>
+
+      <WorkshopMap workshops={workshops} selected={selected} onSelect={onSelect} />
+
+      <div className="grid gap-3 max-h-64 overflow-y-auto">
+        {workshops.map(w => (
+          <div
+            key={w.id}
+            onClick={() => onSelect(w.id)}
+            className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              selected === w.id
+                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <MapPin className={`w-5 h-5 flex-shrink-0 ${selected === w.id ? 'text-primary' : 'text-muted-foreground'}`} />
+              <div>
+                <h4 className="font-bold text-foreground text-sm">{w.name}</h4>
+                <p className="text-xs text-muted-foreground">{w.area} — {w.address}</p>
+              </div>
+              {selected === w.id && <CheckCircle2 className="w-5 h-5 text-primary mr-auto" />}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WorkshopMap({ workshops, selected, onSelect }: {
+  workshops: Array<{ id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null }>;
+  selected: number | null;
+  onSelect: (id: number) => void;
+}) {
+  const mapRef = React.useRef<HTMLDivElement>(null);
+  const mapInstanceRef = React.useRef<unknown>(null);
+
+  useEffect(() => {
+    let map: unknown;
+
+    async function initMap() {
+      if (!mapRef.current || mapInstanceRef.current) return;
+
+      const L = (await import('leaflet')).default;
+      await import('leaflet/dist/leaflet.css');
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+
+      const leafletMap = L.map(mapRef.current).setView([31.2001, 29.9187], 12);
+      map = leafletMap;
+      mapInstanceRef.current = leafletMap;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18,
+      }).addTo(leafletMap);
+
+      workshops.forEach(w => {
+        if (w.lat && w.lng) {
+          const marker = L.marker([w.lat, w.lng]).addTo(leafletMap);
+          marker.bindPopup(`<b>${w.name}</b><br>${w.area}`);
+          marker.on('click', () => onSelect(w.id));
+        }
+      });
+    }
+
+    initMap();
+
+    return () => {
+      if (mapInstanceRef.current) {
+        (mapInstanceRef.current as { remove: () => void }).remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border h-48">
+      <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
+    </div>
+  );
+}
+
+function HomePicker({ address, area, onAddressChange, onAreaChange }: {
+  address: string;
+  area: string;
+  onAddressChange: (v: string) => void;
+  onAreaChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="font-bold">المنطقة</Label>
+        <select
+          value={area}
+          onChange={e => onAreaChange(e.target.value)}
+          className="w-full h-12 rounded-xl border border-border px-3 mt-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+        >
+          <option value="">اختر منطقتك في الإسكندرية</option>
+          {ALEX_AREAS.map(a => (
+            <option key={a} value={a}>{a}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <Label className="font-bold">العنوان بالتفصيل</Label>
+        <Input
+          value={address}
+          onChange={e => onAddressChange(e.target.value)}
+          className="h-12 rounded-xl mt-1"
+          placeholder="الشارع، رقم العمارة، الدور..."
+        />
+      </div>
+    </div>
+  );
+}
+
+function Step4Payment({ formData, onChange, onConfirm, onBack, isPending }: {
+  formData: FormData;
+  onChange: (f: FormData) => void;
+  onConfirm: () => void;
+  onBack: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <h2 className="text-2xl font-bold text-foreground">طريقة الدفع</h2>
+
+      <div className="grid gap-4">
+        <button
+          onClick={() => onChange({ ...formData, paymentMethod: 'cash' })}
+          className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
+            formData.paymentMethod === 'cash'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/50'
+          }`}
+        >
+          <Banknote className="w-8 h-8 flex-shrink-0" />
+          <div>
+            <div className="font-bold text-lg">كاش عند الاستلام</div>
+            <div className="text-sm opacity-75">يُؤكَّد الطلب فوراً — الدفع نقداً عند التركيب</div>
+          </div>
+          {formData.paymentMethod === 'cash' && <CheckCircle2 className="w-6 h-6 mr-auto flex-shrink-0" />}
+        </button>
+
+        <button
+          onClick={() => onChange({ ...formData, paymentMethod: 'card' })}
+          className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
+            formData.paymentMethod === 'card'
+              ? 'border-primary bg-primary/5 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/50'
+          }`}
+        >
+          <CreditCard className="w-8 h-8 flex-shrink-0" />
+          <div>
+            <div className="font-bold text-lg">بطاقة بنكية (PayMob)</div>
+            <div className="text-sm opacity-75">دفع إلكتروني آمن عبر بوابة PayMob</div>
+          </div>
+          {formData.paymentMethod === 'card' && <CheckCircle2 className="w-6 h-6 mr-auto flex-shrink-0" />}
+        </button>
+      </div>
+
+      {formData.paymentMethod === 'card' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+          سيتم تحويلك لبوابة الدفع الآمنة لإتمام العملية. يعود تأكيد الطلب تلقائياً بعد نجاح الدفع.
+        </div>
+      )}
+
+      <div className="flex gap-4 mt-8">
+        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack} disabled={isPending}>
+          رجوع
+        </Button>
+        <Button
+          className="w-2/3 h-14 rounded-xl font-bold text-lg bg-accent text-primary hover:bg-accent/90 shadow-lg shadow-accent/20"
+          onClick={onConfirm}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              {formData.paymentMethod === 'card' ? 'جارٍ التحويل...' : 'جارٍ التأكيد...'}
+            </span>
+          ) : (
+            formData.paymentMethod === 'card' ? 'المتابعة للدفع' : 'تأكيد الطلب'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Step5Confirmation({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) {
+  return (
+    <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500 py-4">
+      <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+        <CheckCircle2 className="w-14 h-14 text-green-500" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-black text-green-700 mb-2">تم تأكيد الطلب!</h2>
+        <p className="text-muted-foreground">رقم الطلب: <span className="font-bold text-foreground">#{orderId}</span></p>
+        {paymentMethod === 'cash' && (
+          <p className="text-sm text-muted-foreground mt-2">سيتواصل معك فريقنا لتحديد موعد التركيب.</p>
+        )}
+      </div>
+      <div className="flex gap-4 justify-center pt-4">
+        <Link href={`/orders/${orderId}`}>
+          <Button variant="outline" className="rounded-xl px-6">تفاصيل الطلب</Button>
+        </Link>
+        <Link href="/my-orders">
+          <Button className="rounded-xl px-6">طلباتي</Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function OrderSummary({
+  pkg, formData, selectedWorkshop
+}: {
+  pkg: { name: string; sellPrice: string | number; warrantyMonths: number };
+  formData: FormData;
+  selectedWorkshop?: { name: string; area: string } | undefined;
+}) {
+  return (
+    <div className="bg-primary text-white rounded-3xl p-6 shadow-xl sticky top-28 border border-white/10">
+      <h3 className="font-bold text-accent mb-5 text-lg">ملخص الطلب</h3>
+      <div className="space-y-4 mb-6">
+        <SummaryRow label="الباكدج" value={pkg.name} />
+        {formData.carModel && <SummaryRow label="السيارة" value={`${formData.carModel} (${formData.carYear})`} />}
+        {formData.installationType === 'workshop' && selectedWorkshop && (
+          <SummaryRow label="الورشة" value={`${selectedWorkshop.name} — ${selectedWorkshop.area}`} />
+        )}
+        {formData.installationType === 'home' && formData.deliveryArea && (
+          <SummaryRow label="التوصيل" value={formData.deliveryArea} />
+        )}
+        <SummaryRow label="الضمان" value={`${pkg.warrantyMonths} شهور`} />
+      </div>
+      <div className="pt-5 border-t border-white/20">
+        <div className="flex justify-between items-center text-xl font-black">
+          <span>الإجمالي</span>
+          <span className="text-accent">{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-white/50 text-xs mb-0.5">{label}</p>
+      <p className="font-semibold text-sm leading-snug">{value}</p>
     </div>
   );
 }

@@ -224,6 +224,17 @@ export interface ChatResponse {
   suggestedPackageName?: string | null;
 }
 
+export interface InitiatePaymentBody {
+  orderId: number;
+}
+
+export interface InitiatePaymentResponse {
+  /** PayMob payment iframe URL to redirect to */
+  iframeUrl: string;
+  orderId: number;
+  paymentToken: string;
+}
+
 export interface AdminStats {
   totalOrders: number;
   pendingOrders: number;
@@ -318,6 +329,8 @@ export type ListPartsParams = {
 export type ListWorkshopsParams = {
   area?: string;
 };
+
+export type PaymentCallbackBody = { [key: string]: unknown };
 
 export type ListAdminOrdersParams = {
   status?: string;
