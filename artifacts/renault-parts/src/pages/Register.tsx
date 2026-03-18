@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wrench, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { RenoPackLogo } from '@/components/layout/AppLayout';
 
 const ALEXANDRIA_AREAS = [
   'سيدي بشر', 'سموحة', 'المنتزه', 'ميامي', 'العجمي', 'المحطة',
@@ -74,18 +75,24 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/30 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-3xl" />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', position: 'relative', overflow: 'hidden', direction: 'rtl' }}>
+      <div style={{ position: 'absolute', top: '-15%', left: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(200,151,74,0.07),transparent 65%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: '-15%', right: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(74,171,202,0.05),transparent 65%)', pointerEvents: 'none' }} />
 
-      <div className="max-w-xl w-full relative z-10">
-        <div className="bg-card rounded-[2rem] shadow-2xl shadow-primary/5 p-8 border border-border/50">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
-              <Wrench className="w-8 h-8 text-accent" />
-            </div>
-            <h2 className="text-3xl font-black text-primary">حساب جديد</h2>
-            <p className="text-muted-foreground mt-2 font-medium">سجل بياناتك واستمتع بأفضل عروض الصيانة</p>
+      <div style={{ maxWidth: 560, width: '100%', position: 'relative', zIndex: 1 }}>
+
+        {/* Logo above card */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <RenoPackLogo size="lg" />
+          </a>
+        </div>
+
+        <div style={{ background: '#161E30', border: '1.5px solid rgba(200,151,74,0.14)', borderRadius: 28, padding: '36px 36px 32px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,#C8974A,transparent)' }} />
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <h2 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>حساب جديد</h2>
+            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 14, fontWeight: 500 }}>سجل بياناتك واستمتع بأفضل عروض الصيانة في الإسكندرية</p>
           </div>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -145,16 +152,26 @@ export default function Register() {
 
             <Button
               type="submit"
-              className="w-full h-14 rounded-xl font-bold text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 mt-6"
               disabled={isPending}
+              style={{
+                width: '100%', height: 52,
+                background: isPending ? 'rgba(200,151,74,0.5)' : 'linear-gradient(135deg,#C8974A,#DEB06C)',
+                color: '#0D1220', fontFamily: "'Almarai',sans-serif",
+                fontWeight: 800, fontSize: 16, borderRadius: 14,
+                border: 'none', cursor: isPending ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 22px rgba(200,151,74,0.35)',
+                marginTop: 8,
+              }}
             >
-              {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'إنشاء حساب'}
+              {isPending ? <Loader2 className="w-5 h-5 animate-spin inline" /> : 'إنشاء حساب'}
             </Button>
           </form>
 
-          <div className="mt-8 text-center text-sm font-medium text-muted-foreground border-t border-border/50 pt-6">
-            لديك حساب بالفعل؟{' '}
-            <Link href="/login" className="text-primary font-bold hover:text-accent transition-colors">
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
+            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#7A95AA', fontWeight: 500 }}>
+              لديك حساب بالفعل؟{' '}
+            </span>
+            <Link href="/login" style={{ fontFamily: "'Almarai',sans-serif", color: '#C8974A', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
               تسجيل الدخول
             </Link>
           </div>

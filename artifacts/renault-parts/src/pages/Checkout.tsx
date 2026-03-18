@@ -10,6 +10,7 @@ import {
   MapPin, CreditCard, Banknote, CarFront, Loader2, CheckCircle2,
   Package2, Home, AlertCircle, Wrench
 } from 'lucide-react';
+import { RenoPackLogo } from '@/components/layout/AppLayout';
 
 const ALEX_AREAS = [
   'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي', 'المنشية',
@@ -147,7 +148,10 @@ export default function Checkout() {
   return (
     <div className="bg-secondary/20 min-h-screen pb-24 pt-12">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-black text-primary mb-8 text-center">إتمام الطلب</h1>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28, gap: 12 }}>
+          <RenoPackLogo size="md" />
+          <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#E8F0F8', margin: 0 }}>إتمام الطلب</h1>
+        </div>
 
         <StepProgress step={step} />
 
