@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch } from 'lucide-react';
+import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import bakoLogoImg from '@/assets/bako-logo.png';
 
@@ -10,7 +10,7 @@ import bakoLogoImg from '@/assets/bako-logo.png';
 function RenoPackLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const s = size === 'sm' ? { img: 36, ar: 14, en: 9 } : { img: 46, ar: 18, en: 10 };
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
       <img src={bakoLogoImg} alt="باكو" style={{ width: s.img, height: s.img, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(200,151,74,0.4))', mixBlendMode: 'screen' }} />
       <div style={{ fontFamily: "'Almarai',sans-serif" }}>
         <div style={{ fontWeight: 800, fontSize: s.ar, lineHeight: 1, letterSpacing: -0.3 }}>
@@ -29,6 +29,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [searchVal, setSearchVal] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -51,39 +52,63 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: location === '/' ? '#0D1220' : 'hsl(var(--background))', fontFamily: "'Almarai','Cairo',sans-serif", direction: 'rtl' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0D1220', fontFamily: "'Almarai','Cairo',sans-serif", direction: 'rtl' }}>
 
       {/* ── NAVBAR ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(13,18,32,0.93)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,151,74,0.12)', boxShadow: '0 2px 24px rgba(0,0,0,0.4)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 99, background: 'rgba(13,18,32,0.95)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(200,151,74,0.10)', boxShadow: '0 2px 24px rgba(0,0,0,0.4)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 28px', display: 'flex', alignItems: 'center', gap: 22, height: 64 }}>
 
           {/* Logo */}
           <Link href="/" style={{ textDecoration: 'none' }}>
             <RenoPackLogo size="md" />
           </Link>
 
-          {/* Nav links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+          {/* ── Search bar (middle, takes remaining space) ── */}
+          <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+            <Search size={14} color="#7A95AA" style={{ position: 'absolute', top: '50%', right: 14, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input
+              value={searchVal}
+              onChange={e => setSearchVal(e.target.value)}
+              placeholder="دور على قطعة أو خدمة أو باكدج..."
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 999,
+                padding: '9px 40px 9px 18px',
+                color: '#D4E0EC',
+                fontSize: 13,
+                fontFamily: "'Almarai',sans-serif",
+                fontWeight: 700,
+                outline: 'none',
+                direction: 'rtl',
+                transition: 'border-color .2s',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(200,151,74,0.45)'; }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+            />
+          </div>
+
+          {/* ── Nav links + auth (right side) ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 22, flexShrink: 0 }}>
             {navLinks.map(n => (
               <Link key={n.href} href={n.href} style={{
                 fontFamily: "'Almarai',sans-serif",
                 color: isActive(n.href) ? '#C8974A' : '#7A95AA',
-                fontSize: 14, fontWeight: 700,
+                fontSize: 13, fontWeight: 700,
                 textDecoration: 'none',
-                borderBottom: isActive(n.href) ? '2px solid #C8974A' : '2px solid transparent',
-                paddingBottom: 2,
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <n.Icon size={14} />{n.label}
+                transition: 'color .2s',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { if (!isActive(n.href)) e.currentTarget.style.color = '#D4E0EC'; }}
+              onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { if (!isActive(n.href)) e.currentTarget.style.color = '#7A95AA'; }}>
+                <n.Icon size={13} />{n.label}
               </Link>
             ))}
-          </div>
 
-          {/* Auth */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {user ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.18)', borderRadius: 999, padding: '6px 14px', fontSize: 13, fontWeight: 700, color: '#D4E0EC' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.18)', borderRadius: 999, padding: '6px 14px', fontSize: 13, fontWeight: 700, color: '#D4E0EC', flexShrink: 0 }}>
                   <User size={13} color="#C8974A" />أهلاً، {user.name.split(' ')[0]}
                 </div>
                 <button onClick={handleLogout} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
@@ -93,7 +118,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             ) : (
               <>
                 <Link href="/login" style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>دخول</Link>
-                <Link href="/register" style={{ fontFamily: "'Almarai',sans-serif", background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', fontWeight: 800, fontSize: 13, borderRadius: 999, padding: '8px 20px', textDecoration: 'none', boxShadow: '0 4px 14px rgba(200,151,74,0.3)' }}>
+                <Link href="/register" style={{ fontFamily: "'Almarai',sans-serif", background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', fontWeight: 800, fontSize: 13, borderRadius: 999, padding: '8px 20px', textDecoration: 'none', boxShadow: '0 4px 14px rgba(200,151,74,0.3)', flexShrink: 0 }}>
                   احجز دلوقتي
                 </Link>
               </>

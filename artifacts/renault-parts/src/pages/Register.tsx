@@ -79,7 +79,7 @@ export default function Register() {
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-accent/10 rounded-full blur-3xl" />
 
       <div className="max-w-xl w-full relative z-10">
-        <div className="bg-white rounded-[2rem] shadow-2xl shadow-primary/5 p-8 border border-border/50">
+        <div className="bg-card rounded-[2rem] shadow-2xl shadow-primary/5 p-8 border border-border/50">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
               <Wrench className="w-8 h-8 text-accent" />

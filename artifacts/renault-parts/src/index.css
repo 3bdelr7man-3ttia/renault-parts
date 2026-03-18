@@ -80,32 +80,36 @@
 }
 
 .dark {
-  --background: 232 53% 10%; /* Very dark navy */
-  --foreground: 210 20% 98%;
-  
-  --card: 232 53% 15%;
-  --card-foreground: 210 20% 98%;
-  --card-border: 232 53% 20%;
-  
-  --popover: 232 53% 15%;
-  --popover-foreground: 210 20% 98%;
-  --popover-border: 232 53% 20%;
-  
-  --primary: 49 89% 78%; /* Gold becomes primary in dark mode for pop */
-  --primary-foreground: 232 53% 15%;
-  
-  --secondary: 232 53% 20%;
-  --secondary-foreground: 210 20% 98%;
-  
-  --accent: 49 89% 78%;
-  --accent-foreground: 232 53% 15%;
-  
-  --muted: 232 53% 20%;
-  --muted-foreground: 220 14% 70%;
-  
-  --border: 232 53% 20%;
-  --input: 232 53% 20%;
-  --ring: 49 89% 78%;
+  /* RenoPack Dark Navy Theme — #0D1220 base */
+  --background: 221 43% 9%;      /* #0D1220 */
+  --foreground: 210 35% 87%;     /* #D4E0EC */
+
+  --card: 220 36% 14%;           /* #161E30 */
+  --card-foreground: 210 35% 87%;
+  --card-border: 220 30% 20%;
+
+  --popover: 220 36% 14%;
+  --popover-foreground: 210 35% 87%;
+  --popover-border: 220 30% 20%;
+
+  --primary: 33 52% 54%;         /* #C8974A gold */
+  --primary-foreground: 221 43% 9%;
+
+  --secondary: 221 37% 12%;      /* #111826 */
+  --secondary-foreground: 210 35% 87%;
+
+  --accent: 33 52% 54%;          /* gold accent */
+  --accent-foreground: 221 43% 9%;
+
+  --muted: 221 37% 12%;
+  --muted-foreground: 210 15% 55%; /* #7A95AA */
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 25% 18%;
+  --input: 220 30% 16%;
+  --ring: 33 52% 54%;
 }
 
 @layer base {
@@ -124,6 +128,15 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
   }
+}
+
+/* ═══ DARK MODE OVERRIDES — bg-white → bg-card ═══ */
+.dark .bg-white {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground));
+}
+.dark .focus\:bg-white:focus {
+  background-color: hsl(var(--card)) !important;
 }
 
 /* ═══ RENOPACK BRAND DESIGN SYSTEM ═══ */

@@ -298,80 +298,156 @@ function AiCompareSection() {
   );
 }
 
-/* ── Ready packages section (uses real API data) ── */
-function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: number; name: string; slug: string; price: string | number; description?: string }> }) {
-  const [active, setActive] = useState(1);
+/* ── 3D Package Box (exact mockup design) ── */
+const PKG_META: Record<string, { topColor: string; sideColor: string; accent: string; frontGrad: string; glow: string; kmNum: string }> = {
+  km20: { topColor: '#1A5A84', sideColor: '#0E3A56', accent: SK,  frontGrad: `linear-gradient(160deg,#1A3A52,${BG} 85%)`, glow: `rgba(74,171,202,0.5)`,   kmNum: '20' },
+  km40: { topColor: '#7A4B0E', sideColor: '#4E3005', accent: G,   frontGrad: `linear-gradient(160deg,#3A2100,${BG} 85%)`, glow: `rgba(200,151,74,0.5)`,  kmNum: '40' },
+  km60: { topColor: '#3A2A86', sideColor: '#241870', accent: LV,  frontGrad: `linear-gradient(160deg,#1E1448,${BG} 85%)`, glow: `rgba(123,114,184,0.5)`, kmNum: '60' },
+};
 
-  const pkgs = realPackages && realPackages.length >= 3
+function PackageBox3D({ pkg, selected, onClick }: { pkg: typeof STATIC_PACKAGES[0]; selected: boolean; onClick: () => void }) {
+  const id = pkg.id as 'km20' | 'km40' | 'km60';
+  const m = PKG_META[id] ?? PKG_META['km40'];
+  const W = 210, H = 310, D = 40;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLElement).style.transform = 'translateY(-10px) scale(1.02)'; }}
+      onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'; }}
+      style={{
+        position: 'relative', width: W + D, cursor: 'pointer', zIndex: selected ? 10 : 1,
+        transform: selected ? 'translateY(-30px) scale(1.06)' : 'translateY(0) scale(1)',
+        transition: 'transform .5s cubic-bezier(.34,1.4,.64,1), filter .3s ease',
+        filter: selected ? `drop-shadow(0 32px 42px ${m.glow})` : 'drop-shadow(0 10px 22px rgba(0,0,0,0.6))',
+      }}
+    >
+      {/* TOP FACE */}
+      <div style={{ width: W, height: D, background: `linear-gradient(135deg,${m.topColor}ff,${m.topColor}99)`, borderRadius: '10px 10px 0 0', marginLeft: D, transformOrigin: 'bottom center', transform: 'perspective(250px) rotateX(58deg)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(255,255,255,0.08),transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 4, left: 0, right: 0, textAlign: 'center', fontSize: 8, letterSpacing: 2.5, fontWeight: 800, color: 'rgba(255,255,255,0.3)' }}>RENOPACK</div>
+      </div>
+
+      <div style={{ display: 'flex' }}>
+        {/* SIDE FACE */}
+        <div style={{ width: D, height: H, background: `linear-gradient(180deg,${m.sideColor}ff,${m.sideColor}66)`, borderRadius: '0 0 0 10px', transformOrigin: 'right center', transform: 'perspective(250px) rotateY(55deg)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(255,255,255,0.05),transparent 50%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ writingMode: 'vertical-rl', fontSize: 9, fontWeight: 800, color: `${m.accent}55`, letterSpacing: 3, transform: 'rotate(180deg)' }}>{pkg.name}</div>
+          </div>
+        </div>
+
+        {/* FRONT FACE */}
+        <div style={{ width: W, height: H, background: m.frontGrad, border: `1.5px solid ${m.accent}28`, borderTop: `3px solid ${m.accent}55`, borderLeft: 'none', borderRadius: '0 0 12px 0', overflow: 'hidden', position: 'relative', padding: '18px 16px 16px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '45%', height: '100%', background: 'linear-gradient(to right,rgba(255,255,255,0.04),transparent)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${m.accent}88,${m.accent}22)`, pointerEvents: 'none' }} />
+
+          <div style={{ fontSize: 9, fontWeight: 800, color: `${m.accent}aa`, letterSpacing: 2.5, marginBottom: 10 }}>RENOPACK ■</div>
+
+          <div style={{ position: 'relative', marginBottom: 4, lineHeight: 1 }}>
+            <div style={{ fontSize: 72, fontWeight: 900, color: m.accent, opacity: 0.12, position: 'absolute', top: -8, left: -4, fontFamily: 'monospace', letterSpacing: -4 }}>{m.kmNum}</div>
+            <div style={{ fontSize: 52, fontWeight: 900, color: m.accent, letterSpacing: -3, position: 'relative' }}>{m.kmNum}</div>
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', marginBottom: 14, letterSpacing: .5 }}>ألف كيلومتر</div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${m.accent}12`, border: `1px solid ${m.accent}28`, borderRadius: 999, padding: '3px 10px', marginBottom: 12, width: 'fit-content' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: m.accent }}>{pkg.sub}</span>
+          </div>
+
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#D0DCE8', marginBottom: 'auto' }}>{pkg.name}</div>
+
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', letterSpacing: -1.5, lineHeight: 1 }}>
+              {pkg.price.toLocaleString()}
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', marginRight: 4 }}> ج.م</span>
+            </div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700, marginTop: 2 }}>شامل التركيب والضمان</div>
+          </div>
+
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.15)', borderRadius: 8, padding: '5px 9px' }}>
+            <Gift size={10} color={G} /><span style={{ fontSize: 9, fontWeight: 700, color: G }}>🎁 {pkg.gift}</span>
+          </div>
+
+          {selected && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${m.accent},transparent)`, animation: 'rp-glow-blink 2s infinite' }} />}
+        </div>
+      </div>
+
+      {/* Shelf shadow */}
+      <div style={{ position: 'absolute', bottom: -20, left: '8%', right: '8%', height: 20, background: `radial-gradient(ellipse at 50% 0%,${m.glow},transparent 70%)`, filter: 'blur(5px)' }} />
+    </div>
+  );
+}
+
+/* ── Ready packages section 3D ── */
+function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: number; name: string; slug: string; price: string | number; description?: string }> }) {
+  const [active, setActive] = useState('km40');
+
+  const pkgs: typeof STATIC_PACKAGES = realPackages && realPackages.length >= 3
     ? realPackages.slice(0, 3).map((p, i) => ({
-        id: p.slug,
+        id: STATIC_PACKAGES[i].id,
         name: p.name,
-        sub: i === 1 ? '⭐ الأكثر طلباً' : i === 2 ? '🔥 الشاملة' : 'أول صيانة',
-        price: (typeof p.price === 'string' ? parseInt(p.price, 10) : (p.price as number)) || 0,
-        color: [SK, G, LV][i],
+        sub: STATIC_PACKAGES[i].sub,
+        price: (typeof p.price === 'string' ? parseInt(p.price, 10) : (p.price as number)) || STATIC_PACKAGES[i].price,
+        color: STATIC_PACKAGES[i].color,
         includes: STATIC_PACKAGES[i].includes,
         gift: STATIC_PACKAGES[i].gift,
       }))
     : STATIC_PACKAGES;
 
+  const pkg = pkgs.find(p => p.id === active) ?? pkgs[1];
+  const m = PKG_META[active] ?? PKG_META['km40'];
+  const pkgSlug = realPackages?.find((_, i) => STATIC_PACKAGES[i]?.id === active)?.slug ?? active;
+
   return (
-    <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}`, borderBottom: `1px solid ${BD}` }}>
+    <section style={{ padding: '72px 28px 80px', borderTop: `1px solid ${BD}`, background: BG, overflow: 'hidden' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.09)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
-            <Package size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>الباكدجات الجاهزة</span>
+
+        {/* Heading */}
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 18px', marginBottom: 16 }}>
+            <Package size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكدجات جاهزة</span>
           </div>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8, fontFamily: "'Almarai',sans-serif" }}>اختار الباكدج حسب عداد سيارتك</h2>
-          <p style={{ color: TD, fontSize: 14 }}>قطعة + تركيب + ضمان — كل ده في سعر واحد</p>
+          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
+          <p style={{ color: TD, fontSize: 14 }}>كل باكدج بيشمل القطع + التركيب + الضمان + هدية</p>
         </div>
 
-        {/* 3 package cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 28 }}>
-          {pkgs.map((pkg, i) => {
-            const on = active === i;
-            return (
-              <div key={pkg.id} onClick={() => setActive(i)} style={{
-                background: B3, border: `2px solid ${on ? pkg.color : BD}`,
-                borderRadius: 22, padding: 24, cursor: 'pointer', position: 'relative', overflow: 'hidden',
-                transform: on ? 'translateY(-8px)' : 'none',
-                boxShadow: on ? `0 20px 50px rgba(0,0,0,0.35), 0 0 0 1px ${pkg.color}30, 0 0 60px ${pkg.color}12` : 'none',
-                transition: 'all .35s cubic-bezier(.34,1.56,.64,1)',
-              }}>
-                {on && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${pkg.color},${pkg.color}44,transparent)` }} />}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${pkg.color}15`, border: `1px solid ${pkg.color}30`, borderRadius: 999, padding: '4px 12px', marginBottom: 16 }}>
-                  <span style={{ color: pkg.color, fontSize: 11, fontWeight: 700 }}>{pkg.sub}</span>
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#E8F0F8', marginBottom: 8, fontFamily: "'Almarai',sans-serif" }}>{pkg.name}</h3>
-                <div style={{ fontSize: 28, fontWeight: 800, color: pkg.color, marginBottom: 16 }}>
-                  {pkg.price.toLocaleString()} <span style={{ fontSize: 14, color: TD }}>ج.م</span>
-                </div>
-                <div style={{ marginBottom: 20 }}>
-                  {pkg.includes.map(item => (
-                    <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12, color: TX, fontWeight: 700 }}>
-                      <CheckCircle2 size={12} color={pkg.color} />{item}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ background: `rgba(200,151,74,0.06)`, border: `1px solid rgba(200,151,74,0.15)`, borderRadius: 10, padding: '8px 12px', display: 'flex', gap: 7, alignItems: 'center', marginBottom: 16 }}>
-                  <Gift size={12} color={G} /><span style={{ color: G, fontSize: 11, fontWeight: 700 }}>هدية: {pkg.gift}</span>
-                </div>
-                <Link href={`/packages/${typeof pkg.id === 'string' ? pkg.id : String(i + 1)}`} style={{
-                  display: 'block', width: '100%', background: on ? `linear-gradient(135deg,${pkg.color},${pkg.color}99)` : `${pkg.color}18`,
-                  border: `1.5px solid ${pkg.color}${on ? '' : '30'}`, borderRadius: 12, padding: '11px', textAlign: 'center',
-                  fontWeight: 800, fontSize: 13, color: on ? BG : pkg.color, textDecoration: 'none', cursor: 'pointer', fontFamily: "'Almarai',sans-serif",
-                  boxShadow: on ? `0 6px 20px ${pkg.color}35` : 'none', transition: 'all .25s ease',
-                }}>
-                  احجز الباكدج ده ←
-                </Link>
-              </div>
-            );
-          })}
+        {/* ── 3D Shelf Scene ── */}
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: 24, alignItems: 'flex-end', paddingBottom: 50 }}>
+          <div style={{ position: 'absolute', bottom: 22, left: '4%', right: '4%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.09) 20%,rgba(255,255,255,0.14) 50%,rgba(255,255,255,0.09) 80%,transparent)', borderRadius: 999 }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '15%', right: '15%', height: 40, background: 'radial-gradient(ellipse at 50% 0%,rgba(200,151,74,0.06),transparent 70%)', filter: 'blur(8px)' }} />
+          {pkgs.map(p => (
+            <PackageBox3D key={p.id} pkg={p} selected={active === p.id} onClick={() => setActive(p.id)} />
+          ))}
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <Link href="/packages" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: G, background: `rgba(200,151,74,0.07)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '9px 22px', fontWeight: 700, fontSize: 13, textDecoration: 'none', fontFamily: "'Almarai',sans-serif" }}>
-            كل الباكدجات <ChevronLeft size={14} />
+
+        {/* ── Expanded details panel ── */}
+        <div style={{ maxWidth: 700, margin: '32px auto 0', background: `linear-gradient(145deg,${m.accent}0a,${B3} 60%)`, border: `1.5px solid ${m.accent}22`, borderRadius: 22, padding: '28px 32px', position: 'relative', overflow: 'hidden', transition: 'all .4s ease' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${m.accent}66,transparent)` }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
+            <div>
+              <h3 style={{ fontSize: 19, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>{pkg.name}</h3>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${m.accent}12`, border: `1px solid ${m.accent}28`, borderRadius: 999, padding: '4px 12px' }}>
+                <Gift size={11} color={m.accent} /><span style={{ color: m.accent, fontSize: 11, fontWeight: 700 }}>هديتك: {pkg.gift}</span>
+              </div>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 34, fontWeight: 800, color: m.accent, lineHeight: 1, letterSpacing: -1.5 }}>{pkg.price.toLocaleString()}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700 }}>ج.م شامل التركيب</div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginBottom: 22 }}>
+            {pkg.includes.map(s => (
+              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle2 size={13} color={m.accent} style={{ flexShrink: 0 }} />
+                <span style={{ color: TX, fontSize: 12, fontWeight: 700 }}>{s}</span>
+              </div>
+            ))}
+          </div>
+          <Link href={`/packages/${pkgSlug}`} style={{ display: 'block', width: '100%', background: `linear-gradient(135deg,${m.accent},${m.accent}bb)`, color: BG, border: 'none', borderRadius: 999, padding: '13px', textAlign: 'center', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 26px ${m.glow}`, textDecoration: 'none', fontFamily: "'Almarai',sans-serif", cursor: 'pointer' }}>
+            احجز الباكدج واستلم الهدية ←
           </Link>
         </div>
+
       </div>
     </section>
   );
