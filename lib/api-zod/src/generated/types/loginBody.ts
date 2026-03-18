@@ -6,7 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Login with email or phone number
+ */
 export interface LoginBody {
-  email: string;
+  /** Email address or phone number */
+  identifier: string;
   password: string;
 }

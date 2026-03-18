@@ -14,7 +14,7 @@ import { Wrench, Loader2 } from 'lucide-react';
 const registerSchema = z.object({
   name: z.string().min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل'),
   phone: z.string().min(10, 'رقم الهاتف غير صحيح'),
-  email: z.string().email('صيغة البريد الإلكتروني غير صحيحة'),
+  email: z.string().email('صيغة البريد الإلكتروني غير صحيحة').optional().or(z.literal('')),
   password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
   carModel: z.string().optional(),
   carYear: z.coerce.number().optional(),
@@ -50,7 +50,7 @@ export default function Register() {
   });
 
   const onSubmit = (data: RegisterForm) => {
-    registerMutation({ data });
+    registerMutation({ data: { ...data, email: data.email || null } });
   };
 
   return (
@@ -85,8 +85,8 @@ export default function Register() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">البريد الإلكتروني</Label>
-                <Input {...form.register('email')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="البريد الإلكتروني" dir="ltr" />
+                <Label className="font-bold text-foreground">البريد الإلكتروني <span className="font-normal text-muted-foreground">(اختياري)</span></Label>
+                <Input {...form.register('email')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="example@mail.com" dir="ltr" />
                 {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
               </div>
 

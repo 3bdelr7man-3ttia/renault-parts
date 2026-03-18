@@ -21,7 +21,10 @@ export const HealthCheckResponse = zod.object({
 export const RegisterUserBody = zod.object({
   name: zod.string(),
   phone: zod.string(),
-  email: zod.string(),
+  email: zod
+    .string()
+    .nullish()
+    .describe("Optional email address (phone is mandatory)"),
   password: zod.string(),
   carModel: zod.string().nullish(),
   carYear: zod.number().nullish(),
@@ -32,10 +35,12 @@ export const RegisterUserBody = zod.object({
 /**
  * @summary Login user
  */
-export const LoginUserBody = zod.object({
-  email: zod.string(),
-  password: zod.string(),
-});
+export const LoginUserBody = zod
+  .object({
+    identifier: zod.string().describe("Email address or phone number"),
+    password: zod.string(),
+  })
+  .describe("Login with email or phone number");
 
 export const LoginUserResponse = zod.object({
   user: zod.object({

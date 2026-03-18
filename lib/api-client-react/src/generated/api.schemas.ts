@@ -20,7 +20,11 @@ export interface SuccessResponse {
 export interface RegisterBody {
   name: string;
   phone: string;
-  email: string;
+  /**
+   * Optional email address (phone is mandatory)
+   * @nullable
+   */
+  email?: string | null;
   password: string;
   /** @nullable */
   carModel?: string | null;
@@ -32,8 +36,12 @@ export interface RegisterBody {
   area?: string | null;
 }
 
+/**
+ * Login with email or phone number
+ */
 export interface LoginBody {
-  email: string;
+  /** Email address or phone number */
+  identifier: string;
   password: string;
 }
 

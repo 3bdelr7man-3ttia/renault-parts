@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   RegisterUserBody,
@@ -11,6 +11,21 @@ import { hashPassword, comparePassword, signToken, requireAuth, type Authenticat
 
 const router: IRouter = Router();
 
+function buildUserOut(user: typeof usersTable.$inferSelect) {
+  return {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    carModel: user.carModel,
+    carYear: user.carYear,
+    address: user.address,
+    area: user.area,
+    role: user.role,
+    createdAt: user.createdAt,
+  };
+}
+
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterUserBody.safeParse(req.body);
   if (!parsed.success) {
@@ -20,9 +35,13 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { name, phone, email, password, carModel, carYear, address, area } = parsed.data;
 
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const conditions = [eq(usersTable.phone, phone)];
+  if (email) {
+    conditions.push(eq(usersTable.email, email));
+  }
+  const [existing] = await db.select().from(usersTable).where(or(...conditions));
   if (existing) {
-    res.status(409).json({ error: "البريد الإلكتروني مسجل بالفعل" });
+    res.status(409).json({ error: "رقم الهاتف أو البريد الإلكتروني مسجل بالفعل" });
     return;
   }
 
@@ -31,7 +50,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const [user] = await db.insert(usersTable).values({
     name,
     phone,
-    email,
+    email: email ?? null,
     passwordHash,
     carModel: carModel ?? null,
     carYear: carYear ?? null,
@@ -41,21 +60,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }).returning();
 
   const token = signToken(user.id);
-
-  const userOut = {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    email: user.email,
-    carModel: user.carModel,
-    carYear: user.carYear,
-    address: user.address,
-    area: user.area,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
-
-  res.status(201).json(LoginUserResponse.parse({ user: userOut, token }));
+  res.status(201).json(LoginUserResponse.parse({ user: buildUserOut(user), token }));
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
@@ -65,36 +70,26 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const { email, password } = parsed.data;
+  const { identifier, password } = parsed.data;
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  const isEmail = identifier.includes("@");
+  const [user] = await db.select().from(usersTable).where(
+    isEmail ? eq(usersTable.email, identifier) : eq(usersTable.phone, identifier)
+  );
+
   if (!user) {
-    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    res.status(401).json({ error: "بيانات الدخول غير صحيحة" });
     return;
   }
 
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) {
-    res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    res.status(401).json({ error: "بيانات الدخول غير صحيحة" });
     return;
   }
 
   const token = signToken(user.id);
-
-  const userOut = {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    email: user.email,
-    carModel: user.carModel,
-    carYear: user.carYear,
-    address: user.address,
-    area: user.area,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
-
-  res.json(LoginUserResponse.parse({ user: userOut, token }));
+  res.json(LoginUserResponse.parse({ user: buildUserOut(user), token }));
 });
 
 router.post("/auth/logout", (_req, res): void => {
@@ -104,21 +99,7 @@ router.post("/auth/logout", (_req, res): void => {
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   const user = authReq.user;
-
-  const userOut = {
-    id: user.id,
-    name: user.name,
-    phone: user.phone,
-    email: user.email,
-    carModel: user.carModel,
-    carYear: user.carYear,
-    address: user.address,
-    area: user.area,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
-
-  res.json(GetCurrentUserResponse.parse(userOut));
+  res.json(GetCurrentUserResponse.parse(buildUserOut(user)));
 });
 
 export default router;

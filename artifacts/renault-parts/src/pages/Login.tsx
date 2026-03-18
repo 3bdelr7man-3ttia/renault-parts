@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Wrench, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email('صيغة البريد الإلكتروني غير صحيحة'),
+  identifier: z.string().min(1, 'يرجى إدخال رقم الهاتف أو البريد الإلكتروني'),
   password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
 });
 
@@ -25,7 +25,7 @@ export default function Login() {
   
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { identifier: '', password: '' },
   });
 
   const { mutate: loginMutation, isPending } = useLoginUser({
@@ -33,7 +33,6 @@ export default function Login() {
       onSuccess: (data) => {
         login(data.token, data.user);
         toast({ title: "مرحباً بك مجدداً!", description: "تم تسجيل الدخول بنجاح." });
-        // Handle redirect if needed (e.g., from checkout)
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect') || '/';
         setLocation(redirect);
@@ -42,7 +41,7 @@ export default function Login() {
         toast({
           variant: "destructive",
           title: "خطأ في تسجيل الدخول",
-          description: error.error?.error || "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+          description: (error as any)?.error?.error || "بيانات الدخول غير صحيحة",
         });
       }
     }
@@ -69,25 +68,25 @@ export default function Login() {
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label className="font-bold text-foreground">البريد الإلكتروني</Label>
-              <Input 
-                {...form.register('email')} 
-                className="h-12 rounded-xl bg-secondary/50 border-transparent focus:border-primary focus:bg-white transition-all" 
-                placeholder="أدخل بريدك الإلكتروني"
+              <Label className="font-bold text-foreground">رقم الهاتف أو البريد الإلكتروني</Label>
+              <Input
+                {...form.register('identifier')}
+                className="h-12 rounded-xl bg-secondary/50 border-transparent focus:border-primary focus:bg-white transition-all"
+                placeholder="01xxxxxxxxx أو example@mail.com"
                 dir="ltr"
-                style={{ textAlign: 'right' }} // Keep placeholder aligned right
+                style={{ textAlign: 'right' }}
               />
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive font-medium">{form.formState.errors.email.message}</p>
+              {form.formState.errors.identifier && (
+                <p className="text-sm text-destructive font-medium">{form.formState.errors.identifier.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label className="font-bold text-foreground">كلمة المرور</Label>
-              <Input 
-                {...form.register('password')} 
-                type="password" 
-                className="h-12 rounded-xl bg-secondary/50 border-transparent focus:border-primary focus:bg-white transition-all" 
+              <Input
+                {...form.register('password')}
+                type="password"
+                className="h-12 rounded-xl bg-secondary/50 border-transparent focus:border-primary focus:bg-white transition-all"
                 placeholder="أدخل كلمة المرور"
                 dir="ltr"
                 style={{ textAlign: 'right' }}
@@ -97,8 +96,8 @@ export default function Login() {
               )}
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-14 rounded-xl font-bold text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
               disabled={isPending}
             >

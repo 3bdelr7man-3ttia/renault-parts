@@ -7,6 +7,7 @@ import workshopsRouter from "./workshops";
 import ordersRouter from "./orders";
 import reviewsRouter from "./reviews";
 import chatRouter from "./chat";
+import partsRouter from "./parts";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(workshopsRouter);
 router.use(ordersRouter);
 router.use(reviewsRouter);
 router.use(chatRouter);
+router.use(partsRouter);
 
 export default router;

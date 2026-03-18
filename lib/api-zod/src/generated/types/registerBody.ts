@@ -9,7 +9,11 @@
 export interface RegisterBody {
   name: string;
   phone: string;
-  email: string;
+  /**
+   * Optional email address (phone is mandatory)
+   * @nullable
+   */
+  email?: string | null;
   password: string;
   /** @nullable */
   carModel?: string | null;

@@ -396,7 +396,8 @@ components:
         phone:
           type: string
         email:
-          type: string
+          type: ["string", "null"]
+          description: Optional email address (phone is mandatory)
         password:
           type: string
         carModel:
@@ -410,18 +411,19 @@ components:
       required:
         - name
         - phone
-        - email
         - password
 
     LoginBody:
       type: object
+      description: Login with email or phone number
       properties:
-        email:
+        identifier:
           type: string
+          description: Email address or phone number
         password:
           type: string
       required:
-        - email
+        - identifier
         - password
 
     AuthResponse:
