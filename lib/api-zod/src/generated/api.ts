@@ -395,6 +395,129 @@ export const CreateReviewBody = zod.object({
 });
 
 /**
+ * @summary Get admin dashboard statistics
+ */
+export const GetAdminStatsResponse = zod.object({
+  totalOrders: zod.number(),
+  pendingOrders: zod.number(),
+  confirmedOrders: zod.number(),
+  completedOrders: zod.number(),
+  totalRevenue: zod.number(),
+  totalUsers: zod.number(),
+  ordersToday: zod.number(),
+  revenueToday: zod.number(),
+});
+
+/**
+ * @summary List all orders (admin)
+ */
+export const ListAdminOrdersQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+  page: zod.coerce.number().optional(),
+});
+
+export const ListAdminOrdersResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  userPhone: zod.string().nullish(),
+  packageId: zod.number(),
+  packageName: zod.string(),
+  workshopId: zod.number().nullish(),
+  workshopName: zod.string().nullish(),
+  status: zod.string(),
+  paymentMethod: zod.string(),
+  paymentStatus: zod.string(),
+  total: zod.number(),
+  deliveryAddress: zod.string().nullish(),
+  deliveryArea: zod.string().nullish(),
+  carModel: zod.string(),
+  carYear: zod.number(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem);
+
+/**
+ * @summary Update order status
+ */
+export const UpdateOrderStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateOrderStatusBody = zod.object({
+  status: zod.enum([
+    "pending",
+    "confirmed",
+    "processing",
+    "completed",
+    "cancelled",
+  ]),
+});
+
+export const UpdateOrderStatusResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  userPhone: zod.string().nullish(),
+  packageId: zod.number(),
+  packageName: zod.string(),
+  workshopId: zod.number().nullish(),
+  workshopName: zod.string().nullish(),
+  status: zod.string(),
+  paymentMethod: zod.string(),
+  paymentStatus: zod.string(),
+  total: zod.number(),
+  deliveryAddress: zod.string().nullish(),
+  deliveryArea: zod.string().nullish(),
+  carModel: zod.string(),
+  carYear: zod.number(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary List all users (admin)
+ */
+export const ListAdminUsersResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string().nullish(),
+  email: zod.string().nullish(),
+  role: zod.string(),
+  carModel: zod.string().nullish(),
+  carYear: zod.number().nullish(),
+  area: zod.string().nullish(),
+  orderCount: zod.number(),
+  createdAt: zod.date(),
+});
+export const ListAdminUsersResponse = zod.array(ListAdminUsersResponseItem);
+
+/**
+ * @summary Update user role
+ */
+export const UpdateUserRoleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUserRoleBody = zod.object({
+  role: zod.enum(["customer", "admin"]),
+});
+
+export const UpdateUserRoleResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phone: zod.string().nullish(),
+  email: zod.string().nullish(),
+  role: zod.string(),
+  carModel: zod.string().nullish(),
+  carYear: zod.number().nullish(),
+  area: zod.string().nullish(),
+  orderCount: zod.number(),
+  createdAt: zod.date(),
+});
+
+/**
  * @summary Send message to AI assistant
  */
 export const SendChatMessageBody = zod.object({

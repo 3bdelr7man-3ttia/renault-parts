@@ -646,6 +646,9 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../lib/db
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

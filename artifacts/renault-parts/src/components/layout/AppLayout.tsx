@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { Wrench, User, LogOut, PackageSearch, ClipboardList, Home } from 'lucide-react';
+import { Wrench, User, LogOut, PackageSearch, ClipboardList, Home, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
@@ -27,6 +27,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (user) {
     navLinks.push({ href: '/my-orders', label: 'طلباتي', icon: ClipboardList });
+  }
+  if (user?.role === 'admin') {
+    navLinks.push({ href: '/admin', label: 'الإدارة', icon: ShieldCheck });
   }
 
   return (

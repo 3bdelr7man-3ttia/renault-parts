@@ -1,4 +1,5 @@
-import { db, packagesTable, partsTable, packagePartsTable, workshopsTable } from "@workspace/db";
+import { db, packagesTable, partsTable, packagePartsTable, workshopsTable, usersTable } from "@workspace/db";
+import bcrypt from "bcryptjs";
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -144,6 +145,21 @@ async function seed() {
 
   console.log(`✅ Inserted ${insertedWorkshops.length} workshops`);
 
+  // Seed admin user
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  await db
+    .insert(usersTable)
+    .values({
+      name: "مدير النظام",
+      phone: "01000000000",
+      email: "admin@renaultparts.eg",
+      passwordHash: adminPassword,
+      role: "admin",
+      area: "الإسكندرية",
+    })
+    .onConflictDoNothing();
+
+  console.log("✅ Admin user seeded: phone=01000000000 / password=admin123");
   console.log("🎉 Seeding complete!");
   process.exit(0);
 }

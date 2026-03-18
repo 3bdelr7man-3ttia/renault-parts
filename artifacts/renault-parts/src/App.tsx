@@ -1,12 +1,13 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import React, { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { CarProvider } from "@/lib/car-context";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 // Pages
 import Home from "@/pages/Home";
@@ -18,6 +19,11 @@ import Checkout from "@/pages/Checkout";
 import MyOrders from "@/pages/MyOrders";
 import OrderDetail from "@/pages/OrderDetail";
 
+// Admin Pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminOrders from "@/pages/admin/AdminOrders";
+import AdminUsers from "@/pages/admin/AdminUsers";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,7 +33,33 @@ const queryClient = new QueryClient({
   },
 });
 
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  if (!user) { setLocation('/login'); return null; }
+  if (user.role !== 'admin') { setLocation('/'); return null; }
+  return <>{children}</>;
+}
+
 function Router() {
+  const [location] = useLocation();
+  const isAdmin = location.startsWith('/admin');
+
+  if (isAdmin) {
+    return (
+      <AdminGuard>
+        <AdminLayout>
+          <Switch>
+            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin/orders" component={AdminOrders} />
+            <Route path="/admin/users" component={AdminUsers} />
+            <Route component={NotFound} />
+          </Switch>
+        </AdminLayout>
+      </AdminGuard>
+    );
+  }
+
   return (
     <AppLayout>
       <Switch>

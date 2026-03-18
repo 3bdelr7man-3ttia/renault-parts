@@ -224,6 +224,89 @@ export interface ChatResponse {
   suggestedPackageName?: string | null;
 }
 
+export interface AdminStats {
+  totalOrders: number;
+  pendingOrders: number;
+  confirmedOrders: number;
+  completedOrders: number;
+  totalRevenue: number;
+  totalUsers: number;
+  ordersToday: number;
+  revenueToday: number;
+}
+
+export interface AdminOrder {
+  id: number;
+  userId: number;
+  userName: string;
+  /** @nullable */
+  userPhone?: string | null;
+  packageId: number;
+  packageName: string;
+  /** @nullable */
+  workshopId?: number | null;
+  /** @nullable */
+  workshopName?: string | null;
+  status: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  total: number;
+  /** @nullable */
+  deliveryAddress?: string | null;
+  /** @nullable */
+  deliveryArea?: string | null;
+  carModel: string;
+  carYear: number;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export type UpdateOrderStatusBodyStatus =
+  (typeof UpdateOrderStatusBodyStatus)[keyof typeof UpdateOrderStatusBodyStatus];
+
+export const UpdateOrderStatusBodyStatus = {
+  pending: "pending",
+  confirmed: "confirmed",
+  processing: "processing",
+  completed: "completed",
+  cancelled: "cancelled",
+} as const;
+
+export interface UpdateOrderStatusBody {
+  status: UpdateOrderStatusBodyStatus;
+}
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  email?: string | null;
+  role: string;
+  /** @nullable */
+  carModel?: string | null;
+  /** @nullable */
+  carYear?: number | null;
+  /** @nullable */
+  area?: string | null;
+  orderCount: number;
+  createdAt: string;
+}
+
+export type UpdateUserRoleBodyRole =
+  (typeof UpdateUserRoleBodyRole)[keyof typeof UpdateUserRoleBodyRole];
+
+export const UpdateUserRoleBodyRole = {
+  customer: "customer",
+  admin: "admin",
+} as const;
+
+export interface UpdateUserRoleBody {
+  role: UpdateUserRoleBodyRole;
+}
+
 export type ListPartsParams = {
   packageId?: number;
   /**
@@ -234,4 +317,9 @@ export type ListPartsParams = {
 
 export type ListWorkshopsParams = {
   area?: string;
+};
+
+export type ListAdminOrdersParams = {
+  status?: string;
+  page?: number;
 };
