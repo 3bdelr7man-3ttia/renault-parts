@@ -137,6 +137,40 @@ const AI_QA: Record<string, string> = {
   'default': 'ممكن تسألني عن أي قطعة أو خدمة! أنا باكو 🤖 وأنا هنا أساعدك تاخد أحسن قرار لسيارتك بأفضل سعر.',
 };
 
+interface ComparePart {
+  id: string;
+  label: string;
+  img: string;
+  orig: { name:string; price:number; score:number; warranty:string; origin:string; badge:string; };
+  turk: { name:string; price:number; score:number; warranty:string; origin:string; badge:string; };
+  aiIntro: string;
+  quickQ: string[];
+}
+
+const AI_COMPARE: ComparePart[] = [
+  {
+    id:'oil', label:'زيت الموبيل', img: partOilImg,
+    orig: { name:'Mobil 1 Full Synthetic', price:320, score:97, warranty:'24 شهر', origin:'🇩🇪 ألمانيا', badge:'أصلي أوروبي' },
+    turk: { name:'Selenia WR Pure Energy', price:160, score:73, warranty:'12 شهر', origin:'🇹🇷 تركيا', badge:'بديل تركي' },
+    aiIntro: 'بشوف الزيتين دول — Mobil 1 الأصلي الألماني يدي ماشياً أحسن بكتير في رينو، لكن لو سيارتك أكبر من 5 سنين، Selenia التركي بيعمل شغله كويس وبيوفر عليك 160 ج.م.',
+    quickQ: ['مين أحسن؟','الفرق في الجودة إيه؟','ضمان إيه؟','الموبيل يتحمل كام كيلو؟'],
+  },
+  {
+    id:'brk', label:'فرامل Brembo', img: partBrakesImg,
+    orig: { name:'Brembo Standard', price:680, score:96, warranty:'24 شهر', origin:'🇮🇹 إيطاليا', badge:'أصلي إيطالي' },
+    turk: { name:'Beral Brake Pads', price:320, score:79, warranty:'12 شهر', origin:'🇹🇷 تركيا', badge:'بديل تركي' },
+    aiIntro: 'الفرامل مش وقت التوفير! Brembo الإيطالي = أمان حقيقي. Beral التركي مقبول لو بتركب الفرامل عند ورشة متخصصة وعارف إيه اللي بيعمله.',
+    quickQ: ['Beral بتوقف صح؟','فرق الأداء إيه؟','الأوريجنال بيدوم كام؟','ينفع أركب التركي؟'],
+  },
+  {
+    id:'air', label:'فلتر هواء', img: partAirImg,
+    orig: { name:'Renault Original Filter', price:95, score:99, warranty:'24 شهر', origin:'🇫🇷 فرنسا', badge:'أصلي رينو' },
+    turk: { name:'Knecht Air Filter', price:48, score:83, warranty:'12 شهر', origin:'🇹🇷 تركيا', badge:'بديل تركي' },
+    aiIntro: 'الفرق في السعر 47 ج.م بس! هنا بنصح بالأصلي لأن فلتر الهواء بيأثر على أداء الموتور كله. بس Knecht التركي لو بتفوت إصلاح سريع — كويس.',
+    quickQ: ['الفلتر بيتغير كل امتى؟','التركي بيضر الموتور؟','الأصلي يستاهل فلوسه؟','الاتنين بيناسبوا كليو؟'],
+  },
+];
+
 const WORKSHOPS = [
   { name:'ورشة الميناء',    area:'الميناء',    rating:4.9, jobs:847,  color:'var(--sky)' },
   { name:'سنتر المنتزه',    area:'المنتزه',    rating:4.8, jobs:1204, color:'var(--gold)' },
@@ -190,13 +224,16 @@ function Card3D({ children, style }: { children: React.ReactNode; style?: React.
 /* ─── AI CHAT COMPONENT ───────────────────────────────────────── */
 interface ChatMsg { from:'user'|'bako'; text:string; }
 
-function BakoChat() {
-  const [msgs, setMsgs] = useState<ChatMsg[]>([
-    { from:'bako', text:'أهلاً! أنا باكو 🤖 مساعد RenoPack. اسألني عن أي قطعة أو قارن بين الأصلي والتركي!' }
-  ]);
+function BakoChat({ context }: { context: ComparePart }) {
+  const initMsg = { from:'bako' as const, text: context.aiIntro };
+  const [msgs, setMsgs] = useState<ChatMsg[]>([initMsg]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMsgs([{ from:'bako', text: context.aiIntro }]);
+  }, [context.id]);
 
   const getReply = (msg: string): string => {
     const lower = msg.toLowerCase();
@@ -206,9 +243,8 @@ function BakoChat() {
     return AI_QA['default'];
   };
 
-  const send = () => {
-    const txt = input.trim();
-    if (!txt) return;
+  const sendText = (txt: string) => {
+    if (!txt.trim()) return;
     setInput('');
     setMsgs(p => [...p, { from:'user', text:txt }]);
     setTyping(true);
@@ -221,36 +257,36 @@ function BakoChat() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [msgs, typing]);
 
   return (
-    <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(200,151,74,0.18)', borderRadius:22, overflow:'hidden', display:'flex', flexDirection:'column', height:420 }}>
+    <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(200,151,74,0.18)', borderRadius:22, overflow:'hidden', display:'flex', flexDirection:'column', height:340 }}>
       {/* Header */}
-      <div style={{ background:'linear-gradient(135deg,var(--navy),var(--navy-lt))', padding:'14px 18px', display:'flex', alignItems:'center', gap:12, borderBottom:'1px solid rgba(200,151,74,0.15)' }}>
-        <img src={bakoImg} alt="باكو" style={{ width:38, height:38, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:'2px solid var(--gold)', background:'var(--navy)' }} />
+      <div style={{ background:'linear-gradient(135deg,var(--navy),var(--navy-lt))', padding:'12px 16px', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(200,151,74,0.15)' }}>
+        <img src={bakoImg} alt="باكو" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:'2px solid var(--gold)', background:'var(--navy)' }} />
         <div>
-          <div style={{ fontFamily:"'Almarai',sans-serif", fontWeight:800, fontSize:14, color:'#fff' }}>باكو 🤖</div>
-          <div style={{ fontSize:10, color:'rgba(200,151,74,0.8)', fontWeight:700 }}>مساعد RenoPack الذكي — بيكلم عربي!</div>
+          <div style={{ fontFamily:"'Almarai',sans-serif", fontWeight:800, fontSize:13, color:'#fff' }}>باكو 🤖 — بيكلمك عن {context.label}</div>
+          <div style={{ fontSize:10, color:'rgba(200,151,74,0.75)', fontWeight:700 }}>اسأله أي سؤال عن القطعتين فوق</div>
         </div>
         <div style={{ marginRight:'auto', display:'flex', alignItems:'center', gap:5 }}>
           <div style={{ width:7, height:7, borderRadius:'50%', background:'#4ADE80', animation:'glowBlink 2s infinite' }} />
-          <span style={{ color:'rgba(255,255,255,0.45)', fontSize:10, fontWeight:700 }}>متاح دلوقتي</span>
+          <span style={{ color:'rgba(255,255,255,0.45)', fontSize:10, fontWeight:700 }}>متاح</span>
         </div>
       </div>
 
-      {/* Quick suggestion pills */}
-      <div style={{ padding:'10px 14px', display:'flex', gap:7, flexWrap:'wrap', borderBottom:'1px solid var(--border)', background:'rgba(255,255,255,0.01)' }}>
-        {['أصلي ولا تركي؟','الفرق في الزيت','ضمان كام؟','الفرامل الأحسن'].map(q=>(
-          <button key={q} onClick={()=>{ setInput(q); setTimeout(()=>{ send(); }, 50); }}
-            style={{ fontFamily:"'Almarai',sans-serif", fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:999, background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', color:'var(--gold)', cursor:'pointer', whiteSpace:'nowrap', transition:'all .2s' }}>
+      {/* Quick suggestion pills from context */}
+      <div style={{ padding:'8px 12px', display:'flex', gap:6, flexWrap:'wrap', borderBottom:'1px solid var(--border)', background:'rgba(255,255,255,0.01)' }}>
+        {context.quickQ.map(q=>(
+          <button key={q} onClick={()=>sendText(q)}
+            style={{ fontFamily:"'Almarai',sans-serif", fontSize:10, fontWeight:700, padding:'3px 11px', borderRadius:999, background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', color:'var(--gold)', cursor:'pointer', whiteSpace:'nowrap', transition:'all .2s' }}>
             {q}
           </button>
         ))}
       </div>
 
       {/* Messages */}
-      <div style={{ flex:1, overflowY:'auto', padding:'16px 14px', display:'flex', flexDirection:'column', gap:12 }}>
+      <div style={{ flex:1, overflowY:'auto', padding:'14px 12px', display:'flex', flexDirection:'column', gap:10 }}>
         {msgs.map((m, i) => (
-          <div key={i} className={m.from==='bako'?'chat-bubble-in':'chat-bubble-out'} style={{ display:'flex', gap:8, alignItems:'flex-end', flexDirection: m.from==='bako'?'row':'row-reverse' }}>
+          <div key={i} className={m.from==='bako'?'chat-bubble-in':'chat-bubble-out'} style={{ display:'flex', gap:7, alignItems:'flex-end', flexDirection: m.from==='bako'?'row':'row-reverse' }}>
             {m.from==='bako' && (
-              <img src={bakoImg} alt="" style={{ width:26, height:26, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
+              <img src={bakoImg} alt="" style={{ width:24, height:24, borderRadius:'50%', objectFit:'cover', objectPosition:'top', flexShrink:0, border:'1.5px solid var(--gold)', background:'var(--navy)' }} />
             )}
             <div style={{
               maxWidth:'78%', padding:'10px 14px', borderRadius: m.from==='bako'?'4px 16px 16px 16px':'16px 4px 16px 16px',
@@ -276,20 +312,139 @@ function BakoChat() {
       </div>
 
       {/* Input */}
-      <div style={{ padding:'12px 14px', borderTop:'1px solid var(--border)', display:'flex', gap:10 }}>
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
-          placeholder="اسأل باكو أي سؤال عن القطع..."
-          style={{ flex:1, background:'rgba(255,255,255,0.05)', border:'1.5px solid rgba(255,255,255,0.09)', borderRadius:999, padding:'9px 16px', color:'var(--text)', fontSize:13, fontFamily:"'Almarai',sans-serif", outline:'none', direction:'rtl' }}
+      <div style={{ padding:'10px 12px', borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ sendText(input); }}}
+          placeholder="اسأل باكو أي سؤال عن القطعتين..."
+          style={{ flex:1, background:'rgba(255,255,255,0.05)', border:'1.5px solid rgba(255,255,255,0.09)', borderRadius:999, padding:'8px 14px', color:'var(--text)', fontSize:12, fontFamily:"'Almarai',sans-serif", outline:'none', direction:'rtl' }}
           onFocus={e=>{e.target.style.borderColor='rgba(200,151,74,0.4)'}}
           onBlur={e=>{e.target.style.borderColor='rgba(255,255,255,0.09)'}}
         />
-        <button onClick={send} style={{ width:38, height:38, borderRadius:'50%', background:'linear-gradient(135deg,var(--gold),var(--gold-lt))', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 4px 14px rgba(200,151,74,0.3)', transition:'transform .2s' }}
+        <button onClick={()=>sendText(input)} style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,var(--gold),var(--gold-lt))', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:'0 4px 14px rgba(200,151,74,0.3)', transition:'transform .2s' }}
           onMouseEnter={e=>(e.currentTarget.style.transform='scale(1.08)')}
           onMouseLeave={e=>(e.currentTarget.style.transform='scale(1)')}>
-          <Send size={15} color="var(--bg)" />
+          <Send size={14} color="var(--bg)" />
         </button>
       </div>
     </div>
+  );
+}
+
+/* ─── AI COMPARE SECTION ─────────────────────────────────────── */
+function ScoreBar({ score, color }: { score:number; color:string }) {
+  return (
+    <div style={{ height:6, background:'rgba(255,255,255,0.07)', borderRadius:999, overflow:'hidden' }}>
+      <div style={{ width:`${score}%`, height:'100%', background:color, borderRadius:999, transition:'width .8s ease' }} />
+    </div>
+  );
+}
+
+function AiCompareSection() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const cp = AI_COMPARE[activeIdx];
+
+  return (
+    <section style={{ padding:'64px 28px', background:'linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%)' }}>
+      <div style={{ maxWidth:1280, margin:'0 auto' }}>
+
+        {/* Heading */}
+        <div style={{ textAlign:'center', marginBottom:36 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(123,114,184,0.09)', border:'1px solid rgba(123,114,184,0.2)', borderRadius:999, padding:'5px 18px', marginBottom:16 }}>
+            <Sparkles size={13} color="var(--lav)"/><span style={{ color:'var(--lav)', fontSize:12, fontWeight:700 }}>باكو يقارنلك — اختار القطعة</span>
+          </div>
+          <h2 style={{ fontSize:26, fontWeight:800, color:'#E8F0F8', marginBottom:8 }}>أصلي ولا تركي؟ 🤔 خلي باكو يساعدك</h2>
+          <p style={{ color:'var(--text-dim)', fontSize:14 }}>اختار القطعة اللي عايز تقارن فيها — وكلم باكو تحت</p>
+
+          {/* Part selector pills */}
+          <div style={{ display:'flex', justifyContent:'center', gap:10, marginTop:18 }}>
+            {AI_COMPARE.map((c,i)=>(
+              <button key={c.id} onClick={()=>setActiveIdx(i)}
+                style={{ fontFamily:"'Almarai',sans-serif", padding:'7px 20px', borderRadius:999, border:`1.5px solid ${i===activeIdx?'var(--gold)':'rgba(255,255,255,0.1)'}`, background: i===activeIdx?'rgba(200,151,74,0.12)':'transparent', color: i===activeIdx?'var(--gold)':'var(--text-dim)', fontWeight:700, fontSize:13, cursor:'pointer', transition:'all .25s' }}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Two Product Cards ── */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:20 }}>
+          {/* Original card */}
+          <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(61,168,130,0.3)', borderRadius:20, overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:'linear-gradient(90deg,var(--sage),rgba(61,168,130,0.3))' }} />
+            {/* Photo */}
+            <div style={{ height:180, overflow:'hidden', position:'relative' }}>
+              <img src={cp.img} alt={cp.orig.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', filter:'brightness(0.85) saturate(1.1)' }} />
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 45%, var(--bg3) 100%)' }} />
+              {/* Badge */}
+              <div style={{ position:'absolute', top:12, right:12, background:'rgba(61,168,130,0.88)', backdropFilter:'blur(8px)', borderRadius:999, padding:'4px 12px', fontSize:11, fontWeight:800, color:'#fff', letterSpacing:.3 }}>
+                ✅ {cp.orig.badge}
+              </div>
+              <div style={{ position:'absolute', bottom:12, left:12, fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.7)' }}>
+                {cp.orig.origin}
+              </div>
+            </div>
+            {/* Info */}
+            <div style={{ padding:'16px 18px 20px' }}>
+              <div style={{ fontWeight:800, fontSize:15, color:'#E8F0F8', marginBottom:4 }}>{cp.orig.name}</div>
+              <div style={{ fontSize:22, fontWeight:800, color:'var(--sage)', marginBottom:14 }}>{cp.orig.price.toLocaleString()} ج.م</div>
+              {/* Quality bar */}
+              <div style={{ marginBottom:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                  <span style={{ color:'var(--text-dim)', fontSize:11, fontWeight:700 }}>مؤشر الجودة</span>
+                  <span style={{ color:'var(--sage)', fontSize:11, fontWeight:800 }}>{cp.orig.score}%</span>
+                </div>
+                <ScoreBar score={cp.orig.score} color="var(--sage)" />
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:12 }}>
+                <div style={{ background:'rgba(61,168,130,0.1)', border:'1px solid rgba(61,168,130,0.25)', borderRadius:8, padding:'4px 10px', fontSize:11, fontWeight:700, color:'var(--sage)' }}>
+                  🛡️ ضمان {cp.orig.warranty}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Turkish card */}
+          <div style={{ background:'var(--bg3)', border:'1.5px solid rgba(74,171,202,0.3)', borderRadius:20, overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:'linear-gradient(90deg,var(--sky),rgba(74,171,202,0.3))' }} />
+            {/* Photo with slight hue shift */}
+            <div style={{ height:180, overflow:'hidden', position:'relative' }}>
+              <img src={cp.img} alt={cp.turk.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', filter:'brightness(0.75) saturate(0.85) hue-rotate(15deg)' }} />
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 45%, var(--bg3) 100%)' }} />
+              {/* Badge */}
+              <div style={{ position:'absolute', top:12, right:12, background:'rgba(74,171,202,0.88)', backdropFilter:'blur(8px)', borderRadius:999, padding:'4px 12px', fontSize:11, fontWeight:800, color:'#fff', letterSpacing:.3 }}>
+                🇹🇷 {cp.turk.badge}
+              </div>
+              <div style={{ position:'absolute', bottom:12, left:12, fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.7)' }}>
+                {cp.turk.origin}
+              </div>
+            </div>
+            {/* Info */}
+            <div style={{ padding:'16px 18px 20px' }}>
+              <div style={{ fontWeight:800, fontSize:15, color:'#E8F0F8', marginBottom:4 }}>{cp.turk.name}</div>
+              <div style={{ fontSize:22, fontWeight:800, color:'var(--sky)', marginBottom:14 }}>{cp.turk.price.toLocaleString()} ج.م</div>
+              {/* Quality bar */}
+              <div style={{ marginBottom:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+                  <span style={{ color:'var(--text-dim)', fontSize:11, fontWeight:700 }}>مؤشر الجودة</span>
+                  <span style={{ color:'var(--sky)', fontSize:11, fontWeight:800 }}>{cp.turk.score}%</span>
+                </div>
+                <ScoreBar score={cp.turk.score} color="var(--sky)" />
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:12 }}>
+                <div style={{ background:'rgba(74,171,202,0.1)', border:'1px solid rgba(74,171,202,0.25)', borderRadius:8, padding:'4px 10px', fontSize:11, fontWeight:700, color:'var(--sky)' }}>
+                  🛡️ ضمان {cp.turk.warranty}
+                </div>
+                <div style={{ background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:8, padding:'4px 10px', fontSize:11, fontWeight:700, color:'var(--gold)' }}>
+                  💰 وفر {(cp.orig.price - cp.turk.price).toLocaleString()} ج.م
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bako Chat below ── */}
+        <BakoChat context={cp} />
+      </div>
+    </section>
   );
 }
 
@@ -614,32 +769,8 @@ export function AlexandriaBlend() {
           </div>
         </section>
 
-        {/* ═══ BAKO AI CHAT ═══ */}
-        <section style={{ padding:'64px 28px' }}>
-          <div style={{ maxWidth:1280, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:48, alignItems:'center' }}>
-            {/* Left explainer */}
-            <div>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(123,114,184,0.09)', border:'1px solid rgba(123,114,184,0.2)', borderRadius:999, padding:'5px 16px', marginBottom:20 }}>
-                <Sparkles size={13} color="var(--lav)"/><span style={{ color:'var(--lav)', fontSize:12, fontWeight:700 }}>ذكاء اصطناعي — عربي كامل</span>
-              </div>
-              <h2 style={{ fontSize:28, fontWeight:800, color:'#E8F0F8', marginBottom:12 }}>اسأل باكو 🤖 اللي في دماغك</h2>
-              <p style={{ color:'var(--text-dim)', fontSize:15, lineHeight:1.85, marginBottom:24 }}>
-                باكو مساعدنا الذكي — بيكلم عربي مصري ويقدر يساعدك تقارن بين الأصلي والتركي، تختار الباكدج المناسب لسيارتك، أو تسأل عن أي قطعة.
-              </p>
-              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                {[['🤖','بيكلم عربي مصري','مش إنجليزي ولا فصحى — ده باكو الإسكندراني'],['⚖️','مقارنة أصلي vs تركي','بيقولك الفرق بالسعر والجودة والضمان'],['🎯','توصيات على حسب سيارتك','عمر السيارة + الكيلومترات + ميزانيتك']].map(([ic,t,s])=>(
-                  <div key={t} style={{ display:'flex', gap:14, alignItems:'flex-start', background:'var(--card)', border:'1px solid var(--border)', borderRadius:14, padding:'12px 16px' }}>
-                    <span style={{ fontSize:22, flexShrink:0 }}>{ic}</span>
-                    <div><div style={{ color:'#E8F0F8', fontWeight:800, fontSize:14, marginBottom:2 }}>{t}</div><div style={{ color:'var(--text-dim)', fontSize:12, fontWeight:400 }}>{s}</div></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Chat */}
-            <BakoChat />
-          </div>
-        </section>
+        {/* ═══ BAKO AI COMPARE + CHAT ═══ */}
+        <AiCompareSection />
 
         {/* ═══ WORKSHOPS ═══ */}
         <section style={{ padding:'56px 28px', background:'var(--bg2)', borderTop:'1px solid var(--border)' }}>
