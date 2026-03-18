@@ -276,6 +276,8 @@ export interface AdminStats {
   totalUsers: number;
   ordersToday: number;
   revenueToday: number;
+  avgRating?: number | null;
+  totalReviews?: number;
   topPackages: AdminStatsTopPackagesItem[];
   topWorkshops: AdminStatsTopWorkshopsItem[];
   weeklySales: AdminStatsWeeklySalesItem[];

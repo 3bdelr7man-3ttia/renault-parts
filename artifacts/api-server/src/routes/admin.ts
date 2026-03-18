@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
 import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
@@ -6,7 +6,7 @@ import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWor
 
 const router: IRouter = Router();
 
-function requireAdmin(req: any, res: any, next: any) {
+function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const authReq = req as AuthenticatedRequest;
   if (!authReq.user || authReq.user.role !== "admin") {
     res.status(403).json({ error: "غير مصرح: هذه الصفحة للمديرين فقط" });
@@ -28,6 +28,11 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<
   const [usersRow] = await db.select({ count: count() }).from(usersTable);
   const [todayOrdersRow] = await db.select({ count: count() }).from(ordersTable).where(gte(ordersTable.createdAt, todayStart));
   const [todayRevenueRow] = await db.select({ total: sum(ordersTable.total) }).from(ordersTable).where(gte(ordersTable.createdAt, todayStart));
+
+  // Reviews rating KPI
+  const [ratingRow] = await db
+    .select({ avg: sql<string>`avg(${reviewsTable.rating})`, total: count() })
+    .from(reviewsTable);
 
   // Top packages by order count
   const topPackages = await db
@@ -70,6 +75,8 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<
     totalUsers: usersRow.count,
     ordersToday: todayOrdersRow.count,
     revenueToday: Number(todayRevenueRow.total ?? 0),
+    avgRating: ratingRow.avg ? Math.round(Number(ratingRow.avg) * 10) / 10 : null,
+    totalReviews: ratingRow.total,
     topPackages: topPackages.map(p => ({ name: p.name, count: p.count })),
     topWorkshops: topWorkshops.map(w => ({ name: w.name ?? '', count: w.count })),
     weeklySales: weeklySales.map(w => ({ week: w.week, total: Number(w.total ?? 0), count: w.count })),

@@ -4,7 +4,7 @@ import { useGetAdminStats, useListAdminOrders } from '@workspace/api-client-reac
 import { useAuth } from '@/lib/auth-context';
 import {
   ShoppingBag, Clock, CheckCircle2, TrendingUp,
-  Users, DollarSign, ArrowLeft, Loader2, Package2, Wrench, BarChart2
+  Users, DollarSign, ArrowLeft, Loader2, Package2, Wrench, BarChart2, Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -53,7 +53,13 @@ export default function AdminDashboard() {
         { icon: CheckCircle2, label: 'مكتملة',       value: stats.completedOrders, sub: `مؤكدة: ${stats.confirmedOrders}`, color: 'from-green-600 to-green-800' },
         { icon: DollarSign,  label: 'إجمالي الإيراد', value: `${stats.totalRevenue.toLocaleString()} ج.م`, sub: `اليوم: ${stats.revenueToday.toLocaleString()} ج.م`, color: 'from-[#1E2761] to-[#2a3580]', border: 'border-[#F9E795]/30' },
         { icon: Users,       label: 'المستخدمون',    value: stats.totalUsers, sub: 'عميل مسجل', color: 'from-purple-600 to-purple-800' },
-        { icon: TrendingUp,  label: 'إيراد اليوم',   value: `${stats.revenueToday.toLocaleString()} ج.م`, sub: `${stats.ordersToday} طلب اليوم`, color: 'from-rose-600 to-rose-800' },
+        {
+          icon: Star,
+          label: 'متوسط التقييم',
+          value: stats.avgRating != null ? `${stats.avgRating} / 5` : 'لا يوجد',
+          sub: `${stats.totalReviews} تقييم`,
+          color: 'from-amber-600 to-amber-800',
+        },
       ]
     : [];
 

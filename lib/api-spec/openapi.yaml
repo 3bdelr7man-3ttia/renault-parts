@@ -1206,6 +1206,11 @@ components:
           type: integer
         revenueToday:
           type: number
+        avgRating:
+          type: number
+          nullable: true
+        totalReviews:
+          type: integer
         topPackages:
           type: array
           items:

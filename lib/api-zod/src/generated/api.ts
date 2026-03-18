@@ -428,6 +428,8 @@ export const GetAdminStatsResponse = zod.object({
   totalUsers: zod.number(),
   ordersToday: zod.number(),
   revenueToday: zod.number(),
+  avgRating: zod.number().nullish(),
+  totalReviews: zod.number().optional(),
   topPackages: zod.array(
     zod.object({
       name: zod.string(),

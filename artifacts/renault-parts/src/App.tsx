@@ -41,8 +41,9 @@ const queryClient = new QueryClient({
 });
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  if (isLoading) return null;
   if (!user) { setLocation('/login'); return null; }
   if (user.role !== 'admin') { return <AccessDenied />; }
   return <>{children}</>;
@@ -58,6 +59,7 @@ function Router() {
         <AdminLayout>
           <Switch>
             <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin/dashboard" component={AdminDashboard} />
             <Route path="/admin/orders" component={AdminOrders} />
             <Route path="/admin/packages" component={AdminPackages} />
             <Route path="/admin/workshops" component={AdminWorkshops} />
