@@ -29,6 +29,7 @@ import AdminPackages from "@/pages/admin/AdminPackages";
 import AdminWorkshops from "@/pages/admin/AdminWorkshops";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminSales from "@/pages/admin/AdminSales";
+import AccessDenied from "@/pages/AccessDenied";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,7 +44,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   if (!user) { setLocation('/login'); return null; }
-  if (user.role !== 'admin') { setLocation('/'); return null; }
+  if (user.role !== 'admin') { return <AccessDenied />; }
   return <>{children}</>;
 }
 

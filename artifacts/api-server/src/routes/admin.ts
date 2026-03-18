@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, count, sum, sql, gte, desc } from "drizzle-orm";
+import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
 import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
@@ -29,6 +29,38 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<
   const [todayOrdersRow] = await db.select({ count: count() }).from(ordersTable).where(gte(ordersTable.createdAt, todayStart));
   const [todayRevenueRow] = await db.select({ total: sum(ordersTable.total) }).from(ordersTable).where(gte(ordersTable.createdAt, todayStart));
 
+  // Top packages by order count
+  const topPackages = await db
+    .select({ packageId: ordersTable.packageId, name: packagesTable.name, count: count() })
+    .from(ordersTable)
+    .innerJoin(packagesTable, eq(ordersTable.packageId, packagesTable.id))
+    .groupBy(ordersTable.packageId, packagesTable.name)
+    .orderBy(sql`count(*) DESC`)
+    .limit(5);
+
+  // Most active workshops by order count
+  const topWorkshops = await db
+    .select({ workshopId: ordersTable.workshopId, name: workshopsTable.name, count: count() })
+    .from(ordersTable)
+    .innerJoin(workshopsTable, eq(ordersTable.workshopId, workshopsTable.id))
+    .groupBy(ordersTable.workshopId, workshopsTable.name)
+    .orderBy(sql`count(*) DESC`)
+    .limit(5);
+
+  // Weekly sales for chart (last 8 weeks)
+  const eightWeeksAgo = new Date();
+  eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+  const weeklySales = await db
+    .select({
+      week: sql<string>`to_char(date_trunc('week', ${ordersTable.createdAt}), 'YYYY-MM-DD')`,
+      total: sum(ordersTable.total),
+      count: count(),
+    })
+    .from(ordersTable)
+    .where(gte(ordersTable.createdAt, eightWeeksAgo))
+    .groupBy(sql`date_trunc('week', ${ordersTable.createdAt})`)
+    .orderBy(sql`date_trunc('week', ${ordersTable.createdAt})`);
+
   res.json({
     totalOrders: totalOrdersRow.count,
     pendingOrders: pendingRow.count,
@@ -38,14 +70,26 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<
     totalUsers: usersRow.count,
     ordersToday: todayOrdersRow.count,
     revenueToday: Number(todayRevenueRow.total ?? 0),
+    topPackages: topPackages.map(p => ({ name: p.name, count: p.count })),
+    topWorkshops: topWorkshops.map(w => ({ name: w.name ?? '', count: w.count })),
+    weeklySales: weeklySales.map(w => ({ week: w.week, total: Number(w.total ?? 0), count: w.count })),
   });
 });
 
 // GET /admin/orders
 router.get("/admin/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
-  const { status } = req.query;
+  const { status, dateFrom, dateTo } = req.query;
 
-  const rows = await db
+  const conditions = [];
+  if (status) conditions.push(eq(ordersTable.status, String(status)));
+  if (dateFrom) conditions.push(gte(ordersTable.createdAt, new Date(String(dateFrom))));
+  if (dateTo) {
+    const toDate = new Date(String(dateTo));
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(ordersTable.createdAt, toDate));
+  }
+
+  const query = db
     .select({
       order: ordersTable,
       user: { name: usersTable.name, phone: usersTable.phone },
@@ -58,9 +102,11 @@ router.get("/admin/orders", requireAuth, requireAdmin, async (req, res): Promise
     .leftJoin(workshopsTable, eq(ordersTable.workshopId, workshopsTable.id))
     .orderBy(sql`${ordersTable.createdAt} DESC`);
 
-  const filtered = status
-    ? rows.filter((r) => r.order.status === status)
-    : rows;
+  const rows = conditions.length > 0
+    ? await query.where(and(...conditions))
+    : await query;
+
+  const filtered = rows;
 
   const result = filtered.map((r) => ({
     id: r.order.id,

@@ -251,6 +251,22 @@ export interface InitiatePaymentResponse {
   paymentToken: string;
 }
 
+export type AdminStatsTopPackagesItem = {
+  name: string;
+  count: number;
+};
+
+export type AdminStatsTopWorkshopsItem = {
+  name: string;
+  count: number;
+};
+
+export type AdminStatsWeeklySalesItem = {
+  week: string;
+  total: number;
+  count: number;
+};
+
 export interface AdminStats {
   totalOrders: number;
   pendingOrders: number;
@@ -260,6 +276,9 @@ export interface AdminStats {
   totalUsers: number;
   ordersToday: number;
   revenueToday: number;
+  topPackages: AdminStatsTopPackagesItem[];
+  topWorkshops: AdminStatsTopWorkshopsItem[];
+  weeklySales: AdminStatsWeeklySalesItem[];
 }
 
 export type AdminOrderPaymentMethod =
@@ -427,5 +446,13 @@ export type PaymentCallbackBody = { [key: string]: unknown };
 
 export type ListAdminOrdersParams = {
   status?: string;
+  /**
+   * Filter orders from this date (ISO format YYYY-MM-DD)
+   */
+  dateFrom?: string;
+  /**
+   * Filter orders up to this date (ISO format YYYY-MM-DD)
+   */
+  dateTo?: string;
   page?: number;
 };

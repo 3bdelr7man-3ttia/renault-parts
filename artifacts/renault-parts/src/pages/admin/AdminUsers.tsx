@@ -33,9 +33,9 @@ export default function AdminUsers() {
   });
 
   const handleRoleToggle = (userId: number, currentRole: string) => {
-    const newRole = currentRole === 'admin' ? 'customer' : 'admin';
+    const newRole: 'customer' | 'admin' = currentRole === 'admin' ? 'customer' : 'admin';
     setUpdatingId(userId);
-    updateRole({ id: userId, data: { role: newRole as any } });
+    updateRole({ id: userId, data: { role: newRole } });
   };
 
   const filtered = users?.filter(u =>

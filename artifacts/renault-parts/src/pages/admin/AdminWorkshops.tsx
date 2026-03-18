@@ -63,13 +63,16 @@ export default function AdminWorkshops() {
     },
   });
 
-  const parseForm = (form: WorkshopForm) => ({
+  const parseForm = (form: WorkshopForm): {
+    name: string; area: string; address: string; phone: string;
+    lat?: number | null; lng?: number | null; partnershipStatus?: string;
+  } => ({
     name: form.name,
     area: form.area,
     address: form.address,
     phone: form.phone,
-    lat: form.lat ? parseFloat(form.lat) : undefined,
-    lng: form.lng ? parseFloat(form.lng) : undefined,
+    lat: form.lat ? parseFloat(form.lat) : null,
+    lng: form.lng ? parseFloat(form.lng) : null,
     partnershipStatus: form.partnershipStatus,
   });
 
@@ -198,7 +201,7 @@ export default function AdminWorkshops() {
           <FormFields form={addForm} setForm={setAddForm} />
           <div className="flex gap-3 pt-2">
             <button
-              onClick={() => createWs({ data: parseForm(addForm) as any })}
+              onClick={() => createWs({ data: parseForm(addForm) })}
               disabled={creating || !addForm.name || !addForm.area || !addForm.address || !addForm.phone}
               className="flex items-center gap-2 px-6 py-2.5 bg-[#F9E795] text-[#1E2761] rounded-xl font-bold text-sm hover:bg-[#F9E795]/80 transition-all disabled:opacity-50"
             >
@@ -238,7 +241,7 @@ export default function AdminWorkshops() {
                     <FormFields form={editForm} setForm={setEditForm} />
                     <div className="flex gap-3">
                       <button
-                        onClick={() => updateWs({ id: ws.id, data: parseForm(editForm) as any })}
+                        onClick={() => updateWs({ id: ws.id, data: parseForm(editForm) })}
                         disabled={updating}
                         className="flex items-center gap-2 px-5 py-2 bg-[#F9E795] text-[#1E2761] rounded-xl font-bold text-sm hover:bg-[#F9E795]/80 transition-all disabled:opacity-50"
                       >

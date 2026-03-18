@@ -4,7 +4,7 @@ import { useGetAdminStats, useListAdminOrders } from '@workspace/api-client-reac
 import { useAuth } from '@/lib/auth-context';
 import {
   ShoppingBag, Clock, CheckCircle2, TrendingUp,
-  Users, DollarSign, ArrowLeft, Loader2
+  Users, DollarSign, ArrowLeft, Loader2, Package2, Wrench, BarChart2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -16,6 +16,26 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   completed:  { label: 'مكتمل',        color: 'bg-green-500/20 text-green-300 border border-green-500/30' },
   cancelled:  { label: 'ملغي',         color: 'bg-red-500/20 text-red-300 border border-red-500/30' },
 };
+
+function MiniBarChart({ data }: { data: { week: string; total: number; count: number }[] }) {
+  const maxTotal = Math.max(...data.map(d => d.total), 1);
+  return (
+    <div className="flex items-end gap-2 h-28">
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <div className="w-full flex items-end" style={{ height: '88px' }}>
+            <div
+              className="w-full rounded-t-lg bg-gradient-to-t from-[#F9E795]/60 to-[#F9E795]/20 hover:from-[#F9E795]/80 hover:to-[#F9E795]/40 transition-all cursor-default"
+              style={{ height: `${Math.max((d.total / maxTotal) * 100, 4)}%` }}
+              title={`${d.week}: ${d.total.toLocaleString()} ج.م (${d.count} طلب)`}
+            />
+          </div>
+          <span className="text-white/30 text-[9px] leading-none">{d.week.slice(5)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const { getAuthHeaders } = useAuth();
@@ -44,7 +64,7 @@ export default function AdminDashboard() {
         <p className="text-white/50 text-sm">مرحباً بك في لوحة إدارة رينو بارتس</p>
       </div>
 
-      {/* Stats */}
+      {/* KPI Cards */}
       {statsLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -66,6 +86,91 @@ export default function AdminDashboard() {
               <p className="text-white/50 text-xs mt-1">{card.sub}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Charts + Top lists row */}
+      {!statsLoading && stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Weekly Sales Chart */}
+          <div className="lg:col-span-1 bg-[#1E2761]/60 rounded-2xl border border-white/10 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-[#F9E795]" />
+                <h2 className="text-white font-bold">المبيعات الأسبوعية</h2>
+              </div>
+              <Link href="/admin/sales">
+                <span className="text-[#F9E795] text-xs font-bold cursor-pointer hover:underline">تفاصيل</span>
+              </Link>
+            </div>
+            {stats.weeklySales.length === 0 ? (
+              <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات بعد</p>
+            ) : (
+              <MiniBarChart data={stats.weeklySales} />
+            )}
+          </div>
+
+          {/* Top Packages */}
+          <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Package2 className="w-5 h-5 text-[#F9E795]" />
+              <h2 className="text-white font-bold">أكثر الباكدجات مبيعاً</h2>
+            </div>
+            {stats.topPackages.length === 0 ? (
+              <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات</p>
+            ) : (
+              <div className="space-y-3">
+                {stats.topPackages.map((pkg, i) => {
+                  const maxCount = stats.topPackages[0]?.count ?? 1;
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/80 text-sm font-bold truncate flex-1 ml-2">{pkg.name}</span>
+                        <span className="text-[#F9E795] text-sm font-black">{pkg.count} طلب</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#F9E795]/80 to-[#F9E795]/30 rounded-full"
+                          style={{ width: `${(pkg.count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Top Workshops */}
+          <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Wrench className="w-5 h-5 text-[#F9E795]" />
+              <h2 className="text-white font-bold">الورش الأكثر نشاطاً</h2>
+            </div>
+            {stats.topWorkshops.length === 0 ? (
+              <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات</p>
+            ) : (
+              <div className="space-y-3">
+                {stats.topWorkshops.map((ws, i) => {
+                  const maxCount = stats.topWorkshops[0]?.count ?? 1;
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/80 text-sm font-bold truncate flex-1 ml-2">{ws.name}</span>
+                        <span className="text-[#F9E795] text-sm font-black">{ws.count} طلب</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-400/80 to-blue-400/30 rounded-full"
+                          style={{ width: `${(ws.count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

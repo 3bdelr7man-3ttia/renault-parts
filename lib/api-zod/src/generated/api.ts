@@ -428,6 +428,25 @@ export const GetAdminStatsResponse = zod.object({
   totalUsers: zod.number(),
   ordersToday: zod.number(),
   revenueToday: zod.number(),
+  topPackages: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod.number(),
+    }),
+  ),
+  topWorkshops: zod.array(
+    zod.object({
+      name: zod.string(),
+      count: zod.number(),
+    }),
+  ),
+  weeklySales: zod.array(
+    zod.object({
+      week: zod.string(),
+      total: zod.number(),
+      count: zod.number(),
+    }),
+  ),
 });
 
 /**
@@ -435,6 +454,14 @@ export const GetAdminStatsResponse = zod.object({
  */
 export const ListAdminOrdersQueryParams = zod.object({
   status: zod.coerce.string().optional(),
+  dateFrom: zod.coerce
+    .string()
+    .optional()
+    .describe("Filter orders from this date (ISO format YYYY-MM-DD)"),
+  dateTo: zod.coerce
+    .string()
+    .optional()
+    .describe("Filter orders up to this date (ISO format YYYY-MM-DD)"),
   page: zod.coerce.number().optional(),
 });
 

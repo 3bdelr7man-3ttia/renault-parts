@@ -3,11 +3,13 @@ import { useListAdminOrders, useUpdateOrderStatus } from '@workspace/api-client-
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { Filter, ChevronDown, Loader2 } from 'lucide-react';
+import { Filter, Calendar, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
-const ALL_STATUSES = [
+type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
+
+const ALL_STATUSES: { value: OrderStatus | ''; label: string }[] = [
   { value: '', label: 'جميع الطلبات' },
   { value: 'pending',    label: 'قيد المراجعة' },
   { value: 'confirmed',  label: 'مؤكد' },
@@ -24,7 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled:  'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
-const STATUS_NEXT: Record<string, { value: string; label: string }[]> = {
+const STATUS_NEXT: Record<string, { value: OrderStatus; label: string }[]> = {
   pending:    [{ value: 'confirmed', label: 'تأكيد' }, { value: 'cancelled', label: 'إلغاء' }],
   confirmed:  [{ value: 'processing', label: 'بدء التركيب' }, { value: 'cancelled', label: 'إلغاء' }],
   processing: [{ value: 'completed', label: 'إتمام' }],
@@ -36,15 +38,21 @@ export default function AdminOrders() {
   const { getAuthHeaders } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | ''>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const headers = getAuthHeaders();
 
-  const { data: orders, isLoading } = useListAdminOrders(
-    filterStatus ? { status: filterStatus } : {},
-    { request: headers }
-  );
+  const queryParams: { status?: string; dateFrom?: string; dateTo?: string } = {};
+  if (filterStatus) queryParams.status = filterStatus;
+  if (dateFrom) queryParams.dateFrom = dateFrom;
+  if (dateTo) queryParams.dateTo = dateTo;
+
+  const { data: orders, isLoading } = useListAdminOrders(queryParams, { request: headers });
+
+  const clearFilters = () => { setFilterStatus(''); setDateFrom(''); setDateTo(''); };
 
   const { mutate: updateStatus } = useUpdateOrderStatus({
     request: headers,
@@ -61,31 +69,71 @@ export default function AdminOrders() {
     },
   });
 
-  const handleStatusChange = (orderId: number, newStatus: string) => {
+  const handleStatusChange = (orderId: number, newStatus: OrderStatus) => {
     setUpdatingId(orderId);
-    updateStatus({ id: orderId, data: { status: newStatus as any } });
+    updateStatus({ id: orderId, data: { status: newStatus } });
   };
+
+  const hasActiveFilters = filterStatus !== '' || dateFrom !== '' || dateTo !== '';
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-white mb-1">إدارة الطلبات</h1>
-          <p className="text-white/50 text-sm">{orders?.length ?? 0} طلب</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-white mb-1">إدارة الطلبات</h1>
+            <p className="text-white/50 text-sm">{orders?.length ?? 0} طلب</p>
+          </div>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-bold hover:bg-red-500/20 transition-all"
+            >
+              <X className="w-4 h-4" />
+              مسح الفلاتر
+            </button>
+          )}
         </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-2 bg-[#1E2761]/60 border border-white/10 rounded-xl px-4 py-2">
-          <Filter className="w-4 h-4 text-white/50" />
-          <select
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-            className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer"
-          >
-            {ALL_STATUSES.map(s => (
-              <option key={s.value} value={s.value} className="bg-[#1E2761]">{s.label}</option>
-            ))}
-          </select>
+        {/* Filters Row */}
+        <div className="flex flex-wrap gap-3">
+          {/* Status Filter */}
+          <div className="flex items-center gap-2 bg-[#1E2761]/60 border border-white/10 rounded-xl px-4 py-2">
+            <Filter className="w-4 h-4 text-white/50" />
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value as OrderStatus | '')}
+              className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer"
+            >
+              {ALL_STATUSES.map(s => (
+                <option key={s.value} value={s.value} className="bg-[#1E2761]">{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date From */}
+          <div className="flex items-center gap-2 bg-[#1E2761]/60 border border-white/10 rounded-xl px-4 py-2">
+            <Calendar className="w-4 h-4 text-white/50" />
+            <label className="text-white/40 text-xs font-bold ml-1">من</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer [color-scheme:dark]"
+            />
+          </div>
+
+          {/* Date To */}
+          <div className="flex items-center gap-2 bg-[#1E2761]/60 border border-white/10 rounded-xl px-4 py-2">
+            <Calendar className="w-4 h-4 text-white/50" />
+            <label className="text-white/40 text-xs font-bold ml-1">إلى</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer [color-scheme:dark]"
+            />
+          </div>
         </div>
       </div>
 
