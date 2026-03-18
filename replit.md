@@ -48,13 +48,24 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
-## Project: رينو بارتس - منصة قطع غيار رينو الإسكندرية
+## Project: رينو باك / RenoPack — منصة باكدجات صيانة رينو في الإسكندرية
 
 ### Product Overview
-B2C platform for selling Renault car maintenance packages in Alexandria, Egypt.
-- 5 packages: 20k km, 40k km, 60k km, 100k km, Emergency (prices: 1040–7500 EGP)
-- Free installation via partner workshops in Alexandria
-- RTL Arabic UI, brand colors: navy #1E2761 + gold #F9E795
+Full-stack Arabic RTL marketplace between Renault spare parts suppliers and installation workshops in Alexandria, Egypt (Uber-style).
+- Brand: navy `#1A2356` + gold `#C8974A` + sky `#4AABCA` + lav `#7B72B8` + sage `#3DA882`
+- Mascot: "باكو" diamond-robot character (`src/assets/bako-new.png`, `bako-logo.png`)
+- Fonts: Almarai (brand) + Cairo (Arabic) loaded via HTML `<link>` in index.html
+- CSS brand vars: `--rp-*` prefix in `index.css` (--rp-navy, --rp-gold, --rp-sky, etc.)
+- CSS animations: `rp-*` prefix (rp-float, rp-blob1, rp-glow-blink, rp-fade-up, etc.)
+
+### Homepage (AlexandriaBlend Design — applied to artifacts/renault-parts)
+- Cinematic hero: Bako mascot + speech bubble + floating stat cards + grid perspective
+- Parts showcase: magazine layout (2-col) with original/Turkish price comparison
+- Ready packages: 3-column 3D cards from real API (`useListPackages()`)
+- Puzzle builder: interactive part selector with gift tier progress bars
+- AI compare: 3 parts (oil/brakes/filter), original vs Turkish, with local BakoChat
+- Workshops grid: 4 Alexandria workshops
+- Dark navy theme (`#0D1220` bg) for home page; existing light theme for other pages
 
 ### Auth
 JWT-based auth using `bcryptjs` + `jsonwebtoken`. Token stored in localStorage by frontend.
