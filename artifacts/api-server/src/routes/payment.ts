@@ -12,6 +12,7 @@ const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID ?? "";
 const PAYMOB_HMAC_SECRET = process.env.PAYMOB_HMAC_SECRET ?? "";
 
 const PAYMOB_BASE = "https://accept.paymob.com/api";
+const APP_BASE_URL = process.env.APP_BASE_URL ?? `https://${process.env.REPLIT_DEV_DOMAIN ?? "localhost"}`;
 
 async function getPaymobAuthToken(): Promise<string> {
   const res = await fetch(`${PAYMOB_BASE}/auth/tokens`, {
@@ -46,7 +47,8 @@ async function getPaymobPaymentKey(
   authToken: string,
   amountCents: number,
   paymobOrderId: number,
-  billingData: Record<string, string>
+  billingData: Record<string, string>,
+  returnUrl?: string
 ): Promise<string> {
   const res = await fetch(`${PAYMOB_BASE}/acceptance/payment_keys`, {
     method: "POST",
@@ -60,6 +62,7 @@ async function getPaymobPaymentKey(
       currency: "EGP",
       integration_id: parseInt(PAYMOB_INTEGRATION_ID),
       lock_order_when_paid: false,
+      ...(returnUrl && { redirect_url: returnUrl }),
     }),
   });
   if (!res.ok) throw new Error(`PayMob payment key failed: ${res.status}`);
@@ -127,7 +130,8 @@ router.post("/payment/initiate", requireAuth, async (req, res): Promise<void> =>
     state: "Alexandria",
   };
 
-  const paymentKey = await getPaymobPaymentKey(authToken, amountCents, paymobOrderId, billingData);
+  const returnUrl = `${APP_BASE_URL}/payment/result?orderId=${order.id}`;
+  const paymentKey = await getPaymobPaymentKey(authToken, amountCents, paymobOrderId, billingData, returnUrl);
 
   await db
     .update(ordersTable)
@@ -139,29 +143,36 @@ router.post("/payment/initiate", requireAuth, async (req, res): Promise<void> =>
   res.json({ iframeUrl, orderId: order.id, paymentToken: paymentKey });
 });
 
-// POST /payment/callback - PayMob HMAC-verified webhook
+// POST /payment/callback - PayMob HMAC-verified webhook (fail-closed)
 router.post("/payment/callback", async (req, res): Promise<void> => {
   const body = req.body as Record<string, unknown>;
 
-  if (PAYMOB_HMAC_SECRET) {
-    const hmacFromPaymob = (body.hmac as string) ?? "";
-    const obj = body.obj as Record<string, unknown>;
-    const concatStr = [
-      obj?.amount_cents, obj?.created_at, obj?.currency,
-      obj?.error_occured, obj?.has_parent_transaction, obj?.id,
-      obj?.integration_id, obj?.is_3d_secure, obj?.is_auth,
-      obj?.is_capture, obj?.is_refunded, obj?.is_standalone_payment,
-      obj?.is_voided, obj?.order?.id, obj?.owner,
-      obj?.pending, obj?.source_data?.pan, obj?.source_data?.sub_type,
-      obj?.source_data?.type, obj?.success,
-    ].join("");
+  if (!PAYMOB_HMAC_SECRET) {
+    console.error("[payment/callback] PAYMOB_HMAC_SECRET is not configured — rejecting callback");
+    res.status(503).json({ error: "Webhook secret not configured" });
+    return;
+  }
 
-    const computedHmac = crypto.createHmac("sha512", PAYMOB_HMAC_SECRET).update(concatStr).digest("hex");
+  const hmacFromPaymob = (body.hmac as string) ?? "";
+  const obj = body.obj as Record<string, unknown>;
 
-    if (computedHmac !== hmacFromPaymob) {
-      res.status(400).json({ error: "Invalid HMAC signature" });
-      return;
-    }
+  const concatStr = [
+    obj?.amount_cents, obj?.created_at, obj?.currency,
+    obj?.error_occured, obj?.has_parent_transaction, obj?.id,
+    obj?.integration_id, obj?.is_3d_secure, obj?.is_auth,
+    obj?.is_capture, obj?.is_refunded, obj?.is_standalone_payment,
+    obj?.is_voided, (obj?.order as Record<string, unknown>)?.id, obj?.owner,
+    obj?.pending, (obj?.source_data as Record<string, unknown>)?.pan,
+    (obj?.source_data as Record<string, unknown>)?.sub_type,
+    (obj?.source_data as Record<string, unknown>)?.type, obj?.success,
+  ].join("");
+
+  const computedHmac = crypto.createHmac("sha512", PAYMOB_HMAC_SECRET).update(concatStr).digest("hex");
+
+  if (computedHmac !== hmacFromPaymob) {
+    console.warn("[payment/callback] Invalid HMAC — rejecting");
+    res.status(400).json({ error: "Invalid HMAC signature" });
+    return;
   }
 
   const transactionObj = body.obj as Record<string, unknown>;
@@ -174,12 +185,12 @@ router.post("/payment/callback", async (req, res): Promise<void> => {
   const paymobOrderId = String((transactionObj.order as Record<string, unknown>)?.id ?? "");
 
   if (paymobOrderId) {
-    const newPaymentStatus = isSuccess ? "paid" : "failed";
-    const newStatus = isSuccess ? "confirmed" : "pending";
-
     await db
       .update(ordersTable)
-      .set({ paymentStatus: newPaymentStatus, status: newStatus })
+      .set({
+        paymentStatus: isSuccess ? "paid" : "failed",
+        status: isSuccess ? "confirmed" : "pending",
+      })
       .where(eq(ordersTable.paymobRef, paymobOrderId));
   }
 

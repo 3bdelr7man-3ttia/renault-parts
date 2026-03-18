@@ -18,6 +18,7 @@ import Register from "@/pages/Register";
 import Checkout from "@/pages/Checkout";
 import MyOrders from "@/pages/MyOrders";
 import OrderDetail from "@/pages/OrderDetail";
+import PaymentResult from "@/pages/PaymentResult";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -71,6 +72,7 @@ function Router() {
         <Route path="/checkout/:id" component={Checkout} />
         <Route path="/my-orders" component={MyOrders} />
         <Route path="/orders/:id" component={OrderDetail} />
+        <Route path="/payment/result" component={PaymentResult} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

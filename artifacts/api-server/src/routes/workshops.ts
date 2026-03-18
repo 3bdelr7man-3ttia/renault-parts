@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, workshopsTable } from "@workspace/db";
 import { ListWorkshopsQueryParams, ListWorkshopsResponse } from "@workspace/api-zod";
 
@@ -12,12 +12,15 @@ router.get("/workshops", async (req, res): Promise<void> => {
     return;
   }
 
-  let query = db.select().from(workshopsTable).$dynamic();
+  const conditions = [eq(workshopsTable.partnershipStatus, "active")];
   if (queryParsed.data.area) {
-    query = query.where(eq(workshopsTable.area, queryParsed.data.area));
+    conditions.push(eq(workshopsTable.area, queryParsed.data.area));
   }
 
-  const workshops = await query;
+  const workshops = await db
+    .select()
+    .from(workshopsTable)
+    .where(and(...conditions));
 
   const result = workshops.map((w) => ({
     id: w.id,

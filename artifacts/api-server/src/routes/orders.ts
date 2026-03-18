@@ -100,10 +100,44 @@ router.post("/orders", requireAuth, async (req, res): Promise<void> => {
 
   const { packageId, workshopId, deliveryAddress, deliveryArea, paymentMethod, carModel, carYear, notes } = parsed.data;
 
+  const isWorkshopInstall = !!workshopId;
+  const isHomeInstall = !!deliveryAddress || !!deliveryArea;
+
+  if (isWorkshopInstall && isHomeInstall) {
+    res.status(400).json({ error: "يرجى اختيار طريقة تركيب واحدة فقط: ورشة أو توصيل للبيت" });
+    return;
+  }
+
+  if (!isWorkshopInstall && !isHomeInstall) {
+    res.status(400).json({ error: "يجب اختيار ورشة أو تحديد عنوان التوصيل للبيت" });
+    return;
+  }
+
+  if (isHomeInstall && !deliveryAddress) {
+    res.status(400).json({ error: "عنوان التوصيل مطلوب عند اختيار التوصيل للبيت" });
+    return;
+  }
+
+  if (isHomeInstall && !deliveryArea) {
+    res.status(400).json({ error: "المنطقة مطلوبة عند اختيار التوصيل للبيت" });
+    return;
+  }
+
   const [pkg] = await db.select().from(packagesTable).where(eq(packagesTable.id, packageId));
   if (!pkg) {
     res.status(404).json({ error: "الباكدج غير موجود" });
     return;
+  }
+
+  if (isWorkshopInstall && workshopId) {
+    const [workshop] = await db
+      .select()
+      .from(workshopsTable)
+      .where(and(eq(workshopsTable.id, workshopId), eq(workshopsTable.partnershipStatus, "active")));
+    if (!workshop) {
+      res.status(400).json({ error: "الورشة المختارة غير متاحة حالياً" });
+      return;
+    }
   }
 
   const isCash = paymentMethod === "cash";
