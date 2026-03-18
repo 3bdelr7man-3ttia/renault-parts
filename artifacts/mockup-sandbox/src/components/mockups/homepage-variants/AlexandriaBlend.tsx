@@ -5,7 +5,8 @@ import {
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
   ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown
 } from 'lucide-react';
-import bakoImg from '@/assets/bako-new.png';
+import bakoImg    from '@/assets/bako-new.png';
+import bakoLogoImg from '@/assets/bako-logo.png';
 import partOilImg    from '@/assets/part-oil.jpg';
 import partBrakesImg from '@/assets/part-brakes.jpg';
 import partAirImg    from '@/assets/part-airfilter.jpg';
@@ -180,18 +181,20 @@ const WORKSHOPS = [
 
 /* ─── LOGO COMPONENT ──────────────────────────────────────────── */
 function RenoPackLogo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const s = { sm:{ logo:28, ar:14, en:9 }, md:{ logo:38, ar:18, en:10 }, lg:{ logo:52, ar:24, en:13 } }[size];
+  const s = { sm:{ logo:36, ar:14, en:9 }, md:{ logo:48, ar:18, en:10 }, lg:{ logo:68, ar:24, en:13 } }[size];
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-      <div style={{ width:s.logo, height:s.logo, borderRadius:s.logo*0.28, background:'linear-gradient(145deg,var(--navy-lt),var(--navy))', border:'2px solid rgba(200,151,74,0.4)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 14px rgba(200,151,74,0.25)', overflow:'hidden', position:'relative' }}>
-        {/* Car silhouette */}
-        <svg width={s.logo*0.7} height={s.logo*0.7} viewBox="0 0 40 24" fill="none">
-          <path d="M6 16 Q8 10 14 9 L26 8 Q31 8 34 12 L36 16 Q30 18 10 18 Z" fill="var(--gold)" opacity="0.9"/>
-          <circle cx="12" cy="18" r="3" fill="var(--navy)" stroke="var(--gold)" strokeWidth="1.5"/>
-          <circle cx="28" cy="18" r="3" fill="var(--navy)" stroke="var(--gold)" strokeWidth="1.5"/>
-          <path d="M16 9 L18 5 L24 5 L27 9" stroke="var(--gold)" strokeWidth="1.2" fill="none"/>
-        </svg>
-      </div>
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <img
+        src={bakoLogoImg}
+        alt="باكو"
+        style={{
+          width: s.logo,
+          height: s.logo,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 2px 8px rgba(200,151,74,0.4))',
+          mixBlendMode: 'screen',
+        }}
+      />
       <div>
         <div style={{ fontFamily:"'Almarai',sans-serif", fontWeight:800, fontSize:s.ar, lineHeight:1, letterSpacing:-0.3 }}>
           <span style={{ color:'var(--text)' }}>رينو </span>
