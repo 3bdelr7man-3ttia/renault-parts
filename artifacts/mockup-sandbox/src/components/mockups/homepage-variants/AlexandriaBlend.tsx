@@ -30,10 +30,10 @@ const STYLES = `
     --sky:      #4AABCA;
     --lav:      #7B72B8;
     --sage:     #3DA882;
-    --text:     #C5D3E0;
-    --text-dim: #5C7488;
-    --border:   rgba(255,255,255,0.07);
-    --card:     rgba(255,255,255,0.04);
+    --text:     #D4E0EC;
+    --text-dim: #7A95AA;
+    --border:   rgba(255,255,255,0.10);
+    --card:     rgba(255,255,255,0.055);
   }
   @keyframes blobMorph {
     0%,100% { border-radius:60% 40% 70% 30%/50% 60% 40% 70%; transform:translate(0,0) scale(1); }
@@ -731,7 +731,7 @@ export function AlexandriaBlend() {
               {/* Platform badge */}
               <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(200,151,74,0.07)', border:'1px solid rgba(200,151,74,0.22)', borderRadius:999, padding:'6px 18px', marginBottom:28 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background:'var(--gold)', boxShadow:'0 0 8px var(--gold)', animation:'glowBlink 2s infinite' }}/>
-                <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700, letterSpacing:.3 }}>منصة قطع الغيار الأولى — الإسكندرية</span>
+                <span style={{ color:'var(--gold)', fontSize:12, fontWeight:700, letterSpacing:.3 }}>منصة باكدجات الصيانة الأولى — الإسكندرية</span>
               </div>
 
               {/* BIG headline */}
@@ -800,10 +800,12 @@ export function AlexandriaBlend() {
               {/* Bako */}
               <div style={{ position:'relative', zIndex:5, animation:'floatBako 5s ease-in-out infinite' }}>
                 <img src={bakoImg} alt="باكو" style={{ width:320, height:320, objectFit:'contain', filter:'drop-shadow(0 28px 55px rgba(200,151,74,0.45)) drop-shadow(0 0 100px rgba(200,151,74,0.2))', display:'block', margin:'0 auto' }} />
-                {/* Speech bubble */}
-                <div style={{ position:'absolute', top:22, right:260, background:'rgba(13,18,32,0.92)', backdropFilter:'blur(12px)', border:'1.5px solid rgba(200,151,74,0.35)', borderRadius:'16px 16px 4px 16px', padding:'10px 16px', whiteSpace:'nowrap', boxShadow:'0 8px 24px rgba(0,0,0,0.4)', animation:'glowBlink 3s infinite' }}>
+                {/* Speech bubble — above Bako's head */}
+                <div style={{ position:'absolute', top:-62, left:'50%', transform:'translateX(-38%)', background:'rgba(13,18,32,0.94)', backdropFilter:'blur(14px)', border:'1.5px solid rgba(200,151,74,0.38)', borderRadius:'16px 16px 16px 4px', padding:'10px 18px', whiteSpace:'nowrap', boxShadow:'0 8px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(200,151,74,0.08)', animation:'glowBlink 3s infinite', zIndex:10 }}>
                   <div style={{ color:'var(--gold)', fontSize:12, fontWeight:800, marginBottom:2 }}>أهلاً! أنا باكو 👋</div>
-                  <div style={{ color:'rgba(255,255,255,0.5)', fontSize:10, fontWeight:700 }}>هساعدك تختار أحسن قطعة</div>
+                  <div style={{ color:'rgba(255,255,255,0.55)', fontSize:10, fontWeight:700 }}>هساعدك تختار الباكدج المناسب</div>
+                  {/* Tail pointing down */}
+                  <div style={{ position:'absolute', bottom:-8, right:24, width:0, height:0, borderLeft:'8px solid transparent', borderRight:'8px solid transparent', borderTop:'8px solid rgba(200,151,74,0.38)' }}/>
                 </div>
               </div>
 
@@ -856,11 +858,14 @@ export function AlexandriaBlend() {
             {/* Header */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
               <div>
-                <h2 style={{ fontSize:22, fontWeight:800, color:'#E8F0F8', marginBottom:4 }}>قطع رينو — أصلي وتركي 🔧</h2>
-                <p style={{ color:'var(--text-dim)', fontSize:13 }}>كل القطع متاحة بخيارين — الأصلي بضمان 24 شهر، التركي بضمان 12 شهر</p>
+                <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(200,151,74,0.08)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:999, padding:'4px 14px', marginBottom:10 }}>
+                  <Package size={11} color="var(--gold)"/><span style={{ color:'var(--gold)', fontSize:11, fontWeight:700 }}>ما بداخل الباكدجات</span>
+                </div>
+                <h2 style={{ fontSize:22, fontWeight:800, color:'#E8F0F8', marginBottom:4 }}>اختار نوع القطعة في باكدجك 🔧</h2>
+                <p style={{ color:'var(--text-dim)', fontSize:13 }}>أصلي أوروبي (ضمان 24 شهر) أو تركي عالي الكفاءة (ضمان 12 شهر) — كلاهما داخل الباكدج</p>
               </div>
               <button style={{ display:'flex', alignItems:'center', gap:6, color:'var(--gold)', background:'rgba(200,151,74,0.07)', border:'1px solid rgba(200,151,74,0.2)', borderRadius:999, padding:'7px 16px', fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
-                كل القطع <ChevronLeft size={13}/>
+                كل الباكدجات <ChevronLeft size={13}/>
               </button>
             </div>
 
@@ -884,7 +889,7 @@ export function AlexandriaBlend() {
                       />
                       <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,transparent 35%,var(--bg3) 100%)' }}/>
                       <div style={{ position:'absolute', top:14, right:14, background:'rgba(13,18,32,0.85)', backdropFilter:'blur(8px)', border:`1px solid ${p.badgeColor}40`, borderRadius:999, padding:'4px 12px', fontSize:10, fontWeight:800, color:p.badgeColor }}>
-                        ⭐ الأكثر طلباً
+                        ⭐ الأكثر في الباكدجات
                       </div>
                     </div>
                     {/* Content */}
@@ -929,7 +934,7 @@ export function AlexandriaBlend() {
                       <div style={{ fontSize:11, fontWeight:700, color:'var(--text)', marginBottom:6, lineHeight:1.35 }}>{p.name}</div>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'auto' }}>
                         <div style={{ fontSize:14, fontWeight:800, color:'var(--gold)' }}>{p.price}</div>
-                        <div style={{ background:`${p.border}14`, border:`1px solid ${p.border}28`, borderRadius:6, padding:'3px 8px', fontSize:9, fontWeight:700, color:p.border }}>+ أضف</div>
+                        <div style={{ background:`${p.border}14`, border:`1px solid ${p.border}28`, borderRadius:6, padding:'3px 8px', fontSize:9, fontWeight:700, color:p.border }}>+ للباكدج</div>
                       </div>
                     </div>
                   </div>
