@@ -169,14 +169,16 @@ function AlexMap({ workshops, selectedId, onSelect }: {
 }) {
   return (
     <div style={{ height: '100%', borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+      {/* Subtle brand-tinted overlay on top of the map */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(26,35,86,0.18) 0%, transparent 40%, rgba(13,18,32,0.12) 100%)', zIndex: 500, pointerEvents: 'none' }} />
       <MapContainer
         center={[31.2001, 29.9187]}
         zoom={12}
-        style={{ height: '100%', width: '100%', background: '#0D1220' }}
+        style={{ height: '100%', width: '100%', background: '#1A2356', filter: 'hue-rotate(195deg) saturate(0.75) brightness(0.88)' }}
         zoomControl={false}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         />
         {workshops.map(w => {
@@ -280,41 +282,10 @@ export default function Workshops() {
         </div>
       </div>
 
-      {/* ── MAIN CONTENT: Map + Cards ── */}
-      <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 24px 60px', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24, alignItems: 'start' }}>
+      {/* ── MAIN CONTENT: Cards + Map (RTL: cards on right, map on left) ── */}
+      <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 24px 60px', display: 'grid', gridTemplateColumns: '400px 1fr', gap: 24, alignItems: 'start' }}>
 
-        {/* Map */}
-        <div style={{ position: 'sticky', top: 140, height: 580, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: 22, overflow: 'hidden' }}>
-          {!isLoading && workshops && workshops.length > 0 && (
-            <AlexMap
-              workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-            />
-          )}
-          {isLoading && (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
-              <MapPin size={32} color="rgba(200,151,74,0.25)" />
-              <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 13, color: '#7A95AA', fontWeight: 700 }}>جاري تحميل الخريطة...</p>
-            </div>
-          )}
-          {/* How it works */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1000, background: 'rgba(13,18,32,0.92)', borderTop: '1px solid rgba(200,151,74,0.1)', padding: '10px 16px', display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {[
-              { n: '01', t: 'اختار الباكدج' },
-              { n: '02', t: 'اختار الورشة' },
-              { n: '03', t: 'احجز أونلاين' },
-              { n: '04', t: 'العربية جاهزة!' },
-            ].map(step => (
-              <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(200,151,74,0.15)', border: '1px solid rgba(200,151,74,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: G, flexShrink: 0 }}>{step.n}</div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#A0B4C8', fontFamily: "'Almarai',sans-serif" }}>{step.t}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Workshops grid */}
+        {/* Workshops grid — first in DOM = right side in RTL */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Guarantee card */}
           <div style={{ background: 'linear-gradient(135deg,rgba(200,151,74,0.08),rgba(200,151,74,0.03))', border: '1.5px solid rgba(200,151,74,0.15)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: "'Almarai',sans-serif" }}>
@@ -348,6 +319,37 @@ export default function Workshops() {
               </AnimatePresence>
             </motion.div>
           )}
+        </div>
+
+        {/* Map — second in DOM = left side in RTL */}
+        <div style={{ position: 'sticky', top: 140, height: 600, background: CARD, border: '1.5px solid rgba(200,151,74,0.12)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
+          {!isLoading && workshops && workshops.length > 0 && (
+            <AlexMap
+              workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
+          )}
+          {isLoading && (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
+              <MapPin size={32} color="rgba(200,151,74,0.25)" />
+              <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 13, color: '#7A95AA', fontWeight: 700 }}>جاري تحميل الخريطة...</p>
+            </div>
+          )}
+          {/* Steps strip */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1000, background: 'rgba(13,18,32,0.94)', borderTop: '1px solid rgba(200,151,74,0.12)', padding: '10px 16px', display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {[
+              { n: '01', t: 'اختار الباكدج' },
+              { n: '02', t: 'اختار الورشة' },
+              { n: '03', t: 'احجز أونلاين' },
+              { n: '04', t: 'العربية جاهزة!' },
+            ].map(step => (
+              <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(200,151,74,0.15)', border: '1px solid rgba(200,151,74,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: G, flexShrink: 0 }}>{step.n}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#A0B4C8', fontFamily: "'Almarai',sans-serif" }}>{step.t}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
