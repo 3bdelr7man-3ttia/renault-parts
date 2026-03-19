@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
 import { useListPackages, useCreateOrder, useInitiatePayment } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   MapPin, CreditCard, CarFront, Loader2, CheckCircle2, Package2,
-  Home, AlertCircle, Store, Phone
+  Home, AlertCircle, Store, Upload, ImageIcon, XCircle
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 
@@ -537,8 +537,55 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg }:
 function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
   orderId: number; paymentMethod: PayMethod; pickupType: PickupType;
 }) {
+  const { getAuthHeaders } = useAuth();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+
+  const needsReceipt = paymentMethod === 'vodafone_cash' || paymentMethod === 'instapay';
+  const methodLabel = paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 'انستاباى';
+  const methodColor = paymentMethod === 'vodafone_cash' ? '#ef4444' : '#10b981';
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+    setUploadedFileName(file.name);
+    setUploadState('uploading');
+
+    try {
+      const formData = new FormData();
+      formData.append('receipt', file);
+      const authHeaders = getAuthHeaders();
+      const authToken = authHeaders.headers?.Authorization;
+      const res = await fetch(`/api/orders/${orderId}/receipt`, {
+        method: 'POST',
+        headers: { ...(authToken ? { Authorization: authToken } : {}) },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || 'فشل الرفع');
+      }
+      setUploadState('done');
+      toast({ title: '✅ تم رفع الإيصال', description: 'سيتم مراجعته وتفعيل طلبك قريباً.' });
+    } catch (err: unknown) {
+      setUploadState('error');
+      setPreviewUrl(null);
+      setUploadedFileName(null);
+      const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء الرفع';
+      toast({ variant: 'destructive', title: 'خطأ في الرفع', description: msg });
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center', padding: '16px 0' }}>
+      {/* Success Icon */}
       <div style={{ width: 96, height: 96, background: 'rgba(34,197,94,0.12)', border: '3px solid #22c55e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CheckCircle2 size={52} style={{ color: '#22c55e' }} />
       </div>
@@ -546,7 +593,9 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
         <h2 style={{ fontSize: 26, fontWeight: 900, color: '#22c55e', margin: '0 0 8px' }}>تم تأكيد الطلب! 🎉</h2>
         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>رقم الطلب: <strong style={{ color: '#fff' }}>#{orderId}</strong></p>
       </div>
-      <div style={{ background: B3, borderRadius: 18, padding: 20, textAlign: 'right', width: '100%', maxWidth: 400 }}>
+
+      {/* Delivery info */}
+      <div style={{ background: B3, borderRadius: 18, padding: 18, textAlign: 'right', width: '100%', maxWidth: 420 }}>
         {pickupType === 'pickup' ? (
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: 0 }}>
             📍 <strong style={{ color: '#fff' }}>استلام من مركز التوزيع</strong><br />
@@ -558,17 +607,84 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
             سيتواصل معك فريقنا خلال 24 ساعة لتأكيد موعد التوصيل.
           </p>
         )}
-        {paymentMethod === 'vodafone_cash' && (
-          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
-            📱 تذكر إرسال إيصال فودافون كاش لتفعيل طلبك فوراً.
-          </p>
-        )}
-        {paymentMethod === 'instapay' && (
-          <p style={{ fontSize: 12, color: '#10b981', marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
-            ⚡ تذكر إرسال لقطة تحويل InstaPay لتفعيل طلبك.
-          </p>
-        )}
       </div>
+
+      {/* Receipt Upload Section */}
+      {needsReceipt && (
+        <div style={{
+          width: '100%', maxWidth: 420, border: `2px dashed ${uploadState === 'done' ? '#22c55e' : methodColor}`,
+          borderRadius: 20, padding: 22, background: `${methodColor}08`,
+        }}>
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>
+              {uploadState === 'done' ? '✅ تم رفع إيصال ' + methodLabel : '📎 ارفع إيصال ' + methodLabel}
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+              {uploadState === 'done'
+                ? 'سيقوم فريقنا بمراجعة الإيصال وتفعيل طلبك خلال ساعات'
+                : 'ارفع صورة أو PDF لإيصال التحويل لتسريع تفعيل الطلب'}
+            </p>
+          </div>
+
+          {/* Preview */}
+          {previewUrl && uploadState === 'done' && (
+            <div style={{ marginBottom: 14, borderRadius: 12, overflow: 'hidden', maxHeight: 160, position: 'relative' }}>
+              <img src={previewUrl} alt="الإيصال" style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', top: 8, left: 8, background: '#22c55e', borderRadius: 999, padding: '4px 10px', fontSize: 11, fontWeight: 800, color: '#fff' }}>
+                ✓ مرفوع
+              </div>
+            </div>
+          )}
+
+          {uploadedFileName && uploadState === 'done' && !previewUrl && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
+              <ImageIcon size={16} style={{ color: '#22c55e' }} />
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadedFileName}</span>
+              <CheckCircle2 size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
+            </div>
+          )}
+
+          {/* Upload Button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadState === 'uploading'}
+            style={{
+              width: '100%', padding: '13px 0', borderRadius: 14, fontSize: 14, fontWeight: 800,
+              background: uploadState === 'done' ? 'rgba(34,197,94,0.15)' : methodColor,
+              color: uploadState === 'done' ? '#22c55e' : '#fff',
+              border: uploadState === 'done' ? '2px solid #22c55e' : 'none',
+              cursor: uploadState === 'uploading' ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontFamily: "'Almarai',sans-serif",
+              opacity: uploadState === 'uploading' ? 0.7 : 1,
+            }}
+          >
+            {uploadState === 'uploading' ? (
+              <><Loader2 size={16} className="animate-spin" /> جارٍ الرفع...</>
+            ) : uploadState === 'done' ? (
+              <><CheckCircle2 size={16} /> تم رفع الإيصال — اضغط لتغييره</>
+            ) : (
+              <><Upload size={16} /> ارفع صورة الإيصال</>
+            )}
+          </button>
+
+          {uploadState === 'error' && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 10 }}>
+              <XCircle size={14} style={{ color: '#ef4444' }} />
+              <span style={{ fontSize: 12, color: '#ef4444' }}>فشل الرفع — حاول مرة أخرى</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Navigation */}
       <div style={{ display: 'flex', gap: 12 }}>
         <Link href={`/orders/${orderId}`}>
           <button style={{ padding: '12px 20px', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>

@@ -1,8 +1,35 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, and } from "drizzle-orm";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import multer from "multer";
 import { db, ordersTable, packagesTable, workshopsTable, partsTable, packagePartsTable } from "@workspace/db";
 import { CreateOrderBody, GetOrderParams, ListOrdersResponse, GetOrderResponse } from "@workspace/api-zod";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.resolve(__dirname, "../../../uploads/receipts");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const receiptStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `receipt-${Date.now()}${ext}`);
+  },
+});
+const _uploadReceipt = multer({
+  storage: receiptStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("نوع الملف غير مدعوم. يُسمح فقط بالصور وملفات PDF"));
+  },
+});
+const receiptMiddleware = (req: Request, res: Response, next: NextFunction) =>
+  _uploadReceipt.single("receipt")(req as never, res as never, next);
 
 const router: IRouter = Router();
 
@@ -70,6 +97,7 @@ async function buildOrderResponse(order: typeof ordersTable.$inferSelect) {
     carModel: order.carModel,
     carYear: order.carYear,
     notes: order.notes,
+    receiptUrl: order.receiptUrl ?? null,
     package: pkgOut,
     workshop,
     createdAt: order.createdAt,
@@ -190,6 +218,51 @@ router.get("/orders/:id", requireAuth, async (req, res): Promise<void> => {
 
   const result = await buildOrderResponse(order);
   res.json(GetOrderResponse.parse(result));
+});
+
+router.post("/orders/:id/receipt", requireAuth, async (req, res): Promise<void> => {
+  await new Promise<void>((resolve, reject) => receiptMiddleware(req, res, (err) => {
+    if (err) reject(err); else resolve();
+  }));
+  {
+    const authReq = req as AuthenticatedRequest;
+    const orderId = parseInt(String(req.params.id), 10);
+
+    if (isNaN(orderId)) {
+      res.status(400).json({ error: "رقم الطلب غير صحيح" });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ error: "لم يتم رفع أي ملف" });
+      return;
+    }
+
+    const [order] = await db
+      .select()
+      .from(ordersTable)
+      .where(and(eq(ordersTable.id, orderId), eq(ordersTable.userId, authReq.user.id)));
+
+    if (!order) {
+      fs.unlinkSync(req.file.path);
+      res.status(404).json({ error: "الطلب غير موجود" });
+      return;
+    }
+
+    if (order.receiptUrl) {
+      const oldPath = path.join(uploadsDir, path.basename(order.receiptUrl));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    const receiptUrl = `/uploads/receipts/${req.file.filename}`;
+
+    await db
+      .update(ordersTable)
+      .set({ receiptUrl, paymentStatus: "receipt_uploaded" })
+      .where(eq(ordersTable.id, orderId));
+
+    res.json({ success: true, receiptUrl, message: "تم رفع الإيصال بنجاح" });
+  }
 });
 
 export default router;
