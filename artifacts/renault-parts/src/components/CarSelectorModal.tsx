@@ -34,45 +34,44 @@ export function CarSelectorModal({ onComplete, onSkip }: CarSelectorModalProps) 
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', padding: 16 }}>
-      <div style={{ background: CARD, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 28, width: '100%', maxWidth: 460, overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.6)', fontFamily: "'Almarai',sans-serif", direction: 'rtl', position: 'relative', animation: 'rp-fade-up .25s ease' }}>
+      <div style={{ background: CARD, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 28, width: '100%', maxWidth: 460, maxHeight: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.6)', fontFamily: "'Almarai',sans-serif", direction: 'rtl', position: 'relative', animation: 'rp-fade-up .25s ease', overflow: 'hidden' }}>
 
         {/* Gold top line */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,#C8974A,transparent)' }} />
 
-        {/* Header */}
-        <div style={{ background: `linear-gradient(145deg,#0B1220,#131B2E)`, padding: '28px 28px 22px', textAlign: 'center', position: 'relative', borderBottom: '1px solid rgba(200,151,74,0.1)' }}>
-          {/* Background glow */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 300, height: 150, background: 'radial-gradient(ellipse,rgba(200,151,74,0.08),transparent 70%)', pointerEvents: 'none' }} />
+        {/* Header — compact */}
+        <div style={{ background: `linear-gradient(145deg,#0B1220,#131B2E)`, padding: '14px 20px 12px', position: 'relative', borderBottom: '1px solid rgba(200,151,74,0.1)', flexShrink: 0 }}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 260, height: 100, background: 'radial-gradient(ellipse,rgba(200,151,74,0.07),transparent 70%)', pointerEvents: 'none' }} />
 
           {/* Close */}
-          <button onClick={onSkip} style={{ position: 'absolute', top: 14, left: 14, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <X size={14} color="rgba(255,255,255,0.5)" />
+          <button onClick={onSkip} style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}>
+            <X size={13} color="rgba(255,255,255,0.5)" />
           </button>
 
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14, position: 'relative', zIndex: 1 }}>
-            <RenoPackLogo size="md" />
-          </div>
-
-          {/* Car icon + title */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ width: 54, height: 54, background: 'rgba(200,151,74,0.1)', border: '1.5px solid rgba(200,151,74,0.25)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <Car size={24} color={G} />
+          {/* Logo + title in one row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, position: 'relative', zIndex: 1 }}>
+            <RenoPackLogo size="sm" />
+            <div style={{ width: 1, height: 28, background: 'rgba(200,151,74,0.2)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 34, height: 34, background: 'rgba(200,151,74,0.1)', border: '1.5px solid rgba(200,151,74,0.25)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Car size={16} color={G} />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: '#E8F0F8', lineHeight: 1.2 }}>حدد سيارتك</div>
+                <div style={{ fontSize: 11, color: '#7A95AA', fontWeight: 500 }}>لنعرض لك الباكدجات المناسبة</div>
+              </div>
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#E8F0F8', marginBottom: 6 }}>حدد سيارتك</h2>
-            <p style={{ fontSize: 13, color: '#7A95AA', fontWeight: 500, lineHeight: 1.6 }}>
-              لنعرض لك الباكدجات والقطع المناسبة لسيارتك بالتحديد
-            </p>
           </div>
 
           {/* Step indicator */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 14, position: 'relative', zIndex: 1 }}>
-            <div style={{ width: 24, height: 4, borderRadius: 999, background: step === 'model' ? G : `${G}60`, transition: 'background .3s' }} />
-            <div style={{ width: 24, height: 4, borderRadius: 999, background: step === 'year' ? G : 'rgba(255,255,255,0.1)', transition: 'background .3s' }} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10, position: 'relative', zIndex: 1 }}>
+            <div style={{ width: 22, height: 3, borderRadius: 999, background: step === 'model' ? G : `${G}60`, transition: 'background .3s' }} />
+            <div style={{ width: 22, height: 3, borderRadius: 999, background: step === 'year' ? G : 'rgba(255,255,255,0.1)', transition: 'background .3s' }} />
           </div>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '24px 28px 28px' }}>
+        {/* Body — scrollable */}
+        <div style={{ padding: '18px 22px 22px', overflowY: 'auto', flex: 1 }}>
           {/* Model selector */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 800, color: '#C8C8D0', marginBottom: 8 }}>الموديل</label>
