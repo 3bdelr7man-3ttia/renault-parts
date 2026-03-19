@@ -1,7 +1,8 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { eq } from "drizzle-orm";
 import { db, packagesTable, partsTable, packagePartsTable } from "@workspace/db";
 import { GetPackageBySlugParams, ListPackagesResponse, GetPackageBySlugResponse } from "@workspace/api-zod";
+import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -82,6 +83,34 @@ router.get("/packages/:slug", async (req, res): Promise<void> => {
   };
 
   res.json(GetPackageBySlugResponse.parse(result));
+});
+
+router.post("/packages/custom", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const { parts, total } = req.body as { parts: Array<{ label: string; price: number }>; total: number };
+
+  if (!Array.isArray(parts) || parts.length === 0 || typeof total !== "number") {
+    res.status(400).json({ error: "بيانات غير صحيحة" });
+    return;
+  }
+
+  const slug = `custom-${Date.now()}`;
+  const partsList = parts.map((p) => p.label).join("، ");
+
+  const [pkg] = await db
+    .insert(packagesTable)
+    .values({
+      name: "باكدج مخصص من البازل",
+      slug,
+      description: `باكدج مخصص يحتوي على: ${partsList}`,
+      kmService: 0,
+      basePrice: String(total),
+      sellPrice: String(total),
+      warrantyMonths: 3,
+      isAvailable: true,
+    })
+    .returning();
+
+  res.json({ packageId: pkg.id });
 });
 
 export default router;

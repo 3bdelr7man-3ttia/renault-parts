@@ -43,13 +43,37 @@ interface FormData {
 
 export default function Checkout() {
   const [, params] = useRoute('/checkout/:id');
-  const packageId = params?.id ? parseInt(params.id, 10) : 0;
+  const isCustom = params?.id === 'custom';
+  const packageId = !isCustom && params?.id ? parseInt(params.id, 10) : 0;
   const [, setLocation] = useLocation();
   const { user, getAuthHeaders } = useAuth();
   const { toast } = useToast();
 
+  const customPuzzle = isCustom ? (() => {
+    try { return JSON.parse(sessionStorage.getItem('customPuzzle') || 'null'); } catch { return null; }
+  })() : null;
+
+  const virtualPkg = isCustom && customPuzzle ? {
+    id: -1,
+    name: 'باكدج مخصص من البازل',
+    slug: 'custom',
+    description: `يحتوي على: ${customPuzzle.parts.map((p: any) => p.label).join('، ')}`,
+    kmService: 0,
+    basePrice: customPuzzle.total as number,
+    sellPrice: customPuzzle.total as number,
+    warrantyMonths: 3,
+    parts: customPuzzle.parts.map((p: any, i: number) => ({
+      id: i, name: p.label, oemCode: null, type: 'custom' as const,
+      priceOriginal: p.price, priceTurkish: null, priceChinese: null,
+      compatibleModels: null, supplier: null,
+    })),
+    createdAt: new Date(),
+  } : null;
+
+  const [isRegisteringCustomPkg, setIsRegisteringCustomPkg] = useState(false);
+
   const { data: packages, isLoading: isLoadingPackages } = useListPackages();
-  const pkg = packages?.find(p => p.id === packageId);
+  const pkg = isCustom ? virtualPkg : packages?.find(p => p.id === packageId);
 
   const userHasCar = !!(user?.carModel && user?.carYear);
   const [step, setStep] = useState<Step>(userHasCar ? 2 : 1);
@@ -109,9 +133,9 @@ export default function Checkout() {
     },
   });
 
-  if (!user) { setLocation('/login?redirect=/checkout/' + packageId); return null; }
+  if (!user) { setLocation('/login?redirect=/checkout/' + (isCustom ? 'custom' : packageId)); return null; }
 
-  if (isLoadingPackages) {
+  if (!isCustom && isLoadingPackages) {
     return (
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 style={{ color: G, width: 40, height: 40 }} className="animate-spin" />
@@ -123,7 +147,9 @@ export default function Checkout() {
     return (
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: "'Almarai',sans-serif" }}>
         <AlertCircle style={{ color: '#ef4444', width: 48, height: 48 }} />
-        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>الباكدج غير موجود</p>
+        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>
+          {isCustom ? 'لم يتم العثور على بيانات الباكدج المخصص' : 'الباكدج غير موجود'}
+        </p>
         <Link href="/packages" style={{ color: G, fontWeight: 700 }}>تصفح الباكدجات</Link>
       </div>
     );
@@ -134,26 +160,44 @@ export default function Checkout() {
     formData.pickupType === 'pickup' ||
     (formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
 
-  const handleConfirmOrder = () => {
-    createOrder({
-      data: {
-        packageId: pkg.id,
-        carModel: formData.carModel || (user?.carModel ?? ''),
-        carYear: Number(formData.carYear) || (user?.carYear ?? 2020),
-        paymentMethod: formData.paymentMethod,
-        deliveryAddress: formData.pickupType === 'delivery'
-          ? formData.deliveryAddress
-          : 'استلام من مركز التوزيع',
-        deliveryArea: formData.pickupType === 'delivery'
-          ? formData.deliveryArea
-          : 'الإسكندرية',
-        notes: formData.paymentMethod === 'vodafone_cash'
-          ? `فودافون كاش - ${formData.vodafonePhone}`
-          : formData.paymentMethod === 'instapay'
-          ? 'انستاباى'
-          : undefined,
-      },
-    });
+  const buildOrderData = (realPackageId: number) => ({
+    packageId: realPackageId,
+    carModel: formData.carModel || (user?.carModel ?? ''),
+    carYear: Number(formData.carYear) || (user?.carYear ?? 2020),
+    paymentMethod: formData.paymentMethod,
+    deliveryAddress: formData.pickupType === 'delivery'
+      ? formData.deliveryAddress
+      : 'استلام من مركز التوزيع',
+    deliveryArea: formData.pickupType === 'delivery'
+      ? formData.deliveryArea
+      : 'الإسكندرية',
+    notes: formData.paymentMethod === 'vodafone_cash'
+      ? `فودافون كاش - ${formData.vodafonePhone}`
+      : formData.paymentMethod === 'instapay'
+      ? 'انستاباى'
+      : undefined,
+  });
+
+  const handleConfirmOrder = async () => {
+    if (isCustom && customPuzzle) {
+      setIsRegisteringCustomPkg(true);
+      try {
+        const res = await fetch('/api/packages/custom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(getAuthHeaders().headers ?? {}) },
+          body: JSON.stringify({ parts: customPuzzle.parts, total: customPuzzle.total }),
+        });
+        if (!res.ok) throw new Error('فشل إنشاء الباكدج');
+        const { packageId: realId } = await res.json();
+        setIsRegisteringCustomPkg(false);
+        createOrder({ data: buildOrderData(realId) });
+      } catch {
+        setIsRegisteringCustomPkg(false);
+        toast({ variant: 'destructive', title: 'خطأ', description: 'حدث خطأ أثناء إنشاء الباكدج. حاول مرة أخرى.' });
+      }
+    } else {
+      createOrder({ data: buildOrderData(pkg.id) });
+    }
   };
 
   return (
@@ -206,7 +250,7 @@ export default function Checkout() {
                   onChange={setFormData}
                   onConfirm={handleConfirmOrder}
                   onBack={() => setStep(3)}
-                  isPending={isCreatingOrder || isRedirectingToPayment}
+                  isPending={isCreatingOrder || isRedirectingToPayment || isRegisteringCustomPkg}
                   pkg={pkg}
                 />
               )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import {
   Search, Wrench, ShieldCheck, Star, MapPin, ChevronLeft,
   Zap, Droplets, Wind, Settings, Disc, Battery, Package,
@@ -525,6 +525,7 @@ export default function Home() {
   const { data: packages, isLoading } = useListPackages();
   const [activeService, setActiveService] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [, navigate] = useLocation();
 
   const togglePart = (id: string) => setSelected(prev => {
     const n = new Set(prev);
@@ -533,6 +534,15 @@ export default function Home() {
   });
 
   const total = [...selected].reduce((s, id) => s + (PUZZLE_PARTS.find(p => p.id === id)?.price ?? 0), 0);
+
+  const goToCustomCheckout = () => {
+    const parts = [...selected].map(id => {
+      const p = PUZZLE_PARTS.find(x => x.id === id)!;
+      return { id: p.id, label: p.label, price: p.price };
+    });
+    sessionStorage.setItem('customPuzzle', JSON.stringify({ parts, total }));
+    navigate('/checkout/custom');
+  };
   const currentGift = [...GIFT_TIERS].reverse().find(t => total >= t.min);
   const nextGift    = GIFT_TIERS.find(t => total < t.min);
 
@@ -620,7 +630,7 @@ export default function Home() {
 
             {/* Stats row */}
             <div style={{ display: 'flex', gap: 0, marginTop: 32, paddingTop: 24, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
-              {[{ n: '1,247+', l: 'عميل تخدمناه', c: G }, { n: '4.9★', l: 'متوسط التقييم', c: SK }, { n: '32', l: 'ورشة معتمدة', c: SG }, { n: '98%', l: 'رضا العملاء', c: LV }].map(({ n, l, c }, i) => (
+              {[{ n: '1,247+', l: 'باكدج اتوصّل', c: G }, { n: '4.9★', l: 'متوسط التقييم', c: SK }, { n: '32', l: 'ورشة معتمدة', c: SG }, { n: '98%', l: 'رضا العملاء', c: LV }].map(({ n, l, c }, i) => (
                 <div key={l} style={{ flex: 1, textAlign: 'center', padding: '0 8px', borderLeft: i > 0 ? `1px solid rgba(255,255,255,0.06)` : 'none' }}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, marginTop: 4 }}>{l}</div>
@@ -875,9 +885,9 @@ export default function Home() {
                     <span style={{ color: '#E8F0F8', fontWeight: 800, fontSize: 14 }}>الإجمالي</span>
                     <span style={{ color: G, fontWeight: 800, fontSize: 16 }}>{total.toLocaleString()} ج.م</span>
                   </div>
-                  <Link href="/packages" className="rp-pill" style={{ width: '100%', background: `linear-gradient(135deg,${G},${GL})`, color: BG, border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.25)`, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                  <button onClick={goToCustomCheckout} className="rp-pill" style={{ width: '100%', background: `linear-gradient(135deg,${G},${GL})`, color: BG, border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.25)`, cursor: 'pointer' }}>
                     احجز الباكدج ده
-                  </Link>
+                  </button>
                 </>}
               </div>
             </div>
