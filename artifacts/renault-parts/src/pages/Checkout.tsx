@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   MapPin, CreditCard, CarFront, Loader2, CheckCircle2, Package2,
-  Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car
+  Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car, Clock
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 import { RENAULT_MODELS, CAR_YEARS } from '@/lib/car-context';
