@@ -16,19 +16,27 @@ import {
   Settings2,
   TrendingDown,
   FileCheck,
+  Store,
 } from 'lucide-react';
+import bakoLogo from '@/assets/bako-logo.png';
+
+const G  = '#C8974A';
+const NV = '#1A2356';
+const BG = '#0D1220';
+const S  = '#111826';
+const S2 = '#161E30';
 
 const navItems = [
-  { href: '/admin', label: 'الرئيسية', icon: LayoutDashboard, exact: true },
-  { href: '/admin/orders', label: 'الطلبات', icon: ClipboardList },
-  { href: '/admin/packages', label: 'الباكدجات', icon: Package2 },
-  { href: '/admin/workshops', label: 'الورش', icon: Wrench },
-  { href: '/admin/workshop-applications', label: 'طلبات الانضمام', icon: FileCheck },
-  { href: '/admin/parts', label: 'القطع', icon: Settings2 },
-  { href: '/admin/reviews', label: 'التقييمات', icon: Star },
-  { href: '/admin/sales', label: 'المبيعات', icon: BarChart2 },
-  { href: '/admin/expenses', label: 'المصروفات', icon: TrendingDown },
-  { href: '/admin/users', label: 'المستخدمون', icon: Users },
+  { href: '/admin',                        label: 'الرئيسية',       icon: LayoutDashboard, exact: true },
+  { href: '/admin/orders',                 label: 'الطلبات',        icon: ClipboardList },
+  { href: '/admin/packages',               label: 'الباكدجات',      icon: Package2 },
+  { href: '/admin/workshops',              label: 'الورش',          icon: Wrench },
+  { href: '/admin/workshop-applications',  label: 'طلبات الانضمام', icon: FileCheck },
+  { href: '/admin/parts',                  label: 'القطع',          icon: Settings2 },
+  { href: '/admin/reviews',                label: 'التقييمات',      icon: Star },
+  { href: '/admin/sales',                  label: 'المبيعات',       icon: BarChart2 },
+  { href: '/admin/expenses',               label: 'المصروفات',      icon: TrendingDown },
+  { href: '/admin/users',                  label: 'المستخدمون',     icon: Users },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -40,112 +48,145 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     exact ? location === href : location.startsWith(href);
 
   return (
-    <div className="min-h-screen flex bg-[#0f1535]" dir="rtl">
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 right-0 z-50 w-72 bg-[#1E2761] border-l border-white/10
-        transform transition-transform duration-300 ease-in-out
-        lg:relative lg:translate-x-0
-        ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-      `}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
+
+      {/* ── Sidebar ── */}
+      <aside style={{
+        position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
+        width: 272, background: S,
+        borderLeft: '1px solid rgba(200,151,74,0.1)',
+        display: 'flex', flexDirection: 'column',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform .3s ease',
+      }}
+        className="lg-sidebar"
+      >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-white/10">
-          <div className="w-10 h-10 bg-[#F9E795] rounded-xl flex items-center justify-center flex-shrink-0">
-            <Wrench className="w-6 h-6 text-[#1E2761]" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '22px 22px 18px', borderBottom: '1px solid rgba(200,151,74,0.08)' }}>
+          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg,${NV},#2A3570)`, borderRadius: 14, border: `1.5px solid rgba(200,151,74,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 16px rgba(200,151,74,0.15)` }}>
+            <img src={bakoLogo} alt="باكو" style={{ width: 30, height: 30, objectFit: 'contain' }} />
           </div>
-          <div>
-            <p className="text-white font-black text-lg leading-tight">رينو بارتس</p>
-            <p className="text-[#F9E795] text-xs font-bold flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> لوحة الإدارة
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 900, fontSize: 17, color: '#E8F0F8', lineHeight: 1.2 }}>
+              <span style={{ color: '#fff' }}>رينو</span>
+              <span style={{ color: G }}> باك</span>
+            </p>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: G, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+              <ShieldCheck size={11} /> لوحة الإدارة
             </p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden mr-auto text-white/60 hover:text-white"
+            className="lg:hidden"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}
           >
-            <X className="w-5 h-5" />
+            <X size={18} />
           </button>
         </div>
 
         {/* User Info */}
-        <div className="px-6 py-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#F9E795]/20 border-2 border-[#F9E795]/40 flex items-center justify-center flex-shrink-0">
-              <span className="text-[#F9E795] font-bold text-sm">{user?.name?.[0]}</span>
+        <div style={{ padding: '14px 22px', borderBottom: '1px solid rgba(200,151,74,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', background: `rgba(200,151,74,0.1)`, border: `2px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ color: G, fontWeight: 900, fontSize: 15 }}>{user?.name?.[0]}</span>
             </div>
-            <div className="min-w-0">
-              <p className="text-white font-bold text-sm truncate">{user?.name}</p>
-              <p className="text-white/50 text-xs">مدير النظام</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#E8F0F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>مدير النظام</p>
             </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <div
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer group ${
-                  isActive(item.href, item.exact)
-                    ? 'bg-[#F9E795] text-[#1E2761]'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.href, item.exact) ? 'text-[#1E2761]' : ''}`} />
-                <span className="font-bold text-sm">{item.label}</span>
-              </div>
-            </Link>
-          ))}
+        <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {navItems.map((item) => {
+            const active = isActive(item.href, item.exact);
+            return (
+              <Link key={item.href} href={item.href}>
+                <div
+                  onClick={() => setSidebarOpen(false)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12,
+                    cursor: 'pointer', transition: 'all .18s',
+                    background: active ? G : 'transparent',
+                    color: active ? NV : 'rgba(255,255,255,0.6)',
+                    fontWeight: 800, fontSize: 13,
+                  }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.08)'; (e.currentTarget as HTMLElement).style.color = active ? NV : '#fff'; }}
+                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = active ? NV : 'rgba(255,255,255,0.6)'; }}
+                >
+                  <item.icon size={16} style={{ flexShrink: 0, color: active ? NV : 'inherit' }} />
+                  <span>{item.label}</span>
+                  {active && <div style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: NV, opacity: 0.6 }} />}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Footer actions */}
-        <div className="px-4 py-4 border-t border-white/10 space-y-2">
+        {/* Footer */}
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(200,151,74,0.08)', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Link href="/">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/10 cursor-pointer transition-all text-sm font-bold">
-              <Wrench className="w-4 h-4" />
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: 13 }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fff'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'; }}
+            >
+              <Store size={15} style={{ flexShrink: 0 }} />
               العودة للمتجر
             </div>
           </Link>
           <button
             onClick={() => { logout(); setLocation('/login'); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm font-bold"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: '#EF4444', fontWeight: 700, fontSize: 13, background: 'none', border: 'none', fontFamily: "'Almarai',sans-serif", width: '100%', textAlign: 'right' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut size={15} style={{ flexShrink: 0 }} />
             تسجيل الخروج
           </button>
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.6)' }}
+          className="lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+      {/* ── Main ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: 0 }} className="admin-main">
+
         {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-[#1E2761]/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <header style={{ position: 'sticky', top: 0, zIndex: 30, background: `${S}CC`, backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-white/70 hover:text-white"
+            className="lg:hidden"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.6)' }}
           >
-            <Menu className="w-6 h-6" />
+            <Menu size={22} />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-white/60 text-sm font-medium">النظام يعمل بشكل طبيعي</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e80', animation: 'pulse 2s infinite' }} />
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600 }}>النظام يعمل بشكل طبيعي</span>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto p-6">
+        {/* Content */}
+        <main style={{ flex: 1, overflowAuto: 'auto', padding: 24, overflowY: 'auto' } as React.CSSProperties}>
           {children}
         </main>
       </div>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .lg-sidebar { position: relative !important; transform: translateX(0) !important; }
+          .admin-main { margin-right: 272px; }
+        }
+      `}</style>
     </div>
   );
 }
