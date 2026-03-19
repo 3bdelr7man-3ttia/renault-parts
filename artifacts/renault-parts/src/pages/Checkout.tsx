@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   MapPin, CreditCard, CarFront, Loader2, CheckCircle2, Package2,
-  Home, AlertCircle, Store, Upload, ImageIcon, XCircle
+  Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { RENAULT_MODELS, CAR_YEARS } from '@/lib/car-context';
 
 const G = '#C8974A';
 const NV = '#1A2356';
@@ -335,29 +336,139 @@ function Btn({ children, onClick, disabled, variant = 'primary', style: extraSty
   );
 }
 
+const MODEL_ICONS: Record<string, string> = {
+  'Renault Logan':   '🚗', 'Renault Symbol':  '🚗', 'Renault Duster':  '🚙',
+  'Renault Megane':  '🏎️', 'Renault Clio':    '🚗', 'Renault Fluence': '🚗',
+  'Renault Sandero': '🚗', 'Renault Kwid':    '🚗', 'Renault Captur':  '🚙',
+};
+
 function Step1Car({ formData, onChange, onNext, canAdvance }: {
   formData: FormData; onChange: (f: FormData) => void; onNext: () => void; canAdvance: boolean;
 }) {
+  const SHORT = (m: string) => m.replace('Renault ', '');
+  const gridModels = RENAULT_MODELS.slice(0, 6);
+  const moreModels = RENAULT_MODELS.slice(6);
+  const recentYears = CAR_YEARS.slice(0, 8);
+  const olderYears = CAR_YEARS.slice(8);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>بيانات السيارة</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <Label style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 13, display: 'block', marginBottom: 6 }}>موديل السيارة</Label>
-          <Input value={formData.carModel} onChange={e => onChange({ ...formData, carModel: e.target.value })}
-            className="h-12 rounded-xl" placeholder="مثال: رينو لوجان 2018"
-            style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
-        </div>
-        <div>
-          <Label style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 13, display: 'block', marginBottom: 6 }}>سنة الصنع</Label>
-          <Input type="number" value={formData.carYear} dir="ltr"
-            onChange={e => onChange({ ...formData, carYear: parseInt(e.target.value) || 2020 })}
-            min={1990} max={new Date().getFullYear() + 1}
-            className="h-12 rounded-xl"
-            style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Title */}
+      <div>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختار سيارتك</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>نضمن لك الباكدج المناسب لموديل وسنة سيارتك بالتحديد</p>
       </div>
-      <Btn onClick={onNext} disabled={!canAdvance} style={{ width: '100%' }}>متابعة لاختيار الباكدج</Btn>
+
+      {/* ── Model selector ── */}
+      <div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>
+          <Car size={14} color={G} /> الموديل
+          {formData.carModel && (
+            <span style={{ marginRight: 6, background: `${G}18`, border: `1px solid ${G}40`, borderRadius: 999, padding: '2px 10px', fontSize: 11, color: G }}>
+              {SHORT(formData.carModel)} ✓
+            </span>
+          )}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 8 }}>
+          {gridModels.map(model => {
+            const active = formData.carModel === model;
+            return (
+              <button
+                key={model}
+                onClick={() => onChange({ ...formData, carModel: model })}
+                style={{
+                  padding: '12px 8px', borderRadius: 14, cursor: 'pointer',
+                  border: `1.5px solid ${active ? G : 'rgba(255,255,255,0.07)'}`,
+                  background: active ? `${G}14` : 'rgba(255,255,255,0.025)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  transition: 'all .18s', fontFamily: "'Almarai',sans-serif",
+                  boxShadow: active ? `0 0 18px ${G}22` : 'none',
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{MODEL_ICONS[model] ?? '🚗'}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: active ? G : '#7A95AA', lineHeight: 1.3 }}>{SHORT(model)}</span>
+                {active && <span style={{ fontSize: 8, color: G }}>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+        {moreModels.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <select
+              value={moreModels.includes(formData.carModel) ? formData.carModel : ''}
+              onChange={e => { if (e.target.value) onChange({ ...formData, carModel: e.target.value }); }}
+              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${moreModels.includes(formData.carModel) ? G : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: moreModels.includes(formData.carModel) ? G : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
+            >
+              <option value="">موديل آخر...</option>
+              {moreModels.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <ChevronDown size={14} color="#7A95AA" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Year selector ── */}
+      <div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>
+          <span style={{ fontSize: 14 }}>📅</span> سنة الصنع
+          {formData.carYear > 0 && (
+            <span style={{ marginRight: 6, background: `${G}18`, border: `1px solid ${G}40`, borderRadius: 999, padding: '2px 10px', fontSize: 11, color: G }}>
+              {formData.carYear} ✓
+            </span>
+          )}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, marginBottom: 8 }}>
+          {recentYears.map(year => {
+            const active = formData.carYear === year;
+            return (
+              <button
+                key={year}
+                onClick={() => onChange({ ...formData, carYear: year })}
+                style={{
+                  padding: '10px 4px', borderRadius: 12, cursor: 'pointer',
+                  border: `1.5px solid ${active ? G : 'rgba(255,255,255,0.07)'}`,
+                  background: active ? `${G}14` : 'rgba(255,255,255,0.025)',
+                  fontSize: 13, fontWeight: 800, color: active ? G : '#7A95AA',
+                  transition: 'all .18s', fontFamily: "'Almarai',sans-serif",
+                  boxShadow: active ? `0 0 14px ${G}22` : 'none',
+                }}
+              >
+                {year}
+              </button>
+            );
+          })}
+        </div>
+        {olderYears.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <select
+              value={olderYears.includes(formData.carYear) ? formData.carYear : ''}
+              onChange={e => { if (e.target.value) onChange({ ...formData, carYear: Number(e.target.value) }); }}
+              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${olderYears.includes(formData.carYear) ? G : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: olderYears.includes(formData.carYear) ? G : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
+            >
+              <option value="">سنة أقدم...</option>
+              {olderYears.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <ChevronDown size={14} color="#7A95AA" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          </div>
+        )}
+      </div>
+
+      {/* Selected summary card */}
+      {formData.carModel && formData.carYear > 0 && (
+        <div style={{ background: `${G}0A`, border: `1.5px solid ${G}35`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <span style={{ fontSize: 28 }}>{MODEL_ICONS[formData.carModel] ?? '🚗'}</span>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#E8F0F8' }}>{formData.carModel}</div>
+            <div style={{ fontSize: 12, color: G, fontWeight: 700 }}>إصدار {formData.carYear}</div>
+          </div>
+          <CheckCircle2 size={20} color={G} style={{ marginRight: 'auto' }} />
+        </div>
+      )}
+
+      <Btn onClick={onNext} disabled={!canAdvance} style={{ width: '100%' }}>
+        متابعة لاختيار الباكدج
+      </Btn>
     </div>
   );
 }
