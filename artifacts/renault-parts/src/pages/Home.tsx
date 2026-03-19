@@ -139,7 +139,7 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
 /* ── Bako chat (local AI) ── */
 interface ChatMsg { from: 'user' | 'bako'; text: string; }
 
-function BakoChat({ context }: { context: ComparePart }) {
+function BakoChat({ context, hideHeader }: { context: ComparePart; hideHeader?: boolean }) {
   const [msgs, setMsgs] = useState<ChatMsg[]>([{ from: 'bako', text: context.aiIntro }]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -168,19 +168,21 @@ function BakoChat({ context }: { context: ComparePart }) {
   }, [msgs, typing]);
 
   return (
-    <div style={{ background: '#0F1928', border: `1.5px solid rgba(200,151,74,0.25)`, borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 240 }}>
-      {/* Header */}
-      <div style={{ background: `linear-gradient(135deg,${NV},#243070)`, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.2)`, flexShrink: 0 }}>
-        <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — بيكلمك عن {context.label}</div>
-          <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700 }}>اسأله أي سؤال عن القطعتين</div>
+    <div style={{ background: '#0F1928', border: hideHeader ? 'none' : `1.5px solid rgba(200,151,74,0.25)`, borderRadius: hideHeader ? 0 : 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 240 }}>
+      {/* Header — hidden when parent wrapper provides its own */}
+      {!hideHeader && (
+        <div style={{ background: `linear-gradient(135deg,${NV},#243070)`, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.2)`, flexShrink: 0 }}>
+          <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — بيكلمك عن {context.label}</div>
+            <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700 }}>اسأله أي سؤال عن القطعتين</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite' }} />
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700 }}>متاح</span>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite' }} />
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700 }}>متاح</span>
-        </div>
-      </div>
+      )}
 
       {/* Quick questions */}
       <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
@@ -406,17 +408,24 @@ function AiCompareSection() {
           ))}
         </div>
 
-        {/* Bako verdict */}
-        <div style={{ background: `rgba(26,35,86,0.55)`, border: `1px solid rgba(200,151,74,0.18)`, borderRadius: 14, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <img src={bakoImg} alt="باكو" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
-          <div>
-            <div style={{ color: G, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>رأي باكو 🤖</div>
-            <div style={{ color: TX, fontSize: 12, fontWeight: 700, lineHeight: 1.6 }}>{part.aiIntro}</div>
+        {/* Bako ask section — visually connected to table above */}
+        <div style={{ border: `1.5px solid rgba(200,151,74,0.28)`, borderRadius: 16, overflow: 'hidden', boxShadow: `0 4px 24px rgba(200,151,74,0.07)` }}>
+          {/* Connector header — shows this chat belongs to the comparison */}
+          <div style={{ background: `linear-gradient(135deg,rgba(26,35,86,0.9),rgba(36,48,112,0.85))`, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid rgba(200,151,74,0.18)` }}>
+            <img src={bakoImg} alt="باكو" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: 13, color: '#fff', fontFamily: "'Almarai',sans-serif" }}>
+                اسأل باكو عن <span style={{ color: G }}>{part.label}</span>
+              </div>
+              <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700, marginTop: 1 }}>بيجاوبك على أصلي ولا تركي بناءً على المقارنة فوق</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 999, padding: '3px 10px' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite', flexShrink: 0 }} />
+              <span style={{ color: '#4ADE80', fontSize: 10, fontWeight: 700 }}>متاح</span>
+            </div>
           </div>
+          <BakoChat context={part} hideHeader />
         </div>
-
-        {/* BakoChat (smaller) */}
-        <BakoChat context={part} />
       </div>
     </section>
   );
