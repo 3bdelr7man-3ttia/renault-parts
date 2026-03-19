@@ -69,8 +69,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => location === href;
 
-  // Scroll to top on every route change
-  React.useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [location]);
+  // Disable browser scroll restoration + force scroll to top on every route change
+  React.useEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  }, []);
+  React.useEffect(() => {
+    // Run after child component effects (setTimeout 0 pushes to end of queue)
+    const t = setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 0);
+    return () => clearTimeout(t);
+  }, [location]);
 
   const footerLinks = [
     {

@@ -140,7 +140,6 @@ function BakoChat({ context }: { context: ComparePart }) {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => { setMsgs([{ from: 'bako', text: context.aiIntro }]); }, [context.id]);
 
   const getReply = (msg: string) => {
@@ -157,7 +156,11 @@ function BakoChat({ context }: { context: ComparePart }) {
     setTimeout(() => { setTyping(false); setMsgs(p => [...p, { from: 'bako', text: getReply(txt) }]); }, 1200 + Math.random() * 600);
   };
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, typing]);
+  // Only auto-scroll when user is actively chatting (more than initial greeting)
+  useEffect(() => {
+    if (msgs.length <= 1 && !typing) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs, typing]);
 
   const chatBg    = B3;
   const chatHdr   = `linear-gradient(135deg,${NV},#243070)`;
