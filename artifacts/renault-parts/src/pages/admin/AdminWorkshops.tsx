@@ -3,7 +3,21 @@ import { useListAdminWorkshops, useCreateWorkshop, useUpdateWorkshop, useDeleteW
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Check, X, Loader2, MapPin, Phone, Wrench } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Loader2, MapPin, Phone, Wrench, ClipboardList } from 'lucide-react';
+
+const G = '#C8974A';
+
+type WorkshopOrder = {
+  id: number; userName: string; userPhone: string | null; packageName: string;
+  status: string; total: number; carModel: string; carYear: number; createdAt: string;
+};
+
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  pending:   { label: 'معلق',   color: '#f59e0b' },
+  confirmed: { label: 'مؤكد',   color: '#60a5fa' },
+  completed: { label: 'منتهي',  color: '#22c55e' },
+  cancelled: { label: 'ملغي',   color: '#ef4444' },
+};
 
 const AREAS = ['سموحة', 'ميامي', 'المنتزه', 'الإبراهيمية', 'المحطة', 'كفر الشيخ', 'سيدي بشر', 'لوران', 'العجمي', 'الدخيلة'];
 
@@ -24,10 +38,11 @@ const emptyForm: WorkshopForm = {
 };
 
 export default function AdminWorkshops() {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, token } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const headers = getAuthHeaders();
+  const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   const { data: workshops, isLoading } = useListAdminWorkshops({ request: headers });
 
@@ -37,6 +52,24 @@ export default function AdminWorkshops() {
   const [editForm, setEditForm] = useState<WorkshopForm>(emptyForm);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+
+  const [ordersModal, setOrdersModal] = useState<{ id: number; name: string } | null>(null);
+  const [workshopOrders, setWorkshopOrders] = useState<WorkshopOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  const openOrders = async (ws: { id: number; name: string }) => {
+    setOrdersModal(ws);
+    setLoadingOrders(true);
+    try {
+      const res = await fetch(`/api/admin/workshops/${ws.id}/orders`, { headers: authHeader });
+      if (!res.ok) throw new Error();
+      setWorkshopOrders(await res.json());
+    } catch {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل طلبات الورشة' });
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const invalidate = () => queryClient.invalidateQueries();
 
@@ -309,6 +342,13 @@ export default function AdminWorkshops() {
                         </>
                       ) : (
                         <>
+                          <button
+                            onClick={() => openOrders({ id: ws.id, name: ws.name })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                            style={{ background: `${G}15`, color: G, border: `1px solid ${G}30` }}
+                          >
+                            <ClipboardList className="w-3.5 h-3.5" /> طلباتها
+                          </button>
                           <button onClick={() => startEdit(ws)} className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -323,6 +363,70 @@ export default function AdminWorkshops() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Workshop Orders Modal */}
+      {ordersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setOrdersModal(null)}>
+          <div
+            className="bg-[#0F1625] border border-[#C8974A]/20 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[85vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+            style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}
+          >
+            <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C8974A] to-transparent" />
+            <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-xl font-black text-white">طلبات الورشة</h2>
+                <p className="text-white/40 text-sm mt-0.5">{ordersModal.name}</p>
+              </div>
+              <button onClick={() => setOrdersModal(null)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {loadingOrders ? (
+                <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-[#C8974A]" /></div>
+              ) : workshopOrders.length === 0 ? (
+                <div className="py-16 text-center text-white/30 font-bold">لا توجد طلبات لهذه الورشة بعد</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[#0F1625]">
+                    <tr className="text-white/40 text-xs font-bold border-b border-white/10">
+                      <th className="px-6 py-3 text-right">#</th>
+                      <th className="px-4 py-3 text-right">العميل</th>
+                      <th className="px-4 py-3 text-right">الباكدج</th>
+                      <th className="px-4 py-3 text-right">السيارة</th>
+                      <th className="px-4 py-3 text-right">الحالة</th>
+                      <th className="px-4 py-3 text-right">الإجمالي</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workshopOrders.map(order => {
+                      const st = STATUS_MAP[order.status] ?? { label: order.status, color: '#94a3b8' };
+                      return (
+                        <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-3 text-white/40 font-mono text-xs">{order.id}</td>
+                          <td className="px-4 py-3">
+                            <div className="text-white text-xs font-bold">{order.userName}</div>
+                            {order.userPhone && <div className="text-white/40 text-xs" dir="ltr">{order.userPhone}</div>}
+                          </td>
+                          <td className="px-4 py-3 text-white/70 text-xs">{order.packageName}</td>
+                          <td className="px-4 py-3 text-white/60 text-xs">{order.carModel} {order.carYear}</td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ color: st.color, background: `${st.color}15` }}>
+                              {st.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-black text-sm" style={{ color: G }}>{order.total.toLocaleString()} ج.م</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

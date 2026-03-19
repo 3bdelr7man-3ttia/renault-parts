@@ -626,6 +626,7 @@ export const UpdatePackageBody = zod.object({
   sellPrice: zod.number().optional(),
   basePrice: zod.number().optional(),
   warrantyMonths: zod.number().optional(),
+  imageUrl: zod.string().nullish(),
 });
 
 export const UpdatePackageResponse = zod.object({

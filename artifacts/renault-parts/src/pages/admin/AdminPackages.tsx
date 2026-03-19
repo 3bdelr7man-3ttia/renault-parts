@@ -116,6 +116,25 @@ export default function AdminPackages() {
   const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
   const [addState, setAddState] = useState<AddPkgState>({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '', imageUrl: '' });
+  const [togglingAvailId, setTogglingAvailId] = useState<number | null>(null);
+
+  const toggleAvailability = async (id: number, current: boolean) => {
+    setTogglingAvailId(id);
+    try {
+      const res = await fetch(`/api/admin/packages/${id}/availability`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ isAvailable: !current }),
+      });
+      if (!res.ok) throw new Error();
+      toast({ title: !current ? '✓ الباكدج متاح الآن' : 'الباكدج أُوقف مؤقتاً' });
+      queryClient.invalidateQueries();
+    } catch {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تغيير حالة التوفر' });
+    } finally {
+      setTogglingAvailId(null);
+    }
+  };
 
   const { mutate: updatePkg } = useUpdatePackage({
     request: headers,
@@ -260,6 +279,23 @@ export default function AdminPackages() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Availability toggle */}
+                    <button
+                      onClick={() => toggleAvailability(pkg.id, pkg.isAvailable ?? true)}
+                      disabled={togglingAvailId === pkg.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all border"
+                      style={{
+                        background: (pkg.isAvailable ?? true) ? '#22c55e15' : '#ef444415',
+                        borderColor: (pkg.isAvailable ?? true) ? '#22c55e40' : '#ef444440',
+                        color: (pkg.isAvailable ?? true) ? '#22c55e' : '#ef4444',
+                      }}
+                    >
+                      {togglingAvailId === pkg.id
+                        ? <Loader2 size={10} className="animate-spin" />
+                        : <span className="w-1.5 h-1.5 rounded-full" style={{ background: (pkg.isAvailable ?? true) ? '#22c55e' : '#ef4444' }} />
+                      }
+                      {(pkg.isAvailable ?? true) ? 'متاح' : 'موقف'}
+                    </button>
                     <button
                       onClick={() => toggleParts(pkg.id)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all text-xs font-bold"

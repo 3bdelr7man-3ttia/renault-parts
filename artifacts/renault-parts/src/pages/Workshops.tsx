@@ -287,7 +287,7 @@ export default function Workshops() {
         <div style={{ position: 'sticky', top: 140, height: 580, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: 22, overflow: 'hidden' }}>
           {!isLoading && workshops && workshops.length > 0 && (
             <AlexMap
-              workshops={workshops}
+              workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}
               selectedId={selectedId}
               onSelect={setSelectedId}
             />
@@ -340,7 +340,7 @@ export default function Workshops() {
               <AnimatePresence>
                 {filtered?.map((w, i) => (
                   <WorkshopCard
-                    key={w.id} w={w} idx={i}
+                    key={w.id} w={{ ...w, rating: w.rating ?? null }} idx={i}
                     selected={selectedId === w.id}
                     onSelect={() => setSelectedId(selectedId === w.id ? null : w.id)}
                   />

@@ -14,6 +14,7 @@ import {
   Star,
   BarChart2,
   Settings2,
+  TrendingDown,
 } from 'lucide-react';
 
 const navItems = [
@@ -23,7 +24,8 @@ const navItems = [
   { href: '/admin/workshops', label: 'الورش', icon: Wrench },
   { href: '/admin/parts', label: 'القطع', icon: Settings2 },
   { href: '/admin/reviews', label: 'التقييمات', icon: Star },
-  { href: '/admin/sales', label: 'تقرير المبيعات', icon: BarChart2 },
+  { href: '/admin/sales', label: 'المبيعات', icon: BarChart2 },
+  { href: '/admin/expenses', label: 'المصروفات', icon: TrendingDown },
   { href: '/admin/users', label: 'المستخدمون', icon: Users },
 ];
 

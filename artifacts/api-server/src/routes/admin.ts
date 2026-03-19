@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable } from "@workspace/db";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
@@ -196,12 +196,19 @@ router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<
   const result = await Promise.all(
     users.map(async (u) => {
       const [countRow] = await db.select({ count: count() }).from(ordersTable).where(eq(ordersTable.userId, u.id));
+      let workshopName: string | null = null;
+      if (u.workshopId) {
+        const [ws] = await db.select({ name: workshopsTable.name }).from(workshopsTable).where(eq(workshopsTable.id, u.workshopId));
+        workshopName = ws?.name ?? null;
+      }
       return {
         id: u.id,
         name: u.name,
         phone: u.phone,
         email: u.email,
         role: u.role,
+        workshopId: u.workshopId ?? null,
+        workshopName,
         carModel: u.carModel,
         carYear: u.carYear,
         area: u.area,
@@ -212,6 +219,26 @@ router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<
   );
 
   res.json(result);
+});
+
+// PATCH /admin/users/:id/workshop — link/unlink user to a workshop
+router.patch("/admin/users/:id/workshop", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const { workshopId, role } = req.body as { workshopId?: number | null; role?: string };
+  const updates: Record<string, unknown> = {};
+  if (workshopId !== undefined) updates.workshopId = workshopId ?? null;
+  if (role !== undefined) updates.role = role;
+
+  const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
+  if (!user) { res.status(404).json({ error: "المستخدم غير موجود" }); return; }
+
+  let workshopName: string | null = null;
+  if (user.workshopId) {
+    const [ws] = await db.select({ name: workshopsTable.name }).from(workshopsTable).where(eq(workshopsTable.id, user.workshopId));
+    workshopName = ws?.name ?? null;
+  }
+  const [countRow] = await db.select({ count: count() }).from(ordersTable).where(eq(ordersTable.userId, user.id));
+  res.json({ id: user.id, name: user.name, phone: user.phone, email: user.email, role: user.role, workshopId: user.workshopId ?? null, workshopName, orderCount: countRow.count, createdAt: user.createdAt });
 });
 
 // PATCH /admin/users/:id/role
@@ -334,6 +361,32 @@ router.delete("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): P
     return;
   }
   res.json({ message: "تم حذف القطعة" });
+});
+
+// PATCH /admin/parts/:id — update stock, supplier, prices
+router.patch("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const { stockQty, supplier, priceOriginal, priceTurkish, priceChinese, imageUrl } = req.body as {
+    stockQty?: number; supplier?: string; priceOriginal?: number; priceTurkish?: number;
+    priceChinese?: number; imageUrl?: string;
+  };
+  const updates: Record<string, unknown> = {};
+  if (stockQty !== undefined) updates.stockQty = Number(stockQty);
+  if (supplier !== undefined) updates.supplier = supplier;
+  if (priceOriginal !== undefined) updates.priceOriginal = String(priceOriginal);
+  if (priceTurkish !== undefined) updates.priceTurkish = String(priceTurkish);
+  if (priceChinese !== undefined) updates.priceChinese = String(priceChinese);
+  if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+
+  const [part] = await db.update(partsTable).set(updates).where(eq(partsTable.id, id)).returning();
+  if (!part) { res.status(404).json({ error: "القطعة غير موجودة" }); return; }
+  res.json({
+    ...part,
+    priceOriginal: part.priceOriginal != null ? Number(part.priceOriginal) : null,
+    priceTurkish: part.priceTurkish != null ? Number(part.priceTurkish) : null,
+    priceChinese: part.priceChinese != null ? Number(part.priceChinese) : null,
+    imageUrl: part.imageUrl ?? null,
+  });
 });
 
 // PATCH /admin/packages/:id
@@ -515,6 +568,73 @@ router.patch("/admin/reviews/:id/reply", requireAuth, requireAdmin, async (req, 
   });
 });
 
+// PATCH /admin/packages/:id/availability
+router.patch("/admin/packages/:id/availability", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const { isAvailable } = req.body as { isAvailable: boolean };
+  const [pkg] = await db.update(packagesTable).set({ isAvailable }).where(eq(packagesTable.id, id)).returning();
+  if (!pkg) { res.status(404).json({ error: "الباكدج غير موجود" }); return; }
+  res.json({ ...pkg, basePrice: Number(pkg.basePrice), sellPrice: Number(pkg.sellPrice), isAvailable: pkg.isAvailable, parts: [] });
+});
+
+// GET /admin/workshops/:id/orders
+router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const rows = await db
+    .select({
+      order: ordersTable,
+      user: { name: usersTable.name, phone: usersTable.phone },
+      pkg: { name: packagesTable.name },
+    })
+    .from(ordersTable)
+    .innerJoin(usersTable, eq(ordersTable.userId, usersTable.id))
+    .innerJoin(packagesTable, eq(ordersTable.packageId, packagesTable.id))
+    .where(eq(ordersTable.workshopId, id))
+    .orderBy(desc(ordersTable.createdAt));
+
+  res.json(rows.map(r => ({
+    id: r.order.id,
+    userId: r.order.userId,
+    userName: r.user.name,
+    userPhone: r.user.phone,
+    packageName: r.pkg.name,
+    status: r.order.status,
+    total: Number(r.order.total),
+    carModel: r.order.carModel,
+    carYear: r.order.carYear,
+    createdAt: r.order.createdAt,
+  })));
+});
+
+// GET /admin/expenses
+router.get("/admin/expenses", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const rows = await db.select().from(expensesTable).orderBy(desc(expensesTable.createdAt));
+  res.json(rows.map(e => ({ ...e, amount: Number(e.amount) })));
+});
+
+// POST /admin/expenses
+router.post("/admin/expenses", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const { category, description, amount, date } = req.body as {
+    category: string; description: string; amount: number; date: string;
+  };
+  if (!category || !description || amount == null || !date) {
+    res.status(400).json({ error: "الحقول المطلوبة ناقصة" }); return;
+  }
+  const [expense] = await db.insert(expensesTable).values({
+    category, description, amount: String(amount), date, createdBy: authReq.user?.id ?? null,
+  }).returning();
+  res.status(201).json({ ...expense, amount: Number(expense.amount) });
+});
+
+// DELETE /admin/expenses/:id
+router.delete("/admin/expenses/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const [deleted] = await db.delete(expensesTable).where(eq(expensesTable.id, id)).returning();
+  if (!deleted) { res.status(404).json({ error: "المصروف غير موجود" }); return; }
+  res.json({ message: "تم حذف المصروف" });
+});
+
 // GET /admin/sales
 router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
   const rows = await db
@@ -529,6 +649,23 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
 
   const [totals] = await db.select({ revenue: sum(ordersTable.total), orders: count() }).from(ordersTable);
 
+  // Sales breakdown by workshop
+  const byWorkshop = await db
+    .select({
+      workshopId: ordersTable.workshopId,
+      workshopName: workshopsTable.name,
+      workshopPhone: workshopsTable.phone,
+      total: sum(ordersTable.total),
+      orderCount: count(),
+    })
+    .from(ordersTable)
+    .leftJoin(workshopsTable, eq(ordersTable.workshopId, workshopsTable.id))
+    .groupBy(ordersTable.workshopId, workshopsTable.name, workshopsTable.phone)
+    .orderBy(sql`sum(${ordersTable.total}) DESC`);
+
+  // Total expenses for net profit
+  const [expenseTotal] = await db.select({ total: sum(expensesTable.amount) }).from(expensesTable);
+
   const weeks = rows.map(r => ({
     week: r.week,
     total: Number(r.total ?? 0),
@@ -542,6 +679,14 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
     weeks,
     totalRevenue: Number(totals.revenue ?? 0),
     totalOrders: totals.orders,
+    totalExpenses: Number(expenseTotal.total ?? 0),
+    byWorkshop: byWorkshop.map(w => ({
+      workshopId: w.workshopId,
+      workshopName: w.workshopName ?? "بدون ورشة",
+      workshopPhone: w.workshopPhone ?? null,
+      total: Number(w.total ?? 0),
+      orderCount: w.orderCount,
+    })),
     exportCsv,
   });
 });

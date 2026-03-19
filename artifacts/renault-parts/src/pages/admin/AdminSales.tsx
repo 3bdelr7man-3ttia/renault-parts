@@ -1,11 +1,9 @@
-import React from 'react';
-import { useGetAdminSales } from '@workspace/api-client-react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Download, TrendingUp, ShoppingBag, DollarSign, Loader2 } from 'lucide-react';
+import { Download, TrendingUp, ShoppingBag, DollarSign, Loader2, TrendingDown, Wrench, Phone } from 'lucide-react';
 
 function SimpleBarChart({ weeks }: { weeks: { week: string; total: number; count: number }[] }) {
   const maxTotal = Math.max(...weeks.map(w => w.total), 1);
-
   return (
     <div className="space-y-3">
       {weeks.map((w, i) => (
@@ -26,10 +24,29 @@ function SimpleBarChart({ weeks }: { weeks: { week: string; total: number; count
   );
 }
 
+type SalesData = {
+  weeks: { week: string; total: number; count: number }[];
+  totalRevenue: number;
+  totalOrders: number;
+  totalExpenses: number;
+  byWorkshop: { workshopId: number | null; workshopName: string; workshopPhone: string | null; total: number; orderCount: number }[];
+  exportCsv: string;
+};
+
 export default function AdminSales() {
-  const { getAuthHeaders } = useAuth();
-  const headers = getAuthHeaders();
-  const { data, isLoading } = useGetAdminSales({ request: headers });
+  const { token } = useAuth();
+  const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const [data, setData] = useState<SalesData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/admin/sales', { headers: authHeader })
+      .then(r => r.json())
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleExport = () => {
     if (!data?.exportCsv) return;
@@ -42,12 +59,14 @@ export default function AdminSales() {
     URL.revokeObjectURL(url);
   };
 
+  const netProfit = data ? data.totalRevenue - data.totalExpenses : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white mb-1">تقرير المبيعات</h1>
-          <p className="text-white/50 text-sm">مبيعات أسبوعية مع إمكانية التصدير</p>
+          <p className="text-white/50 text-sm">مبيعات أسبوعية وتفصيل الورش مع إمكانية التصدير</p>
         </div>
         <button
           onClick={handleExport}
@@ -66,27 +85,93 @@ export default function AdminSales() {
       ) : !data ? null : (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gradient-to-br from-[#1E2761] to-[#2a3580] rounded-2xl p-5 border border-[#F9E795]/20">
-              <DollarSign className="w-6 h-6 text-[#F9E795] mb-3" />
-              <p className="text-2xl font-black text-white mb-1">{data.totalRevenue.toLocaleString()} ج.م</p>
-              <p className="text-white/60 text-sm font-bold">إجمالي الإيرادات</p>
+              <DollarSign className="w-5 h-5 text-[#F9E795] mb-2" />
+              <p className="text-xl font-black text-white mb-0.5">{data.totalRevenue.toLocaleString()} ج.م</p>
+              <p className="text-white/60 text-xs font-bold">إجمالي الإيرادات</p>
             </div>
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 border border-white/10">
-              <ShoppingBag className="w-6 h-6 text-white/70 mb-3" />
-              <p className="text-2xl font-black text-white mb-1">{data.totalOrders}</p>
-              <p className="text-white/60 text-sm font-bold">إجمالي الطلبات</p>
+              <ShoppingBag className="w-5 h-5 text-white/70 mb-2" />
+              <p className="text-xl font-black text-white mb-0.5">{data.totalOrders}</p>
+              <p className="text-white/60 text-xs font-bold">إجمالي الطلبات</p>
             </div>
-            <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-2xl p-5 border border-white/10">
-              <TrendingUp className="w-6 h-6 text-white/70 mb-3" />
-              <p className="text-2xl font-black text-white mb-1">
-                {data.totalOrders > 0 ? Math.round(data.totalRevenue / data.totalOrders).toLocaleString() : 0} ج.م
-              </p>
-              <p className="text-white/60 text-sm font-bold">متوسط قيمة الطلب</p>
+            <div className="rounded-2xl p-5 border" style={{
+              background: 'linear-gradient(135deg,#7f1d1d50,#991b1b30)',
+              borderColor: '#ef444430',
+            }}>
+              <TrendingDown className="w-5 h-5 text-red-400 mb-2" />
+              <p className="text-xl font-black text-red-400 mb-0.5">{(data.totalExpenses ?? 0).toLocaleString()} ج.م</p>
+              <p className="text-white/60 text-xs font-bold">إجمالي المصروفات</p>
+            </div>
+            <div className="rounded-2xl p-5 border" style={{
+              background: netProfit >= 0 ? 'linear-gradient(135deg,#14532d50,#15803d30)' : 'linear-gradient(135deg,#7f1d1d50,#991b1b30)',
+              borderColor: netProfit >= 0 ? '#22c55e30' : '#ef444430',
+            }}>
+              <TrendingUp className="w-5 h-5 mb-2" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }} />
+              <p className="text-xl font-black mb-0.5" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>{netProfit.toLocaleString()} ج.م</p>
+              <p className="text-white/60 text-xs font-bold">صافي الربح</p>
             </div>
           </div>
 
-          {/* Chart */}
+          {/* Workshop Breakdown */}
+          {data.byWorkshop.length > 0 && (
+            <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 overflow-hidden">
+              <div className="px-6 py-4 border-b border-white/10 flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-[#F9E795]" />
+                <h2 className="text-white font-bold">تفصيل المبيعات بالورش</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-white/40 text-xs font-bold border-b border-white/5 bg-white/5">
+                      <th className="px-6 py-3 text-right">الورشة</th>
+                      <th className="px-4 py-3 text-right">الهاتف</th>
+                      <th className="px-4 py-3 text-right">عدد الطلبات</th>
+                      <th className="px-4 py-3 text-right">الإيرادات</th>
+                      <th className="px-4 py-3 text-right">النسبة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.byWorkshop.map((w, i) => (
+                      <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-[#F9E795]/10 flex items-center justify-center flex-shrink-0">
+                              <Wrench size={12} className="text-[#F9E795]" />
+                            </div>
+                            <span className="text-white font-bold">{w.workshopName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          {w.workshopPhone
+                            ? <span className="text-white/60 text-xs flex items-center gap-1"><Phone size={10} />{w.workshopPhone}</span>
+                            : <span className="text-white/20 text-xs">—</span>}
+                        </td>
+                        <td className="px-4 py-4 text-white/70">{w.orderCount} طلب</td>
+                        <td className="px-4 py-4 text-[#F9E795] font-bold">{w.total.toLocaleString()} ج.م</td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-[#F9E795]"
+                                style={{ width: `${data.totalRevenue > 0 ? (w.total / data.totalRevenue) * 100 : 0}%` }}
+                              />
+                            </div>
+                            <span className="text-white/40 text-xs font-bold w-10 text-left">
+                              {data.totalRevenue > 0 ? Math.round((w.total / data.totalRevenue) * 100) : 0}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Weekly Chart */}
           <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-6">
             <h2 className="text-white font-bold text-lg mb-6">المبيعات الأسبوعية</h2>
             {data.weeks.length === 0 ? (
@@ -96,7 +181,7 @@ export default function AdminSales() {
             )}
           </div>
 
-          {/* Table */}
+          {/* Weekly Table */}
           {data.weeks.length > 0 && (
             <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 overflow-hidden">
               <div className="px-6 py-4 border-b border-white/10">

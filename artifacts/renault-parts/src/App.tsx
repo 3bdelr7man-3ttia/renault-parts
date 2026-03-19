@@ -32,6 +32,7 @@ import AdminWorkshops from "@/pages/admin/AdminWorkshops";
 import AdminParts from "@/pages/admin/AdminParts";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminSales from "@/pages/admin/AdminSales";
+import AdminExpenses from "@/pages/admin/AdminExpenses";
 import AccessDenied from "@/pages/AccessDenied";
 
 const queryClient = new QueryClient({
@@ -69,6 +70,7 @@ function Router() {
             <Route path="/admin/parts" component={AdminParts} />
             <Route path="/admin/reviews" component={AdminReviews} />
             <Route path="/admin/sales" component={AdminSales} />
+            <Route path="/admin/expenses" component={AdminExpenses} />
             <Route path="/admin/users" component={AdminUsers} />
             <Route component={NotFound} />
           </Switch>

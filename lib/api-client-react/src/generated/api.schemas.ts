@@ -129,6 +129,7 @@ export interface Package {
   warrantyMonths: number;
   /** @nullable */
   imageUrl?: string | null;
+  isAvailable: boolean;
   parts: Part[];
   createdAt: string;
 }
@@ -375,6 +376,8 @@ export interface UpdatePackageBody {
   sellPrice?: number;
   basePrice?: number;
   warrantyMonths?: number;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface CreateWorkshopBody {

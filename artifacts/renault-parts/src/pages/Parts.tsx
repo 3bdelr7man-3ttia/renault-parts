@@ -311,7 +311,7 @@ export default function Parts() {
           <motion.div layout style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 20 }}>
             <AnimatePresence>
               {filtered?.map(part => (
-                <PartCard key={part.id} part={part} origin={origin} />
+                <PartCard key={part.id} part={{ ...part, oemCode: part.oemCode ?? null, priceOriginal: part.priceOriginal ?? null, priceTurkish: part.priceTurkish ?? null, priceChinese: part.priceChinese ?? null, compatibleModels: part.compatibleModels ?? null, supplier: part.supplier ?? null }} origin={origin} />
               ))}
             </AnimatePresence>
           </motion.div>
