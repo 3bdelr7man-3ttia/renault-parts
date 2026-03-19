@@ -92,31 +92,37 @@ const AI_QA: Record<string, string> = {
   'default': 'ممكن تسألني عن أي قطعة أو خدمة! أنا باكو 🤖 وأنا هنا أساعدك تاخد أحسن قرار.',
 };
 
+const CN = '#E53935'; // chinese red accent
+
 interface ComparePart {
   id: string; label: string; img: string;
   orig: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
   turk: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
+  chin: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
   aiIntro: string; quickQ: string[];
 }
 
 const AI_COMPARE: ComparePart[] = [
   { id: 'oil', label: 'زيت الموبيل', img: partOilImg,
-    orig: { name: 'Mobil 1 Full Synthetic', price: 320, score: 97, warranty: '24 شهر', origin: '🇩🇪 ألمانيا', badge: 'أصلي أوروبي' },
-    turk: { name: 'Selenia WR Pure Energy', price: 160, score: 73, warranty: '12 شهر', origin: '🇹🇷 تركيا',  badge: 'بديل تركي'  },
-    aiIntro: 'بشوف الزيتين — Mobil 1 الأصلي الألماني يدي ماشياً أحسن في رينو، لكن لو سيارتك أكبر من 5 سنين، Selenia التركي بيعمل شغله كويس وبيوفر 160 ج.م.',
+    orig: { name: 'Mobil 1 Full Synthetic',   price: 320, score: 97, warranty: '24 شهر', origin: '🇩🇪 ألمانيا', badge: 'أصلي أوروبي' },
+    turk: { name: 'Selenia WR Pure Energy',   price: 160, score: 73, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
+    chin: { name: 'Great Wall Motor Oil',     price: 85,  score: 51, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    aiIntro: 'Mobil 1 الأصلي الألماني الأفضل على طول. الصيني السعر رخيص بس الجودة والضمان أضعف بكثير — مش بنصح بيه للرينو.',
     quickQ: ['مين أحسن؟', 'الفرق في الجودة إيه؟', 'ضمان إيه؟', 'الموبيل يتحمل كام كيلو؟'],
   },
   { id: 'brk', label: 'فرامل Brembo', img: partBrakesImg,
-    orig: { name: 'Brembo Standard', price: 680, score: 96, warranty: '24 شهر', origin: '🇮🇹 إيطاليا', badge: 'أصلي إيطالي' },
-    turk: { name: 'Beral Brake Pads', price: 320, score: 79, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'  },
-    aiIntro: 'الفرامل مش وقت التوفير! Brembo الإيطالي = أمان حقيقي. Beral التركي مقبول لو عند ورشة متخصصة.',
-    quickQ: ['Beral بتوقف صح؟', 'فرق الأداء إيه؟', 'الأوريجنال بيدوم كام؟', 'ينفع أركب التركي؟'],
+    orig: { name: 'Brembo Standard',          price: 680, score: 96, warranty: '24 شهر', origin: '🇮🇹 إيطاليا', badge: 'أصلي إيطالي' },
+    turk: { name: 'Beral Brake Pads',         price: 320, score: 79, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
+    chin: { name: 'Yida Brake Pads',          price: 170, score: 58, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    aiIntro: 'الفرامل مش وقت التوفير! Brembo الإيطالي = أمان حقيقي. الصيني سعره أرخص لكن المسافة الكابحة أطول وبيتآكل أسرع.',
+    quickQ: ['Beral بتوقف صح؟', 'فرق الأداء إيه؟', 'الأوريجنال بيدوم كام؟', 'الصيني آمن؟'],
   },
   { id: 'air', label: 'فلتر هواء', img: partAirImg,
-    orig: { name: 'Renault Original Filter', price: 95, score: 99, warranty: '24 شهر', origin: '🇫🇷 فرنسا', badge: 'أصلي رينو' },
-    turk: { name: 'Knecht Air Filter',       price: 48, score: 83, warranty: '12 شهر', origin: '🇹🇷 تركيا', badge: 'بديل تركي' },
-    aiIntro: 'الفرق في السعر 47 ج.م بس! هنا بنصح بالأصلي لأن فلتر الهواء بيأثر على الموتور كله.',
-    quickQ: ['الفلتر بيتغير كل امتى؟', 'التركي بيضر الموتور؟', 'الأصلي يستاهل؟', 'الاتنين بيناسبوا كليو؟'],
+    orig: { name: 'Renault Original Filter',  price: 95,  score: 99, warranty: '24 شهر', origin: '🇫🇷 فرنسا',   badge: 'أصلي رينو'   },
+    turk: { name: 'Knecht Air Filter',        price: 48,  score: 83, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
+    chin: { name: 'Sakura Air Filter',        price: 22,  score: 55, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    aiIntro: 'الأصلي الفرنسي هو الأفضل. التركي Knecht مقبول. الصيني Sakura رخيص جداً بس كفاءة التصفية ضعيفة — خطر على الموتور.',
+    quickQ: ['الفلتر بيتغير كل امتى؟', 'التركي بيضر الموتور؟', 'الأصلي يستاهل؟', 'الصيني مناسب؟'],
   },
 ];
 
@@ -336,88 +342,127 @@ function ScoreRing({ score, color, size = 80 }: { score: number; color: string; 
 function AiCompareSection() {
   const [sel, setSel] = useState(0);
   const part = AI_COMPARE[sel];
-  const savings = part.orig.price - part.turk.price;
-  const origWins = part.orig.score > part.turk.score;
 
-  const ROWS = [
-    { label: 'الجودة',  origVal: `${part.orig.score}%`, turkVal: `${part.turk.score}%`, origColor: SG, turkColor: SK },
-    { label: 'السعر',   origVal: `${part.orig.price} ج.م`, turkVal: `${part.turk.price} ج.م`, origColor: TX, turkColor: TX },
-    { label: 'الضمان',  origVal: part.orig.warranty, turkVal: part.turk.warranty, origColor: TX, turkColor: TX },
-    { label: 'المنشأ',  origVal: part.orig.origin,  turkVal: part.turk.origin,  origColor: TX, turkColor: TX },
+  const scores = [part.orig.score, part.turk.score, part.chin.score];
+  const bestScore = Math.max(...scores);
+  const bestIdx = scores.indexOf(bestScore); // 0=orig,1=turk,2=chin
+
+  const COL = [
+    { key: 'orig' as const, color: SG,  accent: SG  },
+    { key: 'turk' as const, color: SK,  accent: SK  },
+    { key: 'chin' as const, color: CN,  accent: CN  },
   ];
+
+  const ROWS: { label: string; vals: [string, string, string]; colors: [string, string, string] }[] = [
+    { label: 'الجودة',
+      vals:   [`${part.orig.score}%`, `${part.turk.score}%`, `${part.chin.score}%`],
+      colors: [SG, SK, CN] },
+    { label: 'السعر',
+      vals:   [`${part.orig.price} ج.م`, `${part.turk.price} ج.م`, `${part.chin.price} ج.م`],
+      colors: [TX, TX, TX] },
+    { label: 'الضمان',
+      vals:   [part.orig.warranty, part.turk.warranty, part.chin.warranty],
+      colors: [TX, TX, TX] },
+    { label: 'المنشأ',
+      vals:   [part.orig.origin, part.turk.origin, part.chin.origin],
+      colors: [TX, TX, TX] },
+  ];
+
+  // grid: [col1] [label-center] [col2] [label-center] [col3]
+  const GRID = '1fr 44px 1fr 44px 1fr';
 
   return (
     <section style={{ padding: '48px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
-      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.08)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 12 }}>
-            <Bot size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكو AI — مقارنة ذكية</span>
+            <Bot size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكو AI — مقارنة ثلاثية</span>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>أصلي ولا تركي؟ باكو بيحلّلها ليك 🤖</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>أصلي ولا تركي ولا صيني؟ باكو بيحلّلها ليك 🤖</h2>
           <p style={{ color: TD, fontSize: 13 }}>اختار القطعة وشوف الفرق في الجودة والسعر والضمان</p>
         </div>
 
-        {/* Part selector tabs */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
-          {AI_COMPARE.map((p, i) => (
-            <button key={p.id} className="rp-pill" onClick={() => setSel(i)} style={{
-              padding: '8px 20px', fontSize: 12, fontWeight: 700,
-              background: sel === i ? `rgba(200,151,74,0.14)` : 'rgba(255,255,255,0.03)',
-              border: `1.5px solid ${sel === i ? G : BD}`,
-              color: sel === i ? G : TD,
-            }}>{p.label}</button>
-          ))}
+        {/* Part selector — dropdown */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <div style={{ position: 'relative', minWidth: 260 }}>
+            <select
+              value={sel}
+              onChange={e => setSel(Number(e.target.value))}
+              style={{
+                width: '100%', appearance: 'none',
+                background: B3, border: `1.5px solid rgba(200,151,74,0.28)`,
+                borderRadius: 14, padding: '11px 44px 11px 18px',
+                color: G, fontSize: 14, fontFamily: "'Almarai',sans-serif",
+                fontWeight: 800, outline: 'none', cursor: 'pointer', direction: 'rtl',
+                boxShadow: `0 4px 20px rgba(200,151,74,0.1)`,
+              }}
+            >
+              {AI_COMPARE.map((p, i) => (
+                <option key={p.id} value={i}>{p.label}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} color={G} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          </div>
         </div>
 
-        {/* Comparison table */}
+        {/* Comparison table — 3 columns */}
         <div style={{ background: B3, border: `1.5px solid rgba(255,255,255,0.07)`, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
 
           {/* Column headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', background: 'rgba(255,255,255,0.025)', borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
-            <div style={{ padding: '14px 20px', textAlign: 'center', borderLeft: `1px solid rgba(255,255,255,0.05)` }}>
-              {origWins && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
-              <div style={{ fontSize: 12, fontWeight: 800, color: SG }}>{part.orig.badge}</div>
-              <div style={{ fontSize: 10, color: TD, marginTop: 2 }}>{part.orig.name}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 900, color: G, background: `${G}18`, border: `1px solid ${G}35`, borderRadius: 999, padding: '5px 9px' }}>VS</span>
-            </div>
-            <div style={{ padding: '14px 20px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.05)` }}>
-              {!origWins && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
-              <div style={{ fontSize: 12, fontWeight: 800, color: SK }}>{part.turk.badge}</div>
-              <div style={{ fontSize: 10, color: TD, marginTop: 2 }}>{part.turk.name}</div>
-              {savings > 0 && <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 4 }}>💰 وفّر {savings} ج.م</div>}
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.025)', borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+            {COL.map((c, ci) => {
+              const p = part[c.key];
+              const isBest = ci === bestIdx;
+              return (
+                <React.Fragment key={c.key}>
+                  <div style={{ padding: '13px 14px', textAlign: 'center', borderLeft: ci > 0 ? `1px solid rgba(255,255,255,0.05)` : undefined }}>
+                    {isBest && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
+                    <div style={{ fontSize: 12, fontWeight: 800, color: c.color }}>{p.badge}</div>
+                    <div style={{ fontSize: 10, color: TD, marginTop: 2, lineHeight: 1.4 }}>{p.name}</div>
+                    {ci > 0 && (part.orig.price - p.price) > 0 && (
+                      <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 3 }}>💰 وفّر {part.orig.price - p.price} ج.م</div>
+                    )}
+                  </div>
+                  {ci < 2 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 10, fontWeight: 900, color: G, background: `${G}18`, border: `1px solid ${G}35`, borderRadius: 999, padding: '3px 7px' }}>VS</span>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           {/* Data rows */}
-          {ROWS.map((row, i) => (
-            <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', borderBottom: i < ROWS.length - 1 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
-              <div style={{ padding: '11px 20px', textAlign: 'center', borderLeft: `1px solid rgba(255,255,255,0.04)` }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: row.origColor }}>{row.origVal}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.22)' }}>{row.label}</span>
-              </div>
-              <div style={{ padding: '11px 20px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.04)` }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: row.turkColor }}>{row.turkVal}</span>
-              </div>
+          {ROWS.map((row, ri) => (
+            <div key={row.label} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: ri < ROWS.length - 1 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: ri % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+              {row.vals.map((val, vi) => (
+                <React.Fragment key={vi}>
+                  <div style={{ padding: '10px 14px', textAlign: 'center', borderLeft: vi > 0 ? `1px solid rgba(255,255,255,0.04)` : undefined }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: row.colors[vi] }}>{val}</span>
+                  </div>
+                  {vi < 2 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>{row.label}</span>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
             </div>
           ))}
         </div>
 
-        {/* Bako ask section — visually connected to table above */}
+        {/* Bako ask section */}
         <div style={{ border: `1.5px solid rgba(200,151,74,0.28)`, borderRadius: 16, overflow: 'hidden', boxShadow: `0 4px 24px rgba(200,151,74,0.07)` }}>
-          {/* Connector header — shows this chat belongs to the comparison */}
           <div style={{ background: `linear-gradient(135deg,rgba(26,35,86,0.9),rgba(36,48,112,0.85))`, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid rgba(200,151,74,0.18)` }}>
             <img src={bakoImg} alt="باكو" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: 13, color: '#fff', fontFamily: "'Almarai',sans-serif" }}>
                 اسأل باكو عن <span style={{ color: G }}>{part.label}</span>
               </div>
-              <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700, marginTop: 1 }}>بيجاوبك على أصلي ولا تركي بناءً على المقارنة فوق</div>
+              <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700, marginTop: 1 }}>بيجاوبك على أصلي ولا تركي ولا صيني بناءً على المقارنة فوق</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 999, padding: '3px 10px' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite', flexShrink: 0 }} />
