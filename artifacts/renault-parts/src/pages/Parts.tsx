@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useListParts } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, SlidersHorizontal, Layers, Zap, Shield, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, SlidersHorizontal, Layers, Zap, Shield, Star, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { usePartCart } from '@/lib/part-cart-context';
+import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/hooks/use-toast';
 import bakoNew from '@/assets/bako-new.png';
 
 /* ── Brand colours ── */
@@ -67,6 +71,12 @@ function PartCard({ part, origin }: {
   origin: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { addPart, removePart, hasItem } = usePartCart();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const inCart = hasItem(part.id);
   const imgFile = PART_IMAGES[part.type];
   const imgSrc = imgFile ? `${import.meta.env.BASE_URL}images/${imgFile}` : undefined;
 
@@ -77,6 +87,22 @@ function PartCard({ part, origin }: {
   ].filter(p => p.val !== null && (origin === 'all' || origin === p.key));
 
   const lowestPrice = prices.reduce((min, p) => (!min || (p.val && p.val < min)) ? p.val : min, null as number | null);
+
+  const handleCartClick = () => {
+    if (!user) {
+      toast({ title: 'سجّل دخولك أولاً', description: 'لازم تكون مسجّل دخول عشان تضيف قطع للباكدج.' });
+      setLocation('/login');
+      return;
+    }
+    if (inCart) {
+      removePart(part.id);
+      toast({ title: 'اتشالت من الباكدج', description: part.name });
+    } else {
+      const price = lowestPrice ?? 0;
+      addPart({ id: part.id, label: part.name, price });
+      toast({ title: 'اتضافت للباكدج ✓', description: `${part.name} — ${formatPrice(price)}` });
+    }
+  };
 
   return (
     <motion.div
@@ -123,6 +149,30 @@ function PartCard({ part, origin }: {
           ))}
           {prices.length === 0 && <span style={{ fontSize: 12, color: '#7A95AA' }}>السعر عند الطلب</span>}
         </div>
+
+        {/* Add to package button */}
+        <button
+          onClick={handleCartClick}
+          style={{
+            width: '100%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            marginTop: 10, marginBottom: 6,
+            padding: '9px 16px',
+            borderRadius: 12,
+            border: inCart ? '1.5px solid rgba(61,168,130,0.4)' : '1.5px solid rgba(200,151,74,0.3)',
+            background: inCart ? 'rgba(61,168,130,0.1)' : 'rgba(200,151,74,0.08)',
+            color: inCart ? '#3DA882' : G,
+            fontFamily: "'Almarai',sans-serif",
+            fontWeight: 800, fontSize: 13,
+            cursor: 'pointer',
+            transition: 'all .2s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = inCart ? 'rgba(61,168,130,0.18)' : 'rgba(200,151,74,0.16)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = inCart ? 'rgba(61,168,130,0.1)' : 'rgba(200,151,74,0.08)'; }}
+        >
+          {inCart ? <Check size={14} /> : <Plus size={14} />}
+          {inCart ? 'اتضافت للباكدج ✓' : 'أضف للباكدج'}
+        </button>
 
         {/* Compatible models toggle */}
         {(() => {

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { CarProvider } from "@/lib/car-context";
+import { PartCartProvider } from "@/lib/part-cart-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import ChatWidget from "@/components/ChatWidget";
@@ -115,10 +116,12 @@ function App() {
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <AuthProvider>
-            <CarProvider>
-              <Router />
-              <ChatWidget />
-            </CarProvider>
+            <PartCartProvider>
+              <CarProvider>
+                <Router />
+                <ChatWidget />
+              </CarProvider>
+            </PartCartProvider>
           </AuthProvider>
         </WouterRouter>
         <Toaster />

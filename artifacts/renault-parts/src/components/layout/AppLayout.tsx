@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search, Settings, Building2 } from 'lucide-react';
+import { usePartCart } from '@/lib/part-cart-context';
+import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search, Settings, Building2, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import bakoLogoImg from '@/assets/bako-logo.png';
 
@@ -43,8 +44,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { items: cartItems, total: cartTotal, clear: clearCart } = usePartCart();
   const [searchVal, setSearchVal] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleGoToCart = () => {
+    if (cartItems.length === 0) return;
+    sessionStorage.setItem('customPuzzle', JSON.stringify({
+      parts: cartItems.map(p => ({ id: p.id, label: p.label, price: p.price })),
+      total: cartTotal,
+    }));
+    setLocation('/checkout/custom');
+  };
 
   const handleLogout = () => {
     logout();
@@ -175,6 +186,40 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 {n.label}
               </Link>
             ))}
+
+            {/* Part Cart button — only when logged in and has items */}
+            {user && cartItems.length > 0 && (
+              <button
+                onClick={handleGoToCart}
+                style={{
+                  position: 'relative',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  background: 'rgba(200,151,74,0.12)',
+                  border: '1.5px solid rgba(200,151,74,0.35)',
+                  borderRadius: 999, padding: '7px 16px',
+                  cursor: 'pointer',
+                  fontFamily: "'Almarai',sans-serif",
+                  fontWeight: 800, fontSize: 13, color: '#C8974A',
+                  flexShrink: 0,
+                  transition: 'background .2s, box-shadow .2s',
+                  boxShadow: '0 2px 12px rgba(200,151,74,0.2)',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.22)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.12)'; }}
+              >
+                <ShoppingCart size={15} />
+                باكدجي
+                <span style={{
+                  background: '#C8974A', color: '#0D1220',
+                  borderRadius: 999, fontSize: 11, fontWeight: 900,
+                  minWidth: 18, height: 18,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 5px',
+                }}>
+                  {cartItems.length}
+                </span>
+              </button>
+            )}
 
             {/* Separator */}
             <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
