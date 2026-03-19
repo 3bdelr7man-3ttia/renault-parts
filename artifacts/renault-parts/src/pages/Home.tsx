@@ -990,12 +990,18 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,151,74,0.18)', borderRadius: 10, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 11, color: '#E8F0F8' }}>عندك ورشة في الإسكندرية؟</div>
-                  <div style={{ color: TD, fontSize: 10 }}>انضم لشبكة RenoPack</div>
+              <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: `radial-gradient(circle,rgba(200,151,74,0.08),transparent 70%)`, pointerEvents: 'none' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 12, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Building2 size={18} color={G} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 13, color: '#E8F0F8', marginBottom: 3 }}>عندك ورشة في الإسكندرية؟</div>
+                    <div style={{ color: TD, fontSize: 11, fontWeight: 700 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر</div>
+                  </div>
                 </div>
-                <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '5px 12px', fontWeight: 800, fontSize: 11, textDecoration: 'none', display: 'inline-block', whiteSpace: 'nowrap' }}>انضم كورشة</Link>
+                <Link href="/join-workshop" className="rp-pill" style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.18),rgba(200,151,74,0.08))`, border: `1.5px solid rgba(200,151,74,0.35)`, color: G, padding: '8px 18px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block', whiteSpace: 'nowrap', boxShadow: `0 4px 14px rgba(200,151,74,0.12)` }}>انضم كورشة ←</Link>
               </div>
             </div>
 
