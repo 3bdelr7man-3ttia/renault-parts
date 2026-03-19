@@ -13,6 +13,7 @@ import {
   Package2,
   Star,
   BarChart2,
+  Settings2,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/admin/orders', label: 'الطلبات', icon: ClipboardList },
   { href: '/admin/packages', label: 'الباكدجات', icon: Package2 },
   { href: '/admin/workshops', label: 'الورش', icon: Wrench },
+  { href: '/admin/parts', label: 'القطع', icon: Settings2 },
   { href: '/admin/reviews', label: 'التقييمات', icon: Star },
   { href: '/admin/sales', label: 'تقرير المبيعات', icon: BarChart2 },
   { href: '/admin/users', label: 'المستخدمون', icon: Users },

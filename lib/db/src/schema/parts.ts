@@ -13,6 +13,7 @@ export const partsTable = pgTable("parts", {
   priceChinese: numeric("price_chinese", { precision: 10, scale: 2 }),
   compatibleModels: text("compatible_models"),
   supplier: text("supplier"),
+  imageUrl: text("image_url"),
 }, (t) => [
   unique("parts_name_unique").on(t.name),
 ]);

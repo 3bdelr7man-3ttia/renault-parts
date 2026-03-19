@@ -11,6 +11,7 @@ export const workshopsTable = pgTable("workshops", {
   lat: numeric("lat", { precision: 10, scale: 7 }),
   lng: numeric("lng", { precision: 10, scale: 7 }),
   rating: numeric("rating", { precision: 3, scale: 2 }),
+  imageUrl: text("image_url"),
   partnershipStatus: text("partnership_status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

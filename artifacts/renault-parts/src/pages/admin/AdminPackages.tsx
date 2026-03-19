@@ -24,6 +24,7 @@ type AddPkgState = {
   warrantyMonths: string;
   kmService: string;
   slug: string;
+  imageUrl: string;
 };
 
 const PART_ICONS: Record<string, React.ElementType> = {
@@ -51,7 +52,7 @@ const KM_LABELS: Record<number, string> = {
   100000: '100,000 كم', 0: 'طوارئ',
 };
 
-function PackagePartsPanel({ pkgId, headers }: { pkgId: number; headers: Record<string, string> }) {
+function PackagePartsPanel({ pkgId, headers }: { pkgId: number; headers: { headers?: { Authorization: string } } }) {
   const { data: parts, isLoading } = useListParts({ packageId: pkgId }, { request: headers });
 
   if (isLoading) {
@@ -89,7 +90,7 @@ function PackagePartsPanel({ pkgId, headers }: { pkgId: number; headers: Record<
                 <div className="flex items-center gap-1">
                   <Tag size={8} className="text-white/30" />
                   <span className="text-white/40 text-[10px] font-bold">{PART_TYPE_LABELS[p.type] ?? p.type}</span>
-                  <span className="text-[#C8974A] text-[10px] font-bold mr-auto">{p.price?.toLocaleString()} ج.م</span>
+                  <span className="text-[#C8974A] text-[10px] font-bold mr-auto">{(p.priceOriginal ?? p.priceTurkish)?.toLocaleString()} ج.م</span>
                 </div>
               </div>
             </div>
@@ -101,10 +102,11 @@ function PackagePartsPanel({ pkgId, headers }: { pkgId: number; headers: Record<
 }
 
 export default function AdminPackages() {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, token } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const headers = getAuthHeaders();
+  const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   const { data: packages, isLoading } = useListAdminPackages({ request: headers });
 
@@ -113,7 +115,7 @@ export default function AdminPackages() {
   const [savingId, setSavingId] = useState<number | null>(null);
   const [expandedParts, setExpandedParts] = useState<Set<number>>(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addState, setAddState] = useState<AddPkgState>({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '' });
+  const [addState, setAddState] = useState<AddPkgState>({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '', imageUrl: '' });
 
   const { mutate: updatePkg } = useUpdatePackage({
     request: headers,
@@ -182,7 +184,7 @@ export default function AdminPackages() {
     try {
       const res = await fetch('/api/packages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...headers },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({
           name: addState.name,
           description: addState.description,
@@ -191,13 +193,14 @@ export default function AdminPackages() {
           basePrice: parseFloat(addState.basePrice || addState.sellPrice),
           warrantyMonths: parseInt(addState.warrantyMonths),
           kmService: parseInt(addState.kmService),
+          imageUrl: addState.imageUrl || null,
         }),
       });
       if (!res.ok) throw new Error();
       toast({ title: '✓ تم إضافة الباكدج بنجاح' });
       queryClient.invalidateQueries();
       setShowAddModal(false);
-      setAddState({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '' });
+      setAddState({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '', imageUrl: '' });
     } catch {
       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل إضافة الباكدج. قد يكون الـ Slug مكرر.' });
     }
@@ -450,6 +453,18 @@ export default function AdminPackages() {
                   onChange={e => setAddState(s => ({ ...s, slug: e.target.value }))}
                   placeholder={addState.name ? generateSlug(addState.name) : 'سيتم إنشاؤه تلقائياً'}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/50 font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20 font-mono"
+                  dir="ltr"
+                />
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="text-white/50 text-xs font-bold mb-1 block">رابط صورة الباكدج (Image URL)</label>
+                <input
+                  value={addState.imageUrl}
+                  onChange={e => setAddState(s => ({ ...s, imageUrl: e.target.value }))}
+                  placeholder="https://example.com/package.jpg"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/70 font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20 font-mono"
                   dir="ltr"
                 />
               </div>

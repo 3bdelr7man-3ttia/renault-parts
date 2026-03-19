@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable } from "@workspace/db";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
@@ -257,8 +257,83 @@ router.get("/admin/packages", requireAuth, requireAdmin, async (_req, res): Prom
     ...p,
     basePrice: Number(p.basePrice),
     sellPrice: Number(p.sellPrice),
+    imageUrl: p.imageUrl ?? null,
     parts: [],
   })));
+});
+
+// POST /admin/packages
+router.post("/admin/packages", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const { name, slug, description, kmService, basePrice, sellPrice, warrantyMonths, imageUrl } = req.body as {
+    name: string; slug: string; description: string; kmService: number;
+    basePrice: number; sellPrice: number; warrantyMonths: number; imageUrl?: string;
+  };
+  if (!name || !slug || !description || kmService == null || basePrice == null || sellPrice == null) {
+    res.status(400).json({ error: "الحقول المطلوبة ناقصة" });
+    return;
+  }
+  const [pkg] = await db.insert(packagesTable).values({
+    name, slug, description,
+    kmService: Number(kmService),
+    basePrice: String(basePrice),
+    sellPrice: String(sellPrice),
+    warrantyMonths: Number(warrantyMonths ?? 12),
+    imageUrl: imageUrl ?? null,
+  }).returning();
+  res.status(201).json({ ...pkg, basePrice: Number(pkg.basePrice), sellPrice: Number(pkg.sellPrice), imageUrl: pkg.imageUrl ?? null, parts: [] });
+});
+
+// GET /admin/parts
+router.get("/admin/parts", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const parts = await db.select().from(partsTable).orderBy(partsTable.name);
+  res.json(parts.map(p => ({
+    ...p,
+    priceOriginal: p.priceOriginal != null ? Number(p.priceOriginal) : null,
+    priceTurkish: p.priceTurkish != null ? Number(p.priceTurkish) : null,
+    priceChinese: p.priceChinese != null ? Number(p.priceChinese) : null,
+    imageUrl: p.imageUrl ?? null,
+  })));
+});
+
+// POST /admin/parts
+router.post("/admin/parts", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const { name, type, oemCode, priceOriginal, priceTurkish, priceChinese, compatibleModels, supplier, imageUrl } = req.body as {
+    name: string; type: string; oemCode?: string; priceOriginal?: number;
+    priceTurkish?: number; priceChinese?: number; compatibleModels?: string;
+    supplier?: string; imageUrl?: string;
+  };
+  if (!name || !type) {
+    res.status(400).json({ error: "الاسم والنوع مطلوبان" });
+    return;
+  }
+  const [part] = await db.insert(partsTable).values({
+    name, type,
+    oemCode: oemCode ?? null,
+    priceOriginal: priceOriginal != null ? String(priceOriginal) : null,
+    priceTurkish: priceTurkish != null ? String(priceTurkish) : null,
+    priceChinese: priceChinese != null ? String(priceChinese) : null,
+    compatibleModels: compatibleModels ?? null,
+    supplier: supplier ?? null,
+    imageUrl: imageUrl ?? null,
+  }).returning();
+  res.status(201).json({
+    ...part,
+    priceOriginal: part.priceOriginal != null ? Number(part.priceOriginal) : null,
+    priceTurkish: part.priceTurkish != null ? Number(part.priceTurkish) : null,
+    priceChinese: part.priceChinese != null ? Number(part.priceChinese) : null,
+    imageUrl: part.imageUrl ?? null,
+  });
+});
+
+// DELETE /admin/parts/:id
+router.delete("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  const [deleted] = await db.delete(partsTable).where(eq(partsTable.id, id)).returning();
+  if (!deleted) {
+    res.status(404).json({ error: "القطعة غير موجودة" });
+    return;
+  }
+  res.json({ message: "تم حذف القطعة" });
 });
 
 // PATCH /admin/packages/:id
@@ -276,6 +351,7 @@ router.patch("/admin/packages/:id", requireAuth, requireAdmin, async (req, res):
   if (parsed.data.sellPrice !== undefined) updates.sellPrice = parsed.data.sellPrice;
   if (parsed.data.basePrice !== undefined) updates.basePrice = parsed.data.basePrice;
   if (parsed.data.warrantyMonths !== undefined) updates.warrantyMonths = parsed.data.warrantyMonths;
+  if (parsed.data.imageUrl !== undefined) updates.imageUrl = parsed.data.imageUrl;
 
   const [pkg] = await db.update(packagesTable).set(updates).where(eq(packagesTable.id, id)).returning();
   if (!pkg) {
@@ -312,6 +388,7 @@ router.post("/admin/workshops", requireAuth, requireAdmin, async (req, res): Pro
     lat: parsed.data.lat !== undefined ? String(parsed.data.lat) : null,
     lng: parsed.data.lng !== undefined ? String(parsed.data.lng) : null,
     partnershipStatus: parsed.data.partnershipStatus ?? "active",
+    imageUrl: parsed.data.imageUrl ?? null,
   }).returning();
 
   res.status(201).json({
@@ -339,6 +416,7 @@ router.patch("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res)
   if (parsed.data.lat !== undefined) updates.lat = parsed.data.lat !== null ? String(parsed.data.lat) : null;
   if (parsed.data.lng !== undefined) updates.lng = parsed.data.lng !== null ? String(parsed.data.lng) : null;
   if (parsed.data.partnershipStatus !== undefined) updates.partnershipStatus = parsed.data.partnershipStatus;
+  if (parsed.data.imageUrl !== undefined) updates.imageUrl = parsed.data.imageUrl;
 
   const [workshop] = await db.update(workshopsTable).set(updates).where(eq(workshopsTable.id, id)).returning();
   if (!workshop) {

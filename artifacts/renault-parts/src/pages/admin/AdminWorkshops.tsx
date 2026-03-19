@@ -15,11 +15,12 @@ type WorkshopForm = {
   lat: string;
   lng: string;
   partnershipStatus: string;
+  imageUrl: string;
 };
 
 const emptyForm: WorkshopForm = {
   name: '', area: '', address: '', phone: '',
-  lat: '', lng: '', partnershipStatus: 'active',
+  lat: '', lng: '', partnershipStatus: 'active', imageUrl: '',
 };
 
 export default function AdminWorkshops() {
@@ -65,7 +66,7 @@ export default function AdminWorkshops() {
 
   const parseForm = (form: WorkshopForm): {
     name: string; area: string; address: string; phone: string;
-    lat?: number | null; lng?: number | null; partnershipStatus?: string;
+    lat?: number | null; lng?: number | null; partnershipStatus?: string; imageUrl?: string | null;
   } => ({
     name: form.name,
     area: form.area,
@@ -74,6 +75,7 @@ export default function AdminWorkshops() {
     lat: form.lat ? parseFloat(form.lat) : null,
     lng: form.lng ? parseFloat(form.lng) : null,
     partnershipStatus: form.partnershipStatus,
+    imageUrl: form.imageUrl || null,
   });
 
   const startEdit = (ws: NonNullable<typeof workshops>[0]) => {
@@ -86,6 +88,7 @@ export default function AdminWorkshops() {
       lat: ws.lat != null ? String(ws.lat) : '',
       lng: ws.lng != null ? String(ws.lng) : '',
       partnershipStatus: ws.partnershipStatus,
+      imageUrl: ws.imageUrl ?? '',
     });
   };
 
@@ -173,6 +176,16 @@ export default function AdminWorkshops() {
           placeholder="29.9187"
           dir="ltr"
           className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+        />
+      </div>
+      <div className="md:col-span-2">
+        <label className="text-white/50 text-xs font-bold mb-1 block">رابط صورة الورشة (Image URL)</label>
+        <input
+          value={form.imageUrl}
+          onChange={e => setForm(s => ({ ...s, imageUrl: e.target.value }))}
+          placeholder="https://example.com/workshop.jpg"
+          dir="ltr"
+          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm font-mono"
         />
       </div>
     </div>

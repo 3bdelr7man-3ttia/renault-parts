@@ -941,6 +941,8 @@ components:
           type: number
         warrantyMonths:
           type: integer
+        imageUrl:
+          type: ["string", "null"]
         parts:
           type: array
           items:
@@ -981,6 +983,8 @@ components:
           type: ["string", "null"]
         supplier:
           type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
       required:
         - id
         - name
@@ -1007,6 +1011,8 @@ components:
           type: ["number", "null"]
         partnershipStatus:
           type: string
+        imageUrl:
+          type: ["string", "null"]
       required:
         - id
         - name
@@ -1398,6 +1404,8 @@ components:
           type: ["number", "null"]
         partnershipStatus:
           type: string
+        imageUrl:
+          type: ["string", "null"]
       required:
         - name
         - area
@@ -1421,6 +1429,8 @@ components:
           type: ["number", "null"]
         partnershipStatus:
           type: string
+        imageUrl:
+          type: ["string", "null"]
 
     AdminReview:
       type: object

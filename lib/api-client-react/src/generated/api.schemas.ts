@@ -114,6 +114,8 @@ export interface Part {
   compatibleModels?: string | null;
   /** @nullable */
   supplier?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface Package {
@@ -125,6 +127,8 @@ export interface Package {
   basePrice: number;
   sellPrice: number;
   warrantyMonths: number;
+  /** @nullable */
+  imageUrl?: string | null;
   parts: Part[];
   createdAt: string;
 }
@@ -142,6 +146,8 @@ export interface Workshop {
   /** @nullable */
   rating?: number | null;
   partnershipStatus: string;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export type CreateOrderBodyPaymentMethod =
@@ -381,6 +387,8 @@ export interface CreateWorkshopBody {
   /** @nullable */
   lng?: number | null;
   partnershipStatus?: string;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface UpdateWorkshopBody {
@@ -393,6 +401,8 @@ export interface UpdateWorkshopBody {
   /** @nullable */
   lng?: number | null;
   partnershipStatus?: string;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface AdminReview {

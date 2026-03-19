@@ -4,7 +4,7 @@ import {
   Search, Wrench, ShieldCheck, Star, MapPin, ChevronLeft,
   Zap, Droplets, Wind, Settings, Disc, Battery, Package,
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
-  ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown,
+  ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown, Truck,
 } from 'lucide-react';
 import { useListPackages } from '@workspace/api-client-react';
 import bakoImg    from '@/assets/bako-new.png';
@@ -220,82 +220,141 @@ function BakoChat({ context }: { context: ComparePart }) {
   );
 }
 
+/* ── Score Ring ── */
+function ScoreRing({ score, color, size = 80 }: { score: number; color: string; size?: number }) {
+  const r = (size - 10) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray .8s ease', filter: `drop-shadow(0 0 6px ${color}88)` }} />
+      <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="middle" style={{ transform: 'rotate(90deg)', transformOrigin: `${size / 2}px ${size / 2}px`, fill: color, fontSize: 16, fontWeight: 800, fontFamily: "'Cairo',sans-serif" }}>{score}</text>
+    </svg>
+  );
+}
+
 /* ── AI Compare section ── */
 function AiCompareSection() {
   const [sel, setSel] = useState(0);
   const part = AI_COMPARE[sel];
   const savings = part.orig.price - part.turk.price;
+  const origWins = part.orig.score > part.turk.score;
 
   return (
     <section style={{ padding: '64px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.08)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
             <Bot size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكو AI — مقارنة ذكية</span>
           </div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8, fontFamily: "'Almarai',sans-serif" }}>أصلي ولا تركي؟ باكو يقولك الإجابة 🤖</h2>
-          <p style={{ color: TD, fontSize: 14 }}>مقارنة لحظية بالجودة والسعر والضمان — وباكو موجود يشرحلك</p>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>أصلي ولا تركي؟ باكو بيحلّلها ليك 🤖</h2>
+          <p style={{ color: TD, fontSize: 14 }}>اختار القطعة وباكو يقارّن الجودة والسعر والضمان مباشرة</p>
         </div>
 
-        {/* Pills */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 36 }}>
+        {/* Part selector tabs */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 40 }}>
           {AI_COMPARE.map((p, i) => (
             <button key={p.id} className="rp-pill" onClick={() => setSel(i)} style={{
-              padding: '10px 22px', fontSize: 13, fontWeight: 700,
-              background: sel === i ? `rgba(200,151,74,0.12)` : 'rgba(255,255,255,0.03)',
+              padding: '11px 26px', fontSize: 13, fontWeight: 700,
+              background: sel === i ? `rgba(200,151,74,0.14)` : 'rgba(255,255,255,0.03)',
               border: `1.5px solid ${sel === i ? G : BD}`,
               color: sel === i ? G : TD,
-              boxShadow: sel === i ? `0 0 18px rgba(200,151,74,0.2)` : 'none',
+              boxShadow: sel === i ? `0 0 20px rgba(200,151,74,0.2)` : 'none',
+              transform: sel === i ? 'translateY(-2px)' : 'none',
             }}>{p.label}</button>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
-          {/* Original */}
-          <div style={{ background: B3, border: `1.5px solid ${SG}30`, borderRadius: 18, padding: 16, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -9, right: 14, background: SG, borderRadius: 999, padding: '3px 10px', fontSize: 9, fontWeight: 800, color: BG }}>{part.orig.badge}</div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12, marginTop: 6 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
-                <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8', marginBottom: 2, lineHeight: 1.3 }}>{part.orig.name}</div>
-                <div style={{ fontSize: 10, color: TD }}>{part.orig.origin}</div>
-                <div style={{ fontSize: 10, color: TD }}>ضمان {part.orig.warranty}</div>
+        {/* Main compare area */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 0, alignItems: 'stretch', marginBottom: 20 }}>
+
+          {/* LEFT: Original card */}
+          <div style={{ background: B3, border: `2px solid ${SG}28`, borderRadius: '24px 0 0 24px', padding: '28px 24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${SG},${SG}20)`, borderRadius: '24px 0 0 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {origWins && <span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px' }}>👑 الأفضل</span>}
+              <span style={{ background: `${SG}15`, color: SG, fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 10px', border: `1px solid ${SG}30` }}>{part.orig.badge}</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <ScoreRing score={part.orig.score} color={SG} size={82} />
+              <div>
+                <div style={{ color: SG, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>درجة الجودة</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.4 }}>{part.orig.name}</div>
+                <div style={{ fontSize: 11, color: TD, marginTop: 3 }}>{part.orig.origin}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ color: TD, fontSize: 10, fontWeight: 700 }}>الجودة</span>
-              <span style={{ color: SG, fontWeight: 800, fontSize: 12 }}>{part.orig.score}/100</span>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1, background: `${SG}0d`, border: `1px solid ${SG}20`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>الضمان</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: SG }}>{part.orig.warranty}</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>المنشأ</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: TX }}>{part.orig.origin}</div>
+              </div>
             </div>
-            <ScoreBar score={part.orig.score} color={SG} />
-            <div style={{ marginTop: 12 }}>
-              <span style={{ fontSize: 20, fontWeight: 900, color: SG }}>{part.orig.price} ج.م</span>
+
+            <div style={{ background: `${SG}0d`, border: `1px solid ${SG}20`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+              <span style={{ color: TD, fontSize: 12, fontWeight: 700 }}>السعر</span>
+              <span style={{ fontSize: 28, fontWeight: 900, color: SG }}>{part.orig.price} <span style={{ fontSize: 14 }}>ج.م</span></span>
             </div>
           </div>
 
-          {/* Turkish */}
-          <div style={{ background: B3, border: `1.5px solid ${SK}30`, borderRadius: 18, padding: 16, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: -9, right: 14, background: SK, borderRadius: 999, padding: '3px 10px', fontSize: 9, fontWeight: 800, color: BG }}>{part.turk.badge}</div>
-            <div style={{ position: 'absolute', top: 10, left: 10, background: `rgba(200,151,74,0.85)`, borderRadius: 7, padding: '3px 7px', fontSize: 9, fontWeight: 800, color: BG }}>وفّر {savings} ج.م</div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12, marginTop: 6 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
-                <img src={part.img} alt={part.label} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'hue-rotate(180deg) saturate(0.7)' }} />
+          {/* CENTER: VS divider */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 72, background: `linear-gradient(180deg,${B3},rgba(13,18,32,0.5))`, borderTop: `2px solid rgba(255,255,255,0.06)`, borderBottom: `2px solid rgba(255,255,255,0.06)`, gap: 16, padding: '20px 0' }}>
+            <div style={{ width: 1, flex: 1, background: `linear-gradient(to bottom,transparent,${G}40,transparent)` }} />
+            <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg,${G},${GL})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 20px ${G}50`, flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 900, color: BG }}>VS</span>
+            </div>
+            <div style={{ width: 1, flex: 1, background: `linear-gradient(to bottom,transparent,${SK}40,transparent)` }} />
+          </div>
+
+          {/* RIGHT: Turkish card */}
+          <div style={{ background: B3, border: `2px solid ${SK}28`, borderRadius: '0 24px 24px 0', padding: '28px 24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${SK}20,${SK})`, borderRadius: '0 24px 0 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {!origWins && <span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px' }}>👑 الأفضل</span>}
+              <span style={{ background: `${SK}15`, color: SK, fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 10px', border: `1px solid ${SK}30` }}>{part.turk.badge}</span>
+              <span style={{ background: `rgba(200,151,74,0.12)`, color: G, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px', border: `1px solid rgba(200,151,74,0.25)` }}>وفّر {savings} ج.م</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <ScoreRing score={part.turk.score} color={SK} size={82} />
+              <div>
+                <div style={{ color: SK, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>درجة الجودة</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.4 }}>{part.turk.name}</div>
+                <div style={{ fontSize: 11, color: TD, marginTop: 3 }}>{part.turk.origin}</div>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8', marginBottom: 2, lineHeight: 1.3 }}>{part.turk.name}</div>
-                <div style={{ fontSize: 10, color: TD }}>{part.turk.origin}</div>
-                <div style={{ fontSize: 10, color: TD }}>ضمان {part.turk.warranty}</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1, background: `${SK}0d`, border: `1px solid ${SK}20`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>الضمان</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: SK }}>{part.turk.warranty}</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>المنشأ</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: TX }}>{part.turk.origin}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ color: TD, fontSize: 10, fontWeight: 700 }}>الجودة</span>
-              <span style={{ color: SK, fontWeight: 800, fontSize: 12 }}>{part.turk.score}/100</span>
+
+            <div style={{ background: `${SK}0d`, border: `1px solid ${SK}20`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+              <span style={{ color: TD, fontSize: 12, fontWeight: 700 }}>السعر</span>
+              <span style={{ fontSize: 28, fontWeight: 900, color: SK }}>{part.turk.price} <span style={{ fontSize: 14 }}>ج.م</span></span>
             </div>
-            <ScoreBar score={part.turk.score} color={SK} />
-            <div style={{ marginTop: 12 }}>
-              <span style={{ fontSize: 20, fontWeight: 900, color: SK }}>{part.turk.price} ج.م</span>
-            </div>
+          </div>
+        </div>
+
+        {/* Bako recommendation bar */}
+        <div style={{ background: `linear-gradient(135deg,rgba(26,35,86,0.8),rgba(17,24,38,0.9))`, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 20, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+          <img src={bakoImg} alt="باكو" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 3 }}>توصية باكو 🤖</div>
+            <div style={{ color: TX, fontSize: 13, fontWeight: 700, lineHeight: 1.6 }}>{part.aiIntro}</div>
           </div>
         </div>
 
@@ -515,12 +574,13 @@ export default function Home() {
               <span style={{ color: G, fontSize: 12, fontWeight: 700, letterSpacing: .3 }}>منصة باكدجات الصيانة الأولى — الإسكندرية</span>
             </div>
 
-            <h1 style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
-              مش بنبيع<br />
-              <span style={{ fontSize: 62, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>قطعة.</span>
+            <h1 style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
+              بنبيع لك<br />
+              <span style={{ fontSize: 56, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>باكدج كامل</span>
             </h1>
-            <h2 style={{ fontSize: 26, fontWeight: 700, color: 'rgba(255,255,255,0.38)', marginBottom: 28, letterSpacing: -.5 }}>
-              بنبيع <span style={{ color: `rgba(200,151,74,0.75)`, fontWeight: 800 }}>باكدج كامل.</span>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 8, letterSpacing: -.5, lineHeight: 1.5 }}>
+              قطع الغيار <span style={{ color: G, fontWeight: 800 }}>+ التركيب مجاناً</span><br />
+              <span style={{ fontSize: 17, color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>بأقرب ورشة معتمدة ليك في الإسكندرية</span>
             </h2>
 
             <p style={{ color: TD, fontSize: 14, lineHeight: 1.9, marginBottom: 32, maxWidth: 500, borderRight: `3px solid rgba(200,151,74,0.25)`, paddingRight: 16 }}>
@@ -616,90 +676,81 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ PARTS SHOWCASE ═══ */}
-      <section style={{ padding: '52px 28px', borderTop: `1px solid ${BD}`, background: `linear-gradient(180deg,${B2},${BG})` }}>
+      {/* ═══ HOW IT WORKS ═══ */}
+      <section style={{ padding: '60px 28px', borderTop: `1px solid ${BD}`, background: `linear-gradient(180deg,${B2},${BG})` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '4px 14px', marginBottom: 10 }}>
-                <Package size={11} color={G} /><span style={{ color: G, fontSize: 11, fontWeight: 700 }}>ما بداخل الباكدجات</span>
-              </div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 4 }}>اختار نوع القطعة في باكدجك 🔧</h2>
-              <p style={{ color: TD, fontSize: 13 }}>أصلي أوروبي (ضمان 24 شهر) أو تركي (ضمان 12 شهر) — كلاهما داخل الباكدج</p>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
+              <Zap size={12} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>إزاي بيشتغل RenoPack</span>
             </div>
-            <Link href="/packages" style={{ display: 'flex', alignItems: 'center', gap: 6, color: G, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 12, textDecoration: 'none', fontFamily: "'Almarai',sans-serif" }}>
-              كل الباكدجات <ChevronLeft size={13} />
-            </Link>
+            <h2 style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>٣ خطوات — وعربيتك تتصلح</h2>
+            <p style={{ color: TD, fontSize: 14 }}>مش محتاج تدور على قطعة، مش محتاج تتعامل مع الورشة — إحنا بنعمل كل ده عنك</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 16 }}>
-            {/* Featured large */}
-            {(() => {
-              const p = PARTS_SHOWCASE[0];
-              return (
-                <div style={{ background: B3, border: `1.5px solid ${p.border}28`, borderRadius: 22, overflow: 'hidden', position: 'relative', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform .25s ease' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = ''}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${p.border},${p.border}44,transparent)` }} />
-                  <div style={{ height: 230, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-                    <img src={p.img} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .5s ease' }}
-                      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
-                      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')} />
-                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom,rgba(0,0,0,0.08) 0%,transparent 35%,${B3} 100%)` }} />
-                    <div style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(13,18,32,0.85)', backdropFilter: 'blur(8px)', border: `1px solid ${p.badgeColor}40`, borderRadius: 999, padding: '4px 12px', fontSize: 10, fontWeight: 800, color: p.badgeColor }}>
-                      ⭐ الأكثر في الباكدجات
-                    </div>
-                  </div>
-                  <div style={{ padding: '18px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>{p.name}</div>
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-                      <div style={{ flex: 1, background: 'rgba(61,168,130,0.07)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 12, padding: '8px 12px' }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: SG, marginBottom: 2 }}>✅ أصلي أوروبي</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: SG }}>{p.price}</div>
-                      </div>
-                      <div style={{ flex: 1, background: 'rgba(74,171,202,0.07)', border: '1px solid rgba(74,171,202,0.2)', borderRadius: 12, padding: '8px 12px' }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: SK, marginBottom: 2 }}>🇹🇷 تركي كفاءة</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: SK }}>160 ج.م</div>
-                      </div>
-                    </div>
-                    <Link href="/packages" className="rp-pill" style={{ width: '100%', background: `linear-gradient(135deg,${p.border},${p.border}99)`, color: BG, border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, marginTop: 'auto', boxShadow: `0 6px 20px ${p.border}35`, textDecoration: 'none', display: 'block', textAlign: 'center' }}>
-                      أضف للباكدج ←
-                    </Link>
-                  </div>
-                </div>
-              );
-            })()}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, position: 'relative' }}>
+            {/* Connector lines */}
+            <div style={{ position: 'absolute', top: 48, right: '33.3%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${G}50,${G}20)`, zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 48, right: '66.6%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${SK}50,${SK}20)`, zIndex: 0, pointerEvents: 'none' }} />
 
-            {/* 2×3 small cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {PARTS_SHOWCASE.slice(1).map((p, i) => (
-                <div key={i} className="rp-part-tile" style={{ background: B3, border: `1.5px solid ${p.border}22`, borderRadius: 16, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px ${p.border}20`; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = ''; }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,${p.border},transparent)` }} />
-                  <div style={{ height: 96, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
-                    <img src={p.img} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .4s ease' }}
-                      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
-                      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')} />
-                    <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom,transparent 40%,${B3} 100%)` }} />
-                    <div style={{ position: 'absolute', top: 7, left: 7, background: `${p.badgeColor}20`, border: `1px solid ${p.badgeColor}45`, borderRadius: 999, padding: '2px 7px', fontSize: 8, fontWeight: 800, color: p.badgeColor }}>{p.badge}</div>
+            {[
+              {
+                num: '١', icon: Package, color: G,
+                title: 'اختار الباكدج',
+                sub: 'اختار من الباكدجات الجاهزة أو ابني باكدجك بنفسك من القطع اللي تحتاجها',
+                tags: ['صيانة 20,000 كم', 'صيانة 40,000 كم', 'باكدج مخصص'],
+                tagColor: G,
+              },
+              {
+                num: '٢', icon: Truck, color: SK,
+                title: 'نيجيلك بالقطعة',
+                sub: 'موردينا بيجيبوا أحسن قطعة بأفضل سعر — أصلي أو تركي — وبنوصلها لأقرب ورشة ليك',
+                tags: ['توصيل خلال 24h', 'ضمان على القطعة', 'اختيار أصلي أو تركي'],
+                tagColor: SK,
+              },
+              {
+                num: '٣', icon: BadgeCheck, color: SG,
+                title: 'تركيب مجاناً وضمان',
+                sub: 'الورشة المعتمدة بتركّب القطعة مجاناً — والضمان على الشغلانة كمان',
+                tags: ['تركيب مجاناً', 'ضمان 12-24 شهر', 'ورش معتمدة'],
+                tagColor: SG,
+              },
+            ].map(({ num, icon: Icon, color, title, sub, tags, tagColor }, i) => (
+              <div key={i} style={{ background: B3, border: `1.5px solid ${color}18`, borderRadius: 24, padding: '28px 24px 24px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 40px rgba(0,0,0,0.3), 0 0 0 1.5px ${color}30`}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = ''}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${color},${color}30,transparent)`, borderRadius: '24px 24px 0 0' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: `${color}12`, border: `1.5px solid ${color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={22} color={color} />
                   </div>
-                  <div style={{ padding: '9px 12px 12px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: TX, marginBottom: 6, lineHeight: 1.35 }}>{p.name}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: G }}>{p.price}</div>
-                      <div style={{ background: `${p.border}14`, border: `1px solid ${p.border}28`, borderRadius: 6, padding: '3px 8px', fontSize: 9, fontWeight: 700, color: p.border }}>+ للباكدج</div>
-                    </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 2 }}>الخطوة {num}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.2 }}>{title}</div>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <p style={{ color: TD, fontSize: 13, lineHeight: 1.8, margin: 0 }}>{sub}</p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 'auto' }}>
+                  {tags.map(t => (
+                    <span key={t} style={{ background: `${tagColor}0d`, border: `1px solid ${tagColor}22`, borderRadius: 999, padding: '4px 10px', fontSize: 10, fontWeight: 700, color: tagColor }}>✓ {t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: 36 }}>
+            <Link href="/packages" className="rp-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `linear-gradient(135deg,${G},${GL})`, color: BG, border: 'none', padding: '13px 32px', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 24px rgba(200,151,74,0.3)`, textDecoration: 'none' }}>
+              <Package size={16} />اختار باكدجك دلوقتي
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ═══ READY PACKAGES ═══ */}
-      <ReadyPackagesSection realPackages={packages?.map(p => ({ id: p.id, name: p.name, slug: p.slug, price: p.price, description: p.description }))} />
+      <ReadyPackagesSection realPackages={packages?.map(p => ({ id: p.id, name: p.name, slug: p.slug, price: p.sellPrice, description: p.description }))} />
 
       {/* ═══ PUZZLE BUILDER ═══ */}
       <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}`, borderBottom: `1px solid ${BD}` }}>
@@ -711,14 +762,15 @@ export default function Home() {
             <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>البازل — اختار قطعك وجمّع باكدجك 🧩</h2>
             <p style={{ color: TD, fontSize: 14 }}>على حسب قيمة الباكدج بتاعك هتاخد هدية تلقائياً</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 28, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: selected.size >= 2 ? '1fr 270px 260px' : '1fr 270px', gap: 20, alignItems: 'start', transition: 'grid-template-columns .3s ease' }}>
+            {/* ── LEFT: Parts categories ── */}
             <div>
               {['سوائل', 'فلاتر', 'فرامل', 'كهرباء', 'عفشة'].map(cat => {
                 const parts = PUZZLE_PARTS.filter(p => p.cat === cat);
                 return (
                   <div key={cat} style={{ marginBottom: 20 }}>
                     <p style={{ color: TD, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, marginBottom: 10 }}>{cat}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 9 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 9 }}>
                       {parts.map(p => { const on = selected.has(p.id); return (
                         <div key={p.id} className="rp-part-tile" onClick={() => togglePart(p.id)} style={{ background: on ? 'rgba(200,151,74,0.07)' : 'var(--rp-card)', border: `1.5px solid ${on ? 'rgba(200,151,74,0.38)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: on ? '0 0 16px rgba(200,151,74,0.1)' : 'none' }}>
                           <div style={{ width: 34, height: 34, borderRadius: 10, background: on ? 'rgba(200,151,74,0.13)' : 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .25s' }}>
@@ -739,12 +791,10 @@ export default function Home() {
               })}
             </div>
 
-            {/* Sidebar */}
-            <div style={{ position: 'sticky', top: 80, display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-              {/* ── Puzzle Visual (shown when ≥2 parts selected) ── */}
-              {selected.size >= 2 && (
-                <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+            {/* ── MIDDLE: Puzzle Visual (shown when ≥2 parts) ── */}
+            {selected.size >= 2 && (
+              <div style={{ position: 'sticky', top: 80, animation: 'rp-fade-up .3s ease both' }}>
+                <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.25)`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${G},transparent)` }} />
                   <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8' }}>🧩 باكدجك يتشكّل</span>
@@ -770,7 +820,6 @@ export default function Home() {
                         </div>
                       );
                     })}
-                    {/* Empty placeholder slots */}
                     {selected.size < 6 && selected.size < 4 && (
                       <div style={{ borderRadius: 12, border: '2px dashed rgba(200,151,74,0.18)', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 18, opacity: 0.3 }}>🧩</span>
@@ -779,13 +828,15 @@ export default function Home() {
                     )}
                   </div>
                   <div style={{ borderTop: `1px solid rgba(255,255,255,0.05)`, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: TD }}>القطع بتتكامل مع بعض 🔧</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: TD }}>اضغط على صورة لإزالتها 🔧</span>
                     <span style={{ fontSize: 12, fontWeight: 900, color: G }}>{total.toLocaleString()} ج.م</span>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* ── Summary card ── */}
+            {/* ── RIGHT: Summary card (always visible) ── */}
+            <div style={{ position: 'sticky', top: 80 }}>
               <div style={{ background: B3, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 20, padding: 22 }}>
                 <h4 style={{ fontSize: 15, fontWeight: 800, color: '#E8F0F8', marginBottom: 18 }}>ملخص الباكدج</h4>
                 <div style={{ marginBottom: 18 }}>

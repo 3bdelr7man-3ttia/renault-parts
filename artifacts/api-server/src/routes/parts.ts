@@ -16,6 +16,7 @@ function normalizePart(part: typeof partsTable.$inferSelect) {
     priceChinese: part.priceChinese != null ? Number(part.priceChinese) : null,
     compatibleModels: part.compatibleModels ?? null,
     supplier: part.supplier ?? null,
+    imageUrl: part.imageUrl ?? null,
   };
 }
 

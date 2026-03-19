@@ -150,6 +150,7 @@ export const ListPackagesResponseItem = zod.object({
   basePrice: zod.number(),
   sellPrice: zod.number(),
   warrantyMonths: zod.number(),
+  imageUrl: zod.string().nullish(),
   parts: zod.array(
     zod.object({
       id: zod.number(),
@@ -161,6 +162,7 @@ export const ListPackagesResponseItem = zod.object({
       priceChinese: zod.number().nullish(),
       compatibleModels: zod.string().nullish(),
       supplier: zod.string().nullish(),
+      imageUrl: zod.string().nullish(),
     }),
   ),
   createdAt: zod.date(),
@@ -183,6 +185,7 @@ export const GetPackageBySlugResponse = zod.object({
   basePrice: zod.number(),
   sellPrice: zod.number(),
   warrantyMonths: zod.number(),
+  imageUrl: zod.string().nullish(),
   parts: zod.array(
     zod.object({
       id: zod.number(),
@@ -194,6 +197,7 @@ export const GetPackageBySlugResponse = zod.object({
       priceChinese: zod.number().nullish(),
       compatibleModels: zod.string().nullish(),
       supplier: zod.string().nullish(),
+      imageUrl: zod.string().nullish(),
     }),
   ),
   createdAt: zod.date(),
@@ -222,6 +226,7 @@ export const ListPartsResponseItem = zod.object({
   priceChinese: zod.number().nullish(),
   compatibleModels: zod.string().nullish(),
   supplier: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
 });
 export const ListPartsResponse = zod.array(ListPartsResponseItem);
 
@@ -242,6 +247,7 @@ export const ListWorkshopsResponseItem = zod.object({
   lng: zod.number().nullish(),
   rating: zod.number().nullish(),
   partnershipStatus: zod.string(),
+  imageUrl: zod.string().nullish(),
 });
 export const ListWorkshopsResponse = zod.array(ListWorkshopsResponseItem);
 
@@ -271,6 +277,7 @@ export const ListOrdersResponseItem = zod.object({
     basePrice: zod.number(),
     sellPrice: zod.number(),
     warrantyMonths: zod.number(),
+    imageUrl: zod.string().nullish(),
     parts: zod.array(
       zod.object({
         id: zod.number(),
@@ -282,6 +289,7 @@ export const ListOrdersResponseItem = zod.object({
         priceChinese: zod.number().nullish(),
         compatibleModels: zod.string().nullish(),
         supplier: zod.string().nullish(),
+        imageUrl: zod.string().nullish(),
       }),
     ),
     createdAt: zod.date(),
@@ -298,6 +306,7 @@ export const ListOrdersResponseItem = zod.object({
         lng: zod.number().nullish(),
         rating: zod.number().nullish(),
         partnershipStatus: zod.string(),
+        imageUrl: zod.string().nullish(),
       }),
       zod.null(),
     ])
@@ -350,6 +359,7 @@ export const GetOrderResponse = zod.object({
     basePrice: zod.number(),
     sellPrice: zod.number(),
     warrantyMonths: zod.number(),
+    imageUrl: zod.string().nullish(),
     parts: zod.array(
       zod.object({
         id: zod.number(),
@@ -361,6 +371,7 @@ export const GetOrderResponse = zod.object({
         priceChinese: zod.number().nullish(),
         compatibleModels: zod.string().nullish(),
         supplier: zod.string().nullish(),
+        imageUrl: zod.string().nullish(),
       }),
     ),
     createdAt: zod.date(),
@@ -377,6 +388,7 @@ export const GetOrderResponse = zod.object({
         lng: zod.number().nullish(),
         rating: zod.number().nullish(),
         partnershipStatus: zod.string(),
+        imageUrl: zod.string().nullish(),
       }),
       zod.null(),
     ])
@@ -580,6 +592,7 @@ export const ListAdminPackagesResponseItem = zod.object({
   basePrice: zod.number(),
   sellPrice: zod.number(),
   warrantyMonths: zod.number(),
+  imageUrl: zod.string().nullish(),
   parts: zod.array(
     zod.object({
       id: zod.number(),
@@ -591,6 +604,7 @@ export const ListAdminPackagesResponseItem = zod.object({
       priceChinese: zod.number().nullish(),
       compatibleModels: zod.string().nullish(),
       supplier: zod.string().nullish(),
+      imageUrl: zod.string().nullish(),
     }),
   ),
   createdAt: zod.date(),
@@ -623,6 +637,7 @@ export const UpdatePackageResponse = zod.object({
   basePrice: zod.number(),
   sellPrice: zod.number(),
   warrantyMonths: zod.number(),
+  imageUrl: zod.string().nullish(),
   parts: zod.array(
     zod.object({
       id: zod.number(),
@@ -634,6 +649,7 @@ export const UpdatePackageResponse = zod.object({
       priceChinese: zod.number().nullish(),
       compatibleModels: zod.string().nullish(),
       supplier: zod.string().nullish(),
+      imageUrl: zod.string().nullish(),
     }),
   ),
   createdAt: zod.date(),
@@ -652,6 +668,7 @@ export const ListAdminWorkshopsResponseItem = zod.object({
   lng: zod.number().nullish(),
   rating: zod.number().nullish(),
   partnershipStatus: zod.string(),
+  imageUrl: zod.string().nullish(),
 });
 export const ListAdminWorkshopsResponse = zod.array(
   ListAdminWorkshopsResponseItem,
@@ -668,6 +685,7 @@ export const CreateWorkshopBody = zod.object({
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
   partnershipStatus: zod.string().optional(),
+  imageUrl: zod.string().nullish(),
 });
 
 /**
@@ -685,6 +703,7 @@ export const UpdateWorkshopBody = zod.object({
   lat: zod.number().nullish(),
   lng: zod.number().nullish(),
   partnershipStatus: zod.string().optional(),
+  imageUrl: zod.string().nullish(),
 });
 
 export const UpdateWorkshopResponse = zod.object({
@@ -697,6 +716,7 @@ export const UpdateWorkshopResponse = zod.object({
   lng: zod.number().nullish(),
   rating: zod.number().nullish(),
   partnershipStatus: zod.string(),
+  imageUrl: zod.string().nullish(),
 });
 
 /**

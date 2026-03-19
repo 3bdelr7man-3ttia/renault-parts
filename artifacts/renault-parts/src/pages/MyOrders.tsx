@@ -80,7 +80,7 @@ export default function MyOrders() {
                 <div className="w-full sm:w-auto flex flex-row sm:flex-col items-center sm:items-end justify-between gap-4 border-t sm:border-t-0 sm:border-r border-border/50 pt-4 sm:pt-0 sm:pr-6">
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground font-bold mb-1">الإجمالي</p>
-                    <p className="text-2xl font-black text-accent-foreground">{order.total} ج.م</p>
+                    <p className="text-2xl font-black" style={{ color: '#C8974A' }}>{order.total} ج.م</p>
                   </div>
                   
                   <Link href={`/orders/${order.id}`}>
