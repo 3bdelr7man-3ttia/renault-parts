@@ -585,7 +585,7 @@ export default function Home() {
             </div>
 
             <h1 style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
-              بنبيع لك<br />
+              بنقدم لك<br />
               <span style={{ fontSize: 56, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>باكدج كامل</span>
             </h1>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 8, letterSpacing: -.5, lineHeight: 1.5 }}>

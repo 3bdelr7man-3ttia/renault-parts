@@ -69,6 +69,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => location === href;
 
+  // Scroll to top on every route change
+  React.useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [location]);
+
   const footerLinks = [
     {
       t: 'الخدمات',
