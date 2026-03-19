@@ -1,38 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
-import { useListPackages, useCreateOrder, useListWorkshops, useInitiatePayment, getListWorkshopsQueryKey } from '@workspace/api-client-react';
+import { useListPackages, useCreateOrder, useInitiatePayment } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
-import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import {
-  MapPin, CreditCard, Banknote, CarFront, Loader2, CheckCircle2,
-  Package2, Home, AlertCircle, Wrench
+  MapPin, CreditCard, CarFront, Loader2, CheckCircle2, Package2,
+  Home, AlertCircle, Store, Phone
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+
+const G = '#C8974A';
+const NV = '#1A2356';
+const BG = '#0D1220';
+const B2 = '#111826';
+const B3 = '#161E30';
 
 const ALEX_AREAS = [
   'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي', 'المنشية',
   'كليوباترا', 'ميامي', 'الإبراهيمية', 'سيدي بشر', 'الشاطبي',
   'الدخيلة', 'العامرية', 'بيكوزي', 'مصطفى كامل', 'المزاريطة',
-  'زيزينيا', 'الورديان', 'البيطاش', 'كرموز', 'باب شرق'
+  'زيزينيا', 'الورديان', 'البيطاش', 'كرموز', 'باب شرق',
 ];
 
-const STEP_LABELS = ['السيارة', 'الباكدج', 'التركيب', 'الدفع', 'التأكيد'];
-
+const STEP_LABELS = ['السيارة', 'الباكدج', 'الاستلام', 'الدفع', 'التأكيد'];
 type Step = 1 | 2 | 3 | 4 | 5;
+
+type PayMethod = 'card' | 'vodafone_cash' | 'instapay';
+type PickupType = 'pickup' | 'delivery';
 
 interface FormData {
   carModel: string;
   carYear: number;
-  installationType: 'workshop' | 'home';
-  workshopId: number | null;
-  workshopName: string;
-  workshopArea: string;
+  pickupType: PickupType;
   deliveryAddress: string;
   deliveryArea: string;
-  paymentMethod: 'cash' | 'card';
+  deliveryPhone: string;
+  paymentMethod: PayMethod;
+  vodafonePhone: string;
 }
 
 export default function Checkout() {
@@ -45,25 +51,25 @@ export default function Checkout() {
   const { data: packages, isLoading: isLoadingPackages } = useListPackages();
   const pkg = packages?.find(p => p.id === packageId);
 
-  const [step, setStep] = useState<Step>(1);
+  const userHasCar = !!(user?.carModel && user?.carYear);
+  const [step, setStep] = useState<Step>(userHasCar ? 2 : 1);
   const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     carModel: user?.carModel ?? '',
     carYear: user?.carYear ?? new Date().getFullYear(),
-    installationType: 'workshop',
-    workshopId: null,
-    workshopName: '',
-    workshopArea: '',
-    deliveryAddress: '',
-    deliveryArea: '',
-    paymentMethod: 'cash',
+    pickupType: 'pickup',
+    deliveryAddress: user?.address ?? '',
+    deliveryArea: user?.area ?? '',
+    deliveryPhone: user?.phone ?? '',
+    paymentMethod: 'card',
+    vodafonePhone: user?.phone ?? '',
   });
 
   useEffect(() => {
     if (user?.carModel && !formData.carModel) {
-      setFormData(f => ({ ...f, carModel: user.carModel ?? '' }));
+      setFormData(f => ({ ...f, carModel: user.carModel ?? '', carYear: user.carYear ?? f.carYear }));
     }
   }, [user]);
 
@@ -72,16 +78,17 @@ export default function Checkout() {
     mutation: {
       onSuccess: async (order) => {
         setConfirmedOrderId(order.id);
-        if (formData.paymentMethod === 'cash') {
-          setStep(5);
-        } else {
+        if (formData.paymentMethod === 'card') {
           setIsRedirectingToPayment(true);
           try {
             await initiatePaymentAsync({ data: { orderId: order.id } });
           } catch {
             toast({ variant: 'destructive', title: 'خطأ', description: 'تعذّر تهيئة بوابة الدفع. حاول لاحقاً.' });
             setIsRedirectingToPayment(false);
+            setStep(5);
           }
+        } else {
+          setStep(5);
         }
       },
       onError: () => {
@@ -93,71 +100,76 @@ export default function Checkout() {
   const { mutateAsync: initiatePaymentAsync } = useInitiatePayment({
     request: getAuthHeaders(),
     mutation: {
-      onSuccess: (data) => {
-        window.location.href = data.iframeUrl;
-      },
+      onSuccess: (data) => { window.location.href = data.iframeUrl; },
       onError: () => {
         setIsRedirectingToPayment(false);
-        toast({ variant: 'destructive', title: 'خطأ في بوابة الدفع', description: 'تواصل مع الدعم الفني لإتمام الدفع.' });
+        setStep(5);
+        toast({ variant: 'destructive', title: 'خطأ في بوابة الدفع', description: 'تواصل مع الدعم الفني.' });
       },
     },
   });
 
-  if (!user) {
-    setLocation('/login?redirect=/checkout/' + packageId);
-    return null;
-  }
+  if (!user) { setLocation('/login?redirect=/checkout/' + packageId); return null; }
 
   if (isLoadingPackages) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 style={{ color: G, width: 40, height: 40 }} className="animate-spin" />
       </div>
     );
   }
 
   if (!pkg) {
     return (
-      <div className="text-center py-20">
-        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-        <p className="text-xl font-bold">الباكدج غير موجود</p>
-        <Link href="/packages" className="text-primary underline mt-4 block">تصفح الباكدجات</Link>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: "'Almarai',sans-serif" }}>
+        <AlertCircle style={{ color: '#ef4444', width: 48, height: 48 }} />
+        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>الباكدج غير موجود</p>
+        <Link href="/packages" style={{ color: G, fontWeight: 700 }}>تصفح الباكدجات</Link>
       </div>
     );
   }
 
   const canAdvanceStep1 = formData.carModel.trim().length > 0 && formData.carYear > 1990;
   const canAdvanceStep3 =
-    (formData.installationType === 'workshop' && formData.workshopId !== null) ||
-    (formData.installationType === 'home' && formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
+    formData.pickupType === 'pickup' ||
+    (formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
 
   const handleConfirmOrder = () => {
     createOrder({
       data: {
         packageId: pkg.id,
-        carModel: formData.carModel,
-        carYear: Number(formData.carYear),
+        carModel: formData.carModel || (user?.carModel ?? ''),
+        carYear: Number(formData.carYear) || (user?.carYear ?? 2020),
         paymentMethod: formData.paymentMethod,
-        workshopId: formData.installationType === 'workshop' ? formData.workshopId ?? undefined : undefined,
-        deliveryAddress: formData.installationType === 'home' ? formData.deliveryAddress : undefined,
-        deliveryArea: formData.installationType === 'home' ? formData.deliveryArea : undefined,
+        deliveryAddress: formData.pickupType === 'delivery'
+          ? formData.deliveryAddress
+          : 'استلام من مركز التوزيع',
+        deliveryArea: formData.pickupType === 'delivery'
+          ? formData.deliveryArea
+          : 'الإسكندرية',
+        notes: formData.paymentMethod === 'vodafone_cash'
+          ? `فودافون كاش - ${formData.vodafonePhone}`
+          : formData.paymentMethod === 'instapay'
+          ? 'انستاباى'
+          : undefined,
       },
     });
   };
 
   return (
-    <div className="bg-secondary/20 min-h-screen pb-24 pt-12">
-      <div className="max-w-4xl mx-auto px-4">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28, gap: 12 }}>
+    <div style={{ background: BG, minHeight: '100vh', paddingBottom: 80, paddingTop: 40, fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32, gap: 10 }}>
           <RenoPackLogo size="md" />
-          <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#E8F0F8', margin: 0 }}>إتمام الطلب</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', margin: 0 }}>إتمام الطلب</h1>
         </div>
 
-        <StepProgress step={step} />
+        <StepProgress step={step} userHasCar={userHasCar} />
 
-        <div className="grid md:grid-cols-3 gap-8 mt-10">
-          <div className="md:col-span-2">
-            <div className="bg-white rounded-3xl p-8 shadow-xl shadow-black/5 border border-border/50">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, marginTop: 32 }} className="checkout-grid">
+          <div>
+            <div style={{ background: B2, borderRadius: 24, border: `1px solid ${G}20`, padding: 28 }}>
 
               {step === 1 && (
                 <Step1Car
@@ -172,12 +184,14 @@ export default function Checkout() {
                 <Step2Package
                   pkg={pkg}
                   onNext={() => setStep(3)}
-                  onBack={() => setStep(1)}
+                  onBack={() => setStep(userHasCar ? 1 : 1)}
+                  userHasCar={userHasCar}
+                  user={user}
                 />
               )}
 
               {step === 3 && (
-                <Step3Installation
+                <Step3Pickup
                   formData={formData}
                   onChange={setFormData}
                   onNext={() => setStep(4)}
@@ -193,6 +207,7 @@ export default function Checkout() {
                   onConfirm={handleConfirmOrder}
                   onBack={() => setStep(3)}
                   isPending={isCreatingOrder || isRedirectingToPayment}
+                  pkg={pkg}
                 />
               )}
 
@@ -200,45 +215,56 @@ export default function Checkout() {
                 <Step5Confirmation
                   orderId={confirmedOrderId}
                   paymentMethod={formData.paymentMethod}
+                  pickupType={formData.pickupType}
                 />
               )}
             </div>
           </div>
 
-          <div className="md:col-span-1">
-            <OrderSummary pkg={pkg} formData={formData} />
+          <div>
+            <OrderSummary pkg={pkg} formData={formData} user={user} />
           </div>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 700px) {
+          .checkout-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
 
-function StepProgress({ step }: { step: Step }) {
-  const icons = [CarFront, Package2, Wrench, CreditCard, CheckCircle2];
+function StepProgress({ step, userHasCar }: { step: Step; userHasCar: boolean }) {
+  const icons = [CarFront, Package2, Store, CreditCard, CheckCircle2];
   return (
-    <div className="flex justify-between items-center relative px-2">
-      <div className="absolute top-6 left-0 right-0 h-1 bg-border -z-10" />
-      <div
-        className="absolute top-6 right-0 h-1 bg-primary -z-10 transition-all duration-500"
-        style={{ width: `${((step - 1) / (STEP_LABELS.length - 1)) * 100}%` }}
-      />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', padding: '0 8px' }}>
+      <div style={{ position: 'absolute', top: 22, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.08)', zIndex: 0 }} />
+      <div style={{ position: 'absolute', top: 22, right: 0, height: 2, background: G, zIndex: 1, width: `${((step - 1) / 4) * 100}%`, transition: 'width 0.4s ease' }} />
       {STEP_LABELS.map((label, i) => {
         const num = (i + 1) as Step;
         const Icon = icons[i];
         const isDone = step > num;
         const isActive = step === num;
+        const isSkipped = num === 1 && userHasCar && step > 1;
         return (
-          <div key={num} className="flex flex-col items-center gap-2">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
-              isDone ? 'bg-green-500 text-white' :
-              isActive ? 'bg-primary text-white shadow-lg shadow-primary/30' :
-              'bg-white text-muted-foreground border-2 border-border'
-            }`}>
-              {isDone ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-5 h-5" />}
+          <div key={num} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, position: 'relative', zIndex: 2 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 800, fontSize: 15, transition: 'all 0.3s',
+              background: isDone || isSkipped ? '#22c55e' : isActive ? G : 'rgba(255,255,255,0.06)',
+              color: isDone || isSkipped ? '#fff' : isActive ? NV : 'rgba(255,255,255,0.3)',
+              border: `2px solid ${isDone || isSkipped ? '#22c55e' : isActive ? G : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: isActive ? `0 0 20px ${G}50` : 'none',
+            }}>
+              {isDone || isSkipped ? <CheckCircle2 size={20} /> : <Icon size={18} />}
             </div>
-            <span className={`text-xs font-bold hidden sm:block ${isActive ? 'text-primary' : isDone ? 'text-green-600' : 'text-muted-foreground'}`}>
-              {label}
+            <span style={{
+              fontSize: 11, fontWeight: 700,
+              color: isActive ? G : isDone || isSkipped ? '#22c55e' : 'rgba(255,255,255,0.3)',
+              whiteSpace: 'nowrap'
+            }}>
+              {label}{isSkipped ? ' ✓' : ''}
             </span>
           </div>
         );
@@ -247,484 +273,353 @@ function StepProgress({ step }: { step: Step }) {
   );
 }
 
-function Step1Car({ formData, onChange, onNext, canAdvance }: {
-  formData: FormData;
-  onChange: (f: FormData) => void;
-  onNext: () => void;
-  canAdvance: boolean;
+function Btn({ children, onClick, disabled, variant = 'primary', style: extraStyle = {} }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean;
+  variant?: 'primary' | 'outline'; style?: React.CSSProperties;
 }) {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-2xl font-bold text-foreground">بيانات السيارة</h2>
-      <div className="space-y-4">
+    <button onClick={onClick} disabled={disabled} style={{
+      padding: '14px 24px', borderRadius: 14, fontSize: 15, fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer',
+      border: variant === 'outline' ? '2px solid rgba(255,255,255,0.15)' : 'none',
+      background: variant === 'outline' ? 'transparent' : disabled ? '#333' : G,
+      color: variant === 'outline' ? 'rgba(255,255,255,0.6)' : disabled ? '#666' : NV,
+      fontFamily: "'Almarai',sans-serif", transition: 'opacity 0.2s', opacity: 1,
+      ...extraStyle,
+    }}>
+      {children}
+    </button>
+  );
+}
+
+function Step1Car({ formData, onChange, onNext, canAdvance }: {
+  formData: FormData; onChange: (f: FormData) => void; onNext: () => void; canAdvance: boolean;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>بيانات السيارة</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <Label className="font-bold">موديل السيارة</Label>
-          <Input
-            value={formData.carModel}
-            onChange={e => onChange({ ...formData, carModel: e.target.value })}
-            className="h-12 rounded-xl mt-1"
-            placeholder="مثال: رينو لوجان 2018"
-          />
+          <Label style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 13, display: 'block', marginBottom: 6 }}>موديل السيارة</Label>
+          <Input value={formData.carModel} onChange={e => onChange({ ...formData, carModel: e.target.value })}
+            className="h-12 rounded-xl" placeholder="مثال: رينو لوجان 2018"
+            style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
         </div>
         <div>
-          <Label className="font-bold">سنة الصنع</Label>
-          <Input
-            type="number"
-            value={formData.carYear}
+          <Label style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 13, display: 'block', marginBottom: 6 }}>سنة الصنع</Label>
+          <Input type="number" value={formData.carYear} dir="ltr"
             onChange={e => onChange({ ...formData, carYear: parseInt(e.target.value) || 2020 })}
-            className="h-12 rounded-xl mt-1"
-            dir="ltr"
-            min={1990}
-            max={new Date().getFullYear() + 1}
-          />
+            min={1990} max={new Date().getFullYear() + 1}
+            className="h-12 rounded-xl"
+            style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
         </div>
       </div>
-      <Button className="w-full h-14 rounded-xl font-bold text-lg" onClick={onNext} disabled={!canAdvance}>
-        متابعة لاختيار الباكدج
-      </Button>
+      <Btn onClick={onNext} disabled={!canAdvance} style={{ width: '100%' }}>متابعة لاختيار الباكدج</Btn>
     </div>
   );
 }
 
-function Step2Package({ pkg, onNext, onBack }: {
+function Step2Package({ pkg, onNext, onBack, userHasCar, user }: {
   pkg: { id: number; name: string; description?: string | null; sellPrice: string | number; warrantyMonths: number };
-  onNext: () => void;
-  onBack: () => void;
+  onNext: () => void; onBack: () => void; userHasCar: boolean;
+  user: { carModel?: string | null; carYear?: number | null } | null;
 }) {
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-2xl font-bold text-foreground">الباكدج المختار</h2>
-      <div className="bg-primary/5 border-2 border-primary rounded-2xl p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center flex-shrink-0">
-            <Package2 className="w-7 h-7 text-white" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>الباكدج المختار</h2>
+      <div style={{ background: `${G}12`, border: `2px solid ${G}40`, borderRadius: 20, padding: 20 }}>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ width: 52, height: 52, background: `${G}25`, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Package2 size={24} style={{ color: G }} />
           </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-black text-primary">{pkg.name}</h3>
-            {pkg.description && (
-              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{pkg.description}</p>
-            )}
-            <div className="flex items-center gap-4 mt-3">
-              <span className="bg-accent/80 text-primary font-black px-3 py-1 rounded-full text-sm">
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 900, color: G, margin: '0 0 4px' }}>{pkg.name}</h3>
+            {pkg.description && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px', lineHeight: 1.5 }}>{pkg.description}</p>}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <span style={{ background: G, color: NV, fontWeight: 900, borderRadius: 999, padding: '3px 14px', fontSize: 14 }}>
                 {Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م
               </span>
-              <span className="text-sm text-muted-foreground">ضمان {pkg.warrantyMonths} شهور</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>ضمان {pkg.warrantyMonths} شهور</span>
             </div>
           </div>
         </div>
       </div>
-      <div className="flex gap-4 mt-8">
-        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack}>رجوع</Button>
-        <Button className="w-2/3 h-14 rounded-xl font-bold text-lg" onClick={onNext}>متابعة للتركيب</Button>
-      </div>
-    </div>
-  );
-}
-
-type WorkshopRow = { id: number; name: string; area: string; address: string; lat?: number | null; lng?: number | null; rating?: number | null; partnershipStatus?: string | null };
-
-function Step3Installation({ formData, onChange, onNext, onBack, canAdvance }: {
-  formData: FormData;
-  onChange: (f: FormData) => void;
-  onNext: () => void;
-  onBack: () => void;
-  canAdvance: boolean;
-}) {
-  const [filterArea, setFilterArea] = useState('');
-
-  const workshopParams = filterArea ? { area: filterArea } : undefined;
-  const { data: workshops, isLoading: isLoadingWorkshops } = useListWorkshops(
-    workshopParams,
-    { query: { queryKey: getListWorkshopsQueryKey(workshopParams) } }
-  );
-
-  const handleSelectWorkshop = (workshop: WorkshopRow) => {
-    onChange({ ...formData, workshopId: workshop.id, workshopName: workshop.name, workshopArea: workshop.area });
-  };
-
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-2xl font-bold text-foreground">طريقة التركيب</h2>
-
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => onChange({ ...formData, installationType: 'workshop', workshopId: null, workshopName: '', workshopArea: '' })}
-          className={`p-4 rounded-2xl border-2 text-center transition-all ${
-            formData.installationType === 'workshop'
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary/50'
-          }`}
-        >
-          <MapPin className="w-8 h-8 mx-auto mb-2" />
-          <span className="font-bold text-sm">في الورشة</span>
-        </button>
-        <button
-          onClick={() => onChange({ ...formData, installationType: 'home', workshopId: null, workshopName: '', workshopArea: '' })}
-          className={`p-4 rounded-2xl border-2 text-center transition-all ${
-            formData.installationType === 'home'
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary/50'
-          }`}
-        >
-          <Home className="w-8 h-8 mx-auto mb-2" />
-          <span className="font-bold text-sm">توصيل للبيت</span>
-        </button>
-      </div>
-
-      {formData.installationType === 'workshop' ? (
-        <WorkshopPicker
-          workshops={workshops ?? []}
-          isLoading={isLoadingWorkshops}
-          selected={formData.workshopId}
-          filterArea={filterArea}
-          onFilterAreaChange={setFilterArea}
-          onSelect={handleSelectWorkshop}
-        />
-      ) : (
-        <HomePicker
-          address={formData.deliveryAddress}
-          area={formData.deliveryArea}
-          onAddressChange={v => onChange({ ...formData, deliveryAddress: v })}
-          onAreaChange={v => onChange({ ...formData, deliveryArea: v })}
-        />
+      {userHasCar && user && (
+        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
+          <CheckCircle2 size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+            بيانات سيارتك محفوظة: {user.carModel} — {user.carYear}
+          </span>
+        </div>
       )}
-
-      <div className="flex gap-4 mt-8">
-        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack}>رجوع</Button>
-        <Button className="w-2/3 h-14 rounded-xl font-bold text-lg" onClick={onNext} disabled={!canAdvance}>
-          متابعة للدفع
-        </Button>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Btn variant="outline" onClick={onBack} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
+        <Btn onClick={onNext} style={{ flex: 1 }}>متابعة لاستلام الباكدج</Btn>
       </div>
     </div>
   );
 }
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <span className="flex items-center gap-0.5 text-yellow-500">
-      {[1, 2, 3, 4, 5].map(i => (
-        <svg key={i} className={`w-3 h-3 ${i <= Math.round(rating) ? 'fill-yellow-400' : 'fill-gray-200'}`} viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
-      <span className="text-xs text-muted-foreground mr-1">{rating.toFixed(1)}</span>
-    </span>
-  );
-}
-
-function WorkshopPicker({ workshops, isLoading, selected, filterArea, onFilterAreaChange, onSelect }: {
-  workshops: WorkshopRow[];
-  isLoading: boolean;
-  selected: number | null;
-  filterArea: string;
-  onFilterAreaChange: (area: string) => void;
-  onSelect: (workshop: WorkshopRow) => void;
+function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
+  formData: FormData; onChange: (f: FormData) => void;
+  onNext: () => void; onBack: () => void; canAdvance: boolean;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label className="font-bold">اختر الورشة الأقرب لك</Label>
-        <span className="text-xs text-green-600 font-medium">الورش المتاحة فقط</span>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <select
-          value={filterArea}
-          onChange={e => onFilterAreaChange(e.target.value)}
-          className="w-full h-10 rounded-xl border border-border px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-        >
-          <option value="">جميع مناطق الإسكندرية</option>
-          {ALEX_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
-        </select>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>استلام الباكدج</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>أنت تستلم الباكدج وتأخذه للورشة الخاصة بك</p>
       </div>
 
-      <WorkshopMap workshops={workshops} selected={selected} onSelect={w => onSelect(w)} />
-
-      <div className="grid gap-3 max-h-56 overflow-y-auto">
-        {isLoading && (
-          <div className="text-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" /></div>
-        )}
-        {!isLoading && workshops.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">لا توجد ورش متاحة في هذه المنطقة</p>
-        )}
-        {workshops.map(w => (
-          <div
-            key={w.id}
-            onClick={() => onSelect(w)}
-            className={`p-4 rounded-xl border cursor-pointer transition-all ${
-              selected === w.id
-                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                : 'border-border hover:border-primary/50'
-            }`}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {[
+          { type: 'pickup' as PickupType, icon: <Store size={28} />, title: 'استلام من مركز التوزيع', desc: 'اجي استلم الباكدج من مركزنا في الإسكندرية مجاناً' },
+          { type: 'delivery' as PickupType, icon: <Home size={28} />, title: 'توصيل للبيت', desc: 'نوصل الباكدج لحد بيتك في الإسكندرية' },
+        ].map(opt => (
+          <button
+            key={opt.type}
+            onClick={() => onChange({ ...formData, pickupType: opt.type })}
+            style={{
+              padding: 18, borderRadius: 18, border: `2px solid ${formData.pickupType === opt.type ? G : 'rgba(255,255,255,0.1)'}`,
+              background: formData.pickupType === opt.type ? `${G}12` : 'rgba(255,255,255,0.03)',
+              cursor: 'pointer', textAlign: 'right', transition: 'all 0.2s', fontFamily: "'Almarai',sans-serif",
+            }}
           >
-            <div className="flex items-start gap-3">
-              <MapPin className={`w-5 h-5 flex-shrink-0 mt-0.5 ${selected === w.id ? 'text-primary' : 'text-muted-foreground'}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-bold text-foreground text-sm">{w.name}</h4>
-                  <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">متاحة</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{w.area} — {w.address}</p>
-                {w.rating != null && w.rating > 0 && (
-                  <div className="mt-1"><StarRating rating={w.rating} /></div>
-                )}
-              </div>
-              {selected === w.id && <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />}
-            </div>
-          </div>
+            <div style={{ color: formData.pickupType === opt.type ? G : 'rgba(255,255,255,0.3)', marginBottom: 10 }}>{opt.icon}</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: formData.pickupType === opt.type ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: 5 }}>{opt.title}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{opt.desc}</div>
+          </button>
         ))}
       </div>
-    </div>
-  );
-}
 
-function WorkshopMap({ workshops, selected, onSelect }: {
-  workshops: WorkshopRow[];
-  selected: number | null;
-  onSelect: (workshop: WorkshopRow) => void;
-}) {
-  const mapRef = React.useRef<HTMLDivElement>(null);
-  const mapInstanceRef = React.useRef<import('leaflet').Map | null>(null);
-  const markersLayerRef = React.useRef<import('leaflet').LayerGroup | null>(null);
-  const LRef = React.useRef<typeof import('leaflet') | null>(null);
-  const [mapReady, setMapReady] = useState(false);
+      {formData.pickupType === 'pickup' && (
+        <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}30`, borderRadius: 16, padding: 16 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 6 }}>📍 مركز التوزيع</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
+            سيتم التواصل معك لتأكيد موعد الاستلام.<br />
+            العنوان: الإسكندرية — سيتم إرسال التفاصيل على هاتفك.
+          </p>
+        </div>
+      )}
 
-  useEffect(() => {
-    let cancelled = false;
+      {formData.pickupType === 'delivery' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>المنطقة</Label>
+            <select
+              value={formData.deliveryArea}
+              onChange={e => onChange({ ...formData, deliveryArea: e.target.value })}
+              style={{ width: '100%', height: 48, borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)', background: B3, color: formData.deliveryArea ? '#fff' : 'rgba(255,255,255,0.3)', padding: '0 14px', fontSize: 14, fontFamily: "'Almarai',sans-serif", outline: 'none' }}
+            >
+              <option value="">اختر منطقتك في الإسكندرية</option>
+              {ALEX_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>العنوان بالتفصيل</Label>
+            <Input value={formData.deliveryAddress} onChange={e => onChange({ ...formData, deliveryAddress: e.target.value })}
+              className="h-12 rounded-xl" placeholder="الشارع، رقم العمارة، الدور..."
+              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+          </div>
+          <div>
+            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم الهاتف للتوصيل</Label>
+            <Input value={formData.deliveryPhone} onChange={e => onChange({ ...formData, deliveryPhone: e.target.value })}
+              className="h-12 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
+              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+          </div>
+        </div>
+      )}
 
-    async function initMap() {
-      if (!mapRef.current || mapInstanceRef.current) return;
-
-      const L = (await import('leaflet')).default;
-      await import('leaflet/dist/leaflet.css');
-      if (cancelled || !mapRef.current) return;
-
-      LRef.current = L;
-
-      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-
-      const leafletMap = L.map(mapRef.current).setView([31.2001, 29.9187], 12);
-      mapInstanceRef.current = leafletMap;
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 18,
-      }).addTo(leafletMap);
-
-      const layer = L.layerGroup().addTo(leafletMap);
-      markersLayerRef.current = layer;
-
-      if (!cancelled) setMapReady(true);
-    }
-
-    initMap();
-
-    return () => {
-      cancelled = true;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-        markersLayerRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const L = LRef.current;
-    const layer = markersLayerRef.current;
-    if (!mapReady || !L || !layer) return;
-
-    layer.clearLayers();
-
-    workshops.forEach(w => {
-      if (w.lat && w.lng) {
-        const marker = L.marker([Number(w.lat), Number(w.lng)]).addTo(layer);
-        marker.bindPopup(`<b>${w.name}</b><br>${w.area}`);
-        marker.on('click', () => onSelect(w));
-      }
-    });
-  }, [workshops, onSelect, mapReady]);
-
-  return (
-    <div className="rounded-xl overflow-hidden border border-border h-48">
-      <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
-    </div>
-  );
-}
-
-function HomePicker({ address, area, onAddressChange, onAreaChange }: {
-  address: string;
-  area: string;
-  onAddressChange: (v: string) => void;
-  onAreaChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label className="font-bold">المنطقة</Label>
-        <select
-          value={area}
-          onChange={e => onAreaChange(e.target.value)}
-          className="w-full h-12 rounded-xl border border-border px-3 mt-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-        >
-          <option value="">اختر منطقتك في الإسكندرية</option>
-          {ALEX_AREAS.map(a => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <Label className="font-bold">العنوان بالتفصيل</Label>
-        <Input
-          value={address}
-          onChange={e => onAddressChange(e.target.value)}
-          className="h-12 rounded-xl mt-1"
-          placeholder="الشارع، رقم العمارة، الدور..."
-        />
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Btn variant="outline" onClick={onBack} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
+        <Btn onClick={onNext} disabled={!canAdvance} style={{ flex: 1 }}>متابعة للدفع</Btn>
       </div>
     </div>
   );
 }
 
-function Step4Payment({ formData, onChange, onConfirm, onBack, isPending }: {
-  formData: FormData;
-  onChange: (f: FormData) => void;
-  onConfirm: () => void;
-  onBack: () => void;
-  isPending: boolean;
+function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg }: {
+  formData: FormData; onChange: (f: FormData) => void;
+  onConfirm: () => void; onBack: () => void; isPending: boolean;
+  pkg: { name: string; sellPrice: string | number };
 }) {
+  const methods: { id: PayMethod; icon: React.ReactNode; title: string; desc: string }[] = [
+    {
+      id: 'card', title: 'فيزا / ماستر كارد',
+      icon: <CreditCard size={26} />,
+      desc: 'دفع إلكتروني آمن — Visa, Mastercard عبر Stripe',
+    },
+    {
+      id: 'vodafone_cash', title: 'فودافون كاش',
+      icon: <span style={{ fontSize: 22 }}>📱</span>,
+      desc: 'تحويل عبر فودافون كاش — أدخل رقمك وادفع',
+    },
+    {
+      id: 'instapay', title: 'انستاباى',
+      icon: <span style={{ fontSize: 22 }}>⚡</span>,
+      desc: 'تحويل فوري عبر InstaPay',
+    },
+  ];
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <h2 className="text-2xl font-bold text-foreground">طريقة الدفع</h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>طريقة الدفع</h2>
 
-      <div className="grid gap-4">
-        <button
-          onClick={() => onChange({ ...formData, paymentMethod: 'cash' })}
-          className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
-            formData.paymentMethod === 'cash'
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary/50'
-          }`}
-        >
-          <Banknote className="w-8 h-8 flex-shrink-0" />
-          <div>
-            <div className="font-bold text-lg">كاش عند الاستلام</div>
-            <div className="text-sm opacity-75">يُؤكَّد الطلب فوراً — الدفع نقداً عند التركيب</div>
-          </div>
-          {formData.paymentMethod === 'cash' && <CheckCircle2 className="w-6 h-6 mr-auto flex-shrink-0" />}
-        </button>
-
-        <button
-          onClick={() => onChange({ ...formData, paymentMethod: 'card' })}
-          className={`p-6 rounded-2xl border-2 text-right flex items-center gap-4 transition-all ${
-            formData.paymentMethod === 'card'
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary/50'
-          }`}
-        >
-          <CreditCard className="w-8 h-8 flex-shrink-0" />
-          <div>
-            <div className="font-bold text-lg">بطاقة بنكية (PayMob)</div>
-            <div className="text-sm opacity-75">دفع إلكتروني آمن عبر بوابة PayMob</div>
-          </div>
-          {formData.paymentMethod === 'card' && <CheckCircle2 className="w-6 h-6 mr-auto flex-shrink-0" />}
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {methods.map(m => (
+          <button
+            key={m.id}
+            onClick={() => onChange({ ...formData, paymentMethod: m.id })}
+            style={{
+              padding: '16px 20px', borderRadius: 18, border: `2px solid ${formData.paymentMethod === m.id ? G : 'rgba(255,255,255,0.08)'}`,
+              background: formData.paymentMethod === m.id ? `${G}12` : 'rgba(255,255,255,0.02)',
+              cursor: 'pointer', textAlign: 'right', display: 'flex', gap: 16, alignItems: 'center',
+              fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
+            }}
+          >
+            <div style={{ color: formData.paymentMethod === m.id ? G : 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{m.icon}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: formData.paymentMethod === m.id ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: 3 }}>{m.title}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{m.desc}</div>
+            </div>
+            {formData.paymentMethod === m.id && <CheckCircle2 size={22} style={{ color: G, flexShrink: 0 }} />}
+          </button>
+        ))}
       </div>
 
       {formData.paymentMethod === 'card' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-          سيتم تحويلك لبوابة الدفع الآمنة لإتمام العملية. يعود تأكيد الطلب تلقائياً بعد نجاح الدفع.
+        <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 14, padding: 14 }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+            🔒 سيتم تحويلك لبوابة الدفع الآمنة. يعود تأكيد الطلب تلقائياً بعد نجاح الدفع.
+          </p>
         </div>
       )}
 
-      <div className="flex gap-4 mt-8">
-        <Button variant="outline" className="w-1/3 h-14 rounded-xl font-bold" onClick={onBack} disabled={isPending}>
-          رجوع
-        </Button>
-        <Button
-          className="w-2/3 h-14 rounded-xl font-bold text-lg bg-accent text-primary hover:bg-accent/90 shadow-lg shadow-accent/20"
-          onClick={onConfirm}
-          disabled={isPending}
-        >
+      {formData.paymentMethod === 'vodafone_cash' && (
+        <div style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', margin: 0 }}>📱 بيانات فودافون كاش</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0 }}>
+            ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على الرقم: <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>01XXXXXXXXX</strong>
+          </p>
+          <div>
+            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم فودافون كاش الخاص بك</Label>
+            <Input value={formData.vodafonePhone}
+              onChange={e => onChange({ ...formData, vodafonePhone: e.target.value })}
+              className="h-10 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
+              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+          </div>
+        </div>
+      )}
+
+      {formData.paymentMethod === 'instapay' && (
+        <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 14, padding: 16 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#10b981', margin: '0 0 8px' }}>⚡ بيانات InstaPay</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+            ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على حساب InstaPay الخاص بنا.<br />
+            رقم الحساب: <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>01XXXXXXXXX@instapay</strong>
+          </p>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Btn variant="outline" onClick={onBack} disabled={isPending} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
+        <Btn onClick={onConfirm} disabled={isPending} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {formData.paymentMethod === 'card' ? 'جارٍ التحويل...' : 'جارٍ التأكيد...'}
-            </span>
+            <><Loader2 size={18} className="animate-spin" /> {formData.paymentMethod === 'card' ? 'جارٍ التحويل...' : 'جارٍ التأكيد...'}</>
           ) : (
             formData.paymentMethod === 'card' ? 'المتابعة للدفع' : 'تأكيد الطلب'
           )}
-        </Button>
+        </Btn>
       </div>
     </div>
   );
 }
 
-function Step5Confirmation({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) {
-  return (
-    <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500 py-4">
-      <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-        <CheckCircle2 className="w-14 h-14 text-green-500" />
-      </div>
-      <div>
-        <h2 className="text-2xl font-black text-green-700 mb-2">تم تأكيد الطلب!</h2>
-        <p className="text-muted-foreground">رقم الطلب: <span className="font-bold text-foreground">#{orderId}</span></p>
-        {paymentMethod === 'cash' && (
-          <p className="text-sm text-muted-foreground mt-2">سيتواصل معك فريقنا لتحديد موعد التركيب.</p>
-        )}
-      </div>
-      <div className="flex gap-4 justify-center pt-4">
-        <Link href={`/orders/${orderId}`}>
-          <Button variant="outline" className="rounded-xl px-6">تفاصيل الطلب</Button>
-        </Link>
-        <Link href="/my-orders">
-          <Button className="rounded-xl px-6">طلباتي</Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function OrderSummary({
-  pkg, formData
-}: {
-  pkg: { name: string; sellPrice: string | number; warrantyMonths: number };
-  formData: FormData;
+function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
+  orderId: number; paymentMethod: PayMethod; pickupType: PickupType;
 }) {
   return (
-    <div className="bg-primary text-white rounded-3xl p-6 shadow-xl sticky top-28 border border-white/10">
-      <h3 className="font-bold text-accent mb-5 text-lg">ملخص الطلب</h3>
-      <div className="space-y-4 mb-6">
-        <SummaryRow label="الباكدج" value={pkg.name} />
-        {formData.carModel && <SummaryRow label="السيارة" value={`${formData.carModel} (${formData.carYear})`} />}
-        {formData.installationType === 'workshop' && formData.workshopName && (
-          <SummaryRow label="الورشة" value={`${formData.workshopName} — ${formData.workshopArea}`} />
-        )}
-        {formData.installationType === 'home' && formData.deliveryArea && (
-          <SummaryRow label="التوصيل" value={formData.deliveryArea} />
-        )}
-        <SummaryRow label="الضمان" value={`${pkg.warrantyMonths} شهور`} />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center', padding: '16px 0' }}>
+      <div style={{ width: 96, height: 96, background: 'rgba(34,197,94,0.12)', border: '3px solid #22c55e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CheckCircle2 size={52} style={{ color: '#22c55e' }} />
       </div>
-      <div className="pt-5 border-t border-white/20">
-        <div className="flex justify-between items-center text-xl font-black">
-          <span>الإجمالي</span>
-          <span className="text-accent">{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</span>
-        </div>
+      <div>
+        <h2 style={{ fontSize: 26, fontWeight: 900, color: '#22c55e', margin: '0 0 8px' }}>تم تأكيد الطلب! 🎉</h2>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>رقم الطلب: <strong style={{ color: '#fff' }}>#{orderId}</strong></p>
+      </div>
+      <div style={{ background: B3, borderRadius: 18, padding: 20, textAlign: 'right', width: '100%', maxWidth: 400 }}>
+        {pickupType === 'pickup' ? (
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: 0 }}>
+            📍 <strong style={{ color: '#fff' }}>استلام من مركز التوزيع</strong><br />
+            سيتواصل معك فريقنا خلال 24 ساعة لتحديد موعد الاستلام.
+          </p>
+        ) : (
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: 0 }}>
+            🏠 <strong style={{ color: '#fff' }}>توصيل للبيت</strong><br />
+            سيتواصل معك فريقنا خلال 24 ساعة لتأكيد موعد التوصيل.
+          </p>
+        )}
+        {paymentMethod === 'vodafone_cash' && (
+          <p style={{ fontSize: 12, color: '#f59e0b', marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
+            📱 تذكر إرسال إيصال فودافون كاش لتفعيل طلبك فوراً.
+          </p>
+        )}
+        {paymentMethod === 'instapay' && (
+          <p style={{ fontSize: 12, color: '#10b981', marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
+            ⚡ تذكر إرسال لقطة تحويل InstaPay لتفعيل طلبك.
+          </p>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Link href={`/orders/${orderId}`}>
+          <button style={{ padding: '12px 20px', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>
+            تفاصيل الطلب
+          </button>
+        </Link>
+        <Link href="/my-orders">
+          <button style={{ padding: '12px 20px', borderRadius: 14, border: 'none', background: G, color: NV, fontWeight: 900, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>
+            طلباتي
+          </button>
+        </Link>
       </div>
     </div>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function OrderSummary({ pkg, formData, user }: {
+  pkg: { name: string; sellPrice: string | number; warrantyMonths: number };
+  formData: FormData;
+  user: { carModel?: string | null; carYear?: number | null } | null;
+}) {
+  const rows = [
+    { label: 'الباكدج', value: pkg.name },
+    { label: 'السيارة', value: formData.carModel ? `${formData.carModel} (${formData.carYear})` : (user?.carModel ? `${user.carModel} (${user.carYear})` : null) },
+    { label: 'الاستلام', value: formData.pickupType === 'pickup' ? 'من مركز التوزيع' : formData.deliveryArea ? `توصيل — ${formData.deliveryArea}` : null },
+    { label: 'الضمان', value: `${pkg.warrantyMonths} شهور` },
+  ].filter(r => r.value);
+
+  const methodLabel: Record<PayMethod, string> = { card: 'فيزا / ماستر', vodafone_cash: 'فودافون كاش', instapay: 'انستاباى' };
+
   return (
-    <div>
-      <p className="text-white/50 text-xs mb-0.5">{label}</p>
-      <p className="font-semibold text-sm leading-snug">{value}</p>
+    <div style={{ background: B2, border: `2px solid ${G}30`, borderRadius: 24, padding: 22, position: 'sticky', top: 28 }}>
+      <h3 style={{ fontWeight: 800, color: G, fontSize: 16, marginBottom: 18 }}>ملخص الطلب</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        {rows.map(r => (
+          <div key={r.label}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>{r.label}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{r.value}</p>
+          </div>
+        ))}
+        <div>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>الدفع</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{methodLabel[formData.paymentMethod]}</p>
+        </div>
+      </div>
+      <div style={{ borderTop: `1px solid ${G}25`, paddingTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>الإجمالي</span>
+          <span style={{ fontSize: 24, fontWeight: 900, color: G }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</span>
+        </div>
+      </div>
     </div>
   );
 }

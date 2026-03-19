@@ -157,6 +157,8 @@ export type CreateOrderBodyPaymentMethod =
 export const CreateOrderBodyPaymentMethod = {
   cash: "cash",
   card: "card",
+  vodafone_cash: "vodafone_cash",
+  instapay: "instapay",
 } as const;
 
 export interface CreateOrderBody {
@@ -180,6 +182,8 @@ export type OrderPaymentMethod =
 export const OrderPaymentMethod = {
   cash: "cash",
   card: "card",
+  vodafone_cash: "vodafone_cash",
+  instapay: "instapay",
 } as const;
 
 export interface Order {
@@ -296,6 +300,8 @@ export type AdminOrderPaymentMethod =
 export const AdminOrderPaymentMethod = {
   cash: "cash",
   card: "card",
+  vodafone_cash: "vodafone_cash",
+  instapay: "instapay",
 } as const;
 
 export interface AdminOrder {

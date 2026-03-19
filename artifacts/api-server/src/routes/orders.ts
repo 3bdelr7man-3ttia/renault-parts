@@ -140,7 +140,7 @@ router.post("/orders", requireAuth, async (req, res): Promise<void> => {
     }
   }
 
-  const isCash = paymentMethod === "cash";
+  const isCash = paymentMethod === "cash" || paymentMethod === "vodafone_cash" || paymentMethod === "instapay";
 
   const [order] = await db
     .insert(ordersTable)
