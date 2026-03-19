@@ -971,12 +971,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,151,74,0.18)', borderRadius: 14, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,151,74,0.18)', borderRadius: 10, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 13, color: '#E8F0F8', marginBottom: 2 }}>عندك ورشة في الإسكندرية؟</div>
-                  <div style={{ color: TD, fontSize: 12 }}>انضم لشبكة RenoPack</div>
+                  <div style={{ fontWeight: 800, fontSize: 11, color: '#E8F0F8' }}>عندك ورشة في الإسكندرية؟</div>
+                  <div style={{ color: TD, fontSize: 10 }}>انضم لشبكة RenoPack</div>
                 </div>
-                <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '8px 18px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block' }}>انضم كورشة</Link>
+                <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '5px 12px', fontWeight: 800, fontSize: 11, textDecoration: 'none', display: 'inline-block', whiteSpace: 'nowrap' }}>انضم كورشة</Link>
               </div>
             </div>
 
