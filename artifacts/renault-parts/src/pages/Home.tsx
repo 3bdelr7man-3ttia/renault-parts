@@ -78,14 +78,18 @@ const GIFT_TIERS = [
 ];
 
 const AI_QA: Record<string, string> = {
-  'أصلي':  'الأصلي بيجيلك من أوروبا، ضمانه 24 شهر وجودته 97%. لو سيارتك أقل من 5 سنين خد الأصلي.',
-  'تركي':  'التركي كويس لو سيارتك أكبر من 5 سنين أو ميزانيتك محدودة. ضمانه 12 شهر.',
-  'زيت':   'موبيل 1 الأصلي الألماني هو الأفضل لرينو. الفرق في السعر مع التركي 160 ج.م.',
-  'فرامل': 'بريمبو الإيطالي هو الأصلي، Beral التركي اختيار كويس لو الميزانية محدودة.',
-  'ضمان':  'كل القطع عندها ضمان — الأصلي 24 شهر، التركي 12 شهر. والضمان بيشمل القطعة والتركيب.',
-  'سعر':   'الأسعار بتختلف حسب القطعة والنوع. الأصلي أغلى بس ضمانه أطول.',
-  'باكدج': 'عندنا باكدجات جاهزة حسب الكيلو (20ك/40ك/60ك) وكمان بيلدر تعمل فيه الباكدج بنفسك!',
-  'default':'ممكن تسألني عن أي قطعة أو خدمة! أنا باكو 🤖 وأنا هنا أساعدك تاخد أحسن قرار.',
+  'أصلي':   'الأصلي بيجيلك من أوروبا، ضمانه 24 شهر وجودته 97%. لو سيارتك أقل من 5 سنين خد الأصلي.',
+  'تركي':   'التركي كويس لو سيارتك أكبر من 5 سنين أو ميزانيتك محدودة. ضمانه 12 شهر.',
+  'زيت':    'موبيل 1 الأصلي الألماني هو الأفضل لرينو. الفرق في السعر مع التركي 160 ج.م.',
+  'فرامل':  'بريمبو الإيطالي هو الأصلي، Beral التركي اختيار كويس لو الميزانية محدودة.',
+  'ضمان':   'كل القطع عندها ضمان — الأصلي 24 شهر، التركي 12 شهر. والضمان بيشمل القطعة والتركيب.',
+  'سعر':    'الأسعار بتختلف حسب القطعة والنوع. الأصلي أغلى بس ضمانه أطول.',
+  'باكدج':  'عندنا باكدجات جاهزة حسب الكيلو (20ك/40ك/60ك) وكمان بيلدر تعمل فيه الباكدج بنفسك!',
+  'ورشة':   'كل الورش اللي عندنا اتاختارت بمعايير صارمة — صيانة دورية، تقييم 4.7+ ، وفريق متخصص في رينو.',
+  'حجز':    'بتحجز من الموقع وبنبعتلك تأكيد فوراً. بعدين الورشة بتتواصل معاك لتحديد الموعد.',
+  'موعد':   'غالباً بنقدر نوفّر موعد خلال 24-48 ساعة. الورش بتشتغل من 9 صباحاً لـ 9 مساءاً.',
+  'منطقة':  'عندنا ورش في الميناء، المنتزه، العجمي، وسيدي جابر. قريبين منك!',
+  'default': 'ممكن تسألني عن أي قطعة أو خدمة! أنا باكو 🤖 وأنا هنا أساعدك تاخد أحسن قرار.',
 };
 
 interface ComparePart {
@@ -168,7 +172,7 @@ function BakoChat({ context }: { context: ComparePart }) {
   const bubbleOut = `linear-gradient(135deg,${G},${GL})`;
 
   return (
-    <div style={{ background: chatBg, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 260 }}>
+    <div style={{ background: chatBg, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 200 }}>
       <div style={{ background: chatHdr, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid rgba(200,151,74,0.15)` }}>
         <img src={bakoImg} alt="باكو" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV }} />
         <div>
@@ -223,6 +227,76 @@ function BakoChat({ context }: { context: ComparePart }) {
   );
 }
 
+/* ── Bako chat general (workshops / general queries) ── */
+function BakoChatSimple({ label, initMsg, quickQ }: { label: string; initMsg: string; quickQ: string[] }) {
+  const [msgs, setMsgs] = useState<ChatMsg[]>([{ from: 'bako', text: initMsg }]);
+  const [input, setInput] = useState('');
+  const [typing, setTyping] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const getReply = (msg: string) => {
+    const lower = msg.toLowerCase();
+    for (const [k, v] of Object.entries(AI_QA)) if (k !== 'default' && lower.includes(k)) return v;
+    return AI_QA['default'];
+  };
+  const send = (txt: string) => {
+    if (!txt.trim()) return;
+    setInput('');
+    setMsgs(p => [...p, { from: 'user', text: txt }]);
+    setTyping(true);
+    setTimeout(() => { setTyping(false); setMsgs(p => [...p, { from: 'bako', text: getReply(txt) }]); }, 1100 + Math.random() * 500);
+  };
+  useEffect(() => {
+    if (msgs.length <= 1 && !typing) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs, typing]);
+
+  return (
+    <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 220 }}>
+      <div style={{ background: `linear-gradient(135deg,${NV},#243070)`, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.15)` }}>
+        <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — {label}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite' }} />
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700 }}>متاح</span>
+        </div>
+      </div>
+      <div style={{ padding: '6px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid ${BD}`, background: 'rgba(255,255,255,0.01)' }}>
+        {quickQ.map(q => (
+          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.08)`, color: TD, fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
+        ))}
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexDirection: m.from === 'bako' ? 'row' : 'row-reverse' }}>
+            {m.from === 'bako' && <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />}
+            <div style={{ maxWidth: '78%', padding: '8px 12px', borderRadius: m.from === 'bako' ? '4px 14px 14px 14px' : '14px 4px 14px 14px', background: m.from === 'bako' ? 'rgba(26,35,86,0.7)' : `linear-gradient(135deg,${G},${GL})`, border: m.from === 'bako' ? `1px solid rgba(200,151,74,0.12)` : 'none', fontSize: 11, fontWeight: 700, color: m.from === 'bako' ? TX : BG, lineHeight: 1.6 }}>{m.text}</div>
+          </div>
+        ))}
+        {typing && (
+          <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
+            <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />
+            <div style={{ padding: '10px 14px', borderRadius: '4px 14px 14px 14px', background: 'rgba(26,35,86,0.7)', border: `1px solid rgba(200,151,74,0.12)`, display: 'flex', gap: 4 }}>
+              {[0, 1, 2].map(n => <div key={n} className={`rp-dot${n + 1}`} style={{ width: 5, height: 5, borderRadius: '50%', background: G }} />)}
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+      <div style={{ padding: '8px 10px', borderTop: `1px solid ${BD}`, display: 'flex', gap: 7 }}>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)}
+          placeholder="اسأل باكو..."
+          style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 10, padding: '7px 12px', color: TX, fontSize: 11, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
+        <button onClick={() => send(input)} style={{ background: `linear-gradient(135deg,${G},${GL})`, border: 'none', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <Send size={12} color={BG} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Score Ring ── */
 function ScoreRing({ score, color, size = 80 }: { score: number; color: string; size?: number }) {
   const r = (size - 10) / 2;
@@ -244,124 +318,85 @@ function AiCompareSection() {
   const savings = part.orig.price - part.turk.price;
   const origWins = part.orig.score > part.turk.score;
 
+  const ROWS = [
+    { label: 'الجودة',  origVal: `${part.orig.score}%`, turkVal: `${part.turk.score}%`, origColor: SG, turkColor: SK },
+    { label: 'السعر',   origVal: `${part.orig.price} ج.م`, turkVal: `${part.turk.price} ج.م`, origColor: TX, turkColor: TX },
+    { label: 'الضمان',  origVal: part.orig.warranty, turkVal: part.turk.warranty, origColor: TX, turkColor: TX },
+    { label: 'المنشأ',  origVal: part.orig.origin,  turkVal: part.turk.origin,  origColor: TX, turkColor: TX },
+  ];
+
   return (
-    <section style={{ padding: '64px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+    <section style={{ padding: '48px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
+      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.08)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.08)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 12 }}>
             <Bot size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكو AI — مقارنة ذكية</span>
           </div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>أصلي ولا تركي؟ باكو بيحلّلها ليك 🤖</h2>
-          <p style={{ color: TD, fontSize: 14 }}>اختار القطعة وباكو يقارّن الجودة والسعر والضمان مباشرة</p>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>أصلي ولا تركي؟ باكو بيحلّلها ليك 🤖</h2>
+          <p style={{ color: TD, fontSize: 13 }}>اختار القطعة وشوف الفرق في الجودة والسعر والضمان</p>
         </div>
 
         {/* Part selector tabs */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 40 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
           {AI_COMPARE.map((p, i) => (
             <button key={p.id} className="rp-pill" onClick={() => setSel(i)} style={{
-              padding: '11px 26px', fontSize: 13, fontWeight: 700,
+              padding: '8px 20px', fontSize: 12, fontWeight: 700,
               background: sel === i ? `rgba(200,151,74,0.14)` : 'rgba(255,255,255,0.03)',
               border: `1.5px solid ${sel === i ? G : BD}`,
               color: sel === i ? G : TD,
-              boxShadow: sel === i ? `0 0 20px rgba(200,151,74,0.2)` : 'none',
-              transform: sel === i ? 'translateY(-2px)' : 'none',
             }}>{p.label}</button>
           ))}
         </div>
 
-        {/* Main compare area */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 0, alignItems: 'stretch', marginBottom: 20 }}>
+        {/* Comparison table */}
+        <div style={{ background: B3, border: `1.5px solid rgba(255,255,255,0.07)`, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
 
-          {/* LEFT: Original card */}
-          <div style={{ background: B3, border: `2px solid ${SG}28`, borderRadius: '24px 0 0 24px', padding: '28px 24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${SG},${SG}20)`, borderRadius: '24px 0 0 0' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {origWins && <span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px' }}>👑 الأفضل</span>}
-              <span style={{ background: `${SG}15`, color: SG, fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 10px', border: `1px solid ${SG}30` }}>{part.orig.badge}</span>
+          {/* Column headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', background: 'rgba(255,255,255,0.025)', borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+            <div style={{ padding: '14px 20px', textAlign: 'center', borderLeft: `1px solid rgba(255,255,255,0.05)` }}>
+              {origWins && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
+              <div style={{ fontSize: 12, fontWeight: 800, color: SG }}>{part.orig.badge}</div>
+              <div style={{ fontSize: 10, color: TD, marginTop: 2 }}>{part.orig.name}</div>
             </div>
-
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <ScoreRing score={part.orig.score} color={SG} size={82} />
-              <div>
-                <div style={{ color: SG, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>درجة الجودة</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.4 }}>{part.orig.name}</div>
-                <div style={{ fontSize: 11, color: TD, marginTop: 3 }}>{part.orig.origin}</div>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 900, color: G, background: `${G}18`, border: `1px solid ${G}35`, borderRadius: 999, padding: '5px 9px' }}>VS</span>
             </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1, background: `${SG}0d`, border: `1px solid ${SG}20`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>الضمان</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: SG }}>{part.orig.warranty}</div>
-              </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>المنشأ</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: TX }}>{part.orig.origin}</div>
-              </div>
-            </div>
-
-            <div style={{ background: `${SG}0d`, border: `1px solid ${SG}20`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              <span style={{ color: TD, fontSize: 12, fontWeight: 700 }}>السعر</span>
-              <span style={{ fontSize: 28, fontWeight: 900, color: SG }}>{part.orig.price} <span style={{ fontSize: 14 }}>ج.م</span></span>
+            <div style={{ padding: '14px 20px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.05)` }}>
+              {!origWins && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
+              <div style={{ fontSize: 12, fontWeight: 800, color: SK }}>{part.turk.badge}</div>
+              <div style={{ fontSize: 10, color: TD, marginTop: 2 }}>{part.turk.name}</div>
+              {savings > 0 && <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 4 }}>💰 وفّر {savings} ج.م</div>}
             </div>
           </div>
 
-          {/* CENTER: VS divider */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 72, background: `linear-gradient(180deg,${B3},rgba(13,18,32,0.5))`, borderTop: `2px solid rgba(255,255,255,0.06)`, borderBottom: `2px solid rgba(255,255,255,0.06)`, gap: 16, padding: '20px 0' }}>
-            <div style={{ width: 1, flex: 1, background: `linear-gradient(to bottom,transparent,${G}40,transparent)` }} />
-            <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg,${G},${GL})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 20px ${G}50`, flexShrink: 0 }}>
-              <span style={{ fontSize: 12, fontWeight: 900, color: BG }}>VS</span>
-            </div>
-            <div style={{ width: 1, flex: 1, background: `linear-gradient(to bottom,transparent,${SK}40,transparent)` }} />
-          </div>
-
-          {/* RIGHT: Turkish card */}
-          <div style={{ background: B3, border: `2px solid ${SK}28`, borderRadius: '0 24px 24px 0', padding: '28px 24px', position: 'relative', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${SK}20,${SK})`, borderRadius: '0 24px 0 0' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {!origWins && <span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px' }}>👑 الأفضل</span>}
-              <span style={{ background: `${SK}15`, color: SK, fontSize: 10, fontWeight: 800, borderRadius: 999, padding: '3px 10px', border: `1px solid ${SK}30` }}>{part.turk.badge}</span>
-              <span style={{ background: `rgba(200,151,74,0.12)`, color: G, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '3px 9px', border: `1px solid rgba(200,151,74,0.25)` }}>وفّر {savings} ج.م</span>
-            </div>
-
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <ScoreRing score={part.turk.score} color={SK} size={82} />
-              <div>
-                <div style={{ color: SK, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>درجة الجودة</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.4 }}>{part.turk.name}</div>
-                <div style={{ fontSize: 11, color: TD, marginTop: 3 }}>{part.turk.origin}</div>
+          {/* Data rows */}
+          {ROWS.map((row, i) => (
+            <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', borderBottom: i < ROWS.length - 1 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+              <div style={{ padding: '11px 20px', textAlign: 'center', borderLeft: `1px solid rgba(255,255,255,0.04)` }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: row.origColor }}>{row.origVal}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.22)' }}>{row.label}</span>
+              </div>
+              <div style={{ padding: '11px 20px', textAlign: 'center', borderRight: `1px solid rgba(255,255,255,0.04)` }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: row.turkColor }}>{row.turkVal}</span>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1, background: `${SK}0d`, border: `1px solid ${SK}20`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>الضمان</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: SK }}>{part.turk.warranty}</div>
-              </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: TD, marginBottom: 4 }}>المنشأ</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: TX }}>{part.turk.origin}</div>
-              </div>
-            </div>
-
-            <div style={{ background: `${SK}0d`, border: `1px solid ${SK}20`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              <span style={{ color: TD, fontSize: 12, fontWeight: 700 }}>السعر</span>
-              <span style={{ fontSize: 28, fontWeight: 900, color: SK }}>{part.turk.price} <span style={{ fontSize: 14 }}>ج.م</span></span>
-            </div>
+        {/* Bako verdict */}
+        <div style={{ background: `rgba(26,35,86,0.55)`, border: `1px solid rgba(200,151,74,0.18)`, borderRadius: 14, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <img src={bakoImg} alt="باكو" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+          <div>
+            <div style={{ color: G, fontSize: 10, fontWeight: 700, marginBottom: 2 }}>رأي باكو 🤖</div>
+            <div style={{ color: TX, fontSize: 12, fontWeight: 700, lineHeight: 1.6 }}>{part.aiIntro}</div>
           </div>
         </div>
 
-        {/* Bako recommendation bar */}
-        <div style={{ background: `linear-gradient(135deg,rgba(26,35,86,0.8),rgba(17,24,38,0.9))`, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 20, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <img src={bakoImg} alt="باكو" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ color: G, fontSize: 11, fontWeight: 700, marginBottom: 3 }}>توصية باكو 🤖</div>
-            <div style={{ color: TX, fontSize: 13, fontWeight: 700, lineHeight: 1.6 }}>{part.aiIntro}</div>
-          </div>
-        </div>
-
-        {/* Bako chat */}
+        {/* BakoChat (smaller) */}
         <BakoChat context={part} />
       </div>
     </section>
@@ -911,33 +946,52 @@ export default function Home() {
             </div>
             <button style={{ color: SK, background: 'none', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>كل الورش ←</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
-            {WORKSHOPS.map(w => (
-              <div key={w.name} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.06)`, background: 'var(--rp-card)', cursor: 'pointer', transition: 'transform .25s,box-shadow .25s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
-                <div style={{ height: 90, background: `linear-gradient(145deg,${B3},${w.color}12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid rgba(255,255,255,0.04)`, position: 'relative' }}>
-                  <Building2 size={30} color={`${w.color}35`} />
-                  <div style={{ position: 'absolute', bottom: -10, right: 12, background: BG, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 999, padding: '2px 9px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Star size={9} color={G} fill={G} /><span style={{ color: G, fontSize: 10, fontWeight: 800 }}>{w.rating}</span>
-                  </div>
-                </div>
-                <div style={{ padding: '18px 14px 14px' }}>
-                  <h4 style={{ color: '#E8F0F8', fontSize: 13, fontWeight: 800, marginBottom: 4 }}>{w.name}</h4>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-                    <MapPin size={9} color={TD} /><span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{w.area}</span>
-                  </div>
-                  <div style={{ color: 'rgba(122,149,170,0.55)', fontSize: 10, fontWeight: 700 }}>{w.jobs.toLocaleString()} سيارة</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 24, background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,151,74,0.18)', borderRadius: 14, padding: '16px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+
+          {/* Workshops grid + Bako chat side by side */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: '#E8F0F8', marginBottom: 2 }}>عندك ورشة في الإسكندرية؟</div>
-              <div style={{ color: TD, fontSize: 12 }}>انضم لشبكة RenoPack</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14, marginBottom: 14 }}>
+                {WORKSHOPS.map(w => (
+                  <div key={w.name} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.06)`, background: 'var(--rp-card)', cursor: 'pointer', transition: 'transform .25s,box-shadow .25s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
+                    <div style={{ height: 80, background: `linear-gradient(145deg,${B3},${w.color}12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid rgba(255,255,255,0.04)`, position: 'relative' }}>
+                      <Building2 size={28} color={`${w.color}35`} />
+                      <div style={{ position: 'absolute', bottom: -10, right: 12, background: BG, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 999, padding: '2px 9px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Star size={9} color={G} fill={G} /><span style={{ color: G, fontSize: 10, fontWeight: 800 }}>{w.rating}</span>
+                      </div>
+                    </div>
+                    <div style={{ padding: '16px 14px 12px' }}>
+                      <h4 style={{ color: '#E8F0F8', fontSize: 13, fontWeight: 800, marginBottom: 4 }}>{w.name}</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+                        <MapPin size={9} color={TD} /><span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{w.area}</span>
+                      </div>
+                      <div style={{ color: 'rgba(122,149,170,0.55)', fontSize: 10, fontWeight: 700 }}>{w.jobs.toLocaleString()} سيارة</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,151,74,0.18)', borderRadius: 14, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 13, color: '#E8F0F8', marginBottom: 2 }}>عندك ورشة في الإسكندرية؟</div>
+                  <div style={{ color: TD, fontSize: 12 }}>انضم لشبكة RenoPack</div>
+                </div>
+                <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '8px 18px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block' }}>انضم كورشة</Link>
+              </div>
             </div>
-            <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '8px 20px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block' }}>انضم كورشة</Link>
+
+            {/* Bako chat for workshops */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+                <Bot size={13} color={G} />
+                <span style={{ color: G, fontSize: 12, fontWeight: 800 }}>اسأل باكو عن الورش</span>
+              </div>
+              <BakoChatSimple
+                label="الورش والحجز"
+                initMsg="أهلاً! 👋 اسألني عن أي ورشة في الإسكندرية أو ازاي تحجز موعدك. أنا هنا أساعدك!"
+                quickQ={['إيه أقرب ورشة؟', 'بيتم الحجز إزاي؟', 'الموعد بييجي إمتى؟', 'الضمان بيشمل إيه؟']}
+              />
+            </div>
           </div>
         </div>
       </section>
