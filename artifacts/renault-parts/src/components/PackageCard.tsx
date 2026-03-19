@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { type Package } from "@workspace/api-client-react";
-import { CheckCircle2, Shield, Settings, ChevronLeft, Star } from 'lucide-react';
+import { CheckCircle2, Shield, Settings, ChevronLeft, Star, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PackageCardProps {
@@ -49,7 +49,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
           </div>
         </div>
 
-        <div className="mb-8 flex-grow">
+        <div className="mb-6 flex-grow">
           <div className="flex items-center gap-2 mb-4">
             <Settings className="w-5 h-5 text-primary" />
             <h4 className="font-bold text-foreground">يشمل القطع التالية:</h4>
@@ -69,21 +69,59 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
           </ul>
         </div>
 
-        <div className="pt-6 border-t border-border/60 flex items-end justify-between mt-auto">
-          <div>
-            <p className="text-xs font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">سعر السوق</p>
-            <p className="text-sm text-muted-foreground line-through mb-1">{formattedBasePrice}</p>
-            <p className="text-3xl font-black text-gradient-navy">{formattedPrice}</p>
-            {savings > 0 && (
-              <p className="text-xs font-bold text-green-600 mt-1">وفر {savings} ج.م</p>
-            )}
+        {/* Price + CTAs */}
+        <div className="pt-5 border-t border-border/60 mt-auto">
+          {/* Price row */}
+          <div className="flex items-end justify-between mb-4">
+            <div>
+              <p className="text-xs font-bold text-muted-foreground mb-0.5 uppercase tracking-wider">سعر السوق</p>
+              <p className="text-sm text-muted-foreground line-through mb-1">{formattedBasePrice}</p>
+              <p className="text-3xl font-black text-gradient-navy">{formattedPrice}</p>
+              {savings > 0 && (
+                <p className="text-xs font-bold text-green-600 mt-1">وفر {savings} ج.م</p>
+              )}
+            </div>
           </div>
 
-          <Link href={`/packages/${pkg.slug}`}>
-            <Button className="rounded-full px-6 bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20 group-hover:pr-4 transition-all">
-              التفاصيل <ChevronLeft className="w-4 h-4 ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-            </Button>
-          </Link>
+          {/* Action buttons row */}
+          <div className="flex gap-2">
+            {/* Book Now — primary CTA */}
+            <Link href={`/checkout/${pkg.slug}`} style={{ flex: 1, display: 'block' }}>
+              <button
+                style={{
+                  width: '100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  background: 'linear-gradient(135deg,#C8974A,#DEB06C)',
+                  border: 'none',
+                  borderRadius: 999,
+                  padding: '11px 16px',
+                  color: '#0D1220',
+                  fontFamily: "'Almarai',sans-serif",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 18px rgba(200,151,74,0.35)',
+                  transition: 'box-shadow .2s, transform .2s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(200,151,74,0.55)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(200,151,74,0.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+              >
+                <Zap className="w-4 h-4" />
+                احجز الآن
+              </button>
+            </Link>
+
+            {/* Details — secondary */}
+            <Link href={`/packages/${pkg.slug}`}>
+              <Button
+                variant="outline"
+                className="rounded-full px-4 border-border/50 text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all"
+                style={{ height: '100%' }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
