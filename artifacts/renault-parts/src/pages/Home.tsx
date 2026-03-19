@@ -252,45 +252,58 @@ function BakoChatSimple({ label, initMsg, quickQ }: { label: string; initMsg: st
   }, [msgs, typing]);
 
   return (
-    <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.18)`, borderRadius: 22, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 220 }}>
-      <div style={{ background: `linear-gradient(135deg,${NV},#243070)`, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.15)` }}>
-        <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — {label}</div>
-        </div>
+    <div style={{ background: '#0F1928', border: `1.5px solid rgba(200,151,74,0.25)`, borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 270 }}>
+      {/* Header */}
+      <div style={{ background: `linear-gradient(135deg,#1A2356,#243070)`, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.2)`, flexShrink: 0 }}>
+        <img src={bakoImg} alt="باكو" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+        <div style={{ flex: 1, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — {label}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite' }} />
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700 }}>متاح</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>متاح</span>
         </div>
       </div>
-      <div style={{ padding: '6px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid ${BD}`, background: 'rgba(255,255,255,0.01)' }}>
+
+      {/* Quick questions */}
+      <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
         {quickQ.map(q => (
-          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.08)`, color: TD, fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
+          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, color: '#C4D4E0', fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
         ))}
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8, background: '#0F1928' }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexDirection: m.from === 'bako' ? 'row' : 'row-reverse' }}>
             {m.from === 'bako' && <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />}
-            <div style={{ maxWidth: '78%', padding: '8px 12px', borderRadius: m.from === 'bako' ? '4px 14px 14px 14px' : '14px 4px 14px 14px', background: m.from === 'bako' ? 'rgba(26,35,86,0.7)' : `linear-gradient(135deg,${G},${GL})`, border: m.from === 'bako' ? `1px solid rgba(200,151,74,0.12)` : 'none', fontSize: 11, fontWeight: 700, color: m.from === 'bako' ? TX : BG, lineHeight: 1.6 }}>{m.text}</div>
+            <div style={{
+              maxWidth: '80%', padding: '8px 12px',
+              borderRadius: m.from === 'bako' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
+              background: m.from === 'bako' ? '#1E2E4A' : `linear-gradient(135deg,${G},${GL})`,
+              border: m.from === 'bako' ? `1px solid rgba(200,151,74,0.18)` : 'none',
+              fontSize: 11, fontWeight: 700,
+              color: m.from === 'bako' ? '#E0EAF5' : '#0D1220',
+              lineHeight: 1.65,
+            }}>{m.text}</div>
           </div>
         ))}
         {typing && (
           <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
             <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />
-            <div style={{ padding: '10px 14px', borderRadius: '4px 14px 14px 14px', background: 'rgba(26,35,86,0.7)', border: `1px solid rgba(200,151,74,0.12)`, display: 'flex', gap: 4 }}>
+            <div style={{ padding: '9px 13px', borderRadius: '4px 14px 14px 14px', background: '#1E2E4A', border: `1px solid rgba(200,151,74,0.18)`, display: 'flex', gap: 4, alignItems: 'center' }}>
               {[0, 1, 2].map(n => <div key={n} className={`rp-dot${n + 1}`} style={{ width: 5, height: 5, borderRadius: '50%', background: G }} />)}
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
-      <div style={{ padding: '8px 10px', borderTop: `1px solid ${BD}`, display: 'flex', gap: 7 }}>
+
+      {/* Input */}
+      <div style={{ padding: '8px 10px', borderTop: `1px solid rgba(255,255,255,0.07)`, display: 'flex', gap: 7, background: '#0F1928', flexShrink: 0 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)}
           placeholder="اسأل باكو..."
-          style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 10, padding: '7px 12px', color: TX, fontSize: 11, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
+          style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 10, padding: '7px 12px', color: '#E0EAF5', fontSize: 11, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
         <button onClick={() => send(input)} style={{ background: `linear-gradient(135deg,${G},${GL})`, border: 'none', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-          <Send size={12} color={BG} />
+          <Send size={12} color="#0D1220" />
         </button>
       </div>
     </div>
