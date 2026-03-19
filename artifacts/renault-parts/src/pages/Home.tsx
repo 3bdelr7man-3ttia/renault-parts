@@ -934,7 +934,7 @@ export default function Home() {
               <div style={{ fontWeight: 800, fontSize: 14, color: '#E8F0F8', marginBottom: 2 }}>عندك ورشة في الإسكندرية؟</div>
               <div style={{ color: TD, fontSize: 12 }}>انضم لشبكة RenoPack</div>
             </div>
-            <button className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '8px 20px', fontWeight: 800, fontSize: 12 }}>انضم كورشة</button>
+            <Link href="/join-workshop" className="rp-pill" style={{ background: 'rgba(200,151,74,0.09)', border: `1.5px solid rgba(200,151,74,0.25)`, color: G, padding: '8px 20px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block' }}>انضم كورشة</Link>
           </div>
         </div>
       </section>

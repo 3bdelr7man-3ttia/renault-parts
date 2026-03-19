@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable } from "@workspace/db";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
@@ -689,6 +689,37 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
     })),
     exportCsv,
   });
+});
+
+router.get("/admin/workshop-applications", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  const apps = await db
+    .select()
+    .from(workshopApplicationsTable)
+    .orderBy(desc(workshopApplicationsTable.createdAt));
+  res.json(apps);
+});
+
+router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  const { status } = req.body as { status: string };
+
+  if (!["approved", "rejected"].includes(status)) {
+    res.status(400).json({ error: "الحالة يجب أن تكون approved أو rejected" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(workshopApplicationsTable)
+    .set({ status, reviewedAt: new Date() })
+    .where(eq(workshopApplicationsTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "الطلب غير موجود" });
+    return;
+  }
+
+  res.json(updated);
 });
 
 export default router;

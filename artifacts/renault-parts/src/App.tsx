@@ -33,7 +33,9 @@ import AdminParts from "@/pages/admin/AdminParts";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminSales from "@/pages/admin/AdminSales";
 import AdminExpenses from "@/pages/admin/AdminExpenses";
+import AdminWorkshopApplications from "@/pages/admin/AdminWorkshopApplications";
 import AccessDenied from "@/pages/AccessDenied";
+import JoinWorkshop from "@/pages/JoinWorkshop";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +74,7 @@ function Router() {
             <Route path="/admin/sales" component={AdminSales} />
             <Route path="/admin/expenses" component={AdminExpenses} />
             <Route path="/admin/users" component={AdminUsers} />
+            <Route path="/admin/workshop-applications" component={AdminWorkshopApplications} />
             <Route component={NotFound} />
           </Switch>
         </AdminLayout>
@@ -93,6 +96,7 @@ function Router() {
         <Route path="/my-orders" component={MyOrders} />
         <Route path="/orders/:id" component={OrderDetail} />
         <Route path="/payment/result" component={PaymentResult} />
+        <Route path="/join-workshop" component={JoinWorkshop} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

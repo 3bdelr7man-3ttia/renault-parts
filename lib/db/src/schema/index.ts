@@ -6,3 +6,4 @@ export * from "./orders";
 export * from "./reviews";
 export * from "./chatSessions";
 export * from "./expenses";
+export * from "./workshopApplications";
