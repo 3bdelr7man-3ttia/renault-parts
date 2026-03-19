@@ -21,6 +21,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Checkout from "@/pages/Checkout";
 import MyOrders from "@/pages/MyOrders";
+import Profile from "@/pages/Profile";
 import OrderDetail from "@/pages/OrderDetail";
 import PaymentResult from "@/pages/PaymentResult";
 
@@ -95,6 +96,7 @@ function Router() {
         <Route path="/register" component={Register} />
         <Route path="/checkout/:id" component={Checkout} />
         <Route path="/my-orders" component={MyOrders} />
+        <Route path="/profile" component={Profile} />
         <Route path="/orders/:id" component={OrderDetail} />
         <Route path="/payment/result" component={PaymentResult} />
         <Route path="/join-workshop" component={JoinWorkshop} />

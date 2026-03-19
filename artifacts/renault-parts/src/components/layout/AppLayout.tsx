@@ -227,15 +227,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Auth buttons */}
             {user ? (
               <>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  background: 'rgba(200,151,74,0.07)',
-                  border: '1px solid rgba(200,151,74,0.18)',
-                  borderRadius: 999, padding: '6px 14px',
-                  fontSize: 14, fontWeight: 700, color: '#D4E0EC', flexShrink: 0,
-                }}>
+                <Link
+                  href="/profile"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    background: 'rgba(200,151,74,0.07)',
+                    border: '1px solid rgba(200,151,74,0.18)',
+                    borderRadius: 999, padding: '6px 14px',
+                    fontSize: 14, fontWeight: 700, color: '#D4E0EC', flexShrink: 0,
+                    textDecoration: 'none', cursor: 'pointer',
+                    transition: 'background .2s, border-color .2s',
+                  }}
+                  onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'rgba(200,151,74,0.14)'; e.currentTarget.style.borderColor = 'rgba(200,151,74,0.35)'; }}
+                  onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'rgba(200,151,74,0.07)'; e.currentTarget.style.borderColor = 'rgba(200,151,74,0.18)'; }}
+                >
                   <User size={13} color="#C8974A" />أهلاً، {user.name.split(' ')[0]}
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   style={{
