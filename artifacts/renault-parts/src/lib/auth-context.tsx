@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGetCurrentUser, getGetCurrentUserQueryKey, type User } from "@workspace/api-client-react";
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('renault_token'));
+  const queryClient = useQueryClient();
   
   // We pass the token explicitly to the query to ensure it authenticates
   const { data: user, isLoading, refetch } = useGetCurrentUser({
@@ -36,6 +38,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem('renault_token');
     setTokenState(null);
+    // Clear all cached query data so stale user info doesn't persist
+    queryClient.clear();
   };
 
   const getAuthHeaders = () => {
