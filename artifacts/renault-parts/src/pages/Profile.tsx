@@ -2,19 +2,27 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
-import { useListOrders } from '@workspace/api-client-react';
+import { useListOrders, getGetCurrentUserQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import {
   User, Phone, MapPin, Car, Calendar, Package,
   ArrowLeft, LogOut, Pencil, ShieldCheck, CheckCircle2,
-  ClipboardList, Star,
+  ClipboardList, Star, Home, Save, X, Loader2,
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 import { CarSelectorModal } from '@/components/CarSelectorModal';
 import { useToast } from '@/hooks/use-toast';
 import bakoNew from '@/assets/bako-new.png';
+
+const ALEX_AREAS = [
+  'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي', 'المنشية',
+  'كليوباترا', 'ميامي', 'الإبراهيمية', 'سيدي بشر', 'الشاطبي',
+  'الدخيلة', 'العامرية', 'بيكوزي', 'مصطفى كامل', 'المزاريطة',
+  'زيزينيا', 'الورديان', 'البيطاش', 'كرموز', 'باب شرق',
+];
 
 const G = '#C8974A';
 const BG = '#0D1220';
@@ -40,12 +48,16 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function Profile() {
-  const { user, logout, getAuthHeaders } = useAuth();
+  const { user, logout, getAuthHeaders, token } = useAuth();
   const { car, clearCar } = useCar();
   const { data: orders, isLoading: ordersLoading } = useListOrders({ request: getAuthHeaders() });
   const [showCarModal, setShowCarModal] = useState(false);
+  const [editingDelivery, setEditingDelivery] = useState(false);
+  const [savingDelivery, setSavingDelivery] = useState(false);
+  const [deliveryForm, setDeliveryForm] = useState({ phone: '', address: '', area: '' });
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   if (!user) { setLocation('/login'); return null; }
 
@@ -53,6 +65,38 @@ export default function Profile() {
     logout();
     toast({ title: 'تم تسجيل الخروج', description: 'نراك قريباً!' });
     setLocation('/');
+  };
+
+  const openDeliveryEdit = () => {
+    setDeliveryForm({
+      phone:   (user as any).phone   ?? '',
+      address: (user as any).address ?? '',
+      area:    (user as any).area    ?? '',
+    });
+    setEditingDelivery(true);
+  };
+
+  const saveDelivery = async () => {
+    setSavingDelivery(true);
+    try {
+      const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+      const res = await fetch(`${base}/api/auth/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(deliveryForm),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error((e as any).error ?? 'فشل الحفظ');
+      }
+      await queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+      setEditingDelivery(false);
+      toast({ title: 'تم الحفظ', description: 'ستظهر بياناتك تلقائياً عند الطلب' });
+    } catch (err: any) {
+      toast({ title: 'خطأ', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingDelivery(false);
+    }
   };
 
   const recentOrders = orders?.slice(0, 5) ?? [];
@@ -113,10 +157,8 @@ export default function Profile() {
           </div>
           <div style={{ padding: '20px 22px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {[
-              { icon: <User size={14} color={G} />,    label: 'الاسم',    val: user.name                  },
-              { icon: <Phone size={14} color={G} />,   label: 'التليفون', val: user.phone ?? '—'          },
-              { icon: <MapPin size={14} color={G} />,  label: 'المنطقة',  val: (user as any).area ?? '—'  },
-              { icon: <MapPin size={14} color={G} />,  label: 'العنوان',  val: (user as any).address ?? '—' },
+              { icon: <User size={14} color={G} />,    label: 'الاسم',    val: user.name         },
+              { icon: <Phone size={14} color={G} />,   label: 'التليفون', val: user.phone ?? '—' },
             ].map(item => (
               <div key={item.label} style={{ background: CARD2, borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: TD, fontSize: 10, fontWeight: 700, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -126,6 +168,147 @@ export default function Profile() {
               </div>
             ))}
           </div>
+        </motion.div>
+
+        {/* Delivery Info Card */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+          style={{ background: CARD, border: '1.5px solid rgba(200,151,74,0.12)', borderRadius: 24, overflow: 'hidden' }}
+        >
+          <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 14, color: '#E8F0F8' }}>
+              <Home size={15} color={G} /> بيانات التوصيل
+            </div>
+            {!editingDelivery && (
+              <button
+                onClick={openDeliveryEdit}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 8, padding: '5px 12px', color: G, fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              >
+                <Pencil size={11} /> تعديل
+              </button>
+            )}
+            {editingDelivery && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setEditingDelivery(false)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '5px 12px', color: '#EF4444', fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  <X size={11} /> إلغاء
+                </button>
+                <button
+                  onClick={saveDelivery}
+                  disabled={savingDelivery}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 8, padding: '5px 14px', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 800, cursor: savingDelivery ? 'not-allowed' : 'pointer', opacity: savingDelivery ? 0.7 : 1 }}
+                >
+                  {savingDelivery ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={11} />}
+                  {savingDelivery ? 'جاري الحفظ...' : 'حفظ'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!editingDelivery ? (
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {(user as any).address || (user as any).area || user.phone ? (
+                <>
+                  {user.phone && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: CARD2, borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <Phone size={15} color={G} />
+                      <div>
+                        <div style={{ fontSize: 10, color: TD, fontWeight: 700, marginBottom: 2 }}>رقم التليفون</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#D4E0EC' }}>{user.phone}</div>
+                      </div>
+                    </div>
+                  )}
+                  {(user as any).area && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: CARD2, borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <MapPin size={15} color={G} />
+                      <div>
+                        <div style={{ fontSize: 10, color: TD, fontWeight: 700, marginBottom: 2 }}>المنطقة</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#D4E0EC' }}>{(user as any).area}</div>
+                      </div>
+                    </div>
+                  )}
+                  {(user as any).address && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: CARD2, borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <Home size={15} color={G} />
+                      <div>
+                        <div style={{ fontSize: 10, color: TD, fontWeight: 700, marginBottom: 2 }}>العنوان التفصيلي</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#D4E0EC' }}>{(user as any).address}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(61,168,130,0.06)', border: '1px solid rgba(61,168,130,0.15)', borderRadius: 10, padding: '8px 12px' }}>
+                    <CheckCircle2 size={13} color="#3DA882" />
+                    <span style={{ fontSize: 12, color: '#3DA882', fontWeight: 700 }}>ستُملأ هذه البيانات تلقائياً عند الطلب</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '20px 22px', textAlign: 'center' }}>
+                  <MapPin size={36} color="rgba(200,151,74,0.2)" style={{ margin: '0 auto 10px' }} />
+                  <p style={{ color: TD, fontSize: 13, marginBottom: 14 }}>لم تضف عنوان التوصيل بعد</p>
+                  <button
+                    onClick={openDeliveryEdit}
+                    style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 999, padding: '9px 22px', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                  >
+                    أضف عنوان التوصيل
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Phone */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: TD, marginBottom: 6 }}>
+                  <Phone size={12} color={G} style={{ display: 'inline', marginLeft: 4 }} />رقم التليفون
+                </label>
+                <input
+                  type="tel"
+                  value={deliveryForm.phone}
+                  onChange={e => setDeliveryForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="01xxxxxxxxx"
+                  style={{ width: '100%', background: CARD2, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 10, padding: '10px 14px', color: '#D4E0EC', fontFamily: "'Almarai',sans-serif", fontSize: 14, outline: 'none', boxSizing: 'border-box', direction: 'ltr', textAlign: 'right' }}
+                  onFocus={e => { e.target.style.borderColor = G; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(200,151,74,0.2)'; }}
+                />
+              </div>
+              {/* Area */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: TD, marginBottom: 6 }}>
+                  <MapPin size={12} color={G} style={{ display: 'inline', marginLeft: 4 }} />المنطقة
+                </label>
+                <select
+                  value={deliveryForm.area}
+                  onChange={e => setDeliveryForm(f => ({ ...f, area: e.target.value }))}
+                  style={{ width: '100%', background: CARD2, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 10, padding: '10px 14px', color: deliveryForm.area ? '#D4E0EC' : TD, fontFamily: "'Almarai',sans-serif", fontSize: 14, outline: 'none', boxSizing: 'border-box', cursor: 'pointer' }}
+                  onFocus={e => { e.target.style.borderColor = G; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(200,151,74,0.2)'; }}
+                >
+                  <option value="" style={{ color: TD }}>اختر منطقتك</option>
+                  {ALEX_AREAS.map(a => <option key={a} value={a} style={{ background: CARD2, color: '#D4E0EC' }}>{a}</option>)}
+                </select>
+              </div>
+              {/* Address */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: TD, marginBottom: 6 }}>
+                  <Home size={12} color={G} style={{ display: 'inline', marginLeft: 4 }} />العنوان التفصيلي
+                </label>
+                <textarea
+                  value={deliveryForm.address}
+                  onChange={e => setDeliveryForm(f => ({ ...f, address: e.target.value }))}
+                  placeholder="مثال: شارع النصر، بجوار مسجد القدس، الدور الثالث"
+                  rows={3}
+                  style={{ width: '100%', background: CARD2, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 10, padding: '10px 14px', color: '#D4E0EC', fontFamily: "'Almarai',sans-serif", fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.6 }}
+                  onFocus={e => { e.target.style.borderColor = G; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(200,151,74,0.2)'; }}
+                />
+              </div>
+              <div style={{ fontSize: 11, color: TD, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <CheckCircle2 size={11} color="#3DA882" />
+                ستُملأ هذه البيانات تلقائياً في صفحة الطلب
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Car Card */}

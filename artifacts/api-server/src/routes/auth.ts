@@ -106,4 +106,29 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   res.json(GetCurrentUserResponse.parse(buildUserOut(user)));
 });
 
+router.put("/auth/profile", requireAuth, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const { name, phone, address, area } = req.body as {
+    name?: string; phone?: string; address?: string; area?: string;
+  };
+  const updates: Partial<typeof usersTable.$inferInsert> = {};
+  if (name     !== undefined) updates.name    = name.trim();
+  if (phone    !== undefined) updates.phone   = phone.trim() || null;
+  if (address  !== undefined) updates.address = address.trim() || null;
+  if (area     !== undefined) updates.area    = area.trim() || null;
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ error: "لا توجد بيانات للتحديث" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set(updates)
+    .where(eq(usersTable.id, authReq.user.id))
+    .returning();
+
+  res.json(buildUserOut(updated));
+});
+
 export default router;
