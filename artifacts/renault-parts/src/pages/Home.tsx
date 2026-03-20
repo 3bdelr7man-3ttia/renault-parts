@@ -698,11 +698,19 @@ function PackageBox3D({ pkg, selected, onClick }: { pkg: typeof STATIC_PACKAGES[
 }
 
 /* ── Ready packages section 3D ── */
-function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: number; name: string; slug: string; price: string | number; description?: string }> }) {
+function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: number; name: string; slug: string; price: string | number; kmService?: number | null; description?: string }> }) {
   const [active, setActive] = useState('km40');
 
-  const pkgs: typeof STATIC_PACKAGES = realPackages && realPackages.length >= 3
-    ? realPackages.slice(0, 3).map((p, i) => ({
+  // Only use km-based packages (20k, 40k, 60k) — exclude custom/emergency (kmService=0 or null)
+  const kmPkgs = realPackages
+    ? realPackages
+        .filter(p => p.kmService && p.kmService > 0)
+        .sort((a, b) => (a.kmService as number) - (b.kmService as number))
+        .slice(0, 3)
+    : null;
+
+  const pkgs: typeof STATIC_PACKAGES = kmPkgs && kmPkgs.length >= 3
+    ? kmPkgs.map((p, i) => ({
         id: STATIC_PACKAGES[i].id,
         name: p.name,
         sub: STATIC_PACKAGES[i].sub,
@@ -715,7 +723,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
 
   const pkg = pkgs.find(p => p.id === active) ?? pkgs[1];
   const m = PKG_META[active] ?? PKG_META['km40'];
-  const pkgSlug = realPackages?.find((_, i) => STATIC_PACKAGES[i]?.id === active)?.slug ?? active;
+  const pkgSlug = kmPkgs?.find((_, i) => STATIC_PACKAGES[i]?.id === active)?.slug ?? active;
 
   return (
     <section style={{ padding: '72px 28px 80px', borderTop: `1px solid ${BD}`, background: BG, overflow: 'hidden' }}>
@@ -1166,7 +1174,7 @@ export default function Home() {
       </section>
 
       {/* ═══ READY PACKAGES ═══ */}
-      <ReadyPackagesSection realPackages={packages?.map(p => ({ id: p.id, name: p.name, slug: p.slug, price: p.sellPrice, description: p.description }))} />
+      <ReadyPackagesSection realPackages={packages?.map(p => ({ id: p.id, name: p.name, slug: p.slug, price: p.sellPrice, kmService: p.kmService, description: p.description }))} />
 
       {/* ═══ PUZZLE BUILDER ═══ */}
       <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}`, borderBottom: `1px solid ${BD}` }}>

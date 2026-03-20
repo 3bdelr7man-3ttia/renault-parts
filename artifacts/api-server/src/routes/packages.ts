@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, notLike, gt } from "drizzle-orm";
 import { db, packagesTable, partsTable, packagePartsTable } from "@workspace/db";
 import { GetPackageBySlugParams, ListPackagesResponse, GetPackageBySlugResponse } from "@workspace/api-zod";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
@@ -27,7 +27,11 @@ async function getPackageWithParts(packageId: number) {
 }
 
 router.get("/packages", async (_req, res): Promise<void> => {
-  const packages = await db.select().from(packagesTable).orderBy(packagesTable.kmService);
+  const packages = await db
+    .select()
+    .from(packagesTable)
+    .where(gt(packagesTable.kmService, 0))
+    .orderBy(packagesTable.kmService);
 
   const result = await Promise.all(
     packages.map(async (pkg) => {
