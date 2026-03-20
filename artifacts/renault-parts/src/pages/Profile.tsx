@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
@@ -49,7 +49,15 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function Profile() {
   const { user, logout, getAuthHeaders, token } = useAuth();
-  const { car, clearCar } = useCar();
+  const { car, clearCar, syncFromUser } = useCar();
+
+  // Sync car from user DB data (runs when user data loads/changes)
+  useEffect(() => {
+    if (user) {
+      syncFromUser((user as any).carModel, (user as any).carYear);
+    }
+  }, [user]);
+
   const { data: orders, isLoading: ordersLoading } = useListOrders({ request: getAuthHeaders() });
   const [showCarModal, setShowCarModal] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState(false);
@@ -343,7 +351,20 @@ export default function Profile() {
                   </span>
                 </div>
               </div>
-              <button onClick={() => { clearCar(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: 11, fontWeight: 700, fontFamily: "'Almarai',sans-serif" }}>
+              <button onClick={async () => {
+                clearCar();
+                // Also clear from DB if logged in
+                if (user && token) {
+                  try {
+                    const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+                    await fetch(`${base}/api/users/${user.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ carModel: null, carYear: null }),
+                    });
+                  } catch {}
+                }
+              }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: 11, fontWeight: 700, fontFamily: "'Almarai',sans-serif" }}>
                 حذف
               </button>
             </div>

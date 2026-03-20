@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Car, ChevronDown, Check, X } from 'lucide-react';
 import { useCar, RENAULT_MODELS, CAR_YEARS } from '@/lib/car-context';
+import { useAuth } from '@/lib/auth-context';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 
 const G  = '#C8974A';
@@ -21,15 +22,33 @@ interface CarSelectorModalProps {
 
 export function CarSelectorModal({ onComplete, onSkip }: CarSelectorModalProps) {
   const { setCar } = useCar();
+  const { user, token } = useAuth();
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [step, setStep] = useState<'model' | 'year'>('model');
+  const [saving, setSaving] = useState(false);
 
-  const handleConfirm = () => {
-    if (selectedModel && selectedYear) {
-      setCar({ model: selectedModel, year: selectedYear });
-      onComplete();
+  const handleConfirm = async () => {
+    if (!selectedModel || !selectedYear) return;
+    setSaving(true);
+    setCar({ model: selectedModel, year: selectedYear });
+
+    // If user is logged in → also persist to DB so it survives logout+login
+    if (user && token) {
+      try {
+        const base = import.meta.env.BASE_URL?.replace(/\/$/, '') ?? '';
+        await fetch(`${base}/api/users/${user.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ carModel: selectedModel, carYear: selectedYear }),
+        });
+      } catch {
+        // non-fatal — car is already set in localStorage
+      }
     }
+
+    setSaving(false);
+    onComplete();
   };
 
   return (
@@ -184,7 +203,7 @@ export function CarSelectorModal({ onComplete, onSkip }: CarSelectorModalProps) 
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            {selectedModel && selectedYear ? (
+            {saving ? 'جاري الحفظ...' : selectedModel && selectedYear ? (
               <><Check size={16} /> تأكيد واعرض الباكدجات</>
             ) : 'اختار الموديل والسنة أولاً'}
           </button>
