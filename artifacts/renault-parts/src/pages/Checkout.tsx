@@ -863,10 +863,45 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
   );
 }
 
+const DIST_CENTER = {
+  name: 'مركز توزيع رينو باك',
+  address: 'شارع الميناء الكبير، بجوار كوبري القباري، الإسكندرية',
+  phone: '01000000000',
+  waPhone: '201000000000',
+  lat: 31.1938,
+  lng: 29.8821,
+  hours: '٩ ص – ٩ م (السبت للخميس)',
+};
+
+function buildPickupWaLink() {
+  const mapsUrl = `https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`;
+  const msg = [
+    'مرحباً رينو باك 👋',
+    'اخترت استلام باكدجي من مركز التوزيع 📦',
+    '',
+    `📍 موقعكم على الخريطة: ${mapsUrl}`,
+    `العنوان: ${DIST_CENTER.address}`,
+    `أوقات العمل: ${DIST_CENTER.hours}`,
+  ].join('\n');
+  return `https://wa.me/${DIST_CENTER.waPhone}?text=${encodeURIComponent(msg)}`;
+}
+
 function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
   formData: FormData; onChange: (f: FormData) => void;
   onNext: () => void; onBack: () => void; canAdvance: boolean;
 }) {
+  const waSentRef = useRef(false);
+
+  useEffect(() => {
+    if (formData.pickupType === 'pickup' && !waSentRef.current) {
+      waSentRef.current = true;
+      setTimeout(() => window.open(buildPickupWaLink(), '_blank'), 600);
+    }
+    if (formData.pickupType !== 'pickup') {
+      waSentRef.current = false;
+    }
+  }, [formData.pickupType]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
@@ -896,12 +931,58 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
       </div>
 
       {formData.pickupType === 'pickup' && (
-        <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}30`, borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 6 }}>📍 مركز التوزيع</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
-            سيتم التواصل معك لتأكيد موعد الاستلام.<br />
-            العنوان: الإسكندرية — سيتم إرسال التفاصيل على هاتفك.
-          </p>
+        <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}30`, borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 40, height: 40, background: `${G}20`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <MapPin size={20} style={{ color: G }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{DIST_CENTER.name}</div>
+              <div style={{ fontSize: 11, color: G, fontWeight: 700 }}>{DIST_CENTER.hours}</div>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '10px 14px' }}>
+            📍 {DIST_CENTER.address}
+          </div>
+
+          {/* WhatsApp sent notice */}
+          <div style={{ background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.3)', borderRadius: 12, padding: '10px 14px', fontSize: 12, color: '#25D166', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>✅</span>
+            تم فتح واتساب برسالة فيها موقعنا — ابعت الرسالة وهنتواصل معك!
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <a
+              href={buildPickupWaLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '12px 0', borderRadius: 14, fontSize: 13, fontWeight: 900, textDecoration: 'none',
+                background: '#25D166', color: '#fff', boxShadow: '0 4px 16px rgba(37,209,102,0.35)',
+                fontFamily: "'Almarai',sans-serif",
+              }}
+            >
+              <span style={{ fontSize: 18 }}>💬</span> فتح الواتساب بالموقع
+            </a>
+            <a
+              href={`https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '12px 0', borderRadius: 14, fontSize: 13, fontWeight: 900, textDecoration: 'none',
+                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)',
+                border: '1.5px solid rgba(255,255,255,0.12)', fontFamily: "'Almarai',sans-serif",
+              }}
+            >
+              <MapPin size={16} /> خريطة جوجل
+            </a>
+          </div>
         </div>
       )}
 
