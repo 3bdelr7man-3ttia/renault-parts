@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, Bot, User, Package2, ChevronDown } from "lucide
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { usePartCart } from "@/lib/part-cart-context";
 
 type Message = {
   id: string;
@@ -31,7 +32,9 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { getAuthHeaders } = useAuth();
-  const { isMobile } = useBreakpoint();
+  const { isMobile, isMobileOrTablet } = useBreakpoint();
+  const { items } = usePartCart();
+  const hasCart = isMobileOrTablet && items.length > 0;
 
   useEffect(() => {
     if (open) {
@@ -143,15 +146,18 @@ export default function ChatWidget() {
   };
 
   /* ── positioning constants ── */
-  const NAV_BAR_H = 64;
-  const BTN_GAP   = 12;
-  const BTN_SIZE  = 56;
+  const NAV_BAR_H  = 64;
+  const CART_BAR_H = 52;
+  const BTN_GAP    = 12;
+  const BTN_SIZE   = 56;
 
-  const btnBottom  = isMobile ? NAV_BAR_H + BTN_GAP : 24;
-  const btnLeft    = isMobile ? 16 : 24;
+  const baseBottom  = isMobile ? NAV_BAR_H + BTN_GAP : 24;
+  const cartOffset  = hasCart ? CART_BAR_H : 0;
+  const btnBottom   = isMobile ? baseBottom + cartOffset : 24;
+  const btnLeft     = isMobile ? 16 : 24;
 
   const panelBottom = isMobile
-    ? NAV_BAR_H + BTN_SIZE + BTN_GAP + 8
+    ? btnBottom + BTN_SIZE + 8
     : btnBottom + BTN_SIZE + 8;
 
   const panelWidth  = isMobile ? "calc(100vw - 32px)" : "340px";
@@ -180,7 +186,7 @@ export default function ChatWidget() {
           justifyContent: "center",
           cursor: "pointer",
           color: "#fff",
-          transition: "transform .2s",
+          transition: "transform .2s, bottom .3s ease",
         }}
         onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "scale(1.1)"}
         onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "scale(1)"}
