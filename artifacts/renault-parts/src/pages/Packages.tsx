@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useListPackages } from '@workspace/api-client-react';
 import { PackageCard } from '@/components/PackageCard';
 import { Filter, Search, Car, X, Pencil } from 'lucide-react';
@@ -44,7 +44,7 @@ export default function Packages() {
   const { car, clearCar } = useCar();
   const recommendedKm = car ? getRecommendedKm(car.year) : null;
 
-  useEffect(() => { if (!car) setShowCarModal(true); }, []);
+  // Do NOT auto-show modal — user opens it voluntarily via the button in the hero
 
   const filteredPackages = packages?.filter(pkg => {
     // Hide custom puzzle-builder packages from the main listing
