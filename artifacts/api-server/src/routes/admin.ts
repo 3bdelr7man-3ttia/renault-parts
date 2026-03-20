@@ -577,6 +577,20 @@ router.patch("/admin/packages/:id/availability", requireAuth, requireAdmin, asyn
   res.json({ ...pkg, basePrice: Number(pkg.basePrice), sellPrice: Number(pkg.sellPrice), isAvailable: pkg.isAvailable, parts: [] });
 });
 
+// DELETE /admin/packages/:id
+router.delete("/admin/packages/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id));
+  // prevent deletion if there are existing orders for this package
+  const [orderCheck] = await db.select({ count: count() }).from(ordersTable).where(eq(ordersTable.packageId, id));
+  if ((orderCheck?.count ?? 0) > 0) {
+    res.status(409).json({ error: "لا يمكن حذف الباكدج لوجود طلبات مرتبطة به" });
+    return;
+  }
+  const [deleted] = await db.delete(packagesTable).where(eq(packagesTable.id, id)).returning();
+  if (!deleted) { res.status(404).json({ error: "الباكدج غير موجود" }); return; }
+  res.json({ success: true });
+});
+
 // GET /admin/workshops/:id/orders
 router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));

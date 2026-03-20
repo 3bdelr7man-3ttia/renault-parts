@@ -3,7 +3,7 @@ import { useListAdminPackages, useUpdatePackage, useListParts } from '@workspace
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { Package2, Edit2, Check, X, Loader2, Plus, ChevronDown, Shield, Zap, Disc, Battery, Settings, Wind, Wrench, Droplets, Tag } from 'lucide-react';
+import { Package2, Edit2, Check, X, Loader2, Plus, ChevronDown, Shield, Zap, Disc, Battery, Settings, Wind, Wrench, Droplets, Tag, Trash2, AlertTriangle } from 'lucide-react';
 
 const G  = '#C8974A';
 const BG = '#0D1220';
@@ -117,6 +117,8 @@ export default function AdminPackages() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addState, setAddState] = useState<AddPkgState>({ name: '', description: '', sellPrice: '', basePrice: '', warrantyMonths: '24', kmService: '40000', slug: '', imageUrl: '' });
   const [togglingAvailId, setTogglingAvailId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const toggleAvailability = async (id: number, current: boolean) => {
     setTogglingAvailId(id);
@@ -133,6 +135,26 @@ export default function AdminPackages() {
       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تغيير حالة التوفر' });
     } finally {
       setTogglingAvailId(null);
+    }
+  };
+
+  const handleDeletePkg = async (id: number) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/packages/${id}`, {
+        method: 'DELETE',
+        headers: { ...authHeader },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'خطأ');
+      toast({ title: '✓ تم حذف الباكدج' });
+      queryClient.invalidateQueries();
+      setConfirmDeleteId(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'فشل حذف الباكدج';
+      toast({ variant: 'destructive', title: 'خطأ', description: msg });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -323,14 +345,45 @@ export default function AdminPackages() {
                           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         </button>
                       </>
+                    ) : confirmDeleteId === pkg.id ? (
+                      /* Confirm delete row */
+                      <>
+                        <span className="flex items-center gap-1 text-red-400 text-xs font-bold">
+                          <AlertTriangle size={11} />
+                          تأكيد الحذف؟
+                        </span>
+                        <button
+                          onClick={() => handleDeletePkg(pkg.id)}
+                          disabled={deletingId === pkg.id}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-all text-xs font-bold disabled:opacity-50"
+                        >
+                          {deletingId === pkg.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                          حذف
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
                     ) : (
-                      <button
-                        onClick={() => startEdit(pkg)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all text-xs font-bold"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        تعديل
-                      </button>
+                      <>
+                        <button
+                          onClick={() => startEdit(pkg)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all text-xs font-bold"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          تعديل
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(pkg.id)}
+                          className="p-2 rounded-lg bg-red-500/10 text-red-400/60 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                          title="حذف الباكدج"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
