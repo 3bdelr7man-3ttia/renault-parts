@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, CalendarCheck, DollarSign, LogOut,
-  Menu, X, Wrench, Store, ChevronRight, Bell,
+  Menu, X, Wrench, Store, ChevronRight, Bell, Tag,
 } from 'lucide-react';
 import bakoLogo from '@/assets/bako-logo.png';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/workshop/appointments',label: 'المواعيد',   icon: CalendarCheck },
   { href: '/workshop/orders',      label: 'الطلبات',    icon: Wrench },
   { href: '/workshop/earnings',    label: 'الحسابات',   icon: DollarSign },
+  { href: '/workshop/pricing',     label: 'التسعير',    icon: Tag },
 ];
 
 export function WorkshopLayout({ children }: { children: React.ReactNode }) {

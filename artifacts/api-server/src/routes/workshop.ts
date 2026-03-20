@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, gte, and, desc, lte } from "drizzle-orm";
-import { db, appointmentsTable, ordersTable, packagesTable, usersTable, workshopsTable } from "@workspace/db";
+import { db, appointmentsTable, ordersTable, packagesTable, usersTable, workshopsTable, workshopPricingTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { sql } from "drizzle-orm";
 
@@ -140,6 +140,55 @@ router.get("/workshop/earnings", requireAuth, requireWorkshop, async (req, res):
     .orderBy(sql`date_trunc('month', ${ordersTable.createdAt})`);
 
   res.json(monthly.map(r => ({ month: r.month, total: Number(r.total ?? 0), count: r.count })));
+});
+
+// GET /workshop/pricing — get this workshop's installation fees per package
+router.get("/workshop/pricing", requireAuth, requireWorkshop, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const workshopId = authReq.user!.workshopId!;
+
+  const allPackages = await db
+    .select({ id: packagesTable.id, name: packagesTable.name, slug: packagesTable.slug, kmService: packagesTable.kmService })
+    .from(packagesTable)
+    .where(eq(packagesTable.isAvailable, true))
+    .orderBy(packagesTable.kmService);
+
+  const existingPricing = await db
+    .select({ packageId: workshopPricingTable.packageId, fee: workshopPricingTable.fee })
+    .from(workshopPricingTable)
+    .where(eq(workshopPricingTable.workshopId, workshopId));
+
+  const pricingMap = new Map(existingPricing.map(p => [p.packageId, Number(p.fee)]));
+
+  res.json(allPackages.map(pkg => ({
+    packageId: pkg.id,
+    packageName: pkg.name,
+    packageSlug: pkg.slug,
+    kmService: pkg.kmService,
+    fee: pricingMap.get(pkg.id) ?? 0,
+  })));
+});
+
+// PUT /workshop/pricing — upsert installation fee for a specific package
+router.put("/workshop/pricing", requireAuth, requireWorkshop, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const workshopId = authReq.user!.workshopId!;
+  const { packageId, fee } = req.body as { packageId: number; fee: number };
+
+  if (typeof packageId !== "number" || typeof fee !== "number" || fee < 0) {
+    res.status(400).json({ error: "بيانات غير صحيحة" });
+    return;
+  }
+
+  await db
+    .insert(workshopPricingTable)
+    .values({ workshopId, packageId, fee: String(fee) })
+    .onConflictDoUpdate({
+      target: [workshopPricingTable.workshopId, workshopPricingTable.packageId],
+      set: { fee: String(fee) },
+    });
+
+  res.json({ message: "تم حفظ التسعير" });
 });
 
 export default router;

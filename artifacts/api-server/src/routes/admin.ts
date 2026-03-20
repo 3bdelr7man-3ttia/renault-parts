@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
-import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable } from "@workspace/db";
+import { eq, count, sum, sql, gte, lte, and, desc, isNotNull } from "drizzle-orm";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable, workshopPricingTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
@@ -670,20 +670,24 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
     .from(ordersTable)
     .where(completedFilter);
 
-  // Sales breakdown by workshop — completed orders only
+  // Workshop breakdown: sum installation fees (not order totals) for completed workshop orders
   const byWorkshop = await db
     .select({
       workshopId: ordersTable.workshopId,
       workshopName: workshopsTable.name,
       workshopPhone: workshopsTable.phone,
-      total: sum(ordersTable.total),
+      total: sql<string>`COALESCE(SUM(${workshopPricingTable.fee}), 0)`,
       orderCount: count(),
     })
     .from(ordersTable)
-    .where(completedFilter)
+    .where(and(completedFilter, isNotNull(ordersTable.workshopId)))
     .leftJoin(workshopsTable, eq(ordersTable.workshopId, workshopsTable.id))
+    .leftJoin(workshopPricingTable, and(
+      eq(ordersTable.workshopId, workshopPricingTable.workshopId),
+      eq(ordersTable.packageId, workshopPricingTable.packageId),
+    ))
     .groupBy(ordersTable.workshopId, workshopsTable.name, workshopsTable.phone)
-    .orderBy(sql`sum(${ordersTable.total}) DESC`);
+    .orderBy(sql`COALESCE(SUM(${workshopPricingTable.fee}), 0) DESC`);
 
   // Total expenses
   const [expenseTotal] = await db.select({ total: sum(expensesTable.amount) }).from(expensesTable);
@@ -699,12 +703,10 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
     orderCount: w.orderCount,
   }));
 
-  // Workshop earnings = sum of all workshop-assigned completed order revenue
-  const totalWorkshopEarnings = workshopList
-    .filter(w => w.workshopId !== null)
-    .reduce((s, w) => s + w.total, 0);
+  // Workshop earnings = sum of installation fees across all workshops
+  const totalWorkshopEarnings = workshopList.reduce((s, w) => s + w.total, 0);
 
-  // Net profit = Revenue - Workshop Earnings - Expenses
+  // Net profit = Revenue - Workshop Earnings (installation fees) - Expenses
   const netProfit = totalRevenue - totalWorkshopEarnings - totalExpenses;
 
   const weeks = rows.map(r => ({

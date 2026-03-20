@@ -8,3 +8,4 @@ export * from "./chatSessions";
 export * from "./expenses";
 export * from "./workshopApplications";
 export * from "./appointments";
+export * from "./workshopPricing";

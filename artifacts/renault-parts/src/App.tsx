@@ -46,6 +46,7 @@ import WorkshopDashboard from "@/pages/workshop/WorkshopDashboard";
 import WorkshopAppointments from "@/pages/workshop/WorkshopAppointments";
 import WorkshopOrders from "@/pages/workshop/WorkshopOrders";
 import WorkshopEarnings from "@/pages/workshop/WorkshopEarnings";
+import WorkshopPricing from "@/pages/workshop/WorkshopPricing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,7 @@ function Router() {
             <Route path="/workshop/appointments" component={WorkshopAppointments} />
             <Route path="/workshop/orders" component={WorkshopOrders} />
             <Route path="/workshop/earnings" component={WorkshopEarnings} />
+            <Route path="/workshop/pricing" component={WorkshopPricing} />
             <Route component={NotFound} />
           </Switch>
         </WorkshopLayout>
