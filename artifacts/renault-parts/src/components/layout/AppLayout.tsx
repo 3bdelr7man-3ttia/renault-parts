@@ -268,7 +268,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 {showCartDropdown && (
                   <motion.div ref={cartDropdownRef}
                     initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.97 }} transition={{ duration: 0.18 }}
-                    style={{ position: 'absolute', top: 'calc(100% + 10px)', left: isMobile ? 'auto' : 0, right: isMobile ? 0 : 'auto', width: isMobile ? Math.min(320, window.innerWidth - 24) : 340, zIndex: 9999, direction: 'rtl' }}>
+                    style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, right: 'auto', width: isMobile ? Math.min(300, window.innerWidth - 32) : 340, zIndex: 9999, direction: 'rtl' }}>
                     <CartContent />
                   </motion.div>
                 )}
