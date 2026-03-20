@@ -1,26 +1,66 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useGetCurrentUser, getGetCurrentUserQueryKey, type User } from "@workspace/api-client-react";
+import { useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
+import { type AppRole, type AppUser, type Permission, hasPermission as checkPermission, isRole as matchRole, normalizeEmployeeRole, normalizeRole } from "@/lib/permissions";
+
+const TOKEN_STORAGE_KEY = 'renault_token';
+const USER_STORAGE_KEY = 'renault_user';
+
+function normalizeUser(raw: unknown): AppUser | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const candidate = raw as Record<string, unknown>;
+  const id = typeof candidate.id === "number" ? candidate.id : null;
+  const name = typeof candidate.name === "string" ? candidate.name : null;
+
+  if (!id || !name) return null;
+
+  return {
+    id,
+    name,
+    phone: typeof candidate.phone === "string" || candidate.phone == null ? (candidate.phone as string | null | undefined) : null,
+    email: typeof candidate.email === "string" || candidate.email == null ? (candidate.email as string | null | undefined) : null,
+    carModel: typeof candidate.carModel === "string" || candidate.carModel == null ? (candidate.carModel as string | null | undefined) : null,
+    carYear: typeof candidate.carYear === "number" || candidate.carYear == null ? (candidate.carYear as number | null | undefined) : null,
+    address: typeof candidate.address === "string" || candidate.address == null ? (candidate.address as string | null | undefined) : null,
+    area: typeof candidate.area === "string" || candidate.area == null ? (candidate.area as string | null | undefined) : null,
+    role: normalizeRole(typeof candidate.role === "string" ? candidate.role : undefined),
+    employeeRole: normalizeEmployeeRole(typeof candidate.employeeRole === "string" ? candidate.employeeRole : null),
+    workshopId: typeof candidate.workshopId === "number" || candidate.workshopId == null ? (candidate.workshopId as number | null | undefined) : null,
+    createdAt: typeof candidate.createdAt === "string" || candidate.createdAt instanceof Date ? candidate.createdAt : undefined,
+  };
+}
 
 interface AuthContextType {
   token: string | null;
-  user: User | null;
+  user: AppUser | null;
   isLoading: boolean;
   isFetching: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: AppUser) => void;
   logout: () => void;
   getAuthHeaders: () => { headers?: { Authorization: string } };
+  hasPermission: (permission: Permission) => boolean;
+  isRole: (role: AppRole) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem('renault_token'));
+  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(TOKEN_STORAGE_KEY));
+  const [localUser, setLocalUser] = useState<AppUser | null>(() => {
+    const saved = localStorage.getItem(USER_STORAGE_KEY);
+    if (!saved) return null;
+    try {
+      return normalizeUser(JSON.parse(saved));
+    } catch {
+      return null;
+    }
+  });
   const queryClient = useQueryClient();
   
   // We pass the token explicitly to the query to ensure it authenticates
   // refetchInterval: re-check every 30s so role changes (e.g. customer→workshop after approval) apply automatically
-  const { data: user, isLoading, isFetching, refetch } = useGetCurrentUser({
+  const { data: fetchedUser, isLoading, isFetching, refetch } = useGetCurrentUser({
     query: {
       queryKey: getGetCurrentUserQueryKey(),
       enabled: !!token,
@@ -32,17 +72,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     request: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   });
 
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('renault_token', newToken);
+  const normalizedFetchedUser = useMemo(() => normalizeUser(fetchedUser), [fetchedUser]);
+  const user = normalizedFetchedUser ?? localUser;
+
+  useEffect(() => {
+    if (normalizedFetchedUser) {
+      const serializedFetchedUser = JSON.stringify(normalizedFetchedUser);
+      const serializedLocalUser = localUser ? JSON.stringify(localUser) : null;
+
+      localStorage.setItem(USER_STORAGE_KEY, serializedFetchedUser);
+      if (serializedFetchedUser !== serializedLocalUser) {
+        setLocalUser(normalizedFetchedUser);
+      }
+      return;
+    }
+
+    if (!token) {
+      localStorage.removeItem(USER_STORAGE_KEY);
+      setLocalUser(null);
+    }
+  }, [localUser, normalizedFetchedUser, token]);
+
+  const login = (newToken: string, newUser: AppUser) => {
+    const normalizedUser = normalizeUser(newUser);
+    localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
     setTokenState(newToken);
-    // User state will update on next render/refetch, but we can optimistically set it if needed
-    // The query will refetch automatically because token changed (if we added it to a key, but here we just refetch)
+    if (normalizedUser) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedUser));
+      setLocalUser(normalizedUser);
+      queryClient.setQueryData(getGetCurrentUserQueryKey(), normalizedUser);
+    }
     setTimeout(() => refetch(), 0);
   };
 
   const logout = () => {
-    localStorage.removeItem('renault_token');
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
     setTokenState(null);
+    setLocalUser(null);
     // Clear all cached query data so stale user info doesn't persist
     queryClient.clear();
   };
@@ -51,8 +118,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   };
 
+  const hasPermission = (permission: Permission) => checkPermission(user, permission);
+  const isRole = (role: AppRole) => matchRole(user, role);
+
   return (
-    <AuthContext.Provider value={{ token, user: user || null, isLoading, isFetching, login, logout, getAuthHeaders }}>
+    <AuthContext.Provider value={{ token, user, isLoading, isFetching, login, logout, getAuthHeaders, hasPermission, isRole }}>
       {children}
     </AuthContext.Provider>
   );
