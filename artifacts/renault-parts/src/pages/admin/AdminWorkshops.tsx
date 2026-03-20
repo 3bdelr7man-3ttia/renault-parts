@@ -429,8 +429,8 @@ export default function AdminWorkshops() {
                               </span>
                             </td>
                             <td className="px-4 py-3 font-black text-sm text-white/70">{order.total.toLocaleString()} ج.م</td>
-                            <td className="px-4 py-3 font-black text-sm" style={{ color: order.workshopFee !== null ? G : 'rgba(255,255,255,0.2)' }}>
-                              {order.workshopFee !== null ? `${order.workshopFee.toLocaleString()} ج.م` : '—'}
+                            <td className="px-4 py-3 font-black text-sm" style={{ color: order.workshopFee != null ? G : 'rgba(255,255,255,0.2)' }}>
+                              {order.workshopFee != null ? `${order.workshopFee.toLocaleString()} ج.م` : '—'}
                             </td>
                           </tr>
                         );
