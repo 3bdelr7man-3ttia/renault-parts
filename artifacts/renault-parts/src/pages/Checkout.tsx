@@ -359,7 +359,7 @@ export default function Checkout() {
 
         <StepProgress step={step} userHasCar={hasCar} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, marginTop: 32 }} className="checkout-grid">
+        <div style={{ maxWidth: 680, margin: '32px auto 0' }}>
           <div>
             <div style={{ background: B2, borderRadius: 24, border: `1px solid ${G}20`, padding: 28 }}>
 
@@ -437,17 +437,8 @@ export default function Checkout() {
               )}
             </div>
           </div>
-
-          <div>
-            <OrderSummary pkg={pkg} formData={formData} user={user} selectedTotal={selectedTotal ?? liveTotal} />
-          </div>
         </div>
       </div>
-      <style>{`
-        @media (max-width: 700px) {
-          .checkout-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -1243,7 +1234,6 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
 }) {
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [localArea, setLocalArea] = useState(formData.deliveryArea || '');
 
   const ALL_SLOTS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
@@ -1353,33 +1343,8 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
         </div>
       </div>
 
-      {/* View toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button
-          onClick={() => setViewMode('map')}
-          style={{
-            flex: 1, padding: '9px 0', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer',
-            border: `2px solid ${viewMode === 'map' ? G : 'rgba(255,255,255,0.1)'}`,
-            background: viewMode === 'map' ? `${G}18` : 'transparent',
-            color: viewMode === 'map' ? G : 'rgba(255,255,255,0.45)',
-            fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
-          }}
-        >🗺️ الخريطة</button>
-        <button
-          onClick={() => setViewMode('list')}
-          style={{
-            flex: 1, padding: '9px 0', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer',
-            border: `2px solid ${viewMode === 'list' ? G : 'rgba(255,255,255,0.1)'}`,
-            background: viewMode === 'list' ? `${G}18` : 'transparent',
-            color: viewMode === 'list' ? G : 'rgba(255,255,255,0.45)',
-            fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
-          }}
-        >📋 القائمة</button>
-      </div>
-
-      {/* Map view */}
-      {viewMode === 'map' && (
-        <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 20, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : 'rgba(255,255,255,0.1)'}`, transition: 'border-color 0.3s' }}>
+      {/* Map */}
+      <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 20, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : 'rgba(255,255,255,0.1)'}`, transition: 'border-color 0.3s' }}>
           <MapContainer
             center={[31.2001, 29.9187]}
             zoom={11}
@@ -1440,15 +1405,12 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             اضغط على أيقونة الورشة لاختيارها مباشرة من الخريطة
           </div>
         </div>
-      )}
 
       {/* Workshop cards — sorted by proximity */}
       <div style={{ marginBottom: 24 }}>
-        {viewMode === 'list' && (
-          <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: 0.5 }}>
-            {localArea ? `مرتبة من الأقرب إلى الأبعد من ${localArea}` : 'الورش المتاحة'}
-          </p>
-        )}
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: 0.5 }}>
+          {localArea ? `مرتبة من الأقرب إلى الأبعد من ${localArea}` : 'الورش المتاحة'}
+        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sortedWorkshops.map((w, idx) => {
             const isSelected = formData.workshopId === w.id;
