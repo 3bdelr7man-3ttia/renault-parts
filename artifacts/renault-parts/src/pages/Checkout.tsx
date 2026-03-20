@@ -873,34 +873,38 @@ const DIST_CENTER = {
   hours: '٩ ص – ٩ م (السبت للخميس)',
 };
 
-function buildPickupWaLink() {
+// Build a wa.me link to send our distribution center location to a customer's phone.
+// When DIST_CENTER.waPhone is set to the customer's number, the message is sent directly to them.
+// TODO: Replace with WhatsApp Business API to auto-send from our number to the customer.
+function buildPickupWaLink(customerPhone?: string) {
   const mapsUrl = `https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`;
   const msg = [
-    'مرحباً رينو باك 👋',
-    'اخترت استلام باكدجي من مركز التوزيع 📦',
+    'مرحباً من رينو باك 👋',
+    'يسعدنا إعلامك بموقع مركز التوزيع لاستلام باكدجك 📦',
     '',
-    `📍 موقعكم على الخريطة: ${mapsUrl}`,
+    `📍 موقعنا على الخريطة: ${mapsUrl}`,
     `العنوان: ${DIST_CENTER.address}`,
     `أوقات العمل: ${DIST_CENTER.hours}`,
+    '',
+    'نتطلع لاستقبالك! 🙌',
   ].join('\n');
-  return `https://wa.me/${DIST_CENTER.waPhone}?text=${encodeURIComponent(msg)}`;
+  // If a customer phone is provided (future WhatsApp Business API flow), send to them.
+  // Otherwise fall back to our own number for testing.
+  const target = customerPhone ? customerPhone.replace(/^0/, '2') : DIST_CENTER.waPhone;
+  return `https://wa.me/${target}?text=${encodeURIComponent(msg)}`;
 }
 
 function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
   formData: FormData; onChange: (f: FormData) => void;
   onNext: () => void; onBack: () => void; canAdvance: boolean;
 }) {
-  const waSentRef = useRef(false);
-
-  useEffect(() => {
-    if (formData.pickupType === 'pickup' && !waSentRef.current) {
-      waSentRef.current = true;
-      setTimeout(() => window.open(buildPickupWaLink(), '_blank'), 600);
+  const handleNext = () => {
+    // Send location via WhatsApp when user proceeds with pickup selection
+    if (formData.pickupType === 'pickup') {
+      window.open(buildPickupWaLink(), '_blank');
     }
-    if (formData.pickupType !== 'pickup') {
-      waSentRef.current = false;
-    }
-  }, [formData.pickupType]);
+    onNext();
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -948,41 +952,25 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
             📍 {DIST_CENTER.address}
           </div>
 
-          {/* WhatsApp sent notice */}
-          <div style={{ background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.3)', borderRadius: 12, padding: '10px 14px', fontSize: 12, color: '#25D166', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16 }}>✅</span>
-            تم فتح واتساب برسالة فيها موقعنا — ابعت الرسالة وهنتواصل معك!
+          {/* Info notice */}
+          <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}25`, borderRadius: 12, padding: '10px 14px', fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+            ✅ عند الضغط على <strong style={{ color: G }}>"متابعة للدفع"</strong> سيتم إرسال موقع مركز التوزيع تلقائياً على واتساب.
           </div>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <a
-              href={buildPickupWaLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '12px 0', borderRadius: 14, fontSize: 13, fontWeight: 900, textDecoration: 'none',
-                background: '#25D166', color: '#fff', boxShadow: '0 4px 16px rgba(37,209,102,0.35)',
-                fontFamily: "'Almarai',sans-serif",
-              }}
-            >
-              <span style={{ fontSize: 18 }}>💬</span> فتح الواتساب بالموقع
-            </a>
-            <a
-              href={`https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '12px 0', borderRadius: 14, fontSize: 13, fontWeight: 900, textDecoration: 'none',
-                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)',
-                border: '1.5px solid rgba(255,255,255,0.12)', fontFamily: "'Almarai',sans-serif",
-              }}
-            >
-              <MapPin size={16} /> خريطة جوجل
-            </a>
-          </div>
+          {/* Maps button only */}
+          <a
+            href={`https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '11px 0', borderRadius: 14, fontSize: 13, fontWeight: 800, textDecoration: 'none',
+              background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.75)',
+              border: '1.5px solid rgba(255,255,255,0.12)', fontFamily: "'Almarai',sans-serif",
+            }}
+          >
+            <MapPin size={15} /> عرض الموقع على الخريطة
+          </a>
         </div>
       )}
 
@@ -1016,7 +1004,9 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
 
       <div style={{ display: 'flex', gap: 12 }}>
         <Btn variant="outline" onClick={onBack} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
-        <Btn onClick={onNext} disabled={!canAdvance} style={{ flex: 1 }}>متابعة للدفع</Btn>
+        <Btn onClick={handleNext} disabled={!canAdvance} style={{ flex: 1 }}>
+          {formData.pickupType === 'pickup' ? '💬 تأكيد وإرسال الموقع' : 'متابعة للدفع'}
+        </Btn>
       </div>
     </div>
   );
