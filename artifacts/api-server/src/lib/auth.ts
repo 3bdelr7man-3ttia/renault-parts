@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { normalizeEmployeeRole, normalizeRole } from "./permissions";
 
 const _jwtSecret = process.env.JWT_SECRET;
 if (!_jwtSecret) {
@@ -18,13 +19,19 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 }
 
-export function signToken(userId: number): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
+type JwtPayload = {
+  userId: number;
+  role?: string;
+  employeeRole?: string | null;
+};
+
+export function signToken(userId: number, role?: string, employeeRole?: string | null): string {
+  return jwt.sign({ userId, role: normalizeRole(role), employeeRole: normalizeEmployeeRole(employeeRole) }, JWT_SECRET, { expiresIn: "7d" });
 }
 
-export function verifyToken(token: string): { userId: number } | null {
+export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as unknown as { userId: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as JwtPayload;
     return decoded;
   } catch {
     return null;
