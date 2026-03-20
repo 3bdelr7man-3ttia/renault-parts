@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { CheckCircle2, AlertCircle, Loader2, ChevronRight, LogIn, UserCheck } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 import { useAuth } from '@/lib/auth-context';
@@ -70,14 +70,24 @@ const inputStyle: React.CSSProperties = {
   transition: 'border-color .2s',
 };
 
+const SESSION_KEY = 'join_workshop_draft';
+
 export default function JoinWorkshop() {
   const { user, getAuthHeaders } = useAuth();
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [, setLocation] = useLocation();
+  const [form, setForm] = useState<FormState>(() => {
+    // Restore draft saved before login redirect
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) return { ...emptyForm, ...JSON.parse(saved) };
+    } catch { /* ignore */ }
+    return emptyForm;
+  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Pre-fill name & phone from logged-in user profile
+  // When user logs in: pre-fill name & phone (only if fields are still empty)
   useEffect(() => {
     if (user) {
       setForm(f => ({
@@ -85,6 +95,8 @@ export default function JoinWorkshop() {
         ownerName: f.ownerName || user.name || '',
         phone: f.phone || user.phone || '',
       }));
+      // Clear draft once we have the user
+      sessionStorage.removeItem(SESSION_KEY);
     }
   }, [user]);
 
@@ -106,7 +118,15 @@ export default function JoinWorkshop() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || !user) return;
+    if (!canSubmit) return;
+
+    // Not logged in → save draft then go to register
+    if (!user) {
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(form)); } catch { /* ignore */ }
+      setLocation('/register?redirect=/join-workshop');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -128,6 +148,7 @@ export default function JoinWorkshop() {
         const d = await res.json();
         throw new Error(d.error || 'حدث خطأ');
       }
+      sessionStorage.removeItem(SESSION_KEY);
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'حدث خطأ غير متوقع');
@@ -148,27 +169,7 @@ export default function JoinWorkshop() {
           </div>
         </div>
 
-        {/* Login wall — must be logged in to apply */}
-        {!user ? (
-          <div style={{ background: B2, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 24, padding: '48px 32px', textAlign: 'center' }}>
-            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(200,151,74,0.1)', border: `2px solid rgba(200,151,74,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-              <LogIn size={32} color={G} />
-            </div>
-            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#E8F0F8', marginBottom: 10 }}>سجّل دخولك أولاً</h2>
-            <p style={{ color: TD, fontSize: 13, lineHeight: 1.9, marginBottom: 28, maxWidth: 380, margin: '0 auto 28px' }}>
-              عشان نقدر نربط طلبك بحسابك ونحولك لصاحب ورشة بعد الموافقة،<br />
-              محتاج تسجل دخول أو تعمل حساب جديد الأول.
-            </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/login?redirect=/join-workshop" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `linear-gradient(135deg,${G},${GL})`, color: BG, padding: '13px 28px', borderRadius: 999, fontWeight: 900, fontSize: 14, textDecoration: 'none' }}>
-                <LogIn size={16} /> سجل دخول
-              </Link>
-              <Link href="/register?redirect=/join-workshop" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.1)', border: `1.5px solid rgba(200,151,74,0.3)`, color: G, padding: '13px 28px', borderRadius: 999, fontWeight: 900, fontSize: 14, textDecoration: 'none' }}>
-                <UserCheck size={16} /> حساب جديد
-              </Link>
-            </div>
-          </div>
-        ) : success ? (
+        {success ? (
           <div style={{ background: B2, border: `1.5px solid rgba(34,197,94,0.3)`, borderRadius: 24, padding: '48px 32px', textAlign: 'center' }}>
             <CheckCircle2 size={64} color="#22c55e" style={{ marginBottom: 20 }} />
             <h2 style={{ fontSize: 24, fontWeight: 900, color: '#E8F0F8', marginBottom: 12 }}>تم إرسال طلبك بنجاح! 🎉</h2>
@@ -306,9 +307,31 @@ export default function JoinWorkshop() {
                 </div>
               )}
 
+              {/* Hint for non-logged-in users */}
+              {!user && canSubmit && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+                  <LogIn size={15} color={G} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <span style={{ color: TX, fontSize: 12, fontWeight: 700, lineHeight: 1.7 }}>
+                    هتحتاج تسجل حساب أو تدخل على حسابك — بياناتك دي هتتحفظ وترجع معاك بعد التسجيل.
+                  </span>
+                </div>
+              )}
+
+              {user && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
+                  <UserCheck size={14} color="#22c55e" />
+                  <span style={{ color: '#22c55e', fontSize: 12, fontWeight: 700 }}>مسجل كـ {user.name} — الطلب هيتربط بحسابك</span>
+                </div>
+              )}
+
               <button type="submit" disabled={!canSubmit || loading}
                 style={{ width: '100%', background: canSubmit ? `linear-gradient(135deg,${G},${GL})` : 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 14, padding: '15px', fontFamily: "'Almarai',sans-serif", fontSize: 15, fontWeight: 900, color: canSubmit ? BG : TD, cursor: canSubmit ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: canSubmit ? `0 8px 24px rgba(200,151,74,0.3)` : 'none', transition: 'all .2s' }}>
-                {loading ? <><Loader2 size={18} className="animate-spin" /> جارٍ إرسال الطلب...</> : '🚀 أرسل طلب الانضمام'}
+                {loading
+                  ? <><Loader2 size={18} className="animate-spin" /> جارٍ إرسال الطلب...</>
+                  : user
+                    ? '🚀 أرسل طلب الانضمام'
+                    : '🚀 متابعة — إنشاء حساب'
+                }
               </button>
             </form>
           </>
