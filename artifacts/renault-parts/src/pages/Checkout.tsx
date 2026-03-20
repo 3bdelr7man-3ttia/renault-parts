@@ -11,7 +11,7 @@ import {
   Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car, Clock
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
-import { RENAULT_MODELS, CAR_YEARS } from '@/lib/car-context';
+import { RENAULT_MODELS, CAR_YEARS, useCar } from '@/lib/car-context';
 
 const G = '#C8974A';
 const NV = '#1A2356';
@@ -50,6 +50,7 @@ export default function Checkout() {
   const packageId = !isCustom && paramId ? parseInt(paramId, 10) : 0;
   const [, setLocation] = useLocation();
   const { user, getAuthHeaders } = useAuth();
+  const { car: contextCar } = useCar();
   const { toast } = useToast();
   const { clear: clearPartCart } = usePartCart();
 
@@ -84,8 +85,12 @@ export default function Checkout() {
         p.slug === paramId
       );
 
-  const userHasCar = !!(user?.carModel && user?.carYear);
-  const [step, setStep] = useState<Step>(userHasCar ? 2 : 1);
+  // Car info: prefer profile, then car-context (sessionStorage), then empty
+  const resolvedCarModel = user?.carModel || contextCar?.model || '';
+  const resolvedCarYear  = user?.carYear  || contextCar?.year  || new Date().getFullYear();
+  const hasCar = !!(resolvedCarModel && resolvedCarYear);
+
+  const [step, setStep] = useState<Step>(hasCar ? 2 : 1);
   const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
@@ -94,8 +99,8 @@ export default function Checkout() {
   const [selectedTotal, setSelectedTotal] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
-    carModel: user?.carModel ?? '',
-    carYear: user?.carYear ?? new Date().getFullYear(),
+    carModel: resolvedCarModel,
+    carYear:  resolvedCarYear,
     pickupType: 'pickup',
     deliveryAddress: user?.address ?? '',
     deliveryArea: user?.area ?? '',
@@ -105,10 +110,10 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    if (user?.carModel && !formData.carModel) {
-      setFormData(f => ({ ...f, carModel: user.carModel ?? '', carYear: user.carYear ?? f.carYear }));
+    if (resolvedCarModel && !formData.carModel) {
+      setFormData(f => ({ ...f, carModel: resolvedCarModel, carYear: resolvedCarYear }));
     }
-  }, [user]);
+  }, [user, contextCar]);
 
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder({
     request: getAuthHeaders(),
@@ -224,7 +229,7 @@ export default function Checkout() {
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', margin: 0 }}>إتمام الطلب</h1>
         </div>
 
-        <StepProgress step={step} userHasCar={userHasCar} />
+        <StepProgress step={step} userHasCar={hasCar} />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, marginTop: 32 }} className="checkout-grid">
           <div>
@@ -246,7 +251,7 @@ export default function Checkout() {
                   onSelectPart={(partId, variant) => setPartSelections(s => ({ ...s, [partId]: variant }))}
                   onNext={(total) => { setSelectedTotal(total); setStep(3); }}
                   onBack={() => setStep(1)}
-                  userHasCar={userHasCar}
+                  userHasCar={hasCar}
                   user={user}
                 />
               )}
