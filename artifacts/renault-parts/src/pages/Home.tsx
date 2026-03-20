@@ -4,7 +4,7 @@ import {
   Search, Wrench, ShieldCheck, Star, MapPin, ChevronLeft,
   Zap, Droplets, Wind, Settings, Disc, Battery, Package,
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
-  ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown, Truck,
+  ArrowLeftRight, ArrowLeft, Plus, Minus, Layers, Send, Bot, ChevronDown, Truck,
 } from 'lucide-react';
 import { useListPackages, useListParts } from '@workspace/api-client-react';
 import bakoImg    from '@/assets/bako-new.png';
@@ -1089,68 +1089,102 @@ export default function Home() {
       <AiCompareSection compareData={compareData} />
 
       {/* ═══ WORKSHOPS ═══ */}
-      <section style={{ padding: '56px 28px', background: B2, borderTop: `1px solid ${BD}` }}>
+      <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 36 }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#E8F0F8', marginBottom: 4 }}>ورشنا في الإسكندرية</h2>
-              <p style={{ color: TD, fontSize: 13 }}>كل ورشة اتاختارت بمعايير صارمة</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '4px 14px', marginBottom: 12 }}>
+                <Building2 size={11} color={G} />
+                <span style={{ color: G, fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>الورش المعتمدة</span>
+              </div>
+              <h2 style={{ fontSize: 28, fontWeight: 900, color: '#E8F0F8', marginBottom: 6, lineHeight: 1.2 }}>ورشنا في الإسكندرية</h2>
+              <p style={{ color: TD, fontSize: 13, fontWeight: 600 }}>كل ورشة اتاختارت بمعايير صارمة للجودة والخدمة</p>
             </div>
-            <button style={{ color: SK, background: 'none', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>كل الورش ←</button>
+            <Link href="/workshops" style={{ display: 'flex', alignItems: 'center', gap: 6, color: G, background: 'rgba(200,151,74,0.08)', border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '8px 18px', fontWeight: 800, fontSize: 13, textDecoration: 'none', transition: 'background .2s' }}>
+              كل الورش <ArrowLeft size={13} />
+            </Link>
           </div>
 
-          {/* Workshops grid + Bako chat side by side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 14, marginBottom: 14 }}>
-                {WORKSHOPS.map(w => (
-                  <div key={w.name} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.06)`, background: 'var(--rp-card)', cursor: 'pointer', transition: 'transform .25s,box-shadow .25s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 30px rgba(0,0,0,0.2)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
-                    <div style={{ height: 80, background: `linear-gradient(145deg,${B3},${w.color}12)`, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid rgba(255,255,255,0.04)`, position: 'relative' }}>
-                      <Building2 size={28} color={`${w.color}35`} />
-                      <div style={{ position: 'absolute', bottom: -10, right: 12, background: BG, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 999, padding: '2px 9px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Star size={9} color={G} fill={G} /><span style={{ color: G, fontSize: 10, fontWeight: 800 }}>{w.rating}</span>
-                      </div>
-                    </div>
-                    <div style={{ padding: '16px 14px 12px' }}>
-                      <h4 style={{ color: '#E8F0F8', fontSize: 13, fontWeight: 800, marginBottom: 4 }}>{w.name}</h4>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
-                        <MapPin size={9} color={TD} /><span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{w.area}</span>
-                      </div>
-                      <div style={{ color: 'rgba(122,149,170,0.55)', fontSize: 10, fontWeight: 700 }}>{w.jobs.toLocaleString()} سيارة</div>
-                    </div>
+          {/* 4-column workshop cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
+            {WORKSHOPS.map((w, idx) => (
+              <div key={w.name}
+                style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.07)`, background: B3, cursor: 'pointer', transition: 'transform .25s, box-shadow .25s, border-color .25s', position: 'relative' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 16px 40px rgba(0,0,0,0.3)`; (e.currentTarget as HTMLDivElement).style.borderColor = `${w.color}40`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)'; }}
+              >
+                {/* Top accent bar */}
+                <div style={{ height: 4, background: `linear-gradient(90deg,${w.color},${w.color}55)` }} />
+
+                {/* Banner area */}
+                <div style={{ height: 90, background: `linear-gradient(145deg,${BG},${w.color}10)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: `${w.color}14`, border: `1.5px solid ${w.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Building2 size={24} color={w.color} />
                   </div>
-                ))}
-              </div>
-              <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.22)`, borderRadius: 14, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: `radial-gradient(circle,rgba(200,151,74,0.08),transparent 70%)`, pointerEvents: 'none' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 12, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Building2 size={18} color={G} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 13, color: '#E8F0F8', marginBottom: 3 }}>عندك ورشة في الإسكندرية؟</div>
-                    <div style={{ color: TD, fontSize: 11, fontWeight: 700 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر</div>
-                  </div>
+                  {/* Rank badge */}
+                  {idx === 0 && (
+                    <div style={{ position: 'absolute', top: 10, right: 10, background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 999, padding: '2px 8px', fontSize: 9, fontWeight: 900 }}>الأعلى تقييماً</div>
+                  )}
                 </div>
-                <Link href="/join-workshop" className="rp-pill" style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.18),rgba(200,151,74,0.08))`, border: `1.5px solid rgba(200,151,74,0.35)`, color: G, padding: '8px 18px', fontWeight: 800, fontSize: 12, textDecoration: 'none', display: 'inline-block', whiteSpace: 'nowrap', boxShadow: `0 4px 14px rgba(200,151,74,0.12)` }}>انضم كورشة ←</Link>
-              </div>
-            </div>
 
-            {/* Bako chat for workshops */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-                <Bot size={13} color={G} />
-                <span style={{ color: G, fontSize: 12, fontWeight: 800 }}>اسأل باكو عن الورش</span>
+                {/* Info */}
+                <div style={{ padding: '14px 16px 16px' }}>
+                  <h4 style={{ color: '#E8F0F8', fontSize: 14, fontWeight: 900, marginBottom: 6, lineHeight: 1.3 }}>{w.name}</h4>
+
+                  {/* Area */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
+                    <MapPin size={10} color={TD} />
+                    <span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{w.area}</span>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: w.color, lineHeight: 1 }}>{w.jobs.toLocaleString()}</div>
+                      <div style={{ fontSize: 9, color: TD, fontWeight: 700, marginTop: 2 }}>سيارة خُدمت</div>
+                    </div>
+                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+                        <Star size={11} color={G} fill={G} />
+                        <span style={{ fontSize: 15, fontWeight: 900, color: G, lineHeight: 1 }}>{w.rating}</span>
+                      </div>
+                      <div style={{ fontSize: 9, color: TD, fontWeight: 700, marginTop: 2 }}>تقييم العملاء</div>
+                    </div>
+                  </div>
+
+                  {/* Rating bar */}
+                  <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 999, overflow: 'hidden', marginBottom: 12 }}>
+                    <div style={{ height: '100%', width: `${(w.rating / 5) * 100}%`, background: `linear-gradient(90deg,${w.color},${w.color}88)`, borderRadius: 999 }} />
+                  </div>
+
+                  {/* CTA */}
+                  <Link href="/packages" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${w.color}10`, border: `1px solid ${w.color}25`, borderRadius: 10, padding: '8px', color: w.color, fontWeight: 800, fontSize: 12, textDecoration: 'none', transition: 'background .2s' }}>
+                    احجز موعد <ArrowLeft size={11} />
+                  </Link>
+                </div>
               </div>
-              <BakoChatSimple
-                label="الورش والحجز"
-                initMsg="أهلاً! 👋 اسألني عن أي ورشة في الإسكندرية أو ازاي تحجز موعدك. أنا هنا أساعدك!"
-                quickQ={['إيه أقرب ورشة؟', 'بيتم الحجز إزاي؟', 'الموعد بييجي إمتى؟', 'الضمان بيشمل إيه؟']}
-              />
-            </div>
+            ))}
           </div>
+
+          {/* Join as workshop banner */}
+          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 18, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: 140, height: 140, background: `radial-gradient(circle,rgba(200,151,74,0.06),transparent 70%)`, pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Building2 size={22} color={G} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 15, color: '#E8F0F8', marginBottom: 4 }}>عندك ورشة في الإسكندرية؟</div>
+                <div style={{ color: TD, fontSize: 12, fontWeight: 700 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر — مجاناً تماماً</div>
+              </div>
+            </div>
+            <Link href="/join-workshop" style={{ background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 12, padding: '11px 24px', fontWeight: 900, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 20px rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', gap: 6 }}>
+              انضم كورشة <ArrowLeft size={13} />
+            </Link>
+          </div>
+
         </div>
       </section>
     </div>
