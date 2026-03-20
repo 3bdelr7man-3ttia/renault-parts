@@ -40,7 +40,7 @@ export function WorkshopLayout({ children }: { children: React.ReactNode }) {
         position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
         width: 260, background: S,
         borderLeft: '1px solid rgba(200,151,74,0.12)',
-        display: 'flex', flexDirection: 'column',
+        display: 'flex', flexDirection: 'column', flexShrink: 0,
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .3s ease',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.3)',
@@ -193,7 +193,7 @@ export function WorkshopLayout({ children }: { children: React.ReactNode }) {
       <style>{`
         @media (min-width: 1024px) {
           .ws-sidebar { position: relative !important; transform: translateX(0) !important; }
-          .ws-main { margin-right: 260px; }
+          .ws-main { margin-right: 0 !important; }
           .ws-bottom-nav { display: none !important; }
         }
       `}</style>
