@@ -46,7 +46,8 @@ interface FormData {
 export default function Checkout() {
   const [, params] = useRoute('/checkout/:id');
   const isCustom = params?.id === 'custom';
-  const packageId = !isCustom && params?.id ? parseInt(params.id, 10) : 0;
+  const paramId = params?.id ?? '';
+  const packageId = !isCustom && paramId ? parseInt(paramId, 10) : 0;
   const [, setLocation] = useLocation();
   const { user, getAuthHeaders } = useAuth();
   const { toast } = useToast();
@@ -76,7 +77,12 @@ export default function Checkout() {
   const [isRegisteringCustomPkg, setIsRegisteringCustomPkg] = useState(false);
 
   const { data: packages, isLoading: isLoadingPackages } = useListPackages();
-  const pkg = isCustom ? virtualPkg : packages?.find(p => p.id === packageId);
+  const pkg = isCustom
+    ? virtualPkg
+    : packages?.find(p =>
+        (packageId > 0 && p.id === packageId) ||
+        p.slug === paramId
+      );
 
   const userHasCar = !!(user?.carModel && user?.carYear);
   const [step, setStep] = useState<Step>(userHasCar ? 2 : 1);
@@ -142,7 +148,7 @@ export default function Checkout() {
     },
   });
 
-  if (!user) { setLocation('/login?redirect=/checkout/' + (isCustom ? 'custom' : packageId)); return null; }
+  if (!user) { setLocation('/login?redirect=/checkout/' + (isCustom ? 'custom' : paramId)); return null; }
 
   if (!isCustom && isLoadingPackages) {
     return (
