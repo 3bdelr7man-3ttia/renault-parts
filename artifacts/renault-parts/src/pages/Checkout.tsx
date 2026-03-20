@@ -126,11 +126,35 @@ export default function Checkout() {
     vodafonePhone: user?.phone ?? '',
   });
 
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [receiptUploadState, setReceiptUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+
   useEffect(() => {
     if (resolvedCarModel && !formData.carModel) {
       setFormData(f => ({ ...f, carModel: resolvedCarModel, carYear: resolvedCarYear }));
     }
   }, [user, contextCar]);
+
+  const autoUploadReceipt = async (orderId: number, file: File) => {
+    setReceiptUploadState('uploading');
+    try {
+      const fd = new FormData();
+      fd.append('receipt', file);
+      const authToken = getAuthHeaders().headers?.Authorization;
+      const res = await fetch(`/api/orders/${orderId}/receipt`, {
+        method: 'POST',
+        headers: { ...(authToken ? { Authorization: authToken } : {}) },
+        body: fd,
+      });
+      if (!res.ok) throw new Error('فشل الرفع');
+      setReceiptUploadState('done');
+      toast({ title: '✅ تم رفع إيصال التحويل', description: 'سيتم مراجعته وتفعيل طلبك قريباً.' });
+    } catch {
+      setReceiptUploadState('error');
+      toast({ variant: 'destructive', title: 'تنبيه', description: 'تم تأكيد الطلب — لكن فشل رفع الإيصال. ارفعه من صفحة الطلب.' });
+    }
+  };
 
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder({
     request: getAuthHeaders(),
@@ -150,6 +174,9 @@ export default function Checkout() {
           }
         } else {
           setStep(5);
+          if (receiptFile) {
+            await autoUploadReceipt(order.id, receiptFile);
+          }
         }
       },
       onError: () => {
@@ -292,6 +319,12 @@ export default function Checkout() {
                   onBack={() => setStep(3)}
                   isPending={isCreatingOrder || isRedirectingToPayment || isRegisteringCustomPkg}
                   pkg={pkg}
+                  receiptFile={receiptFile}
+                  receiptPreviewUrl={receiptPreviewUrl}
+                  onReceiptSelect={(file) => {
+                    setReceiptFile(file);
+                    setReceiptPreviewUrl(file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null);
+                  }}
                 />
               )}
 
@@ -300,6 +333,7 @@ export default function Checkout() {
                   orderId={confirmedOrderId}
                   paymentMethod={formData.paymentMethod}
                   pickupType={formData.pickupType}
+                  autoUploadState={receiptUploadState}
                 />
               )}
             </div>
@@ -808,11 +842,15 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
   );
 }
 
-function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg }: {
+function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, receiptFile, receiptPreviewUrl, onReceiptSelect }: {
   formData: FormData; onChange: (f: FormData) => void;
   onConfirm: () => void; onBack: () => void; isPending: boolean;
   pkg: { name: string; sellPrice: string | number };
+  receiptFile: File | null;
+  receiptPreviewUrl: string | null;
+  onReceiptSelect: (file: File | null) => void;
 }) {
+  const receiptInputRef = useRef<HTMLInputElement>(null);
   const methods: { id: PayMethod; icon: React.ReactNode; title: string; desc: string }[] = [
     {
       id: 'card', title: 'فيزا / ماستر كارد',
@@ -865,31 +903,89 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg }:
         </div>
       )}
 
-      {formData.paymentMethod === 'vodafone_cash' && (
-        <div style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#ef4444', margin: 0 }}>📱 بيانات فودافون كاش</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0 }}>
-            ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على الرقم: <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>01XXXXXXXXX</strong>
-          </p>
-          <div>
-            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم فودافون كاش الخاص بك</Label>
-            <Input value={formData.vodafonePhone}
-              onChange={e => onChange({ ...formData, vodafonePhone: e.target.value })}
-              className="h-10 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
-              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
-          </div>
-        </div>
-      )}
+      {(formData.paymentMethod === 'vodafone_cash' || formData.paymentMethod === 'instapay') && (() => {
+        const isVodafone = formData.paymentMethod === 'vodafone_cash';
+        const accent = isVodafone ? '#ef4444' : '#10b981';
+        const accentBg = isVodafone ? 'rgba(220,38,38,0.08)' : 'rgba(16,185,129,0.08)';
+        const accentBorder = isVodafone ? 'rgba(220,38,38,0.25)' : 'rgba(16,185,129,0.25)';
+        const accountNum = isVodafone ? '01XXXXXXXXX' : '01XXXXXXXXX@instapay';
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Payment instructions */}
+            <div style={{ background: accentBg, border: `1px solid ${accentBorder}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: accent, margin: 0 }}>
+                {isVodafone ? '📱 بيانات فودافون كاش' : '⚡ بيانات InstaPay'}
+              </p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+                ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على:{' '}
+                <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>{accountNum}</strong>
+              </p>
+              {isVodafone && (
+                <div>
+                  <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم فودافون كاش الخاص بك</Label>
+                  <Input value={formData.vodafonePhone}
+                    onChange={e => onChange({ ...formData, vodafonePhone: e.target.value })}
+                    className="h-10 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
+                    style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+                </div>
+              )}
+            </div>
 
-      {formData.paymentMethod === 'instapay' && (
-        <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 14, padding: 16 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#10b981', margin: '0 0 8px' }}>⚡ بيانات InstaPay</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
-            ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على حساب InstaPay الخاص بنا.<br />
-            رقم الحساب: <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>01XXXXXXXXX@instapay</strong>
-          </p>
-        </div>
-      )}
+            {/* Receipt upload */}
+            <div style={{ border: `2px dashed ${receiptFile ? accent : 'rgba(255,255,255,0.15)'}`, borderRadius: 16, padding: 18, background: receiptFile ? `${accent}08` : 'transparent' }}>
+              <p style={{ fontSize: 13, fontWeight: 800, color: receiptFile ? '#fff' : 'rgba(255,255,255,0.55)', margin: '0 0 4px' }}>
+                {receiptFile ? '✅ إيصال التحويل محدد' : '📎 ارفع إيصال التحويل (اختياري)'}
+              </p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 12px' }}>
+                {receiptFile ? 'سيُرفع الإيصال تلقائياً عند تأكيد الطلب' : 'صورة أو PDF — يسرع تفعيل الطلب'}
+              </p>
+
+              {/* Preview */}
+              {receiptPreviewUrl && (
+                <div style={{ marginBottom: 12, borderRadius: 12, overflow: 'hidden', maxHeight: 140, position: 'relative' }}>
+                  <img src={receiptPreviewUrl} alt="الإيصال" style={{ width: '100%', height: 140, objectFit: 'cover' }} />
+                </div>
+              )}
+              {receiptFile && !receiptPreviewUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>
+                  <ImageIcon size={14} color={accent} />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{receiptFile.name}</span>
+                </div>
+              )}
+
+              <input ref={receiptInputRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0] ?? null; onReceiptSelect(f); }} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => receiptInputRef.current?.click()}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                    background: receiptFile ? `${accent}22` : accent,
+                    color: receiptFile ? accent : '#fff',
+                    border: receiptFile ? `1.5px solid ${accent}` : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    fontFamily: "'Almarai',sans-serif",
+                  }}
+                >
+                  <Upload size={14} /> {receiptFile ? 'تغيير الإيصال' : 'اختر ملف'}
+                </button>
+                {receiptFile && (
+                  <button
+                    onClick={() => onReceiptSelect(null)}
+                    style={{
+                      padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
+                      background: 'rgba(239,68,68,0.12)', border: '1.5px solid rgba(239,68,68,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <XCircle size={16} color="#ef4444" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ display: 'flex', gap: 12 }}>
         <Btn variant="outline" onClick={onBack} disabled={isPending} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
@@ -905,15 +1001,21 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg }:
   );
 }
 
-function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
+function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState }: {
   orderId: number; paymentMethod: PayMethod; pickupType: PickupType;
+  autoUploadState: 'idle' | 'uploading' | 'done' | 'error';
 }) {
   const { getAuthHeaders } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  // Start from the auto-upload state — if receipt was already uploaded in Step 4, reflect that here
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'done' | 'error'>(autoUploadState);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoUploadState !== 'idle') setUploadState(autoUploadState);
+  }, [autoUploadState]);
 
   const needsReceipt = paymentMethod === 'vodafone_cash' || paymentMethod === 'instapay';
   const methodLabel = paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 'انستاباى';
