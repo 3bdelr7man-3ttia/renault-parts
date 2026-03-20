@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 export interface CartPart {
   id: number;
@@ -31,34 +32,59 @@ interface PartCartContextValue {
 }
 
 const PartCartContext = createContext<PartCartContextValue | null>(null);
-const LS_KEY     = 'renopack_part_cart';
-const LS_PKG_KEY = 'renopack_cart_package';
+const LS_KEY_PREFIX = 'renopack_part_cart';
+const LS_PKG_KEY_PREFIX = 'renopack_cart_package';
+
+function readCartItems(storageKey: string): CartPart[] {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? (JSON.parse(raw) as CartPart[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readCartPackage(storageKey: string): CartPackage | null {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? (JSON.parse(raw) as CartPackage) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function PartCartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartPart[]>(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      return raw ? (JSON.parse(raw) as CartPart[]) : [];
-    } catch { return []; }
-  });
-
-  const [cartPackage, setCartPackageState] = useState<CartPackage | null>(() => {
-    try {
-      const raw = localStorage.getItem(LS_PKG_KEY);
-      return raw ? (JSON.parse(raw) as CartPackage) : null;
-    } catch { return null; }
-  });
-
+  const { user } = useAuth();
+  const storageScope = useMemo(() => (user?.id ? `user:${user.id}` : 'guest'), [user?.id]);
+  const itemsStorageKey = `${LS_KEY_PREFIX}:${storageScope}`;
+  const packageStorageKey = `${LS_PKG_KEY_PREFIX}:${storageScope}`;
+  const activeScopeRef = useRef(storageScope);
+  const [items, setItems] = useState<CartPart[]>(() => readCartItems(`${LS_KEY_PREFIX}:guest`));
+  const [cartPackage, setCartPackageState] = useState<CartPackage | null>(() => readCartPackage(`${LS_PKG_KEY_PREFIX}:guest`));
   const [pkgJustAdded, setPkgJustAdded] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(items));
-  }, [items]);
+    localStorage.removeItem(LS_KEY_PREFIX);
+    localStorage.removeItem(LS_PKG_KEY_PREFIX);
+  }, []);
 
   useEffect(() => {
-    if (cartPackage) localStorage.setItem(LS_PKG_KEY, JSON.stringify(cartPackage));
-    else localStorage.removeItem(LS_PKG_KEY);
-  }, [cartPackage]);
+    if (activeScopeRef.current === storageScope) return;
+    activeScopeRef.current = storageScope;
+    setItems(readCartItems(itemsStorageKey));
+    setCartPackageState(readCartPackage(packageStorageKey));
+    setPkgJustAdded(false);
+  }, [itemsStorageKey, packageStorageKey, storageScope]);
+
+  useEffect(() => {
+    if (items.length > 0) localStorage.setItem(itemsStorageKey, JSON.stringify(items));
+    else localStorage.removeItem(itemsStorageKey);
+  }, [items, itemsStorageKey]);
+
+  useEffect(() => {
+    if (cartPackage) localStorage.setItem(packageStorageKey, JSON.stringify(cartPackage));
+    else localStorage.removeItem(packageStorageKey);
+  }, [cartPackage, packageStorageKey]);
 
   const addPart = (part: CartPart) =>
     setItems(prev => prev.some(p => p.id === part.id) ? prev : [...prev, part]);
