@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRoute, Link, useLocation } from 'wouter';
 import { useGetPackageBySlug, getGetPackageBySlugQueryKey } from '@workspace/api-client-react';
 import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Car, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
+
+type Variant = 'original' | 'turkish' | 'chinese';
 
 const G = '#C8974A';
 const BG = '#0D1220';
@@ -40,6 +42,40 @@ export default function PackageDetail() {
     query: { queryKey: getGetPackageBySlugQueryKey(slug), enabled: !!slug }
   });
 
+  // ── hooks must always run (before any early returns) ──────────────────────
+  const defaultSelections = useMemo<Record<number, Variant>>(() => {
+    const s: Record<number, Variant> = {};
+    pkg?.parts?.forEach(p => {
+      if (p.priceChinese != null) s[p.id] = 'chinese';
+      else if (p.priceTurkish != null) s[p.id] = 'turkish';
+      else s[p.id] = 'original';
+    });
+    return s;
+  }, [pkg?.parts]);
+
+  const [partSelections, setPartSelections] = useState<Record<number, Variant>>({});
+
+  // Sync default selections when package data first arrives
+  useEffect(() => {
+    if (pkg?.parts?.length) {
+      setPartSelections(defaultSelections);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pkg?.id]);
+
+  const liveTotal = useMemo(() => {
+    if (!pkg?.parts) return 0;
+    return pkg.parts.reduce((sum, p) => {
+      const v = partSelections[p.id];
+      const price =
+        v === 'original' ? Number(p.priceOriginal ?? 0) :
+        v === 'turkish'  ? Number(p.priceTurkish ?? 0)  :
+                           Number(p.priceChinese ?? 0);
+      return sum + price;
+    }, 0);
+  }, [pkg?.parts, partSelections]);
+  // ─────────────────────────────────────────────────────────────────────────
+
   if (isLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG }}>
@@ -57,9 +93,8 @@ export default function PackageDetail() {
     );
   }
 
-  const sellPrice = Number(pkg.sellPrice);
   const basePrice = Number(pkg.basePrice);
-  const savings = basePrice - sellPrice;
+  const savings = basePrice > liveTotal ? basePrice - liveTotal : 0;
 
   const handleOrderClick = () => {
     if (!user) setLocation('/login?redirect=/checkout/' + pkg.id);
@@ -140,9 +175,12 @@ export default function PackageDetail() {
               </div>
             </div>
 
-            {/* Price comparison */}
+            {/* Price comparison — interactive variant selector */}
             <div style={{ background: B2, borderRadius: 24, border: `1px solid ${G}25`, padding: 28, overflowX: 'auto' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 20 }}>مقارنة الأسعار حسب الجودة</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: 0 }}>اختر جودة كل قطعة</h2>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>اضغط على السعر لاختياره — يتحدث الإجمالي تلقائياً</span>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: 420 }}>
                 <thead>
                   <tr>
@@ -159,24 +197,45 @@ export default function PackageDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pkg.parts?.map((part) => (
-                    <tr key={part.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '12px 0' }}>
-                        <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{part.name}</span>
-                        <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{getPartTypeLabel(part.type)}</span>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontWeight: 700, color: '#C8974A', fontSize: 13 }}>
-                        {part.priceOriginal != null ? `${Number(part.priceOriginal).toLocaleString('ar-EG')} ج.م` : <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontWeight: 600, color: '#60a5fa', fontSize: 13 }}>
-                        {part.priceTurkish != null ? `${Number(part.priceTurkish).toLocaleString('ar-EG')} ج.م` : <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
-                        {part.priceChinese != null ? `${Number(part.priceChinese).toLocaleString('ar-EG')} ج.م` : <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
-                      </td>
-                    </tr>
-                  ))}
+                  {pkg.parts?.map((part) => {
+                    const sel = partSelections[part.id];
+                    const cellStyle = (v: Variant, avail: boolean, activeColor: string) => ({
+                      padding: '10px 12px', textAlign: 'center' as const, fontWeight: sel === v ? 800 : 600,
+                      fontSize: 13, cursor: avail ? 'pointer' : 'default', transition: 'all 0.15s',
+                      background: sel === v ? `${activeColor}18` : 'transparent',
+                      borderRadius: 10, border: sel === v ? `1.5px solid ${activeColor}` : '1.5px solid transparent',
+                      color: sel === v ? activeColor : avail ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
+                    });
+                    return (
+                      <tr key={part.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '12px 0' }}>
+                          <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{part.name}</span>
+                          <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{getPartTypeLabel(part.type)}</span>
+                        </td>
+                        <td style={cellStyle('original', part.priceOriginal != null, '#C8974A')}
+                          onClick={() => part.priceOriginal != null && setPartSelections(s => ({ ...s, [part.id]: 'original' }))}>
+                          {part.priceOriginal != null ? `${Number(part.priceOriginal).toLocaleString('ar-EG')} ج.م` : <span>—</span>}
+                        </td>
+                        <td style={cellStyle('turkish', part.priceTurkish != null, '#60a5fa')}
+                          onClick={() => part.priceTurkish != null && setPartSelections(s => ({ ...s, [part.id]: 'turkish' }))}>
+                          {part.priceTurkish != null ? `${Number(part.priceTurkish).toLocaleString('ar-EG')} ج.م` : <span>—</span>}
+                        </td>
+                        <td style={cellStyle('chinese', part.priceChinese != null, '#a1a1aa')}
+                          onClick={() => part.priceChinese != null && setPartSelections(s => ({ ...s, [part.id]: 'chinese' }))}>
+                          {part.priceChinese != null ? `${Number(part.priceChinese).toLocaleString('ar-EG')} ج.م` : <span>—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
+                <tfoot>
+                  <tr>
+                    <td style={{ paddingTop: 16, fontWeight: 900, color: '#fff', fontSize: 14 }}>الإجمالي</td>
+                    <td colSpan={3} style={{ paddingTop: 16, textAlign: 'center', fontWeight: 900, fontSize: 20, color: G }}>
+                      {liveTotal.toLocaleString('ar-EG')} ج.م
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
 
@@ -217,19 +276,24 @@ export default function PackageDetail() {
 
               <div style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>سعر القطع في السوق</span>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>سعر السوق المرجعي</span>
                   <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through' }}>
                     {basePrice.toLocaleString('ar-EG')} ج.م
                   </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span style={{ fontSize: 16, color: '#fff', fontWeight: 700 }}>سعرنا الحصري</span>
-                  <span style={{ fontSize: 28, fontWeight: 900, color: G }}>{sellPrice.toLocaleString('ar-EG')} ج.م</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 16, color: '#fff', fontWeight: 700 }}>إجمالي اختيارك</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: G, transition: 'all 0.2s' }}>{liveTotal.toLocaleString('ar-EG')} ج.م</span>
                 </div>
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10, display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>أنت توفر</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: '#22c55e' }}>{savings.toLocaleString()} ج.م</span>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'left', marginBottom: 12 }}>
+                  يتغير حسب الجودة التي تختارها في الجدول ↑
                 </div>
+                {savings > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10, display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, color: '#22c55e', fontWeight: 700 }}>أنت توفر</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#22c55e' }}>{savings.toLocaleString('ar-EG')} ج.م</span>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
