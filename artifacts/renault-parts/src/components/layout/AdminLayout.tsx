@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { getRoleLabel } from '@/lib/permissions';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -29,27 +30,41 @@ const S  = '#111826';
 const S2 = '#161E30';
 
 const navItems = [
-  { href: '/admin',                        label: 'الرئيسية',       icon: LayoutDashboard, exact: true },
-  { href: '/admin/orders',                 label: 'الطلبات',        icon: ClipboardList },
-  { href: '/admin/appointments',           label: 'المواعيد',       icon: CalendarCheck },
-  { href: '/admin/packages',               label: 'الباكدجات',      icon: Package2 },
-  { href: '/admin/workshops',              label: 'الورش',          icon: Wrench },
-  { href: '/admin/workshop-applications',  label: 'طلبات الانضمام', icon: FileCheck },
-  { href: '/admin/parts',                  label: 'القطع',          icon: Settings2 },
-  { href: '/admin/reviews',                label: 'التقييمات',      icon: Star },
-  { href: '/admin/sales',                  label: 'المبيعات',       icon: BarChart2 },
-  { href: '/admin/expenses',               label: 'المصروفات',      icon: TrendingDown },
-  { href: '/admin/users',                  label: 'المستخدمون',     icon: Users },
+  { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, exact: true, adminOnly: true },
+  { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, employeeOnly: true },
+  { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, permission: 'orders.view' as const },
+  { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, permission: 'appointments.view' as const },
+  { href: '/admin/packages',               label: 'الباكدجات',        icon: Package2, permission: 'packages.edit' as const },
+  { href: '/admin/workshops',              label: 'الورش',            icon: Wrench, permission: 'workshops.manage' as const },
+  { href: '/admin/workshop-applications',  label: 'طلبات الانضمام',   icon: FileCheck, permission: 'workshops.manage' as const },
+  { href: '/admin/parts',                  label: 'القطع',            icon: Settings2, permission: 'parts.edit' as const },
+  { href: '/admin/reviews',                label: 'التقييمات',        icon: Star, permission: 'reviews.view' as const },
+  { href: '/admin/sales',                  label: 'المبيعات',         icon: BarChart2, permission: 'reports.sales' as const },
+  { href: '/admin/expenses',               label: 'المصروفات',        icon: TrendingDown, permission: 'reports.financial' as const },
+  { href: '/admin/users',                  label: 'المستخدمون',       icon: Users, permission: 'employees.manage' as const },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission, isRole } = useAuth();
   const { isMobile } = useBreakpoint();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
+
+  const visibleNavItems = useMemo(() => {
+    return navItems.filter((item) => {
+      if (item.adminOnly) return isRole('admin');
+      if (item.employeeOnly) return isRole('employee');
+      if (isRole('admin')) return true;
+      if (!isRole('employee')) return false;
+      if (!item.permission) return true;
+      return hasPermission(item.permission);
+    });
+  }, [hasPermission, isRole]);
+
+  const mobileNavItems = visibleNavItems.slice(0, 5);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
@@ -59,7 +74,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
         width: 272, background: S,
         borderLeft: '1px solid rgba(200,151,74,0.1)',
-        display: 'flex', flexDirection: 'column',
+        display: 'flex', flexDirection: 'column', flexShrink: 0,
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .3s ease',
       }}
@@ -96,14 +111,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div style={{ minWidth: 0 }}>
               <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#E8F0F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>مدير النظام</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{getRoleLabel(user?.role, user?.employeeRole)}</p>
             </div>
           </div>
         </div>
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const active = isActive(item.href, item.exact);
             return (
               <Link key={item.href} href={item.href}>
@@ -192,14 +207,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         borderTop: '1px solid rgba(200,151,74,0.1)',
         display: 'flex', height: 60,
       }} className="lg:hidden">
-        {[
-          { href: '/admin',               label: 'الرئيسية', icon: navItems[0].icon },
-          { href: '/admin/orders',         label: 'الطلبات',  icon: navItems[1].icon },
-          { href: '/admin/appointments',   label: 'المواعيد', icon: navItems[2].icon },
-          { href: '/admin/sales',          label: 'المبيعات', icon: navItems[8].icon },
-          { href: '/admin/users',          label: 'المستخدمون', icon: navItems[10].icon },
-        ].map(item => {
-          const active = isActive(item.href, item.href === '/admin');
+        {mobileNavItems.map(item => {
+          const active = isActive(item.href, item.exact);
           return (
             <Link key={item.href} href={item.href} style={{ flex: 1, textDecoration: 'none' }}>
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: active ? G : 'rgba(255,255,255,0.35)', transition: 'color .2s' }}>
@@ -214,7 +223,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <style>{`
         @media (min-width: 1024px) {
           .lg-sidebar { position: relative !important; transform: translateX(0) !important; }
-          .admin-main { margin-right: 272px; }
+          .admin-main { margin-right: 0 !important; }
           .lg\\:hidden { display: none !important; }
         }
       `}</style>
