@@ -594,15 +594,21 @@ router.delete("/admin/packages/:id", requireAuth, requireAdmin, async (req, res)
 // GET /admin/workshops/:id/orders
 router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
+
   const rows = await db
     .select({
       order: ordersTable,
       user: { name: usersTable.name, phone: usersTable.phone },
       pkg: { name: packagesTable.name },
+      workshopFee: workshopPricingTable.fee,
     })
     .from(ordersTable)
     .innerJoin(usersTable, eq(ordersTable.userId, usersTable.id))
     .innerJoin(packagesTable, eq(ordersTable.packageId, packagesTable.id))
+    .leftJoin(workshopPricingTable, and(
+      eq(workshopPricingTable.workshopId, id),
+      eq(workshopPricingTable.packageId, ordersTable.packageId),
+    ))
     .where(eq(ordersTable.workshopId, id))
     .orderBy(desc(ordersTable.createdAt));
 
@@ -614,6 +620,7 @@ router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req,
     packageName: r.pkg.name,
     status: r.order.status,
     total: Number(r.order.total),
+    workshopFee: r.workshopFee !== null ? Number(r.workshopFee) : null,
     carModel: r.order.carModel,
     carYear: r.order.carYear,
     createdAt: r.order.createdAt,

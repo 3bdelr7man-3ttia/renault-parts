@@ -9,7 +9,8 @@ const G = '#C8974A';
 
 type WorkshopOrder = {
   id: number; userName: string; userPhone: string | null; packageName: string;
-  status: string; total: number; carModel: string; carYear: number; createdAt: string;
+  status: string; total: number; workshopFee: number | null;
+  carModel: string; carYear: number; createdAt: string;
 };
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -53,12 +54,13 @@ export default function AdminWorkshops() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
-  const [ordersModal, setOrdersModal] = useState<{ id: number; name: string } | null>(null);
+  const [ordersModal, setOrdersModal] = useState<{ id: number; name: string; phone: string | null } | null>(null);
   const [workshopOrders, setWorkshopOrders] = useState<WorkshopOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
-  const openOrders = async (ws: { id: number; name: string }) => {
+  const openOrders = async (ws: { id: number; name: string; phone: string | null }) => {
     setOrdersModal(ws);
+    setWorkshopOrders([]);
     setLoadingOrders(true);
     try {
       const res = await fetch(`/api/admin/workshops/${ws.id}/orders`, { headers: authHeader });
@@ -343,7 +345,7 @@ export default function AdminWorkshops() {
                       ) : (
                         <>
                           <button
-                            onClick={() => openOrders({ id: ws.id, name: ws.name })}
+                            onClick={() => openOrders({ id: ws.id, name: ws.name, phone: ws.phone ?? null })}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                             style={{ background: `${G}15`, color: G, border: `1px solid ${G}30` }}
                           >
@@ -379,6 +381,12 @@ export default function AdminWorkshops() {
               <div>
                 <h2 className="text-xl font-black text-white">طلبات الورشة</h2>
                 <p className="text-white/40 text-sm mt-0.5">{ordersModal.name}</p>
+                {ordersModal.phone && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Phone className="w-3 h-3" style={{ color: G }} />
+                    <span className="text-xs font-bold" style={{ color: G }} dir="ltr">{ordersModal.phone}</span>
+                  </div>
+                )}
               </div>
               <button onClick={() => setOrdersModal(null)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center">
                 <X className="w-4 h-4" />
@@ -390,40 +398,61 @@ export default function AdminWorkshops() {
               ) : workshopOrders.length === 0 ? (
                 <div className="py-16 text-center text-white/30 font-bold">لا توجد طلبات لهذه الورشة بعد</div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[#0F1625]">
-                    <tr className="text-white/40 text-xs font-bold border-b border-white/10">
-                      <th className="px-6 py-3 text-right">#</th>
-                      <th className="px-4 py-3 text-right">العميل</th>
-                      <th className="px-4 py-3 text-right">الباكدج</th>
-                      <th className="px-4 py-3 text-right">السيارة</th>
-                      <th className="px-4 py-3 text-right">الحالة</th>
-                      <th className="px-4 py-3 text-right">الإجمالي</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workshopOrders.map(order => {
-                      const st = STATUS_MAP[order.status] ?? { label: order.status, color: '#94a3b8' };
-                      return (
-                        <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="px-6 py-3 text-white/40 font-mono text-xs">{order.id}</td>
-                          <td className="px-4 py-3">
-                            <div className="text-white text-xs font-bold">{order.userName}</div>
-                            {order.userPhone && <div className="text-white/40 text-xs" dir="ltr">{order.userPhone}</div>}
-                          </td>
-                          <td className="px-4 py-3 text-white/70 text-xs">{order.packageName}</td>
-                          <td className="px-4 py-3 text-white/60 text-xs">{order.carModel} {order.carYear}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ color: st.color, background: `${st.color}15` }}>
-                              {st.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 font-black text-sm" style={{ color: G }}>{order.total.toLocaleString()} ج.م</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <>
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-[#0F1625]">
+                      <tr className="text-white/40 text-xs font-bold border-b border-white/10">
+                        <th className="px-4 py-3 text-right">#</th>
+                        <th className="px-4 py-3 text-right">العميل</th>
+                        <th className="px-4 py-3 text-right">الباكدج</th>
+                        <th className="px-4 py-3 text-right">السيارة</th>
+                        <th className="px-4 py-3 text-right">الحالة</th>
+                        <th className="px-4 py-3 text-right">الإجمالي</th>
+                        <th className="px-4 py-3 text-right" style={{ color: G }}>أرباح الورشة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workshopOrders.map(order => {
+                        const st = STATUS_MAP[order.status] ?? { label: order.status, color: '#94a3b8' };
+                        return (
+                          <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="px-4 py-3 text-white/40 font-mono text-xs">{order.id}</td>
+                            <td className="px-4 py-3">
+                              <div className="text-white text-xs font-bold">{order.userName}</div>
+                              {order.userPhone && <div className="text-white/40 text-xs" dir="ltr">{order.userPhone}</div>}
+                            </td>
+                            <td className="px-4 py-3 text-white/70 text-xs">{order.packageName}</td>
+                            <td className="px-4 py-3 text-white/60 text-xs">{order.carModel} {order.carYear}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ color: st.color, background: `${st.color}15` }}>
+                                {st.label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 font-black text-sm text-white/70">{order.total.toLocaleString()} ج.م</td>
+                            <td className="px-4 py-3 font-black text-sm" style={{ color: order.workshopFee !== null ? G : 'rgba(255,255,255,0.2)' }}>
+                              {order.workshopFee !== null ? `${order.workshopFee.toLocaleString()} ج.م` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {/* Summary row */}
+                  {workshopOrders.length > 0 && (
+                    <div className="px-6 py-4 border-t border-white/10 flex flex-wrap gap-6 justify-end" style={{ background: 'rgba(200,151,74,0.04)' }}>
+                      <div className="text-right">
+                        <p className="text-white/40 text-xs font-bold mb-0.5">إجمالي الطلبات</p>
+                        <p className="text-white font-black text-sm">{workshopOrders.reduce((s, o) => s + o.total, 0).toLocaleString()} ج.م</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold mb-0.5" style={{ color: 'rgba(200,151,74,0.6)' }}>إجمالي أرباح الورشة</p>
+                        <p className="font-black text-sm" style={{ color: G }}>
+                          {workshopOrders.reduce((s, o) => s + (o.workshopFee ?? 0), 0).toLocaleString()} ج.م
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
