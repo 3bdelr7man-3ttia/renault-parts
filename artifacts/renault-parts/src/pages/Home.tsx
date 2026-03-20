@@ -951,6 +951,8 @@ export default function Home() {
               return <line key={i} x1={640 - 640 * p} y1={y} x2={640 + 640 * p} y2={y} stroke="rgba(200,151,74,1)" strokeWidth=".6" />;
             })}
           </svg>
+          {/* Logo watermark */}
+          <img src={bakoLogoImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: isMobile ? 320 : 560, height: isMobile ? 320 : 560, objectFit: 'contain', opacity: 0.04, pointerEvents: 'none', userSelect: 'none', filter: 'grayscale(1) brightness(3)', mixBlendMode: 'screen' }} />
           {/* Particles */}
           {[{ top: '18%', left: '8%', c: G, d: '0s', sz: 5 }, { top: '72%', left: '14%', c: SK, d: '1.8s', sz: 4 }, { top: '40%', left: '28%', c: LV, d: '3.2s', sz: 3 }, { top: '12%', left: '44%', c: SG, d: '.6s', sz: 4 }, { top: '80%', left: '52%', c: G, d: '2.1s', sz: 3 }, { top: '25%', left: '76%', c: SK, d: '1.2s', sz: 5 }].map((p, i) => (
             <div key={i} style={{ position: 'absolute', top: p.top, left: p.left, width: p.sz, height: p.sz, borderRadius: '50%', background: p.c, boxShadow: `0 0 ${p.sz * 2}px ${p.c}`, animation: `rp-particle ${4 + i}s ease-in-out infinite ${p.d}` }} />
