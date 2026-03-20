@@ -9,6 +9,7 @@ import { CarProvider } from "@/lib/car-context";
 import { PartCartProvider } from "@/lib/part-cart-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { WorkshopLayout } from "@/components/layout/WorkshopLayout";
 import ChatWidget from "@/components/ChatWidget";
 
 // Pages
@@ -40,6 +41,12 @@ import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AccessDenied from "@/pages/AccessDenied";
 import JoinWorkshop from "@/pages/JoinWorkshop";
 
+// Workshop Portal Pages
+import WorkshopDashboard from "@/pages/workshop/WorkshopDashboard";
+import WorkshopAppointments from "@/pages/workshop/WorkshopAppointments";
+import WorkshopOrders from "@/pages/workshop/WorkshopOrders";
+import WorkshopEarnings from "@/pages/workshop/WorkshopEarnings";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -58,9 +65,20 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function WorkshopGuard({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  if (isLoading) return null;
+  if (!user) { setLocation('/login'); return null; }
+  if (user.role === 'admin') { setLocation('/admin'); return null; }
+  if (user.role !== 'workshop') { return <AccessDenied />; }
+  return <>{children}</>;
+}
+
 function Router() {
   const [location] = useLocation();
   const isAdmin = location.startsWith('/admin');
+  const isWorkshop = location.startsWith('/workshop');
 
   if (isAdmin) {
     return (
@@ -83,6 +101,22 @@ function Router() {
           </Switch>
         </AdminLayout>
       </AdminGuard>
+    );
+  }
+
+  if (isWorkshop) {
+    return (
+      <WorkshopGuard>
+        <WorkshopLayout>
+          <Switch>
+            <Route path="/workshop" component={WorkshopDashboard} />
+            <Route path="/workshop/appointments" component={WorkshopAppointments} />
+            <Route path="/workshop/orders" component={WorkshopOrders} />
+            <Route path="/workshop/earnings" component={WorkshopEarnings} />
+            <Route component={NotFound} />
+          </Switch>
+        </WorkshopLayout>
+      </WorkshopGuard>
     );
   }
 

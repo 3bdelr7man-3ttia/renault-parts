@@ -11,6 +11,7 @@ import partsRouter from "./parts";
 import adminRouter from "./admin";
 import paymentRouter from "./payment";
 import appointmentsRouter from "./appointments";
+import workshopRouter from "./workshop";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(partsRouter);
 router.use(adminRouter);
 router.use(paymentRouter);
 router.use(appointmentsRouter);
+router.use(workshopRouter);
 
 export default router;

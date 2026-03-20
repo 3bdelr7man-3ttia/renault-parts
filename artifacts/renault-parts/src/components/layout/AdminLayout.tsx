@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -44,6 +45,7 @@ const navItems = [
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { isMobile } = useBreakpoint();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (href: string, exact?: boolean) =>
@@ -178,15 +180,42 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, overflowAuto: 'auto', padding: 24, overflowY: 'auto' } as React.CSSProperties}>
+        <main style={{ flex: 1, padding: isMobile ? '14px 12px 80px' : 24, overflowY: 'auto' }}>
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom nav for admin - quick access to main sections */}
+      <nav style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+        background: `${S}F5`, backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(200,151,74,0.1)',
+        display: 'flex', height: 60,
+      }} className="lg:hidden">
+        {[
+          { href: '/admin',               label: 'الرئيسية', icon: navItems[0].icon },
+          { href: '/admin/orders',         label: 'الطلبات',  icon: navItems[1].icon },
+          { href: '/admin/appointments',   label: 'المواعيد', icon: navItems[2].icon },
+          { href: '/admin/sales',          label: 'المبيعات', icon: navItems[8].icon },
+          { href: '/admin/users',          label: 'المستخدمون', icon: navItems[10].icon },
+        ].map(item => {
+          const active = isActive(item.href, item.href === '/admin');
+          return (
+            <Link key={item.href} href={item.href} style={{ flex: 1, textDecoration: 'none' }}>
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: active ? G : 'rgba(255,255,255,0.35)', transition: 'color .2s' }}>
+                <item.icon size={18} style={{ strokeWidth: active ? 2.5 : 1.8 }} />
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: "'Almarai',sans-serif" }}>{item.label}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
 
       <style>{`
         @media (min-width: 1024px) {
           .lg-sidebar { position: relative !important; transform: translateX(0) !important; }
           .admin-main { margin-right: 272px; }
+          .lg\\:hidden { display: none !important; }
         }
       `}</style>
     </div>
