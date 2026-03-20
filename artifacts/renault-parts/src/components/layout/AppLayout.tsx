@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { usePartCart } from '@/lib/part-cart-context';
+import { isWorkshopRole } from '@/lib/permissions';
 import {
   LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search,
   Settings, Building2, ShoppingCart, X, Trash2, ArrowLeft,
@@ -106,7 +107,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const authLinks: Array<{ href: string; label: string; Icon: React.ElementType }> = [];
   if (user) authLinks.push({ href: '/my-orders', label: 'طلباتي', Icon: ClipboardList });
-  if (user?.role === 'workshop') authLinks.push({ href: '/workshop', label: 'لوحة الورشة', Icon: Wrench });
+  if (isWorkshopRole(user?.role)) authLinks.push({ href: '/workshop', label: 'لوحة الورشة', Icon: Wrench });
+  if (user?.role === 'employee') authLinks.push({ href: '/admin/employee/dashboard', label: 'لوحة الموظف', Icon: ShieldCheck });
   if (user?.role === 'admin') authLinks.push({ href: '/admin', label: 'الإدارة', Icon: ShieldCheck });
 
   const isActive = (href: string) => href === '/' ? location === '/' : location.startsWith(href);
