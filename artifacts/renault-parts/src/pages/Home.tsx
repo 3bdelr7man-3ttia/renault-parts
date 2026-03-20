@@ -6,7 +6,7 @@ import {
   Building2, Gift, Sparkles, CheckCircle2, BadgeCheck,
   ArrowLeftRight, Plus, Minus, Layers, Send, Bot, ChevronDown, Truck,
 } from 'lucide-react';
-import { useListPackages } from '@workspace/api-client-react';
+import { useListPackages, useListParts } from '@workspace/api-client-react';
 import bakoImg    from '@/assets/bako-new.png';
 import bakoLogoImg from '@/assets/bako-logo.png';
 import partOilImg    from '@/assets/part-oil.jpg';
@@ -94,33 +94,76 @@ const AI_QA: Record<string, string> = {
 
 const CN = '#E53935'; // chinese red accent
 
+interface VariantInfo {
+  name: string; price: number; score: number; warranty: string; origin: string; badge: string;
+  available: boolean;
+}
 interface ComparePart {
   id: string; label: string; img: string;
-  orig: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
-  turk: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
-  chin: { name: string; price: number; score: number; warranty: string; origin: string; badge: string; };
+  orig: VariantInfo;
+  turk: VariantInfo;
+  chin: VariantInfo;
   aiIntro: string; quickQ: string[];
+}
+
+type RealPart = {
+  id: number; name: string; type: string;
+  priceOriginal: number | null; priceTurkish: number | null; priceChinese: number | null;
+  imageUrl?: string | null; supplier?: string | null;
+};
+
+function buildCompareParts(parts: RealPart[]): ComparePart[] | null {
+  const eligible = parts.filter(p => p.priceOriginal || p.priceTurkish || p.priceChinese);
+  if (eligible.length === 0) return null;
+  return eligible.map(p => {
+    const hasOrig = !!(p.priceOriginal && p.priceOriginal > 0);
+    const hasTurk = !!(p.priceTurkish && p.priceTurkish > 0);
+    const hasChin = !!(p.priceChinese && p.priceChinese > 0);
+    const availableCount = [hasOrig, hasTurk, hasChin].filter(Boolean).length;
+    const intros = [];
+    if (hasOrig) intros.push(`الأصلي بـ ${p.priceOriginal} ج.م`);
+    if (hasTurk) intros.push(`التركي بـ ${p.priceTurkish} ج.م`);
+    if (hasChin) intros.push(`الصيني بـ ${p.priceChinese} ج.م`);
+    return {
+      id: String(p.id),
+      label: p.name,
+      img: (p.imageUrl as string) || partOilImg,
+      orig: hasOrig
+        ? { name: p.name, price: p.priceOriginal!, score: 95, warranty: '24 شهر', origin: '🇫🇷 أصلي', badge: 'أصلي', available: true }
+        : { name: p.name, price: 0, score: 0, warranty: '—', origin: '—', badge: 'أصلي', available: false },
+      turk: hasTurk
+        ? { name: p.name, price: p.priceTurkish!, score: 78, warranty: '12 شهر', origin: '🇹🇷 تركيا', badge: 'بديل تركي', available: true }
+        : { name: p.name, price: 0, score: 0, warranty: '—', origin: '—', badge: 'تركي', available: false },
+      chin: hasChin
+        ? { name: p.name, price: p.priceChinese!, score: 58, warranty: '6 شهور', origin: '🇨🇳 الصين', badge: 'صيني', available: true }
+        : { name: p.name, price: 0, score: 0, warranty: '—', origin: '—', badge: 'صيني', available: false },
+      aiIntro: availableCount > 1
+        ? `${p.name} متاح بـ ${intros.join(' و ')}. الأصلي أفضل جودة وضمانه أطول — اختار حسب ميزانيتك.`
+        : `${p.name} متاح ${intros[0] ?? ''}. تواصل معنا لمعرفة المزيد.`,
+      quickQ: ['أنهي أحسن؟', 'الفرق في الجودة إيه؟', 'الضمان إيه؟', 'الأرخص آمن؟'],
+    };
+  });
 }
 
 const AI_COMPARE: ComparePart[] = [
   { id: 'oil', label: 'زيت الموبيل', img: partOilImg,
-    orig: { name: 'Mobil 1 Full Synthetic',   price: 320, score: 97, warranty: '24 شهر', origin: '🇩🇪 ألمانيا', badge: 'أصلي أوروبي' },
-    turk: { name: 'Selenia WR Pure Energy',   price: 160, score: 73, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
-    chin: { name: 'Great Wall Motor Oil',     price: 85,  score: 51, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    orig: { name: 'Mobil 1 Full Synthetic',   price: 320, score: 97, warranty: '24 شهر', origin: '🇩🇪 ألمانيا', badge: 'أصلي أوروبي', available: true },
+    turk: { name: 'Selenia WR Pure Energy',   price: 160, score: 73, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي',   available: true },
+    chin: { name: 'Great Wall Motor Oil',     price: 85,  score: 51, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني',         available: true },
     aiIntro: 'Mobil 1 الأصلي الألماني الأفضل على طول. الصيني السعر رخيص بس الجودة والضمان أضعف بكثير — مش بنصح بيه للرينو.',
     quickQ: ['مين أحسن؟', 'الفرق في الجودة إيه؟', 'ضمان إيه؟', 'الموبيل يتحمل كام كيلو؟'],
   },
   { id: 'brk', label: 'فرامل Brembo', img: partBrakesImg,
-    orig: { name: 'Brembo Standard',          price: 680, score: 96, warranty: '24 شهر', origin: '🇮🇹 إيطاليا', badge: 'أصلي إيطالي' },
-    turk: { name: 'Beral Brake Pads',         price: 320, score: 79, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
-    chin: { name: 'Yida Brake Pads',          price: 170, score: 58, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    orig: { name: 'Brembo Standard',          price: 680, score: 96, warranty: '24 شهر', origin: '🇮🇹 إيطاليا', badge: 'أصلي إيطالي', available: true },
+    turk: { name: 'Beral Brake Pads',         price: 320, score: 79, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي',   available: true },
+    chin: { name: 'Yida Brake Pads',          price: 170, score: 58, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني',         available: true },
     aiIntro: 'الفرامل مش وقت التوفير! Brembo الإيطالي = أمان حقيقي. الصيني سعره أرخص لكن المسافة الكابحة أطول وبيتآكل أسرع.',
     quickQ: ['Beral بتوقف صح؟', 'فرق الأداء إيه؟', 'الأوريجنال بيدوم كام؟', 'الصيني آمن؟'],
   },
   { id: 'air', label: 'فلتر هواء', img: partAirImg,
-    orig: { name: 'Renault Original Filter',  price: 95,  score: 99, warranty: '24 شهر', origin: '🇫🇷 فرنسا',   badge: 'أصلي رينو'   },
-    turk: { name: 'Knecht Air Filter',        price: 48,  score: 83, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي'   },
-    chin: { name: 'Sakura Air Filter',        price: 22,  score: 55, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني'         },
+    orig: { name: 'Renault Original Filter',  price: 95,  score: 99, warranty: '24 شهر', origin: '🇫🇷 فرنسا',   badge: 'أصلي رينو',   available: true },
+    turk: { name: 'Knecht Air Filter',        price: 48,  score: 83, warranty: '12 شهر', origin: '🇹🇷 تركيا',   badge: 'بديل تركي',   available: true },
+    chin: { name: 'Sakura Air Filter',        price: 22,  score: 55, warranty: '6 شهور', origin: '🇨🇳 الصين',    badge: 'صيني',         available: true },
     aiIntro: 'الأصلي الفرنسي هو الأفضل. التركي Knecht مقبول. الصيني Sakura رخيص جداً بس كفاءة التصفية ضعيفة — خطر على الموتور.',
     quickQ: ['الفلتر بيتغير كل امتى؟', 'التركي بيضر الموتور؟', 'الأصلي يستاهل؟', 'الصيني مناسب؟'],
   },
@@ -339,37 +382,38 @@ function ScoreRing({ score, color, size = 80 }: { score: number; color: string; 
 }
 
 /* ── AI Compare section ── */
-function AiCompareSection() {
+function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null }) {
+  const data = (compareData && compareData.length > 0) ? compareData : AI_COMPARE;
   const [sel, setSel] = useState(0);
-  const part = AI_COMPARE[sel];
+  const safeIdx = sel >= data.length ? 0 : sel;
+  const part = data[safeIdx];
 
-  const scores = [part.orig.score, part.turk.score, part.chin.score];
-  const bestScore = Math.max(...scores);
-  const bestIdx = scores.indexOf(bestScore); // 0=orig,1=turk,2=chin
+  const availableScores = [
+    part.orig.available ? part.orig.score : -1,
+    part.turk.available ? part.turk.score : -1,
+    part.chin.available ? part.chin.score : -1,
+  ];
+  const bestScore = Math.max(...availableScores);
+  const bestIdx = availableScores.indexOf(bestScore);
 
   const COL = [
-    { key: 'orig' as const, color: SG,  accent: SG  },
-    { key: 'turk' as const, color: SK,  accent: SK  },
-    { key: 'chin' as const, color: CN,  accent: CN  },
+    { key: 'orig' as const, color: SG, accent: SG },
+    { key: 'turk' as const, color: SK, accent: SK },
+    { key: 'chin' as const, color: CN, accent: CN },
   ];
 
-  const ROWS: { label: string; vals: [string, string, string]; colors: [string, string, string] }[] = [
-    { label: 'الجودة',
-      vals:   [`${part.orig.score}%`, `${part.turk.score}%`, `${part.chin.score}%`],
-      colors: [SG, SK, CN] },
-    { label: 'السعر',
-      vals:   [`${part.orig.price} ج.م`, `${part.turk.price} ج.م`, `${part.chin.price} ج.م`],
-      colors: [TX, TX, TX] },
-    { label: 'الضمان',
-      vals:   [part.orig.warranty, part.turk.warranty, part.chin.warranty],
-      colors: [TX, TX, TX] },
-    { label: 'المنشأ',
-      vals:   [part.orig.origin, part.turk.origin, part.chin.origin],
-      colors: [TX, TX, TX] },
-  ];
-
-  // grid: [col1] [label-center] [col2] [label-center] [col3]
   const GRID = '1fr 44px 1fr 44px 1fr';
+  const isFromDB = !!(compareData && compareData.length > 0);
+
+  const rowVal = (v: VariantInfo, type: 'score' | 'price' | 'warranty' | 'origin') => {
+    if (!v.available) return 'غير متوفر';
+    if (type === 'score') return `${v.score}%`;
+    if (type === 'price') return `${v.price.toLocaleString('ar-EG')} ج.م`;
+    if (type === 'warranty') return v.warranty;
+    return v.origin;
+  };
+
+  const rowColor = (v: VariantInfo, baseColor: string) => v.available ? baseColor : 'rgba(255,255,255,0.2)';
 
   return (
     <section style={{ padding: '48px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
@@ -378,17 +422,22 @@ function AiCompareSection() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: `rgba(200,151,74,0.08)`, border: `1px solid rgba(200,151,74,0.2)`, borderRadius: 999, padding: '5px 16px', marginBottom: 12 }}>
-            <Bot size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكو AI — مقارنة ثلاثية</span>
+            <Bot size={13} color={G} />
+            <span style={{ color: G, fontSize: 12, fontWeight: 700 }}>
+              باكو AI — مقارنة ثلاثية {isFromDB && <span style={{ color: SG }}>• بيانات حقيقية</span>}
+            </span>
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>أصلي ولا تركي ولا صيني؟ باكو بيحلّلها ليك 🤖</h2>
-          <p style={{ color: TD, fontSize: 13 }}>اختار القطعة وشوف الفرق في الجودة والسعر والضمان</p>
+          <p style={{ color: TD, fontSize: 13 }}>
+            {isFromDB ? 'أسعار القطع من قاعدة البيانات الفعلية — متحدثة في الوقت الفعلي' : 'اختار القطعة وشوف الفرق في الجودة والسعر والضمان'}
+          </p>
         </div>
 
         {/* Part selector — dropdown */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <div style={{ position: 'relative', minWidth: 260 }}>
             <select
-              value={sel}
+              value={safeIdx}
               onChange={e => setSel(Number(e.target.value))}
               style={{
                 width: '100%', appearance: 'none',
@@ -399,9 +448,12 @@ function AiCompareSection() {
                 boxShadow: `0 4px 20px rgba(200,151,74,0.1)`,
               }}
             >
-              {AI_COMPARE.map((p, i) => (
-                <option key={p.id} value={i}>{p.label}</option>
-              ))}
+              {data.map((p, i) => {
+                const avail = [p.orig.available, p.turk.available, p.chin.available].filter(Boolean).length;
+                return (
+                  <option key={p.id} value={i}>{p.label} ({avail}/3 متوفر)</option>
+                );
+              })}
             </select>
             <ChevronDown size={16} color={G} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           </div>
@@ -413,16 +465,32 @@ function AiCompareSection() {
           {/* Column headers */}
           <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.025)', borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
             {COL.map((c, ci) => {
-              const p = part[c.key];
-              const isBest = ci === bestIdx;
+              const v = part[c.key];
+              const isBest = ci === bestIdx && v.available;
               return (
                 <React.Fragment key={c.key}>
-                  <div style={{ padding: '13px 14px', textAlign: 'center', borderLeft: ci > 0 ? `1px solid rgba(255,255,255,0.05)` : undefined }}>
-                    {isBest && <div style={{ marginBottom: 4 }}><span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span></div>}
-                    <div style={{ fontSize: 12, fontWeight: 800, color: c.color }}>{p.badge}</div>
-                    <div style={{ fontSize: 10, color: TD, marginTop: 2, lineHeight: 1.4 }}>{p.name}</div>
-                    {ci > 0 && (part.orig.price - p.price) > 0 && (
-                      <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 3 }}>💰 وفّر {part.orig.price - p.price} ج.م</div>
+                  <div style={{
+                    padding: '13px 14px', textAlign: 'center',
+                    borderLeft: ci > 0 ? `1px solid rgba(255,255,255,0.05)` : undefined,
+                    opacity: v.available ? 1 : 0.45,
+                  }}>
+                    {isBest && (
+                      <div style={{ marginBottom: 4 }}>
+                        <span style={{ background: G, color: BG, fontSize: 9, fontWeight: 800, borderRadius: 999, padding: '2px 8px' }}>👑 الأفضل</span>
+                      </div>
+                    )}
+                    {/* Availability badge */}
+                    <div style={{ marginBottom: 4 }}>
+                      {v.available ? (
+                        <span style={{ fontSize: 9, fontWeight: 800, color: SG, background: 'rgba(61,168,130,0.12)', border: '1px solid rgba(61,168,130,0.25)', borderRadius: 999, padding: '2px 8px' }}>✓ متوفر</span>
+                      ) : (
+                        <span style={{ fontSize: 9, fontWeight: 800, color: '#EF4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '2px 8px' }}>✗ غير متوفر</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: v.available ? c.color : 'rgba(255,255,255,0.25)' }}>{v.badge}</div>
+                    <div style={{ fontSize: 10, color: TD, marginTop: 2, lineHeight: 1.4 }}>{v.name}</div>
+                    {ci > 0 && v.available && part.orig.available && (part.orig.price - v.price) > 0 && (
+                      <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 3 }}>💰 وفّر {(part.orig.price - v.price).toLocaleString('ar-EG')} ج.م</div>
                     )}
                   </div>
                   {ci < 2 && (
@@ -436,22 +504,28 @@ function AiCompareSection() {
           </div>
 
           {/* Data rows */}
-          {ROWS.map((row, ri) => (
-            <div key={row.label} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: ri < ROWS.length - 1 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: ri % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
-              {row.vals.map((val, vi) => (
-                <React.Fragment key={vi}>
-                  <div style={{ padding: '10px 14px', textAlign: 'center', borderLeft: vi > 0 ? `1px solid rgba(255,255,255,0.04)` : undefined }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: row.colors[vi] }}>{val}</span>
-                  </div>
-                  {vi < 2 && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>{row.label}</span>
+          {(['score', 'price', 'warranty', 'origin'] as const).map((type, ri) => {
+            const labels: Record<string, string> = { score: 'الجودة', price: 'السعر', warranty: 'الضمان', origin: 'المنشأ' };
+            const baseColors: [string, string, string] = type === 'score' ? [SG, SK, CN] : [TX, TX, TX];
+            return (
+              <div key={type} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: ri < 3 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: ri % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+                {COL.map((c, vi) => (
+                  <React.Fragment key={c.key}>
+                    <div style={{ padding: '10px 14px', textAlign: 'center', borderLeft: vi > 0 ? `1px solid rgba(255,255,255,0.04)` : undefined }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: rowColor(part[c.key], baseColors[vi]) }}>
+                        {rowVal(part[c.key], type)}
+                      </span>
                     </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          ))}
+                    {vi < 2 && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>{labels[type]}</span>
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Bako ask section */}
@@ -634,6 +708,11 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
 /* ══════════════════ MAIN HOME PAGE ══════════════════ */
 export default function Home() {
   const { data: packages, isLoading } = useListPackages();
+  const { data: realParts } = useListParts();
+  const compareData = React.useMemo(
+    () => realParts ? buildCompareParts(realParts as RealPart[]) : null,
+    [realParts]
+  );
   const [activeService, setActiveService] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [, navigate] = useLocation();
@@ -1007,7 +1086,7 @@ export default function Home() {
       </section>
 
       {/* ═══ AI COMPARE + CHAT ═══ */}
-      <AiCompareSection />
+      <AiCompareSection compareData={compareData} />
 
       {/* ═══ WORKSHOPS ═══ */}
       <section style={{ padding: '56px 28px', background: B2, borderTop: `1px solid ${BD}` }}>
