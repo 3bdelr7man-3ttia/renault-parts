@@ -13,6 +13,7 @@ import {
   ClipboardList, Star, Home, Save, X, Loader2,
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CarSelectorModal } from '@/components/CarSelectorModal';
 import { useToast } from '@/hooks/use-toast';
 import bakoNew from '@/assets/bako-new.png';
@@ -48,6 +49,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function Profile() {
+  const { isMobile, isTablet } = useBreakpoint();
   const { user, logout, getAuthHeaders, token } = useAuth();
   const { car, clearCar, syncFromUser } = useCar();
 
@@ -119,7 +121,7 @@ export default function Profile() {
       </AnimatePresence>
 
       {/* ── Hero ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '48px 24px 80px', background: 'linear-gradient(160deg,#070C18 0%,#111826 60%,#0D1220 100%)' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: isMobile ? '32px 16px 60px' : '48px 24px 80px', background: 'linear-gradient(160deg,#070C18 0%,#111826 60%,#0D1220 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(200,151,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.03) 1px,transparent 1px)', backgroundSize: '36px 36px', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse,rgba(200,151,74,0.07),transparent 65%)', pointerEvents: 'none' }} />
         <img src={bakoNew} alt="" style={{ position: 'absolute', left: 24, bottom: 0, height: 160, opacity: 0.12, mixBlendMode: 'screen', pointerEvents: 'none' }} />
@@ -152,7 +154,7 @@ export default function Profile() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ maxWidth: 900, margin: '-32px auto 60px', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 20, position: 'relative', zIndex: 5 }}>
+      <div style={{ maxWidth: 900, margin: '-32px auto 80px', padding: isMobile ? '0 14px' : '0 24px', display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 20, position: 'relative', zIndex: 5 }}>
 
         {/* Personal Info Card */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
@@ -163,7 +165,7 @@ export default function Profile() {
               <User size={15} color={G} /> بياناتي الشخصية
             </div>
           </div>
-          <div style={{ padding: '20px 22px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ padding: isMobile ? '16px' : '20px 22px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 16 }}>
             {[
               { icon: <User size={14} color={G} />,    label: 'الاسم',    val: user.name         },
               { icon: <Phone size={14} color={G} />,   label: 'التليفون', val: user.phone ?? '—' },
@@ -451,7 +453,7 @@ export default function Profile() {
 
         {/* Quick actions */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
+          style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 10 : 12 }}
         >
           <Link href="/packages" style={{ textDecoration: 'none' }}>
             <div style={{ background: 'rgba(200,151,74,0.07)', border: '1.5px solid rgba(200,151,74,0.18)', borderRadius: 16, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'background .2s' }}

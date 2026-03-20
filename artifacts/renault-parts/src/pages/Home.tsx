@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import {
   Search, Wrench, ShieldCheck, Star, MapPin, ChevronLeft,
   Zap, Droplets, Wind, Settings, Disc, Battery, Package,
@@ -790,6 +791,7 @@ export default function Home() {
     () => realParts ? buildCompareParts(realParts as RealPart[]) : null,
     [realParts]
   );
+  const { isMobile, isTablet, isMobileOrTablet } = useBreakpoint();
   const [activeService, setActiveService] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [, navigate] = useLocation();
@@ -842,7 +844,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '60px 28px', position: 'relative', display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 0, alignItems: 'center', width: '100%' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '36px 16px 40px' : isTablet ? '48px 20px 52px' : '60px 28px', position: 'relative', display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : '1.15fr 0.85fr', gap: 0, alignItems: 'center', width: '100%' }}>
 
           {/* LEFT: Copy */}
           <div style={{ animation: 'rp-fade-up .7s ease both' }}>
@@ -851,13 +853,13 @@ export default function Home() {
               <span style={{ color: G, fontSize: 12, fontWeight: 700, letterSpacing: .3 }}>منصة باكدجات الصيانة الأولى — الإسكندرية</span>
             </div>
 
-            <h1 style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
+            <h1 style={{ fontSize: isMobile ? 30 : isTablet ? 38 : 46, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
               بنقدم لك<br />
-              <span style={{ fontSize: 56, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>باكدج كامل</span>
+              <span style={{ fontSize: isMobile ? 36 : isTablet ? 44 : 56, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>باكدج كامل</span>
             </h1>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 8, letterSpacing: -.5, lineHeight: 1.5 }}>
+            <h2 style={{ fontSize: isMobile ? 16 : isTablet ? 19 : 22, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 8, letterSpacing: -.5, lineHeight: 1.5 }}>
               قطع الغيار <span style={{ color: G, fontWeight: 800 }}>+ التركيب مجاناً</span><br />
-              <span style={{ fontSize: 17, color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>بأقرب ورشة معتمدة ليك في الإسكندرية</span>
+              <span style={{ fontSize: isMobile ? 13 : 17, color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>بأقرب ورشة معتمدة ليك في الإسكندرية</span>
             </h2>
 
             <p style={{ color: TD, fontSize: 14, lineHeight: 1.9, marginBottom: 32, maxWidth: 500, borderRight: `3px solid rgba(200,151,74,0.25)`, paddingRight: 16 }}>
@@ -906,8 +908,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT: Bako cinematic */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* RIGHT: Bako cinematic — hidden on mobile to avoid overflow */}
+          <div style={{ position: 'relative', display: isMobileOrTablet ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', border: '1px solid rgba(200,151,74,0.08)', animation: 'rp-blob1 6s ease-in-out infinite' }} />
             <div style={{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', border: '1px dashed rgba(200,151,74,0.1)', animation: 'rp-blob2 8s ease-in-out infinite 2s' }} />
 
@@ -954,17 +956,17 @@ export default function Home() {
       </section>
 
       {/* ═══ HOW IT WORKS ═══ */}
-      <section style={{ padding: '60px 28px', borderTop: `1px solid ${BD}`, background: `linear-gradient(180deg,${B2},${BG})` }}>
+      <section style={{ padding: isMobile ? '36px 16px' : isTablet ? '48px 20px' : '60px 28px', borderTop: `1px solid ${BD}`, background: `linear-gradient(180deg,${B2},${BG})` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ textAlign: 'center', marginBottom: isMobile ? 28 : 48 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
               <Zap size={12} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>إزاي بيشتغل RenoPack</span>
             </div>
-            <h2 style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>٣ خطوات — وعربيتك تتصلح</h2>
-            <p style={{ color: TD, fontSize: 14 }}>مش محتاج تدور على قطعة، مش محتاج تتعامل مع الورشة — إحنا بنعمل كل ده عنك</p>
+            <h2 style={{ fontSize: isMobile ? 20 : 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>٣ خطوات — وعربيتك تتصلح</h2>
+            <p style={{ color: TD, fontSize: isMobile ? 13 : 14 }}>مش محتاج تدور على قطعة، مش محتاج تتعامل مع الورشة — إحنا بنعمل كل ده عنك</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, position: 'relative' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(3,1fr)' : 'repeat(3,1fr)', gap: isMobile ? 14 : 20, position: 'relative' }}>
             {/* Connector lines */}
             <div style={{ position: 'absolute', top: 48, right: '33.3%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${G}50,${G}20)`, zIndex: 0, pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', top: 48, right: '66.6%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${SK}50,${SK}20)`, zIndex: 0, pointerEvents: 'none' }} />
@@ -1030,7 +1032,7 @@ export default function Home() {
       <ReadyPackagesSection realPackages={packages?.map(p => ({ id: p.id, name: p.name, slug: p.slug, price: p.sellPrice, kmService: p.kmService, description: p.description }))} />
 
       {/* ═══ PUZZLE BUILDER ═══ */}
-      <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}`, borderBottom: `1px solid ${BD}` }}>
+      <section style={{ padding: isMobile ? '36px 16px' : isTablet ? '48px 20px' : '64px 28px', background: B2, borderTop: `1px solid ${BD}`, borderBottom: `1px solid ${BD}` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.09)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
@@ -1039,7 +1041,7 @@ export default function Home() {
             <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>البازل — اختار قطعك وجمّع باكدجك 🧩</h2>
             <p style={{ color: TD, fontSize: 14 }}>على حسب قيمة الباكدج بتاعك هتاخد هدية تلقائياً</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: selected.size >= 2 ? '1fr 270px 260px' : '1fr 270px', gap: 20, alignItems: 'start', transition: 'grid-template-columns .3s ease' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : selected.size >= 2 ? '1fr 270px 260px' : '1fr 270px', gap: isMobile ? 14 : 20, alignItems: 'start', transition: 'grid-template-columns .3s ease' }}>
             {/* ── LEFT: Parts categories ── */}
             <div>
               {['سوائل', 'فلاتر', 'فرامل', 'كهرباء', 'عفشة'].map(cat => {
@@ -1166,11 +1168,11 @@ export default function Home() {
       <AiCompareSection compareData={compareData} />
 
       {/* ═══ WORKSHOPS ═══ */}
-      <section style={{ padding: '64px 28px', background: B2, borderTop: `1px solid ${BD}` }}>
+      <section style={{ padding: isMobile ? '36px 16px 80px' : isTablet ? '48px 20px 80px' : '64px 28px', background: B2, borderTop: `1px solid ${BD}` }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 36 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? 20 : 36, flexWrap: 'wrap', gap: 12 }}>
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '4px 14px', marginBottom: 12 }}>
                 <Building2 size={11} color={G} />
@@ -1185,7 +1187,7 @@ export default function Home() {
           </div>
 
           {/* 4-column workshop cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 12 : 16, marginBottom: 20 }}>
             {WORKSHOPS.map((w, idx) => (
               <div key={w.name}
                 style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.07)`, background: B3, cursor: 'pointer', transition: 'transform .25s, box-shadow .25s, border-color .25s', position: 'relative' }}

@@ -6,6 +6,7 @@ import { RenoPackLogo } from '@/components/layout/AppLayout';
 import bakoNew from '@/assets/bako-new.png';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 /* ── Brand tokens ── */
 const G  = '#C8974A';
@@ -310,6 +311,7 @@ function AlexMap({ workshops, selectedId, onSelect, focusCoords }: {
 
 export default function Workshops() {
   const { data: workshops, isLoading } = useListWorkshops();
+  const { isMobile, isTablet, isMobileOrTablet } = useBreakpoint();
   const [area, setArea]         = useState('الكل');
   const [search, setSearch]     = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -411,7 +413,7 @@ export default function Workshops() {
       </div>
 
       {/* ── MAIN CONTENT: cards + map ── */}
-      <div style={{ maxWidth: 1280, margin: '20px auto', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 20, alignItems: 'start' }}>
+      <div style={{ maxWidth: 1280, margin: '20px auto', padding: isMobile ? '0 14px 80px' : '0 20px 60px', display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : '380px 1fr', gap: isMobile ? 14 : 20, alignItems: 'start' }}>
 
         {/* Workshop cards (right in RTL) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -453,7 +455,7 @@ export default function Workshops() {
         </div>
 
         {/* Map (left in RTL) */}
-        <div style={{ position: 'sticky', top: 138, height: 620, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
+        <div style={{ position: isMobileOrTablet ? 'relative' : 'sticky', top: isMobileOrTablet ? 'auto' : 138, height: isMobile ? 260 : isTablet ? 360 : 620, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: isMobile ? 16 : 22, overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
           {!isLoading && workshops && workshops.length > 0 ? (
             <AlexMap
               workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}

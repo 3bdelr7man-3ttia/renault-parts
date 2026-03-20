@@ -11,6 +11,7 @@ import {
   Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car, Clock, Calendar, Navigation
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { RENAULT_MODELS, CAR_YEARS, useCar } from '@/lib/car-context';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -102,6 +103,7 @@ interface FormData {
 }
 
 export default function Checkout() {
+  const { isMobile, isTablet, isMobileOrTablet } = useBreakpoint();
   const [, params] = useRoute('/checkout/:id');
   const isCustom = params?.id === 'custom';
   const paramId = params?.id ?? '';
@@ -351,19 +353,19 @@ export default function Checkout() {
   };
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', paddingBottom: 80, paddingTop: 40, fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px' }}>
+    <div style={{ background: BG, minHeight: '100vh', paddingBottom: isMobile ? 80 : 80, paddingTop: isMobile ? 20 : 40, fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '0 12px' : '0 16px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32, gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: isMobile ? 20 : 32, gap: 10 }}>
           <RenoPackLogo size="md" />
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', margin: 0 }}>إتمام الطلب</h1>
         </div>
 
         <StepProgress step={step} userHasCar={hasCar} />
 
-        <div style={{ maxWidth: 680, margin: '32px auto 0' }}>
+        <div style={{ maxWidth: 680, margin: isMobile ? '20px auto 0' : '32px auto 0' }}>
           <div>
-            <div style={{ background: B2, borderRadius: 24, border: `1px solid ${G}20`, padding: 28 }}>
+            <div style={{ background: B2, borderRadius: isMobile ? 18 : 24, border: `1px solid ${G}20`, padding: isMobile ? 16 : 28 }}>
 
               {step === 1 && (
                 <Step1Car
@@ -583,7 +585,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
             </span>
           )}
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 8, marginBottom: 8 }}>
           {gridModels.map(model => {
             const active = formData.carModel === model;
             return (
@@ -631,7 +633,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
             </span>
           )}
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 7, marginBottom: 8 }}>
           {recentYears.map(year => {
             const active = formData.carYear === year;
             return (
@@ -903,7 +905,7 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>أنت تستلم الباكدج وتأخذه للورشة الخاصة بك</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         {[
           { type: 'pickup' as PickupType, icon: <Store size={28} />, title: 'استلام من مركز التوزيع', desc: 'اجي استلم الباكدج من مركزنا في الإسكندرية مجاناً' },
           { type: 'delivery' as PickupType, icon: <Home size={28} />, title: 'توصيل للبيت', desc: 'نوصل الباكدج لحد بيتك في الإسكندرية' },
@@ -1507,7 +1509,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             اختر الوقت
             {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>جارٍ التحقق من المواعيد...</span>}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 10 }}>
             {workshopSlots.map(s => {
               const isFull     = fullSlots.includes(s);
               const isSelected = formData.appointmentSlot === s;
