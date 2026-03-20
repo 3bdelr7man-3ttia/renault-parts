@@ -227,18 +227,18 @@ export default function AdminPackages() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-white mb-1">إدارة الباكدجات</h1>
+          <h1 className="text-xl sm:text-3xl font-black text-white mb-1">إدارة الباكدجات</h1>
           <p className="text-white/50 text-sm">تعديل أسعار ومحتوى باكدجات الصيانة</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex-shrink-0"
           style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', boxShadow: '0 4px 18px rgba(200,151,74,0.35)' }}
         >
           <Plus size={15} />
-          إضافة باكدج جديد
+          إضافة باكدج
         </button>
       </div>
 
@@ -256,21 +256,23 @@ export default function AdminPackages() {
             const partsExpanded = expandedParts.has(pkg.id);
 
             return (
-              <div key={pkg.id} className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#F9E795]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div key={pkg.id} className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-4 sm:p-6 space-y-4">
+                {/* Card header: name row + actions */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  {/* Icon + name */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 bg-[#F9E795]/20 rounded-xl flex items-center justify-center flex-shrink-0">
                       <Package2 className="w-5 h-5 text-[#F9E795]" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       {isEditing ? (
                         <input
                           value={editState.name}
                           onChange={e => setEditState(s => ({ ...s, name: e.target.value }))}
-                          className="bg-white/10 text-white font-bold text-lg px-3 py-1 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 w-full"
+                          className="bg-white/10 text-white font-bold text-base px-3 py-1 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 w-full"
                         />
                       ) : (
-                        <h3 className="text-white font-bold text-lg">{pkg.name}</h3>
+                        <h3 className="text-white font-bold text-base sm:text-lg truncate">{pkg.name}</h3>
                       )}
                       <span className="text-[#F9E795] text-xs font-bold bg-[#F9E795]/10 px-2 py-0.5 rounded-full">
                         {KM_LABELS[pkg.kmService] ?? `${pkg.kmService.toLocaleString()} كم`}
@@ -278,7 +280,8 @@ export default function AdminPackages() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* Action buttons — wrap on mobile */}
+                  <div className="flex flex-wrap items-center gap-2">
                     {/* Availability toggle */}
                     <button
                       onClick={() => toggleAvailability(pkg.id, pkg.isAvailable ?? true)}
@@ -323,9 +326,9 @@ export default function AdminPackages() {
                     ) : (
                       <button
                         onClick={() => startEdit(pkg)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all text-sm font-bold"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all text-xs font-bold"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-3.5 h-3.5" />
                         تعديل
                       </button>
                     )}
