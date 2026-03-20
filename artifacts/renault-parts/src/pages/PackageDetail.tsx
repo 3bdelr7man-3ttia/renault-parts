@@ -4,6 +4,7 @@ import { useGetPackageBySlug, getGetPackageBySlugQueryKey } from '@workspace/api
 import { CheckCircle2, Shield, Wrench, ArrowRight, ShoppingCart, Car, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
+import { usePartCart } from '@/lib/part-cart-context';
 
 type Variant = 'original' | 'turkish' | 'chinese';
 
@@ -37,6 +38,7 @@ export default function PackageDetail() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { car } = useCar();
+  const { setCartPackage, cartPackage } = usePartCart();
 
   const { data: pkg, isLoading, isError } = useGetPackageBySlug(slug, {
     query: { queryKey: getGetPackageBySlugQueryKey(slug), enabled: !!slug }
@@ -96,9 +98,18 @@ export default function PackageDetail() {
   const basePrice = Number(pkg.basePrice);
   const savings = basePrice > liveTotal ? basePrice - liveTotal : 0;
 
+  const isInCart = cartPackage?.id === pkg.id;
+
   const handleOrderClick = () => {
-    if (!user) setLocation('/login?redirect=/checkout/' + pkg.id);
-    else setLocation('/checkout/' + pkg.id);
+    if (!user) {
+      setLocation('/login?redirect=/packages/' + pkg.slug);
+      return;
+    }
+    if (isInCart) {
+      // Already in cart — just open cart (navigate to packages to show button)
+      return;
+    }
+    setCartPackage({ id: pkg.id, name: pkg.name, slug: pkg.slug, price: liveTotal });
   };
 
   return (
@@ -313,16 +324,28 @@ export default function PackageDetail() {
                 onClick={handleOrderClick}
                 style={{
                   width: '100%', padding: '16px 0', borderRadius: 16, fontSize: 17, fontWeight: 900,
-                  background: G, color: NV, border: 'none', cursor: 'pointer',
+                  background: isInCart ? '#22c55e' : G,
+                  color: isInCart ? '#fff' : NV,
+                  border: 'none', cursor: isInCart ? 'default' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: `0 8px 24px ${G}50`, fontFamily: "'Almarai',sans-serif",
-                  transition: 'opacity 0.2s',
+                  boxShadow: isInCart ? '0 8px 24px rgba(34,197,94,0.4)' : `0 8px 24px ${G}50`,
+                  fontFamily: "'Almarai',sans-serif",
+                  transition: 'all 0.3s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                onMouseEnter={e => { if (!isInCart) e.currentTarget.style.opacity = '0.85'; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
               >
-                <ShoppingCart size={20} /> اطلب الآن
+                {isInCart ? (
+                  <><CheckCircle2 size={20} /> في السلة ✓</>
+                ) : (
+                  <><ShoppingCart size={20} /> أضف للسلة</>
+                )}
               </button>
+              {isInCart && (
+                <p style={{ textAlign: 'center', fontSize: 12, color: '#22c55e', marginTop: 8, fontWeight: 700 }}>
+                  شوف السلة فوق ← تقدر تضيف قطع زيادة أو تكمل الطلب
+                </p>
+              )}
               <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 10 }}>
                 فيزا / ماستر / فودافون كاش / انستاباى
               </p>

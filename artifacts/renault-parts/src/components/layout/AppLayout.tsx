@@ -44,7 +44,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const { items: cartItems, total: cartTotal, clear: clearCart, removePart } = usePartCart();
+  const {
+    items: cartItems, total: cartTotal, clear: clearCart, removePart,
+    cartPackage, setCartPackage, pkgJustAdded, consumePkgJustAdded, grandTotal,
+  } = usePartCart();
   const [searchVal, setSearchVal] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
@@ -65,14 +68,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [showCartDropdown]);
 
+  // Auto-open cart when a package is just added
+  useEffect(() => {
+    if (pkgJustAdded) {
+      setShowCartDropdown(true);
+      consumePkgJustAdded();
+    }
+  }, [pkgJustAdded, consumePkgJustAdded]);
+
   const handleGoToCheckout = () => {
-    if (cartItems.length === 0) return;
-    sessionStorage.setItem('customPuzzle', JSON.stringify({
-      parts: cartItems.map(p => ({ id: p.id, label: p.label, price: p.price })),
-      total: cartTotal,
-    }));
     setShowCartDropdown(false);
-    setLocation('/checkout/custom');
+    if (cartPackage) {
+      // If extra parts exist, store them as notes/puzzle for the checkout step
+      if (cartItems.length > 0) {
+        sessionStorage.setItem('cartExtraParts', JSON.stringify(cartItems));
+      }
+      setLocation('/checkout/' + cartPackage.id);
+    } else if (cartItems.length > 0) {
+      sessionStorage.setItem('customPuzzle', JSON.stringify({
+        parts: cartItems.map(p => ({ id: p.id, label: p.label, price: p.price })),
+        total: cartTotal,
+      }));
+      setLocation('/checkout/custom');
+    }
   };
 
   const handleLogout = () => {
@@ -220,8 +238,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
 
-            {/* Part Cart button — only when logged in and has items */}
-            {user && cartItems.length > 0 && (
+            {/* Cart button — visible when there's a package OR extra parts */}
+            {(cartItems.length > 0 || cartPackage) && (
               <div style={{ position: 'relative' }}>
                 <button
                   ref={cartBtnRef}
@@ -251,7 +269,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 5px',
                   }}>
-                    {cartItems.length}
+                    {(cartPackage ? 1 : 0) + cartItems.length}
                   </span>
                 </button>
 
@@ -266,7 +284,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       transition={{ duration: 0.18 }}
                       style={{
                         position: 'absolute', top: 'calc(100% + 10px)', left: 0,
-                        width: 320, background: '#111826',
+                        width: 340, background: '#111826',
                         border: '1.5px solid rgba(200,151,74,0.2)',
                         borderRadius: 18, overflow: 'hidden',
                         boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
@@ -278,50 +296,97 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, fontSize: 13, color: '#E8F0F8' }}>
                           <ShoppingCart size={14} color="#C8974A" />
-                          سلة القطع
-                          <span style={{ background: 'rgba(200,151,74,0.15)', color: '#C8974A', borderRadius: 999, fontSize: 11, fontWeight: 900, padding: '1px 8px' }}>{cartItems.length}</span>
+                          سلتي
                         </div>
                         <button
                           onClick={() => { clearCart(); setShowCartDropdown(false); }}
                           style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '4px 10px', color: '#EF4444', fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-                          title="إفراغ السلة"
                         >
-                          <Trash2 size={11} /> إفراغ
+                          <Trash2 size={11} /> إفراغ الكل
                         </button>
                       </div>
 
-                      {/* Items list */}
-                      <div style={{ maxHeight: 260, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {cartItems.map(item => (
-                          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#161E30', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#D4E0EC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
-                              <div style={{ fontSize: 12, fontWeight: 800, color: '#C8974A', marginTop: 2 }}>{item.price.toLocaleString('ar-EG')} ج.م</div>
+                      {/* Content */}
+                      <div style={{ maxHeight: 320, overflowY: 'auto', padding: '10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                        {/* Package row */}
+                        {cartPackage && (
+                          <div style={{ background: 'rgba(200,151,74,0.08)', border: '1.5px solid rgba(200,151,74,0.25)', borderRadius: 14, padding: '12px 14px' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                              <div style={{ fontSize: 20, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>📦</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 11, color: '#C8974A', fontWeight: 700, marginBottom: 2, letterSpacing: 0.5 }}>باكدج</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cartPackage.name}</div>
+                                <div style={{ fontSize: 13, fontWeight: 900, color: '#C8974A', marginTop: 3 }}>{cartPackage.price.toLocaleString('ar-EG')} ج.م</div>
+                              </div>
+                              <button
+                                onClick={() => setCartPackage(null)}
+                                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                              >
+                                <X size={12} color="#EF4444" />
+                              </button>
                             </div>
-                            <button
-                              onClick={() => removePart(item.id)}
-                              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-                              title="حذف القطعة"
-                            >
-                              <X size={12} color="#EF4444" />
-                            </button>
                           </div>
-                        ))}
+                        )}
+
+                        {/* Extra parts */}
+                        {cartItems.length > 0 && (
+                          <>
+                            {cartPackage && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px' }}>
+                                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, whiteSpace: 'nowrap' }}>قطع إضافية</span>
+                                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                              </div>
+                            )}
+                            {cartItems.map(item => (
+                              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#161E30', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#D4E0EC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
+                                  <div style={{ fontSize: 12, fontWeight: 800, color: '#C8974A', marginTop: 2 }}>{item.price.toLocaleString('ar-EG')} ج.م</div>
+                                </div>
+                                <button
+                                  onClick={() => removePart(item.id)}
+                                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                                >
+                                  <X size={12} color="#EF4444" />
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Empty state */}
+                        {!cartPackage && cartItems.length === 0 && (
+                          <div style={{ padding: '20px 0', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>السلة فارغة</div>
+                        )}
                       </div>
 
                       {/* Footer — total + checkout */}
                       <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(200,151,74,0.03)' }}>
+                        {cartItems.length > 0 && cartPackage && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>
+                            <span>القطع الإضافية</span>
+                            <span>{cartTotal.toLocaleString('ar-EG')} ج.م</span>
+                          </div>
+                        )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                          <span style={{ fontSize: 12, color: '#7A95AA', fontWeight: 700 }}>الإجمالي</span>
-                          <span style={{ fontSize: 16, fontWeight: 900, color: '#C8974A' }}>{cartTotal.toLocaleString('ar-EG')} ج.م</span>
+                          <span style={{ fontSize: 13, color: '#7A95AA', fontWeight: 700 }}>الإجمالي</span>
+                          <span style={{ fontSize: 18, fontWeight: 900, color: '#C8974A' }}>{grandTotal.toLocaleString('ar-EG')} ج.م</span>
                         </div>
                         <button
                           onClick={handleGoToCheckout}
+                          disabled={!cartPackage && cartItems.length === 0}
                           style={{ width: '100%', background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 12, padding: '11px', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
                         >
                           إتمام الطلب
                           <ArrowLeft size={14} />
                         </button>
+                        {cartPackage && cartItems.length === 0 && (
+                          <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '8px 0 0' }}>
+                            تقدر تضيف قطع من صفحة "القطع" على الباكدج
+                          </p>
+                        )}
                       </div>
                     </motion.div>
                   )}
