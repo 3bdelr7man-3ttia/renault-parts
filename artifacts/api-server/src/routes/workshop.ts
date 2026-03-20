@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, gte, and, desc, lte } from "drizzle-orm";
-import { db, appointmentsTable, ordersTable, packagesTable, usersTable, workshopsTable, workshopPricingTable } from "@workspace/db";
+import { db, appointmentsTable, ordersTable, packagesTable, usersTable, workshopsTable, workshopPricingTable, workshopAvailabilityTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { sql } from "drizzle-orm";
 
@@ -189,6 +189,51 @@ router.put("/workshop/pricing", requireAuth, requireWorkshop, async (req, res): 
     });
 
   res.json({ message: "تم حفظ التسعير" });
+});
+
+// GET /api/workshop/availability — get this workshop's configured availability
+router.get("/workshop/availability", requireAuth, requireWorkshop, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const workshopId = authReq.user!.workshopId!;
+  const slots = await db
+    .select()
+    .from(workshopAvailabilityTable)
+    .where(eq(workshopAvailabilityTable.workshopId, workshopId));
+  res.json(slots);
+});
+
+// PUT /api/workshop/availability — replace this workshop's entire availability config
+router.put("/workshop/availability", requireAuth, requireWorkshop, async (req, res): Promise<void> => {
+  const authReq = req as AuthenticatedRequest;
+  const workshopId = authReq.user!.workshopId!;
+  const { slots, maxBookings } = req.body as {
+    slots: { dayOfWeek: number; timeSlot: string }[];
+    maxBookings: number;
+  };
+
+  if (!Array.isArray(slots)) {
+    res.status(400).json({ error: "slots must be an array" });
+    return;
+  }
+
+  const max = Number(maxBookings) || 2;
+
+  await db
+    .delete(workshopAvailabilityTable)
+    .where(eq(workshopAvailabilityTable.workshopId, workshopId));
+
+  if (slots.length > 0) {
+    await db.insert(workshopAvailabilityTable).values(
+      slots.map(s => ({
+        workshopId,
+        dayOfWeek: Number(s.dayOfWeek),
+        timeSlot: String(s.timeSlot),
+        maxBookings: max,
+      }))
+    );
+  }
+
+  res.json({ ok: true, saved: slots.length });
 });
 
 export default router;

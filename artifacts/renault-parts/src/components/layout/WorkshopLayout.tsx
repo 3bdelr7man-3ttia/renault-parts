@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, CalendarCheck, DollarSign, LogOut,
-  Menu, X, Wrench, Store, ChevronRight, Bell, Tag,
+  Menu, X, Wrench, Store, ChevronRight, Bell, Tag, CalendarDays,
 } from 'lucide-react';
 import bakoLogo from '@/assets/bako-logo.png';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
@@ -15,11 +15,12 @@ const S   = '#111826';
 const S2  = '#161E30';
 
 const navItems = [
-  { href: '/workshop',             label: 'الرئيسية',   icon: LayoutDashboard, exact: true },
-  { href: '/workshop/appointments',label: 'المواعيد',   icon: CalendarCheck },
-  { href: '/workshop/orders',      label: 'الطلبات',    icon: Wrench },
-  { href: '/workshop/earnings',    label: 'الحسابات',   icon: DollarSign },
-  { href: '/workshop/pricing',     label: 'التسعير',    icon: Tag },
+  { href: '/workshop',              label: 'الرئيسية',  icon: LayoutDashboard, exact: true },
+  { href: '/workshop/appointments', label: 'المواعيد',  icon: CalendarCheck },
+  { href: '/workshop/schedule',     label: 'الجدول',    icon: CalendarDays },
+  { href: '/workshop/orders',       label: 'الطلبات',   icon: Wrench },
+  { href: '/workshop/earnings',     label: 'الحسابات',  icon: DollarSign },
+  { href: '/workshop/pricing',      label: 'التسعير',   icon: Tag },
 ];
 
 export function WorkshopLayout({ children }: { children: React.ReactNode }) {

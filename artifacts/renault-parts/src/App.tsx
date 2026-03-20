@@ -44,6 +44,7 @@ import JoinWorkshop from "@/pages/JoinWorkshop";
 // Workshop Portal Pages
 import WorkshopDashboard from "@/pages/workshop/WorkshopDashboard";
 import WorkshopAppointments from "@/pages/workshop/WorkshopAppointments";
+import WorkshopSchedule from "@/pages/workshop/WorkshopSchedule";
 import WorkshopOrders from "@/pages/workshop/WorkshopOrders";
 import WorkshopEarnings from "@/pages/workshop/WorkshopEarnings";
 import WorkshopPricing from "@/pages/workshop/WorkshopPricing";
@@ -123,6 +124,7 @@ function Router() {
           <Switch>
             <Route path="/workshop" component={WorkshopDashboard} />
             <Route path="/workshop/appointments" component={WorkshopAppointments} />
+            <Route path="/workshop/schedule" component={WorkshopSchedule} />
             <Route path="/workshop/orders" component={WorkshopOrders} />
             <Route path="/workshop/earnings" component={WorkshopEarnings} />
             <Route path="/workshop/pricing" component={WorkshopPricing} />

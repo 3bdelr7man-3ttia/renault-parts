@@ -1234,12 +1234,14 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
   isPending: boolean;
   getAuthHeaders: () => { headers?: Record<string, string> };
 }) {
-  const [fullSlots, setFullSlots]   = useState<string[]>([]);
-  const [slotCounts, setSlotCounts] = useState<Record<string, number>>({});
+  const [fullSlots, setFullSlots]       = useState<string[]>([]);
+  const [slotCounts, setSlotCounts]     = useState<Record<string, number>>({});
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [hasConfig, setHasConfig]       = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [localArea, setLocalArea]   = useState(formData.deliveryArea || '');
+  const [localArea, setLocalArea]       = useState(formData.deliveryArea || '');
 
-  // All possible slots — filtered per workshop hours on render
+  // Fallback slots (when no workshop availability config exists)
   const ALL_SLOTS_FULL = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
 
   const today = new Date();
@@ -1271,13 +1273,18 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
     setLoadingSlots(true);
     setFullSlots([]);
     setSlotCounts({});
+    setAvailableSlots([]);
+    setHasConfig(false);
     try {
       const headers = getAuthHeaders().headers ?? {};
-      const res = await fetch(`/api/appointments/slots?workshopId=${workshopId}&date=${date}`, { headers });
+      const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, '') ?? '';
+      const res = await fetch(`${base}/api/appointments/slots?workshopId=${workshopId}&date=${date}`, { headers });
       if (res.ok) {
         const data = await res.json();
+        setAvailableSlots(data.slots ?? []);
         setFullSlots(data.bookedSlots ?? []);
         setSlotCounts(data.slotCounts ?? {});
+        setHasConfig(data.hasConfig ?? false);
       }
     } catch { /* ignore */ } finally {
       setLoadingSlots(false);
@@ -1288,6 +1295,8 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
     onChange(p => ({ ...p, workshopId: w.id, workshopName: w.name, appointmentSlot: '', appointmentDate: '' }));
     setFullSlots([]);
     setSlotCounts({});
+    setAvailableSlots([]);
+    setHasConfig(false);
   };
 
   const handleDate = (date: string) => {
@@ -1305,13 +1314,16 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
 
   const selectedWorkshop = CHECKOUT_WORKSHOPS.find(w => w.id === formData.workshopId);
 
-  // Filter slots to workshop operating hours
+  // Use configured slots from API; fallback to hours-based filter for legacy workshops
   const workshopSlots = selectedWorkshop
     ? ALL_SLOTS_FULL.filter(s => {
         const h = parseInt(s.split(':')[0]);
         return h >= selectedWorkshop.openHour && h < selectedWorkshop.closeHour;
       })
     : ALL_SLOTS_FULL;
+
+  // slotsToShow: prefer API-returned configured slots; fall back to hour-based if no config
+  const slotsToShow = availableSlots.length > 0 ? availableSlots : !hasConfig ? workshopSlots : [];
 
   // Map center: fly to selected workshop, else to user area, else Alexandria default
   const mapFlyLat = selectedWorkshop ? selectedWorkshop.lat : userCoord ? userCoord[0] : 31.2001;
@@ -1474,7 +1486,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
               </div>
             </div>
             <button
-              onClick={() => { onChange(p => ({ ...p, workshopId: 0, workshopName: '', appointmentDate: '', appointmentSlot: '' })); setFullSlots([]); setSlotCounts({}); }}
+              onClick={() => { onChange(p => ({ ...p, workshopId: 0, workshopName: '', appointmentDate: '', appointmentSlot: '' })); setFullSlots([]); setSlotCounts({}); setAvailableSlots([]); setHasConfig(false); }}
               style={{ padding: '6px 12px', borderRadius: 10, border: `1px solid rgba(255,255,255,0.15)`, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", whiteSpace: 'nowrap' }}
             >
               تغيير
@@ -1510,12 +1522,21 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             اختر الوقت
             {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>جارٍ التحقق من المواعيد...</span>}
           </p>
+
+          {!loadingSlots && slotsToShow.length === 0 && (
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, padding: '16px 20px', textAlign: 'center' }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#EF4444' }}>🚫 هذا اليوم غير متاح للحجز</p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>اختر يوماً آخر أو ورشة مختلفة</p>
+            </div>
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 10 }}>
-            {workshopSlots.map(s => {
+            {slotsToShow.map(s => {
               const isFull     = fullSlots.includes(s);
               const isSelected = formData.appointmentSlot === s;
               const count      = slotCounts[s] || 0;
-              const spotsLeft  = Math.max(0, 2 - count);
+              const maxC       = 2;
+              const spotsLeft  = Math.max(0, maxC - count);
               return (
                 <div key={s} onClick={() => !isFull && onChange(p => ({ ...p, appointmentSlot: s }))}
                   style={{ borderRadius: 12, border: `2px solid ${isSelected ? G : isFull ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`, background: isSelected ? `${G}20` : isFull ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)', padding: '12px 8px', textAlign: 'center', cursor: isFull ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isFull ? 0.45 : 1, boxShadow: isSelected ? `0 0 14px ${G}40` : 'none' }}>
@@ -1523,7 +1544,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
                     {slotLabel(s)}
                   </div>
                   <div style={{ fontSize: 9, marginTop: 3, fontWeight: 700, color: isFull ? '#ef4444' : count === 1 ? '#f59e0b' : '#22c55e' }}>
-                    {isFull ? 'مكتمل' : spotsLeft === 2 ? 'متاح' : `مقعد واحد متبقي`}
+                    {isFull ? 'مكتمل' : spotsLeft >= 2 ? 'متاح' : 'مقعد واحد متبقي'}
                   </div>
                 </div>
               );
