@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Package2, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 type Message = {
   id: string;
@@ -30,6 +31,7 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { getAuthHeaders } = useAuth();
+  const { isMobile } = useBreakpoint();
 
   useEffect(() => {
     if (open) {
@@ -140,74 +142,136 @@ export default function ChatWidget() {
     }
   };
 
+  /* ── positioning constants ── */
+  const NAV_BAR_H = 64;
+  const BTN_GAP   = 12;
+  const BTN_SIZE  = 56;
+
+  const btnBottom  = isMobile ? NAV_BAR_H + BTN_GAP : 24;
+  const btnLeft    = isMobile ? 16 : 24;
+
+  const panelBottom = isMobile
+    ? NAV_BAR_H + BTN_SIZE + BTN_GAP + 8
+    : btnBottom + BTN_SIZE + 8;
+
+  const panelWidth  = isMobile ? "calc(100vw - 32px)" : "340px";
+  const panelHeight = isMobile ? `calc(100dvh - ${panelBottom + 16}px)` : "480px";
+  const panelLeft   = isMobile ? 16 : btnLeft;
+
   return (
     <>
+      {/* ── Toggle button ── */}
       <button
         onClick={() => setOpen((p) => !p)}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-primary shadow-xl flex items-center justify-center text-white border-2 border-accent hover:scale-110 transition-transform"
         aria-label="افتح المساعد"
+        style={{
+          position: "fixed",
+          bottom: btnBottom,
+          left: btnLeft,
+          zIndex: 60,
+          width: BTN_SIZE,
+          height: BTN_SIZE,
+          borderRadius: "50%",
+          background: "var(--primary, #1A2356)",
+          border: "2.5px solid #C8974A",
+          boxShadow: "0 8px 28px rgba(0,0,0,0.45)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          color: "#fff",
+          transition: "transform .2s",
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "scale(1.1)"}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "scale(1)"}
       >
         {open ? <ChevronDown size={24} /> : <MessageCircle size={26} />}
         {!open && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full animate-pulse" />
+          <span style={{
+            position: "absolute",
+            top: -4,
+            right: -4,
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            background: "#C8974A",
+            animation: "rp-glow-blink 2s infinite",
+          }} />
         )}
       </button>
 
+      {/* ── Chat panel ── */}
       {open && (
         <div
-          className="fixed bottom-24 left-6 z-50 w-[340px] max-w-[calc(100vw-2rem)] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border"
-          style={{ height: "480px" }}
+          style={{
+            position: "fixed",
+            bottom: panelBottom,
+            left: panelLeft,
+            zIndex: 59,
+            width: panelWidth,
+            height: panelHeight,
+            maxHeight: isMobile ? `calc(100dvh - ${panelBottom + 8}px)` : "480px",
+            borderRadius: isMobile ? 24 : 28,
+            background: "#fff",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+            border: "1px solid rgba(0,0,0,0.08)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
         >
-          <div className="bg-primary px-4 py-3 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center">
-                <Bot size={20} className="text-accent" />
+          {/* Header */}
+          <div style={{ background: "#1A2356", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(200,151,74,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Bot size={20} color="#C8974A" />
               </div>
               <div>
-                <p className="text-white font-bold text-sm leading-tight">رينو مساعد</p>
-                <p className="text-white/60 text-xs">متخصص صيانة رينو الإسكندرية</p>
+                <p style={{ color: "#fff", fontWeight: 800, fontSize: 14, margin: 0, lineHeight: 1.3, fontFamily: "'Almarai',sans-serif" }}>رينو مساعد</p>
+                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: 0, fontFamily: "'Almarai',sans-serif" }}>متخصص صيانة رينو الإسكندرية</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white">
+            <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", display: "flex", alignItems: "center", padding: 4 }}>
               <X size={18} />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 12, background: "#F8FAFC" }}>
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                <div
-                  className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === "user" ? "bg-primary/10" : "bg-accent/20"}`}
-                >
-                  {msg.role === "user" ? (
-                    <User size={14} className="text-primary" />
-                  ) : (
-                    <Bot size={14} className="text-accent" />
-                  )}
+              <div key={msg.id} style={{ display: "flex", gap: 8, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: msg.role === "user" ? "rgba(26,35,86,0.1)" : "rgba(200,151,74,0.2)" }}>
+                  {msg.role === "user" ? <User size={14} color="#1A2356" /> : <Bot size={14} color="#C8974A" />}
                 </div>
-                <div className={`max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                  <div
-                    className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                      msg.role === "user"
-                        ? "bg-primary text-white rounded-tr-sm"
-                        : "bg-white text-foreground shadow-sm border border-border/50 rounded-tl-sm"
-                    }`}
-                  >
+                <div style={{ maxWidth: "75%", display: "flex", flexDirection: "column", gap: 4, alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                  <div style={{
+                    padding: "8px 12px",
+                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                    fontSize: 13,
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "'Almarai',sans-serif",
+                    direction: "rtl",
+                    ...(msg.role === "user"
+                      ? { background: "#1A2356", color: "#fff" }
+                      : { background: "#fff", color: "#1a2356", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }
+                    ),
+                  }}>
                     {msg.content || (msg.streaming && (
-                      <span className="flex gap-1 items-center py-0.5">
-                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0ms]" />
-                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:150ms]" />
-                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:300ms]" />
+                      <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        {[0, 150, 300].map(d => (
+                          <span key={d} style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(26,35,86,0.35)", animation: `rp-bounce 1.2s ${d}ms infinite` }} />
+                        ))}
                       </span>
                     ))}
                     {msg.streaming && msg.content && (
-                      <span className="inline-block w-0.5 h-3.5 bg-primary/50 animate-pulse ml-0.5 align-middle" />
+                      <span style={{ display: "inline-block", width: 2, height: 14, background: "rgba(26,35,86,0.4)", animation: "rp-glow-blink 1s infinite", marginLeft: 2, verticalAlign: "middle" }} />
                     )}
                   </div>
                   {!msg.streaming && msg.suggestedPackageId && msg.suggestedPackageName && (
                     <Link
                       href={`/checkout/${msg.suggestedPackageId}`}
-                      className="flex items-center gap-1.5 bg-accent text-primary text-xs font-bold px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
+                      style={{ display: "flex", alignItems: "center", gap: 6, background: "#C8974A", color: "#1A2356", fontSize: 12, fontWeight: 800, padding: "6px 14px", borderRadius: 999, textDecoration: "none", fontFamily: "'Almarai',sans-serif" }}
                       onClick={() => setOpen(false)}
                     >
                       <Package2 size={12} />
@@ -220,7 +284,8 @@ export default function ChatWidget() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="p-3 border-t border-border bg-white flex gap-2">
+          {/* Input */}
+          <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(0,0,0,0.07)", background: "#fff", display: "flex", gap: 8, flexShrink: 0 }}>
             <input
               ref={inputRef}
               type="text"
@@ -229,15 +294,38 @@ export default function ChatWidget() {
               onKeyDown={handleKeyDown}
               placeholder="اكتب رسالتك..."
               disabled={isStreaming}
-              className="flex-1 bg-slate-50 border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 text-right"
               dir="rtl"
+              style={{
+                flex: 1,
+                background: "#F1F5F9",
+                border: "1.5px solid rgba(0,0,0,0.08)",
+                borderRadius: 14,
+                padding: "9px 14px",
+                fontSize: 13,
+                outline: "none",
+                fontFamily: "'Almarai',sans-serif",
+                direction: "rtl",
+                color: "#1a2356",
+              }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isStreaming}
-              className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 transition-colors"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 12,
+                background: !input.trim() || isStreaming ? "#e2e8f0" : "#1A2356",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: !input.trim() || isStreaming ? "not-allowed" : "pointer",
+                flexShrink: 0,
+                transition: "background .2s",
+              }}
             >
-              <Send size={16} className="rotate-180" />
+              <Send size={16} color={!input.trim() || isStreaming ? "#94a3b8" : "#C8974A"} style={{ transform: "rotate(180deg)" }} />
             </button>
           </div>
         </div>
