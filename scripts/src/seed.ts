@@ -159,7 +159,38 @@ async function seed() {
     })
     .onConflictDoNothing();
 
+  await db
+    .insert(usersTable)
+    .values({
+      name: "عميل تجريبي",
+      phone: "01010000001",
+      email: "customer@renaultparts.eg",
+      passwordHash: await bcrypt.hash("customer123", 10),
+      role: "customer",
+      area: "سيدي بشر",
+    })
+    .onConflictDoNothing();
+
+  const primaryWorkshop = allWorkshops[0];
+
+  if (primaryWorkshop) {
+    await db
+      .insert(usersTable)
+      .values({
+        name: "صاحب ورشة تجريبي",
+        phone: "01010000006",
+        email: "workshop@renaultparts.eg",
+        passwordHash: await bcrypt.hash("workshop123", 10),
+        role: "workshop_owner",
+        workshopId: primaryWorkshop.id,
+        area: primaryWorkshop.area,
+      })
+      .onConflictDoNothing();
+  }
+
   console.log("✅ Admin user seeded: phone=01000000000 / password=admin123");
+  console.log("✅ Customer user seeded: email=customer@renaultparts.eg / password=customer123");
+  console.log("✅ Workshop owner seeded: email=workshop@renaultparts.eg / password=workshop123");
   console.log("🎉 Seeding complete!");
   process.exit(0);
 }
