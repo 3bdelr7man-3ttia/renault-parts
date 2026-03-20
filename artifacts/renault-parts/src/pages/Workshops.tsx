@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useListWorkshops } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, Star, Shield, Clock, Wrench, Search, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { MapPin, Star, Shield, Clock, Wrench, Search, ChevronDown, CheckCircle2, Navigation, Zap, Settings } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 import bakoNew from '@/assets/bako-new.png';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
 /* ── Brand tokens ── */
-const G = '#C8974A';
+const G  = '#C8974A';
+const GL = '#DEB06C';
 const BG = '#0D1220';
-const CARD = '#161E30';
+const CARD  = '#161E30';
 const CARD2 = '#111826';
+const TD = '#7A95AA';
+const F  = "'Almarai',sans-serif";
 
 /* ── Area → approximate lat/lng ── */
 const AREA_COORDS: Record<string, [number, number]> = {
@@ -31,23 +34,17 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'الميناء':    [31.2001, 29.9187],
 };
 
-/* Custom gold marker icon */
-function createGoldIcon(rating: number | null) {
-  const html = `
-    <div style="
-      width:36px; height:36px; border-radius:50% 50% 50% 0;
-      background:linear-gradient(135deg,#C8974A,#DEB06C);
-      border:2.5px solid #0D1220; transform:rotate(-45deg);
-      box-shadow:0 4px 16px rgba(200,151,74,0.5);
-      display:flex; align-items:center; justify-content:center;
-    ">
-      <span style="transform:rotate(45deg); font-size:11px; font-weight:900; color:#0D1220; font-family:Almarai,sans-serif;">${rating?.toFixed(1) ?? '★'}</span>
-    </div>
-  `;
-  return L.divIcon({ html, className: '', iconAnchor: [18, 36], popupAnchor: [0, -36] });
-}
+/* ── Workshop card color palettes (deterministic) ── */
+const WORKSHOP_PALETTES = [
+  { from: '#1A4A6B', to: '#0D2A40', accent: '#4AABCA' },
+  { from: '#4A2D1A', to: '#2A1A0D', accent: '#C8974A' },
+  { from: '#1A3A2D', to: '#0D2018', accent: '#3DA882' },
+  { from: '#2D1A4A', to: '#180D2A', accent: '#7B72B8' },
+  { from: '#3A1A1A', to: '#200D0D', accent: '#E05050' },
+  { from: '#1A2D4A', to: '#0D1828', accent: '#5AA0D8' },
+];
 
-/* ── Alexandria areas ── */
+/* ── Area filter list ── */
 const AREAS = [
   'الكل', 'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي',
   'المنشية', 'كليوباترا', 'ميامي', 'الإبراهيمية', 'سيدي بشر', 'الشاطبي',
@@ -55,10 +52,36 @@ const AREAS = [
 
 const SPECS = ['كهرباء', 'ميكانيكا', 'تكييف', 'رفع ودهان', 'فرامل', 'إطارات'];
 
+/* ── MapFlyTo helper ── */
+function MapFlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+  const map = useMap();
+  useEffect(() => { map.flyTo([lat, lng], zoom, { duration: 1.0 }); }, [lat, lng, zoom]);
+  return null;
+}
+
+/* ── Custom map marker ── */
+function createWorkshopIcon(selected: boolean, accent: string) {
+  const size = selected ? 44 : 36;
+  const html = `
+    <div style="
+      width:${size}px; height:${size}px; border-radius:50% 50% 50% 0;
+      background:${selected ? G : accent};
+      border:2.5px solid #fff;
+      transform:rotate(-45deg);
+      box-shadow:0 4px 18px ${selected ? 'rgba(200,151,74,0.7)' : 'rgba(0,0,0,0.35)'};
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s;
+    ">
+      <span style="transform:rotate(45deg); font-size:${selected ? 14 : 11}px; font-weight:900; color:#fff; font-family:Almarai,sans-serif;">🔧</span>
+    </div>`;
+  return L.divIcon({ html, className: '', iconAnchor: [size / 2, size], popupAnchor: [0, -size] });
+}
+
+/* ── Stars ── */
 function Stars({ rating }: { rating: number | null }) {
   const r = rating ?? 0;
   return (
-    <div style={{ display: 'flex', gap: 1 }}>
+    <div style={{ display: 'flex', gap: 1.5 }}>
       {[1, 2, 3, 4, 5].map(s => (
         <Star key={s} size={11} fill={s <= Math.round(r) ? G : 'transparent'} color={s <= Math.round(r) ? G : '#3A4860'} />
       ))}
@@ -66,6 +89,39 @@ function Stars({ rating }: { rating: number | null }) {
   );
 }
 
+/* ── Workshop cover banner (placeholder image) ── */
+function WorkshopCover({ w, selected }: { w: { id: number; name: string; area: string }; selected: boolean }) {
+  const palette = WORKSHOP_PALETTES[w.id % WORKSHOP_PALETTES.length];
+  const initials = w.name.slice(0, 2);
+  return (
+    <div style={{
+      height: 90, position: 'relative', overflow: 'hidden',
+      background: `linear-gradient(135deg,${palette.from},${palette.to})`,
+      borderBottom: `1px solid rgba(255,255,255,0.06)`,
+    }}>
+      {/* Subtle grid texture */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)`, backgroundSize: '20px 20px', pointerEvents: 'none' }} />
+      {/* Glow blob */}
+      <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: `radial-gradient(circle,${palette.accent}30,transparent 70%)`, pointerEvents: 'none' }} />
+      {/* Workshop icon circle */}
+      <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', width: 56, height: 56, borderRadius: 16, background: `${palette.accent}18`, border: `1.5px solid ${palette.accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+        <Wrench size={18} color={palette.accent} />
+        <span style={{ fontSize: 9, fontWeight: 800, color: palette.accent, fontFamily: F }}>{initials}</span>
+      </div>
+      {/* Area badge */}
+      <div style={{ position: 'absolute', left: 12, bottom: 10, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <MapPin size={9} color={palette.accent} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: F }}>{w.area}</span>
+      </div>
+      {/* Selected shimmer */}
+      {selected && (
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg,${G}18,transparent)`, pointerEvents: 'none' }} />
+      )}
+    </div>
+  );
+}
+
+/* ── Workshop card ── */
 function WorkshopCard({ w, idx, onSelect, selected }: {
   w: { id: number; name: string; area: string; address: string; phone: string; rating: number | null };
   idx: number;
@@ -73,85 +129,95 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
   selected: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const specTags = SPECS.filter((_, i) => (w.id + i) % 3 === 0).slice(0, 2);
+  const specTags = SPECS.filter((_, i) => (w.id + i) % 3 === 0).slice(0, 3);
+  const palette = WORKSHOP_PALETTES[w.id % WORKSHOP_PALETTES.length];
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ delay: idx * 0.03 }}
+      transition={{ delay: idx * 0.04 }}
       onClick={onSelect}
-      style={{ background: selected ? 'rgba(200,151,74,0.08)' : CARD, border: `1.5px solid ${selected ? 'rgba(200,151,74,0.4)' : 'rgba(200,151,74,0.1)'}`, borderRadius: 20, overflow: 'hidden', fontFamily: "'Almarai',sans-serif", direction: 'rtl', transition: 'all .2s', cursor: 'pointer', boxShadow: selected ? '0 8px 32px rgba(200,151,74,0.15)' : 'none' }}
+      style={{
+        background: selected ? `${palette.accent}10` : CARD,
+        border: `1.5px solid ${selected ? palette.accent + '60' : 'rgba(255,255,255,0.07)'}`,
+        borderRadius: 20, overflow: 'hidden', fontFamily: F, direction: 'rtl',
+        transition: 'all .22s', cursor: 'pointer',
+        boxShadow: selected ? `0 8px 32px ${palette.accent}20` : '0 2px 12px rgba(0,0,0,0.2)',
+      }}
     >
-      <div style={{ height: 3, background: selected ? `linear-gradient(90deg,${G},#DEB06C)` : `linear-gradient(90deg,${G},#DEB06C,rgba(200,151,74,0))` }} />
-      <div style={{ padding: '14px 16px 14px' }}>
+      {/* Cover image / banner */}
+      <WorkshopCover w={w} selected={selected} />
+
+      <div style={{ padding: '12px 14px 14px' }}>
+        {/* Name + rating row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(61,168,130,0.1)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 999, padding: '2px 7px', marginBottom: 5 }}>
               <CheckCircle2 size={9} color="#3DA882" />
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#3DA882' }}>معتمدة</span>
+              <span style={{ fontSize: 9, fontWeight: 800, color: '#3DA882' }}>ورشة معتمدة</span>
             </div>
-            <h3 style={{ fontSize: 14, fontWeight: 900, color: '#E8F0F8', lineHeight: 1.2, marginBottom: 3 }}>{w.name}</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#7A95AA', fontSize: 11, fontWeight: 600 }}>
-              <MapPin size={10} color={G} />{w.area}
-            </div>
+            <h3 style={{ fontSize: 15, fontWeight: 900, color: '#E8F0F8', lineHeight: 1.2, margin: 0 }}>{w.name}</h3>
+            <p style={{ fontSize: 11, color: TD, margin: '3px 0 0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.address}</p>
           </div>
-          <div style={{ flexShrink: 0, textAlign: 'center', background: CARD2, borderRadius: 10, padding: '6px 10px', border: '1px solid rgba(200,151,74,0.1)' }}>
-            <div style={{ fontSize: 16, fontWeight: 900, color: G }}>{w.rating?.toFixed(1) ?? '—'}</div>
+          {/* Rating badge */}
+          <div style={{ flexShrink: 0, textAlign: 'center', background: CARD2, borderRadius: 12, padding: '6px 10px', border: `1px solid ${selected ? palette.accent + '30' : 'rgba(200,151,74,0.1)'}`, marginRight: 10 }}>
+            <div style={{ fontSize: 17, fontWeight: 900, color: G, lineHeight: 1 }}>{w.rating?.toFixed(1) ?? '—'}</div>
             <Stars rating={w.rating} />
           </div>
         </div>
 
+        {/* Hours + status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '6px 10px' }}>
+          <Clock size={10} color="#4AABCA" />
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#4AABCA', flex: 1 }}>السبت – الخميس: ٩ص – ٩م</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#3DA882', boxShadow: '0 0 6px #3DA882' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#3DA882' }}>مفتوح</span>
+          </div>
+        </div>
+
+        {/* Spec tags */}
         {specTags.length > 0 && (
-          <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+          <div style={{ display: 'flex', gap: 5, marginBottom: 12, flexWrap: 'wrap' }}>
             {specTags.map(s => (
-              <span key={s} style={{ background: 'rgba(123,114,184,0.1)', border: '1px solid rgba(123,114,184,0.2)', borderRadius: 6, padding: '2px 7px', fontSize: 10, fontWeight: 700, color: '#7B72B8' }}>{s}</span>
+              <span key={s} style={{ background: `${palette.accent}12`, border: `1px solid ${palette.accent}25`, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: palette.accent }}>{s}</span>
             ))}
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
-          <Clock size={10} color="#4AABCA" />
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#4AABCA' }}>السبت – الخميس: ٩ص – ٩م</span>
-          <span style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 3 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#3DA882', boxShadow: '0 0 5px #3DA882' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#3DA882' }}>مفتوح</span>
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: 7 }}>
-          {w.phone && (
-            <a href={`tel:${w.phone}`} onClick={e => e.stopPropagation()}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, borderRadius: 10, padding: '8px 0', textDecoration: 'none', boxShadow: '0 3px 10px rgba(200,151,74,0.3)' }}
-            >
-              <Phone size={11} /> اتصل
-            </a>
-          )}
-          <button onClick={e => { e.stopPropagation(); setExpanded(x => !x); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '8px 12px', color: '#A0B4C8', fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
-          >
-            تفاصيل <ChevronDown size={10} style={{ transform: expanded ? 'rotate(180deg)' : '', transition: 'transform .2s' }} />
-          </button>
-        </div>
+        {/* Details toggle */}
+        <button onClick={e => { e.stopPropagation(); setExpanded(x => !x); }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${palette.accent}0D`, border: `1px solid ${palette.accent}25`, borderRadius: 10, padding: '8px', color: palette.accent, fontFamily: F, fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all .15s' }}
+        >
+          <Settings size={11} />
+          تفاصيل الورشة
+          <ChevronDown size={11} style={{ transform: expanded ? 'rotate(180deg)' : '', transition: 'transform .2s' }} />
+        </button>
 
         <AnimatePresence>
           {expanded && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-              <div style={{ marginTop: 10, padding: '10px 12px', background: CARD2, borderRadius: 10, border: '1px solid rgba(200,151,74,0.08)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: 'hidden' }}>
+              <div style={{ marginTop: 10, padding: '12px', background: CARD2, borderRadius: 12, border: `1px solid ${palette.accent}12`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[
-                  { icon: <Shield size={10} />, label: 'ضمان', val: '30 يوم' },
-                  { icon: <Wrench size={10} />, label: 'قطع أصلية', val: '✓' },
-                  { icon: <Clock size={10} />, label: 'وقت التركيب', val: '2-4 ساعات' },
-                  { icon: <Star size={10} />, label: 'تقييمات', val: `${20 + (w.id % 60)} تقييم` },
+                  { icon: <Shield size={12} />, label: 'ضمان', val: '30 يوم' },
+                  { icon: <Zap size={12} />,    label: 'وقت التركيب', val: '2-4 ساعات' },
+                  { icon: <Wrench size={12} />, label: 'قطع أصلية', val: '✓ مضمونة' },
+                  { icon: <Star size={12} />,   label: 'تقييمات', val: `${20 + (w.id % 60)} تقييم` },
                 ].map(item => (
-                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ color: G }}>{item.icon}</span>
-                    <span style={{ fontSize: 10, color: '#7A95AA', fontWeight: 600 }}>{item.label}:</span>
-                    <span style={{ fontSize: 10, color: '#D4E0EC', fontWeight: 700 }}>{item.val}</span>
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '6px 8px' }}>
+                    <span style={{ color: palette.accent }}>{item.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 9, color: TD, fontWeight: 600 }}>{item.label}</div>
+                      <div style={{ fontSize: 11, color: '#D4E0EC', fontWeight: 800 }}>{item.val}</div>
+                    </div>
                   </div>
                 ))}
+              </div>
+              <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(61,168,130,0.05)', borderRadius: 10, border: '1px solid rgba(61,168,130,0.12)', fontSize: 11, color: '#3DA882', fontWeight: 700 }}>
+                🏆 هذه الورشة جزء من شبكة رينو باك المعتمدة — كل الحجوزات تتم عبر الباكدج
               </div>
             </motion.div>
           )}
@@ -161,63 +227,95 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
   );
 }
 
-/* ── Leaflet map component ── */
-function AlexMap({ workshops, selectedId, onSelect }: {
-  workshops: Array<{ id: number; name: string; area: string; address: string; phone: string; rating: number | null; lat: number | null; lng: number | null }>;
+/* ── Map fly target tracker ── */
+function MapController({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+  const map = useMap();
+  const prev = useRef({ lat, lng, zoom });
+  useEffect(() => {
+    if (prev.current.lat !== lat || prev.current.lng !== lng) {
+      map.flyTo([lat, lng], zoom, { duration: 0.9 });
+      prev.current = { lat, lng, zoom };
+    }
+  }, [lat, lng, zoom]);
+  return null;
+}
+
+/* ── Leaflet map ── */
+function AlexMap({ workshops, selectedId, onSelect, focusCoords }: {
+  workshops: Array<{ id: number; name: string; area: string; address: string; rating: number | null; lat: number | null; lng: number | null }>;
   selectedId: number | null;
   onSelect: (id: number) => void;
+  focusCoords: { lat: number; lng: number; zoom: number };
 }) {
   return (
     <div style={{ height: '100%', borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
-      {/* Subtle brand-tinted overlay on top of the map */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(26,35,86,0.18) 0%, transparent 40%, rgba(13,18,32,0.12) 100%)', zIndex: 500, pointerEvents: 'none' }} />
       <MapContainer
-        center={[31.2001, 29.9187]}
-        zoom={12}
-        style={{ height: '100%', width: '100%', background: '#1A2356', filter: 'hue-rotate(195deg) saturate(0.75) brightness(0.88)' }}
-        zoomControl={false}
+        center={[focusCoords.lat, focusCoords.lng]}
+        zoom={focusCoords.zoom}
+        style={{ height: '100%', width: '100%' }}
+        zoomControl={true}
+        attributionControl={false}
       >
+        {/* Standard Carto Voyager — Google Maps-like look */}
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         />
+
+        <MapController lat={focusCoords.lat} lng={focusCoords.lng} zoom={focusCoords.zoom} />
+
         {workshops.map(w => {
           const coords: [number, number] =
             w.lat && w.lng ? [w.lat, w.lng] : AREA_COORDS[w.area] ?? [31.2001, 29.9187];
+          const palette = WORKSHOP_PALETTES[w.id % WORKSHOP_PALETTES.length];
+          const isSelected = selectedId === w.id;
           return (
             <Marker
               key={w.id}
               position={coords}
-              icon={createGoldIcon(w.rating)}
+              icon={createWorkshopIcon(isSelected, palette.accent)}
               eventHandlers={{ click: () => onSelect(w.id) }}
             >
               <Popup>
-                <div style={{ fontFamily: 'Almarai,sans-serif', direction: 'rtl', minWidth: 150, background: '#161E30', color: '#E8F0F8', padding: '8px', borderRadius: 8 }}>
-                  <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 4, color: '#E8F0F8' }}>{w.name}</div>
-                  <div style={{ fontSize: 11, color: '#C8974A', fontWeight: 700 }}>{w.area}</div>
-                  {w.rating && <div style={{ fontSize: 11, color: '#C8974A', fontWeight: 900, marginTop: 2 }}>⭐ {w.rating.toFixed(1)}</div>}
-                  {w.phone && (
-                    <a href={`tel:${w.phone}`} style={{ display: 'block', marginTop: 6, fontSize: 11, color: '#4AABCA', fontWeight: 700, textDecoration: 'none' }}>📞 {w.phone}</a>
-                  )}
+                <div style={{ fontFamily: F, direction: 'rtl', minWidth: 160, padding: 4 }}>
+                  <div style={{ fontWeight: 900, fontSize: 14, color: palette.accent, marginBottom: 3 }}>{w.name}</div>
+                  <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>{w.address}</div>
+                  <div style={{ display: 'flex', gap: 6, fontSize: 11, alignItems: 'center' }}>
+                    {w.rating && <span style={{ fontWeight: 800, color: '#f59e0b' }}>★ {w.rating.toFixed(1)}</span>}
+                    <span style={{ background: 'rgba(61,168,130,0.1)', color: '#3DA882', borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 700 }}>معتمدة</span>
+                  </div>
                 </div>
               </Popup>
             </Marker>
           );
         })}
       </MapContainer>
-      {/* Brand overlay */}
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, background: 'rgba(13,18,32,0.92)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 10, padding: '6px 12px', fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, color: '#C8974A' }}>
+
+      {/* Map label */}
+      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', border: '1px solid rgba(200,151,74,0.25)', borderRadius: 10, padding: '5px 12px', fontFamily: F, fontSize: 11, fontWeight: 800, color: '#1A2356', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
         🗺️ ورش رينو باك — الإسكندرية
       </div>
+
+      {/* Leaflet popup styles */}
+      <style>{`
+        .leaflet-popup-content-wrapper { background: #fff !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important; border: none !important; }
+        .leaflet-popup-tip { background: #fff !important; }
+        .leaflet-popup-content { margin: 12px !important; }
+        .leaflet-control-zoom a { background: rgba(255,255,255,0.95) !important; color: #1A2356 !important; border-color: rgba(0,0,0,0.1) !important; font-weight: 900; }
+        .leaflet-control-zoom a:hover { background: #fff !important; }
+      `}</style>
     </div>
   );
 }
 
 export default function Workshops() {
   const { data: workshops, isLoading } = useListWorkshops();
-  const [area, setArea] = useState('الكل');
-  const [search, setSearch] = useState('');
+  const [area, setArea]         = useState('الكل');
+  const [search, setSearch]     = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Focus coordinates for the map
+  const [focusCoords, setFocusCoords] = useState({ lat: 31.2001, lng: 29.9187, zoom: 12 });
 
   const filtered = workshops?.filter(w => {
     if (area !== 'الكل' && w.area !== area) return false;
@@ -225,32 +323,56 @@ export default function Workshops() {
     return true;
   });
 
+  // When area filter changes → pan map to that area
+  const handleAreaChange = (a: string) => {
+    setArea(a);
+    setSelectedId(null);
+    if (a === 'الكل') {
+      setFocusCoords({ lat: 31.2001, lng: 29.9187, zoom: 12 });
+    } else if (AREA_COORDS[a]) {
+      setFocusCoords({ lat: AREA_COORDS[a][0], lng: AREA_COORDS[a][1], zoom: 14 });
+    }
+  };
+
+  // When workshop selected → pan map to workshop
+  const handleWorkshopSelect = (id: number) => {
+    const wid = selectedId === id ? null : id;
+    setSelectedId(wid);
+    if (wid && workshops) {
+      const w = workshops.find(x => x.id === wid);
+      if (w) {
+        const coords = (w.lat && w.lng) ? [w.lat, w.lng] : AREA_COORDS[w.area];
+        if (coords) setFocusCoords({ lat: coords[0], lng: coords[1], zoom: 15 });
+      }
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: BG, direction: 'rtl' }}>
 
       {/* ── HERO ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '48px 24px 60px', background: `linear-gradient(160deg,#070C18 0%,#111826 60%,${BG} 100%)` }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(200,151,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.03) 1px,transparent 1px)', backgroundSize: '36px 36px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse,rgba(61,168,130,0.06),transparent 65%)', pointerEvents: 'none' }} />
-        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 40, bottom: 0, height: 180, opacity: 0.14, mixBlendMode: 'screen', pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '44px 24px 52px', background: `linear-gradient(160deg,#070C18 0%,#111826 60%,${BG} 100%)` }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(200,151,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.03) 1px,transparent 1px)`, backgroundSize: '36px 36px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '40%', transform: 'translate(-50%,-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse,rgba(61,168,130,0.06),transparent 65%)', pointerEvents: 'none' }} />
+        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 32, bottom: 0, height: 170, opacity: 0.13, mixBlendMode: 'screen', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><RenoPackLogo size="md" /></div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(61,168,130,0.08)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 999, padding: '5px 14px', marginBottom: 12 }}>
+        <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><RenoPackLogo size="md" /></div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(61,168,130,0.08)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 999, padding: '4px 14px', marginBottom: 14 }}>
             <CheckCircle2 size={11} color="#3DA882" />
-            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, color: '#3DA882' }}>شبكة ورش معتمدة في الإسكندرية</span>
+            <span style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#3DA882' }}>شبكة ورش معتمدة في الإسكندرية</span>
           </div>
-          <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 32, fontWeight: 900, color: '#E8F0F8', marginBottom: 8, lineHeight: 1.2 }}>
-            ورش <span style={{ color: G }}>رينو</span> في كل الإسكندرية
+          <h1 style={{ fontFamily: F, fontSize: 30, fontWeight: 900, color: '#E8F0F8', marginBottom: 8, lineHeight: 1.2 }}>
+            ورش <span style={{ color: G }}>رينو باك</span> في كل الإسكندرية
           </h1>
-          <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#7A95AA', fontWeight: 500, maxWidth: 460, margin: '0 auto 20px' }}>
-            شبكة من أفضل ورش الصيانة المعتمدة، متخصصة في رينو، بأسعار شفافة وضمان على الشغل.
+          <p style={{ fontFamily: F, fontSize: 14, color: TD, fontWeight: 500, maxWidth: 460, margin: '0 auto 20px' }}>
+            أقرب ورشة متخصصة في رينو — بأسعار شفافة وضمان على الشغل وتركيب ضمن الباكدج.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
-            {[{ n: '+30', l: 'ورشة معتمدة' }, { n: '11', l: 'منطقة' }, { n: '4.8★', l: 'متوسط التقييم' }].map(s => (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 36, flexWrap: 'wrap' }}>
+            {[{ n: '+30', l: 'ورشة معتمدة' }, { n: '11', l: 'منطقة' }, { n: '4.8★', l: 'متوسط التقييم' }, { n: '30', l: 'يوم ضمان' }].map(s => (
               <div key={s.l} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 900, color: G }}>{s.n}</div>
-                <div style={{ fontFamily: "'Almarai',sans-serif", fontSize: 11, color: '#7A95AA', fontWeight: 600 }}>{s.l}</div>
+                <div style={{ fontFamily: F, fontSize: 22, fontWeight: 900, color: G }}>{s.n}</div>
+                <div style={{ fontFamily: F, fontSize: 11, color: TD, fontWeight: 600 }}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -261,20 +383,26 @@ export default function Workshops() {
       <div style={{ position: 'sticky', top: 68, zIndex: 20, background: 'rgba(13,18,32,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '10px 24px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 180, position: 'relative' }}>
-            <Search size={13} color="#7A95AA" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <Search size={13} color={TD} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث باسم الورشة أو المنطقة..."
-              style={{ width: '100%', background: '#111826', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 999, padding: '8px 36px 8px 14px', color: '#D4E0EC', fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 600, outline: 'none', direction: 'rtl' }}
+              style={{ width: '100%', background: '#111826', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 999, padding: '8px 36px 8px 14px', color: '#D4E0EC', fontSize: 13, fontFamily: F, fontWeight: 600, outline: 'none', direction: 'rtl' }}
             />
           </div>
-          {!isLoading && <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: '#7A95AA', fontWeight: 600, flexShrink: 0 }}>{filtered?.length ?? 0} ورشة</span>}
+          {!isLoading && (
+            <span style={{ fontFamily: F, fontSize: 12, color: TD, fontWeight: 600, flexShrink: 0, background: 'rgba(200,151,74,0.08)', borderRadius: 999, padding: '4px 12px' }}>
+              {filtered?.length ?? 0} ورشة
+            </span>
+          )}
         </div>
+        {/* Area filter pills */}
         <div style={{ maxWidth: 1280, margin: '8px auto 0', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
           {AREAS.map(a => {
             const active = area === a;
             return (
-              <button key={a} onClick={() => setArea(a)}
-                style={{ fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '4px 12px', border: active ? 'none' : '1.5px solid rgba(61,168,130,0.2)', background: active ? 'rgba(61,168,130,0.15)' : 'transparent', color: active ? '#3DA882' : '#A0B4C8', cursor: 'pointer', transition: 'all .2s' }}
+              <button key={a} onClick={() => handleAreaChange(a)}
+                style={{ fontFamily: F, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '5px 13px', border: active ? 'none' : '1.5px solid rgba(255,255,255,0.08)', background: active ? G : 'rgba(255,255,255,0.03)', color: active ? '#0D1220' : TD, cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 4 }}
               >
+                {a !== 'الكل' && active && <Navigation size={9} />}
                 {a}
               </button>
             );
@@ -282,38 +410,41 @@ export default function Workshops() {
         </div>
       </div>
 
-      {/* ── MAIN CONTENT: Cards + Map (RTL: cards on right, map on left) ── */}
-      <div style={{ maxWidth: 1280, margin: '24px auto', padding: '0 24px 60px', display: 'grid', gridTemplateColumns: '400px 1fr', gap: 24, alignItems: 'start' }}>
+      {/* ── MAIN CONTENT: cards + map ── */}
+      <div style={{ maxWidth: 1280, margin: '20px auto', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 20, alignItems: 'start' }}>
 
-        {/* Workshops grid — first in DOM = right side in RTL */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Guarantee card */}
-          <div style={{ background: 'linear-gradient(135deg,rgba(200,151,74,0.08),rgba(200,151,74,0.03))', border: '1.5px solid rgba(200,151,74,0.15)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, fontFamily: "'Almarai',sans-serif" }}>
-            <Shield size={22} color={G} style={{ flexShrink: 0 }} />
+        {/* Workshop cards (right in RTL) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* Info banner */}
+          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.3))`, border: '1.5px solid rgba(200,151,74,0.15)', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, fontFamily: F }}>
+            <Shield size={20} color={G} style={{ flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', marginBottom: 2 }}>ضمان الجودة على كل الشغل</div>
-              <div style={{ fontSize: 11, color: '#7A95AA', fontWeight: 500 }}>كل الورش المعتمدة تقدم ضمان 30 يوم على اليد العاملة</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', marginBottom: 1 }}>ضمان الجودة على كل الشغل</div>
+              <div style={{ fontSize: 11, color: TD, fontWeight: 500 }}>ضمان 30 يوم على اليد العاملة في كل الورش المعتمدة</div>
             </div>
           </div>
 
           {isLoading ? (
             [...Array(4)].map((_, i) => (
-              <div key={i} style={{ height: 160, background: CARD, borderRadius: 20, opacity: 0.6, animation: 'pulse 1.5s infinite' }} />
+              <div key={i} style={{ height: 190, background: CARD, borderRadius: 20, opacity: 0.5 + i * 0.1, animation: 'shimmer 1.5s infinite' }} />
             ))
           ) : filtered?.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 16px', background: CARD, borderRadius: 20, border: '1.5px dashed rgba(200,151,74,0.15)' }}>
               <Wrench size={36} color="rgba(200,151,74,0.15)" style={{ margin: '0 auto 12px' }} />
-              <h3 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 18, fontWeight: 800, color: '#D4E0EC', marginBottom: 6 }}>لا توجد ورش هنا</h3>
-              <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 13 }}>جرب منطقة أخرى.</p>
+              <h3 style={{ fontFamily: F, fontSize: 18, fontWeight: 800, color: '#D4E0EC', marginBottom: 6 }}>لا توجد ورش هنا</h3>
+              <p style={{ fontFamily: F, color: TD, fontSize: 13 }}>جرب منطقة أخرى.</p>
             </div>
           ) : (
             <motion.div layout style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <AnimatePresence>
                 {filtered?.map((w, i) => (
                   <WorkshopCard
-                    key={w.id} w={{ ...w, rating: w.rating ?? null }} idx={i}
+                    key={w.id}
+                    w={{ ...w, rating: w.rating ?? null }}
+                    idx={i}
                     selected={selectedId === w.id}
-                    onSelect={() => setSelectedId(selectedId === w.id ? null : w.id)}
+                    onSelect={() => handleWorkshopSelect(w.id)}
                   />
                 ))}
               </AnimatePresence>
@@ -321,32 +452,33 @@ export default function Workshops() {
           )}
         </div>
 
-        {/* Map — second in DOM = left side in RTL */}
-        <div style={{ position: 'sticky', top: 140, height: 600, background: CARD, border: '1.5px solid rgba(200,151,74,0.12)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
-          {!isLoading && workshops && workshops.length > 0 && (
+        {/* Map (left in RTL) */}
+        <div style={{ position: 'sticky', top: 138, height: 620, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
+          {!isLoading && workshops && workshops.length > 0 ? (
             <AlexMap
               workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={handleWorkshopSelect}
+              focusCoords={focusCoords}
             />
-          )}
-          {isLoading && (
+          ) : (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
               <MapPin size={32} color="rgba(200,151,74,0.25)" />
-              <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 13, color: '#7A95AA', fontWeight: 700 }}>جاري تحميل الخريطة...</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: TD, fontWeight: 700 }}>جاري تحميل الخريطة...</p>
             </div>
           )}
-          {/* Steps strip */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1000, background: 'rgba(13,18,32,0.94)', borderTop: '1px solid rgba(200,151,74,0.12)', padding: '10px 16px', display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+
+          {/* Steps strip at bottom */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1000, background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(8px)', borderTop: '1px solid rgba(0,0,0,0.08)', padding: '10px 16px', display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
-              { n: '01', t: 'اختار الباكدج' },
-              { n: '02', t: 'اختار الورشة' },
-              { n: '03', t: 'احجز أونلاين' },
-              { n: '04', t: 'العربية جاهزة!' },
+              { n: '01', t: 'اختار الباكدج', c: G },
+              { n: '02', t: 'اختار الورشة', c: '#4AABCA' },
+              { n: '03', t: 'احجز أونلاين', c: '#3DA882' },
+              { n: '04', t: 'العربية جاهزة!', c: '#7B72B8' },
             ].map(step => (
               <div key={step.n} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(200,151,74,0.15)', border: '1px solid rgba(200,151,74,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: G, flexShrink: 0 }}>{step.n}</div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#A0B4C8', fontFamily: "'Almarai',sans-serif" }}>{step.t}</span>
+                <div style={{ width: 22, height: 22, borderRadius: 7, background: `${step.c}18`, border: `1.5px solid ${step.c}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: step.c, flexShrink: 0 }}>{step.n}</div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#1A2356', fontFamily: F }}>{step.t}</span>
               </div>
             ))}
           </div>
@@ -354,19 +486,27 @@ export default function Workshops() {
       </div>
 
       {/* ── Footer strip ── */}
-      <div style={{ background: '#111826', borderTop: '1px solid rgba(200,151,74,0.08)', padding: '24px' }}>
+      <div style={{ background: '#111826', borderTop: '1px solid rgba(200,151,74,0.08)', padding: '20px 24px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
           {[
-            { icon: <CheckCircle2 size={16} color="#3DA882" />, text: 'ورش معتمدة ومراجعة' },
-            { icon: <Shield size={16} color={G} />, text: 'ضمان على الشغل' },
-            { icon: <Clock size={16} color="#4AABCA" />, text: 'خدمة 6 أيام في الأسبوع' },
+            { icon: <CheckCircle2 size={15} color="#3DA882" />, text: 'ورش معتمدة ومراجعة' },
+            { icon: <Shield size={15} color={G} />, text: 'ضمان 30 يوم على الشغل' },
+            { icon: <Clock size={15} color="#4AABCA" />, text: 'خدمة 6 أيام في الأسبوع' },
+            { icon: <Zap size={15} color="#7B72B8" />, text: 'تركيب سريع خلال 24 ساعة' },
           ].map(item => (
-            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700, color: '#A0B4C8' }}>
+            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: F, fontSize: 12, fontWeight: 700, color: TD }}>
               {item.icon}{item.text}
             </div>
           ))}
         </div>
       </div>
+
+      <style>{`
+        @keyframes shimmer {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 }
