@@ -47,6 +47,8 @@ export default function Packages() {
   useEffect(() => { if (!car) setShowCarModal(true); }, []);
 
   const filteredPackages = packages?.filter(pkg => {
+    // Hide custom puzzle-builder packages from the main listing
+    if (pkg.slug?.startsWith('custom-')) return false;
     const kmMatch = activeFilter !== null ? pkg.kmService === activeFilter : true;
     if (!kmMatch) return false;
     if (car && pkg.parts && pkg.parts.length > 0) {
