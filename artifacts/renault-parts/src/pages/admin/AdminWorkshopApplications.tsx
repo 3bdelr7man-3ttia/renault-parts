@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle2, XCircle, Loader2, Clock, MapPin, Phone, Wrench, User, Calendar, FileText } from 'lucide-react';
@@ -87,8 +86,7 @@ export default function AdminWorkshopApplications() {
   const pendingCount = apps.filter(a => a.status === 'pending').length;
 
   return (
-    <AdminLayout>
-      <div style={{ fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
+    <div style={{ fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
         <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 900, color: '#E8F0F8', marginBottom: 4 }}>طلبات انضمام الورش</h1>
@@ -210,7 +208,6 @@ export default function AdminWorkshopApplications() {
             })}
           </div>
         )}
-      </div>
-    </AdminLayout>
+    </div>
   );
 }
