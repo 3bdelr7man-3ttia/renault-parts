@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { CheckCircle2, AlertCircle, Loader2, ChevronRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, ChevronRight, LogIn, UserCheck } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { useAuth } from '@/lib/auth-context';
 
 const G = '#C8974A';
 const GL = '#E0B06A';
@@ -70,10 +71,22 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function JoinWorkshop() {
+  const { user, getAuthHeaders } = useAuth();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Pre-fill name & phone from logged-in user profile
+  useEffect(() => {
+    if (user) {
+      setForm(f => ({
+        ...f,
+        ownerName: f.ownerName || user.name || '',
+        phone: f.phone || user.phone || '',
+      }));
+    }
+  }, [user]);
 
   const set = (k: keyof FormState, v: any) => setForm(f => ({ ...f, [k]: v }));
 
@@ -93,13 +106,13 @@ export default function JoinWorkshop() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !user) return;
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/workshops/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(getAuthHeaders().headers ?? {}) },
         body: JSON.stringify({
           ownerName: form.ownerName,
           workshopName: form.workshopName,
@@ -135,7 +148,27 @@ export default function JoinWorkshop() {
           </div>
         </div>
 
-        {success ? (
+        {/* Login wall — must be logged in to apply */}
+        {!user ? (
+          <div style={{ background: B2, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 24, padding: '48px 32px', textAlign: 'center' }}>
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(200,151,74,0.1)', border: `2px solid rgba(200,151,74,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <LogIn size={32} color={G} />
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 900, color: '#E8F0F8', marginBottom: 10 }}>سجّل دخولك أولاً</h2>
+            <p style={{ color: TD, fontSize: 13, lineHeight: 1.9, marginBottom: 28, maxWidth: 380, margin: '0 auto 28px' }}>
+              عشان نقدر نربط طلبك بحسابك ونحولك لصاحب ورشة بعد الموافقة،<br />
+              محتاج تسجل دخول أو تعمل حساب جديد الأول.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/login?redirect=/join-workshop" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `linear-gradient(135deg,${G},${GL})`, color: BG, padding: '13px 28px', borderRadius: 999, fontWeight: 900, fontSize: 14, textDecoration: 'none' }}>
+                <LogIn size={16} /> سجل دخول
+              </Link>
+              <Link href="/register?redirect=/join-workshop" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.1)', border: `1.5px solid rgba(200,151,74,0.3)`, color: G, padding: '13px 28px', borderRadius: 999, fontWeight: 900, fontSize: 14, textDecoration: 'none' }}>
+                <UserCheck size={16} /> حساب جديد
+              </Link>
+            </div>
+          </div>
+        ) : success ? (
           <div style={{ background: B2, border: `1.5px solid rgba(34,197,94,0.3)`, borderRadius: 24, padding: '48px 32px', textAlign: 'center' }}>
             <CheckCircle2 size={64} color="#22c55e" style={{ marginBottom: 20 }} />
             <h2 style={{ fontSize: 24, fontWeight: 900, color: '#E8F0F8', marginBottom: 12 }}>تم إرسال طلبك بنجاح! 🎉</h2>

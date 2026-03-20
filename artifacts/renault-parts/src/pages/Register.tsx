@@ -37,6 +37,7 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
+  const redirect = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') || '/' : '/';
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -48,7 +49,7 @@ export default function Register() {
       onSuccess: (data) => {
         login(data.token, data.user);
         toast({ title: "مرحباً بك!", description: "تم إنشاء حسابك بنجاح." });
-        setLocation('/');
+        setLocation(redirect);
       },
       onError: (error: RegisterUserMutationError) => {
         toast({

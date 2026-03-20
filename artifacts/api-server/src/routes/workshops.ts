@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
 import { db, workshopsTable, workshopApplicationsTable } from "@workspace/db";
 import { ListWorkshopsQueryParams, ListWorkshopsResponse } from "@workspace/api-zod";
+import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -37,7 +38,9 @@ router.get("/workshops", async (req, res): Promise<void> => {
   res.json(ListWorkshopsResponse.parse(result));
 });
 
-router.post("/workshops/apply", async (req, res): Promise<void> => {
+// POST /api/workshops/apply — requires login; saves userId so approval links the account
+router.post("/workshops/apply", requireAuth, async (req, res): Promise<void> => {
+  const user = (req as AuthenticatedRequest).user;
   const { ownerName, workshopName, phone, area, address, yearsExperience, specialties, notes } = req.body;
 
   if (!ownerName || !workshopName || !phone || !area || !address || !yearsExperience || !specialties) {
@@ -45,9 +48,21 @@ router.post("/workshops/apply", async (req, res): Promise<void> => {
     return;
   }
 
+  // Prevent duplicate pending/approved applications from same user
+  const existing = await db
+    .select({ id: workshopApplicationsTable.id, status: workshopApplicationsTable.status })
+    .from(workshopApplicationsTable)
+    .where(eq(workshopApplicationsTable.userId, user.id));
+
+  const active = existing.find(a => ["pending", "approved"].includes(a.status));
+  if (active) {
+    res.status(409).json({ error: active.status === "approved" ? "حسابك مرتبط بورشة بالفعل" : "لديك طلب قيد المراجعة مسبقاً" });
+    return;
+  }
+
   const [app] = await db
     .insert(workshopApplicationsTable)
-    .values({ ownerName, workshopName, phone, area, address, yearsExperience, specialties, notes: notes || null })
+    .values({ userId: user.id, ownerName, workshopName, phone, area, address, yearsExperience, specialties, notes: notes || null })
     .returning();
 
   res.status(201).json({ id: app.id, message: "تم إرسال طلبك بنجاح! سيتم مراجعته والرد عليك قريباً." });
