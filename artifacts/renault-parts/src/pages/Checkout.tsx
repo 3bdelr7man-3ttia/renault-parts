@@ -311,7 +311,8 @@ export default function Checkout() {
     packageId: realPackageId,
     carModel: formData.carModel || (user?.carModel ?? ''),
     carYear: Number(formData.carYear) || (user?.carYear ?? 2020),
-    paymentMethod: formData.paymentMethod,
+    // API schema accepts "cash" not "cash_on_delivery"
+    paymentMethod: (formData.paymentMethod === 'cash_on_delivery' ? 'cash' : formData.paymentMethod) as 'cash' | 'card' | 'vodafone_cash' | 'instapay',
     deliveryAddress: formData.pickupType === 'delivery'
       ? formData.deliveryAddress
       : 'استلام من مركز التوزيع',
