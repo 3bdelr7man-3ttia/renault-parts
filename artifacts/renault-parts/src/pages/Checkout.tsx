@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
 import { useListPackages, useCreateOrder, useInitiatePayment } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   MapPin, CreditCard, CarFront, Loader2, CheckCircle2, Package2,
-  Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car, Clock
+  Home, AlertCircle, Store, Upload, ImageIcon, XCircle, ChevronDown, Car, Clock, Calendar
 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
 import { RENAULT_MODELS, CAR_YEARS, useCar } from '@/lib/car-context';
@@ -26,11 +26,18 @@ const ALEX_AREAS = [
   'زيزينيا', 'الورديان', 'البيطاش', 'كرموز', 'باب شرق',
 ];
 
-const STEP_LABELS = ['السيارة', 'الباكدج', 'الاستلام', 'الدفع', 'التأكيد'];
-type Step = 1 | 2 | 3 | 4 | 5;
+const STEP_LABELS = ['السيارة', 'الباكدج', 'الاستلام', 'الدفع', 'الموعد', 'التأكيد'];
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 type PayMethod = 'card' | 'vodafone_cash' | 'instapay';
 type PickupType = 'pickup' | 'delivery';
+
+const CHECKOUT_WORKSHOPS = [
+  { id: 1, name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: '#4AABCA', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م' },
+  { id: 2, name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: '#C8974A', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م' },
+  { id: 3, name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: '#9B59B6', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م' },
+  { id: 4, name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: '#3DA882', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م' },
+];
 
 interface FormData {
   carModel: string;
@@ -41,6 +48,10 @@ interface FormData {
   deliveryPhone: string;
   paymentMethod: PayMethod;
   vodafonePhone: string;
+  workshopId: number;
+  workshopName: string;
+  appointmentDate: string;
+  appointmentSlot: string;
 }
 
 export default function Checkout() {
@@ -124,6 +135,10 @@ export default function Checkout() {
     deliveryPhone: user?.phone ?? '',
     paymentMethod: 'card',
     vodafonePhone: user?.phone ?? '',
+    workshopId: 0,
+    workshopName: '',
+    appointmentDate: '',
+    appointmentSlot: '',
   });
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -163,6 +178,25 @@ export default function Checkout() {
         setConfirmedOrderId(order.id);
         clearPartCart();
         sessionStorage.removeItem('customPuzzle');
+        // Create appointment after order (if workshop was selected)
+        if (formData.workshopId && formData.appointmentDate && formData.appointmentSlot) {
+          try {
+            const authToken = getAuthHeaders().headers?.Authorization;
+            await fetch('/api/appointments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: authToken } : {}) },
+              body: JSON.stringify({
+                orderId: order.id,
+                workshopId: formData.workshopId,
+                workshopName: formData.workshopName,
+                date: formData.appointmentDate,
+                timeSlot: formData.appointmentSlot,
+              }),
+            });
+          } catch {
+            toast({ variant: 'destructive', title: 'تنبيه', description: 'تم تأكيد الطلب — لكن فشل حجز الموعد. تواصل معنا.' });
+          }
+        }
         if (formData.paymentMethod === 'card') {
           setIsRedirectingToPayment(true);
           try {
@@ -170,10 +204,10 @@ export default function Checkout() {
           } catch {
             toast({ variant: 'destructive', title: 'خطأ', description: 'تعذّر تهيئة بوابة الدفع. حاول لاحقاً.' });
             setIsRedirectingToPayment(false);
-            setStep(5);
+            setStep(6);
           }
         } else {
-          setStep(5);
+          setStep(6);
           if (receiptFile) {
             await autoUploadReceipt(order.id, receiptFile);
           }
@@ -223,6 +257,7 @@ export default function Checkout() {
   const canAdvanceStep3 =
     formData.pickupType === 'pickup' ||
     (formData.deliveryAddress.trim().length > 3 && formData.deliveryArea.length > 0);
+  const canAdvanceStep5 = !!formData.workshopId && !!formData.appointmentDate && !!formData.appointmentSlot;
 
   const buildOrderData = (realPackageId: number) => ({
     packageId: realPackageId,
@@ -315,9 +350,9 @@ export default function Checkout() {
                 <Step4Payment
                   formData={formData}
                   onChange={setFormData}
-                  onConfirm={handleConfirmOrder}
+                  onConfirm={() => setStep(5)}
                   onBack={() => setStep(3)}
-                  isPending={isCreatingOrder || isRedirectingToPayment || isRegisteringCustomPkg}
+                  isPending={false}
                   pkg={pkg}
                   receiptFile={receiptFile}
                   receiptPreviewUrl={receiptPreviewUrl}
@@ -328,12 +363,27 @@ export default function Checkout() {
                 />
               )}
 
-              {step === 5 && confirmedOrderId && (
+              {step === 5 && (
+                <Step5Appointment
+                  formData={formData}
+                  onChange={setFormData}
+                  onConfirm={handleConfirmOrder}
+                  onBack={() => setStep(4)}
+                  canAdvance={canAdvanceStep5}
+                  isPending={isCreatingOrder || isRedirectingToPayment || isRegisteringCustomPkg}
+                  getAuthHeaders={getAuthHeaders}
+                />
+              )}
+
+              {step === 6 && confirmedOrderId && (
                 <Step5Confirmation
                   orderId={confirmedOrderId}
                   paymentMethod={formData.paymentMethod}
                   pickupType={formData.pickupType}
                   autoUploadState={receiptUploadState}
+                  appointmentDate={formData.appointmentDate}
+                  appointmentSlot={formData.appointmentSlot}
+                  workshopName={formData.workshopName}
                 />
               )}
             </div>
@@ -354,11 +404,11 @@ export default function Checkout() {
 }
 
 function StepProgress({ step, userHasCar }: { step: Step; userHasCar: boolean }) {
-  const icons = [CarFront, Package2, Store, CreditCard, CheckCircle2];
+  const icons = [CarFront, Package2, Store, CreditCard, Calendar, CheckCircle2];
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', padding: '0 8px' }}>
       <div style={{ position: 'absolute', top: 22, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.08)', zIndex: 0 }} />
-      <div style={{ position: 'absolute', top: 22, right: 0, height: 2, background: G, zIndex: 1, width: `${((step - 1) / 4) * 100}%`, transition: 'width 0.4s ease' }} />
+      <div style={{ position: 'absolute', top: 22, right: 0, height: 2, background: G, zIndex: 1, width: `${((step - 1) / 5) * 100}%`, transition: 'width 0.4s ease' }} />
       {STEP_LABELS.map((label, i) => {
         const num = (i + 1) as Step;
         const Icon = icons[i];
@@ -990,20 +1040,204 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
       <div style={{ display: 'flex', gap: 12 }}>
         <Btn variant="outline" onClick={onBack} disabled={isPending} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
         <Btn onClick={onConfirm} disabled={isPending} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          {isPending ? (
-            <><Loader2 size={18} className="animate-spin" /> {formData.paymentMethod === 'card' ? 'جارٍ التحويل...' : 'جارٍ التأكيد...'}</>
-          ) : (
-            formData.paymentMethod === 'card' ? 'المتابعة للدفع' : 'تأكيد الطلب'
-          )}
+          {'متابعة لتحديد الموعد ←'}
         </Btn>
       </div>
     </div>
   );
 }
 
-function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState }: {
+function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, isPending, getAuthHeaders }: {
+  formData: FormData;
+  onChange: React.Dispatch<React.SetStateAction<FormData>>;
+  onConfirm: () => void;
+  onBack: () => void;
+  canAdvance: boolean;
+  isPending: boolean;
+  getAuthHeaders: () => { headers?: Record<string, string> };
+}) {
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  const ALL_SLOTS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+
+  // Generate next 14 days
+  const today = new Date();
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i + 1);
+    const dow = d.toLocaleDateString('ar-EG', { weekday: 'short' });
+    const label = d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
+    const val = d.toISOString().slice(0, 10);
+    const isFriday = d.getDay() === 5;
+    return { val, label, dow, isFriday };
+  });
+
+  const fetchSlots = useCallback(async (workshopId: number, date: string) => {
+    if (!workshopId || !date) return;
+    setLoadingSlots(true);
+    setBookedSlots([]);
+    try {
+      const headers = getAuthHeaders().headers ?? {};
+      const res = await fetch(`/api/appointments/slots?workshopId=${workshopId}&date=${date}`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setBookedSlots(data.bookedSlots ?? []);
+      }
+    } catch { /* ignore */ } finally {
+      setLoadingSlots(false);
+    }
+  }, [getAuthHeaders]);
+
+  const handleWorkshop = (w: typeof CHECKOUT_WORKSHOPS[0]) => {
+    onChange(p => ({ ...p, workshopId: w.id, workshopName: w.name, appointmentSlot: '' }));
+    if (formData.appointmentDate) fetchSlots(w.id, formData.appointmentDate);
+  };
+
+  const handleDate = (date: string) => {
+    onChange(p => ({ ...p, appointmentDate: date, appointmentSlot: '' }));
+    if (formData.workshopId) fetchSlots(formData.workshopId, date);
+  };
+
+  const slotLabel = (s: string) => {
+    const [hStr] = s.split(':');
+    const h = parseInt(hStr);
+    const suffix = h < 12 ? 'ص' : 'م';
+    const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${h12}:00 ${suffix}`;
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+        <div style={{ background: `${G}20`, borderRadius: 12, padding: 10 }}>
+          <Calendar size={22} style={{ color: G }} />
+        </div>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#fff' }}>حدد موعد التركيب</h2>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>اختر الورشة والوقت المناسب لك</p>
+        </div>
+      </div>
+
+      {/* Workshop Selection */}
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>اختر الورشة</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {CHECKOUT_WORKSHOPS.map(w => {
+            const isSelected = formData.workshopId === w.id;
+            return (
+              <div key={w.id} onClick={() => handleWorkshop(w)}
+                style={{
+                  borderRadius: 16, border: `2px solid ${isSelected ? w.color : 'rgba(255,255,255,0.08)'}`,
+                  background: isSelected ? `${w.color}18` : 'rgba(255,255,255,0.03)',
+                  padding: '14px 16px', cursor: 'pointer', transition: 'all 0.25s',
+                  boxShadow: isSelected ? `0 0 20px ${w.color}30` : 'none',
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 900, fontSize: 15, color: isSelected ? w.color : '#fff' }}>{w.name}</span>
+                  {isSelected && <CheckCircle2 size={18} style={{ color: w.color, flexShrink: 0 }} />}
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{w.address}</div>
+                <div style={{ display: 'flex', gap: 12, fontSize: 11 }}>
+                  <span style={{ color: '#f59e0b' }}>★ {w.rating}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{w.jobs.toLocaleString('ar-EG')} طلب</span>
+                  <span style={{ color: '#22c55e' }}>{w.hours}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Date Selection */}
+      {formData.workshopId > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>اختر اليوم</p>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+            {days.map(d => {
+              const isSelected = formData.appointmentDate === d.val;
+              return (
+                <div key={d.val} onClick={() => !d.isFriday && handleDate(d.val)}
+                  style={{
+                    minWidth: 62, borderRadius: 14, border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`,
+                    background: isSelected ? `${G}20` : d.isFriday ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
+                    padding: '10px 8px', textAlign: 'center', cursor: d.isFriday ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s', opacity: d.isFriday ? 0.35 : 1,
+                    boxShadow: isSelected ? `0 0 16px ${G}40` : 'none',
+                  }}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 3 }}>{d.dow}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? G : '#fff' }}>{d.label}</div>
+                  {d.isFriday && <div style={{ fontSize: 9, color: '#ef4444', marginTop: 2 }}>مغلق</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Time Slot Selection */}
+      {formData.workshopId > 0 && formData.appointmentDate && (
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>
+            اختر الوقت
+            {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>يتم التحقق من المتاح...</span>}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {ALL_SLOTS.map(s => {
+              const isBooked = bookedSlots.includes(s);
+              const isSelected = formData.appointmentSlot === s;
+              return (
+                <div key={s} onClick={() => !isBooked && onChange(p => ({ ...p, appointmentSlot: s }))}
+                  style={{
+                    borderRadius: 12, border: `2px solid ${isSelected ? G : isBooked ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    background: isSelected ? `${G}20` : isBooked ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
+                    padding: '12px 8px', textAlign: 'center', cursor: isBooked ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s', opacity: isBooked ? 0.45 : 1,
+                    boxShadow: isSelected ? `0 0 14px ${G}40` : 'none',
+                  }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: isSelected ? G : isBooked ? '#ef4444' : '#fff' }}>
+                    {slotLabel(s)}
+                  </div>
+                  {isBooked && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>محجوز</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Summary before confirm */}
+      {canAdvance && (
+        <div style={{ borderRadius: 16, background: `${G}12`, border: `1px solid ${G}30`, padding: '14px 18px', marginBottom: 20 }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>ملخص الموعد</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ fontWeight: 800, color: '#fff', fontSize: 15 }}>{formData.workshopName}</div>
+            <div style={{ color: G, fontWeight: 700 }}>
+              {new Date(formData.appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {' — '}
+              {slotLabel(formData.appointmentSlot)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Btn variant="outline" onClick={onBack} disabled={isPending} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
+        <Btn onClick={onConfirm} disabled={!canAdvance || isPending} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {isPending
+            ? <><Loader2 size={18} className="animate-spin" /> جارٍ تأكيد الطلب...</>
+            : '🎉 تأكيد الطلب'
+          }
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState, appointmentDate, appointmentSlot, workshopName }: {
   orderId: number; paymentMethod: PayMethod; pickupType: PickupType;
   autoUploadState: 'idle' | 'uploading' | 'done' | 'error';
+  appointmentDate?: string; appointmentSlot?: string; workshopName?: string;
 }) {
   const { getAuthHeaders } = useAuth();
   const { toast } = useToast();
@@ -1081,6 +1315,31 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
           </p>
         )}
       </div>
+
+      {/* Appointment card */}
+      {workshopName && appointmentDate && appointmentSlot && (
+        <div style={{
+          background: `${G}12`, border: `1.5px solid ${G}40`, borderRadius: 18,
+          padding: '16px 20px', textAlign: 'right', width: '100%', maxWidth: 420,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <Calendar size={18} style={{ color: G }} />
+            <span style={{ fontWeight: 900, fontSize: 15, color: '#fff' }}>موعد التركيب</span>
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{workshopName}</div>
+          <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>
+            {new Date(appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
+            الساعة {(() => {
+              const [h] = appointmentSlot.split(':').map(Number);
+              const suffix = h < 12 ? 'ص' : 'م';
+              const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+              return `${h12}:00 ${suffix}`;
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Receipt Upload Section */}
       {needsReceipt && (
