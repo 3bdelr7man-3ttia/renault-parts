@@ -5,7 +5,9 @@ import { requireAuth } from "../lib/auth";
 
 const router: IRouter = Router();
 
-const ALL_SLOTS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+// Max clients per hour slot per workshop
+const SLOT_CAPACITY = 2;
+const ALL_SLOTS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
 
 // GET /api/appointments/slots?workshopId=X&date=YYYY-MM-DD
 router.get("/appointments/slots", async (req, res): Promise<void> => {
@@ -24,8 +26,14 @@ router.get("/appointments/slots", async (req, res): Promise<void> => {
         ne(appointmentsTable.status, "cancelled")
       )
     );
-  const bookedSlots = booked.map(b => b.timeSlot);
-  res.json({ slots: ALL_SLOTS, bookedSlots });
+  // Count bookings per slot
+  const slotCounts: Record<string, number> = {};
+  for (const b of booked) {
+    slotCounts[b.timeSlot] = (slotCounts[b.timeSlot] || 0) + 1;
+  }
+  // A slot is "full" when it has reached SLOT_CAPACITY bookings
+  const fullSlots = ALL_SLOTS.filter(s => (slotCounts[s] || 0) >= SLOT_CAPACITY);
+  res.json({ slots: ALL_SLOTS, bookedSlots: fullSlots, slotCounts });
 });
 
 // POST /api/appointments — create appointment after order confirmed
@@ -35,7 +43,7 @@ router.post("/appointments", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: "orderId, workshopId, date, timeSlot are required" });
     return;
   }
-  // Check slot still available
+  // Check slot capacity (max 2 per slot)
   const existing = await db
     .select()
     .from(appointmentsTable)
@@ -47,8 +55,8 @@ router.post("/appointments", requireAuth, async (req, res): Promise<void> => {
         ne(appointmentsTable.status, "cancelled")
       )
     );
-  if (existing.length > 0) {
-    res.status(409).json({ error: "هذا الموعد محجوز — اختار وقتاً آخر" });
+  if (existing.length >= SLOT_CAPACITY) {
+    res.status(409).json({ error: "هذا الموعد اكتمل — اختار وقتاً آخر" });
     return;
   }
   // Fetch workshop name (fall back to body-provided name for static workshops)

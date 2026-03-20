@@ -36,10 +36,10 @@ type PayMethod = 'cash_on_delivery' | 'card' | 'vodafone_cash' | 'instapay';
 type PickupType = 'pickup' | 'delivery';
 
 const CHECKOUT_WORKSHOPS = [
-  { id: 1, name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: '#4AABCA', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م',  lat: 31.1938, lng: 29.8821, phone: '01091234567' },
-  { id: 2, name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: '#C8974A', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م', lat: 31.2524, lng: 30.0549, phone: '01091234568' },
-  { id: 3, name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: '#9B59B6', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م',  lat: 31.0849, lng: 29.7403, phone: '01091234569' },
-  { id: 4, name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: '#3DA882', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م', lat: 31.2175, lng: 29.9524, phone: '01091234570' },
+  { id: 1, name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: '#4AABCA', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م',  lat: 31.1938, lng: 29.8821, phone: '01091234567', openHour: 9,  closeHour: 21 },
+  { id: 2, name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: '#C8974A', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م', lat: 31.2524, lng: 30.0549, phone: '01091234568', openHour: 8,  closeHour: 22 },
+  { id: 3, name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: '#9B59B6', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م',  lat: 31.0849, lng: 29.7403, phone: '01091234569', openHour: 9,  closeHour: 21 },
+  { id: 4, name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: '#3DA882', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م', lat: 31.2175, lng: 29.9524, phone: '01091234570', openHour: 8,  closeHour: 23 },
 ];
 
 /* ── Area → approximate lat/lng ── */
@@ -241,27 +241,6 @@ export default function Checkout() {
               }),
             });
 
-            // WhatsApp notification to customer
-            const workshop = CHECKOUT_WORKSHOPS.find(w => w.id === formData.workshopId);
-            const customerPhone = (formData.deliveryPhone || user?.phone || '').replace(/^0/, '2');
-            const dateLabel = new Date(formData.appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const [h] = formData.appointmentSlot.split(':');
-            const hour = Number(h);
-            const timeLabel = `${hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}:00 ${hour < 12 ? 'ص' : 'م'}`;
-
-            if (customerPhone.length >= 11) {
-              const customerMsg = `مرحباً ${user?.name ?? ''}،\n✅ تم تأكيد موعدك في رينو باك\n🔧 الورشة: ${formData.workshopName}\n📅 التاريخ: ${dateLabel}\n🕐 الساعة: ${timeLabel}\n🚗 سيارتك: ${formData.carModel} ${formData.carYear}\n📌 رقم الطلب: #${order.id}\n\nللاستفسار: 01000000000`;
-              window.open(`https://wa.me/${customerPhone}?text=${encodeURIComponent(customerMsg)}`, '_blank');
-            }
-
-            // WhatsApp notification to workshop (after short delay so browser allows both)
-            if (workshop?.phone) {
-              const wsPhone = workshop.phone.replace(/^0/, '2');
-              const wsMsg = `📋 *حجز جديد - رينو باك*\n🚗 ${formData.carModel} ${formData.carYear}\n👤 ${user?.name ?? ''}\n📱 ${formData.deliveryPhone || user?.phone || ''}\n📅 ${dateLabel}\n🕐 ${timeLabel}\n#طلب: ${order.id}`;
-              setTimeout(() => {
-                window.open(`https://wa.me/${wsPhone}?text=${encodeURIComponent(wsMsg)}`, '_blank');
-              }, 1500);
-            }
           } catch {
             toast({ variant: 'destructive', title: 'تنبيه', description: 'تم تأكيد الطلب — لكن فشل حجز الموعد. تواصل معنا.' });
           }
@@ -455,6 +434,7 @@ export default function Checkout() {
                   appointmentDate={formData.appointmentDate}
                   appointmentSlot={formData.appointmentSlot}
                   workshopName={formData.workshopName}
+                  workshopId={formData.workshopId}
                 />
               )}
             </div>
@@ -912,10 +892,6 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
   onNext: () => void; onBack: () => void; canAdvance: boolean;
 }) {
   const handleNext = () => {
-    // Send location via WhatsApp when user proceeds with pickup selection
-    if (formData.pickupType === 'pickup') {
-      window.open(buildPickupWaLink(), '_blank');
-    }
     onNext();
   };
 
@@ -1254,44 +1230,50 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
   isPending: boolean;
   getAuthHeaders: () => { headers?: Record<string, string> };
 }) {
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [fullSlots, setFullSlots]   = useState<string[]>([]);
+  const [slotCounts, setSlotCounts] = useState<Record<string, number>>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [localArea, setLocalArea] = useState(formData.deliveryArea || '');
+  const [localArea, setLocalArea]   = useState(formData.deliveryArea || '');
 
-  const ALL_SLOTS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+  // All possible slots — filtered per workshop hours on render
+  const ALL_SLOTS_FULL = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
 
   const today = new Date();
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(today);
     d.setDate(today.getDate() + i + 1);
-    const dow = d.toLocaleDateString('ar-EG', { weekday: 'short' });
+    const dow   = d.toLocaleDateString('ar-EG', { weekday: 'short' });
     const label = d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' });
-    const val = d.toISOString().slice(0, 10);
+    const val   = d.toISOString().slice(0, 10);
     const isFriday = d.getDay() === 5;
     return { val, label, dow, isFriday };
   });
 
   const sortedWorkshops = useMemo(() => workshopsSortedByArea(localArea), [localArea]);
-  const nearest = useMemo(() => localArea ? nearestWorkshop(localArea) : null, [localArea]);
+  const nearest   = useMemo(() => localArea ? nearestWorkshop(localArea) : null, [localArea]);
   const userCoord = localArea ? AREA_COORDS[localArea] : null;
 
-  /* auto-select nearest when area changes */
+  /* When area changes: reset workshop → auto-select nearest */
   useEffect(() => {
-    if (nearest && formData.workshopId === 0) {
-      onChange(p => ({ ...p, workshopId: nearest.id, workshopName: nearest.name, appointmentSlot: '' }));
+    if (!localArea) return;
+    const near = nearestWorkshop(localArea);
+    if (near) {
+      onChange(p => ({ ...p, workshopId: near.id, workshopName: near.name, appointmentSlot: '', appointmentDate: '' }));
     }
-  }, [nearest]);
+  }, [localArea]);
 
   const fetchSlots = useCallback(async (workshopId: number, date: string) => {
     if (!workshopId || !date) return;
     setLoadingSlots(true);
-    setBookedSlots([]);
+    setFullSlots([]);
+    setSlotCounts({});
     try {
       const headers = getAuthHeaders().headers ?? {};
       const res = await fetch(`/api/appointments/slots?workshopId=${workshopId}&date=${date}`, { headers });
       if (res.ok) {
         const data = await res.json();
-        setBookedSlots(data.bookedSlots ?? []);
+        setFullSlots(data.bookedSlots ?? []);
+        setSlotCounts(data.slotCounts ?? {});
       }
     } catch { /* ignore */ } finally {
       setLoadingSlots(false);
@@ -1299,8 +1281,9 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
   }, [getAuthHeaders]);
 
   const handleWorkshop = (w: typeof CHECKOUT_WORKSHOPS[0]) => {
-    onChange(p => ({ ...p, workshopId: w.id, workshopName: w.name, appointmentSlot: '' }));
-    if (formData.appointmentDate) fetchSlots(w.id, formData.appointmentDate);
+    onChange(p => ({ ...p, workshopId: w.id, workshopName: w.name, appointmentSlot: '', appointmentDate: '' }));
+    setFullSlots([]);
+    setSlotCounts({});
   };
 
   const handleDate = (date: string) => {
@@ -1317,9 +1300,19 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
   };
 
   const selectedWorkshop = CHECKOUT_WORKSHOPS.find(w => w.id === formData.workshopId);
-  const mapCenter: [number, number] = selectedWorkshop
-    ? [selectedWorkshop.lat, selectedWorkshop.lng]
-    : userCoord ?? [31.2001, 29.9187];
+
+  // Filter slots to workshop operating hours
+  const workshopSlots = selectedWorkshop
+    ? ALL_SLOTS_FULL.filter(s => {
+        const h = parseInt(s.split(':')[0]);
+        return h >= selectedWorkshop.openHour && h < selectedWorkshop.closeHour;
+      })
+    : ALL_SLOTS_FULL;
+
+  // Map center: fly to selected workshop, else to user area, else Alexandria default
+  const mapFlyLat = selectedWorkshop ? selectedWorkshop.lat : userCoord ? userCoord[0] : 31.2001;
+  const mapFlyLng = selectedWorkshop ? selectedWorkshop.lng : userCoord ? userCoord[1] : 29.9187;
+  const mapFlyZoom = selectedWorkshop ? 14 : userCoord ? 13 : 11;
 
   return (
     <div>
@@ -1330,18 +1323,18 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
         </div>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#fff' }}>حدد موعد التركيب</h2>
-          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>الورشة الأقرب لك تتحدد تلقائياً</p>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>اختر منطقتك وسنقترح أقرب ورشة</p>
         </div>
       </div>
 
       {/* Area selector */}
-      <div style={{ background: '#0F1928', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', marginBottom: 20 }}>
+      <div style={{ background: '#0F1928', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <Navigation size={15} style={{ color: G }} />
           <span style={{ fontSize: 13, fontWeight: 800, color: G }}>منطقتك في الإسكندرية</span>
-          {nearest && localArea && (
+          {nearest && localArea && !selectedWorkshop && (
             <span style={{ marginRight: 'auto', fontSize: 11, color: '#22c55e', fontWeight: 700 }}>
-              أقرب ورشة: {nearest.name}
+              سيتم اختيار: {nearest.name}
             </span>
           )}
         </div>
@@ -1365,138 +1358,137 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
         </div>
       </div>
 
-      {/* Map */}
-      <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 20, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : 'rgba(255,255,255,0.1)'}`, transition: 'border-color 0.3s' }}>
-          <MapContainer
-            center={[31.2001, 29.9187]}
-            zoom={11}
-            style={{ height: 300, background: '#0D1220' }}
-            zoomControl={true}
-            attributionControl={false}
-          >
-            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-            {selectedWorkshop && <MapFlyTo lat={mapCenter[0]} lng={mapCenter[1]} zoom={14} />}
-            {!selectedWorkshop && userCoord && <MapFlyTo lat={userCoord[0]} lng={userCoord[1]} zoom={12} />}
+      {/* Map — always shown */}
+      <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : 'rgba(255,255,255,0.1)'}`, transition: 'border-color 0.3s' }}>
+        <MapContainer
+          center={[31.2001, 29.9187]}
+          zoom={11}
+          style={{ height: 280, background: '#0D1220' }}
+          zoomControl={true}
+          attributionControl={false}
+        >
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          {/* Fly to selected workshop / area */}
+          <MapFlyTo lat={mapFlyLat} lng={mapFlyLng} zoom={mapFlyZoom} />
 
-            {/* User area marker */}
-            {userCoord && (
-              <Marker position={userCoord} icon={userAreaIcon()}>
-                <Popup>
-                  <div style={{ fontFamily: 'Almarai,sans-serif', direction: 'rtl', fontWeight: 700 }}>📍 منطقتك: {localArea}</div>
-                </Popup>
-              </Marker>
-            )}
+          {/* User area marker */}
+          {userCoord && (
+            <Marker position={userCoord} icon={userAreaIcon()}>
+              <Popup>
+                <div style={{ fontFamily: 'Almarai,sans-serif', direction: 'rtl', fontWeight: 700 }}>📍 منطقتك: {localArea}</div>
+              </Popup>
+            </Marker>
+          )}
 
-            {/* Workshop markers */}
-            {CHECKOUT_WORKSHOPS.map(w => {
-              const isSelected = formData.workshopId === w.id;
-              const dist = userCoord ? distKm(userCoord[0], userCoord[1], w.lat, w.lng).toFixed(1) : null;
-              return (
-                <Marker
-                  key={w.id}
-                  position={[w.lat, w.lng]}
-                  icon={workshopIcon(w.color, isSelected)}
-                  eventHandlers={{ click: () => handleWorkshop(w) }}
-                >
-                  <Popup>
-                    <div style={{ fontFamily: 'Almarai,sans-serif', direction: 'rtl', minWidth: 170, padding: 4 }}>
-                      <div style={{ fontWeight: 900, fontSize: 14, color: w.color, marginBottom: 4 }}>{w.name}</div>
-                      <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{w.address}</div>
-                      <div style={{ display: 'flex', gap: 8, fontSize: 11, marginBottom: 6 }}>
-                        <span>★ {w.rating}</span>
-                        {dist && <span>📍 {dist} كم</span>}
-                        <span style={{ color: '#22c55e' }}>{w.hours}</span>
-                      </div>
-                      <button
-                        onClick={() => handleWorkshop(w)}
-                        style={{
-                          width: '100%', padding: '6px 0', background: w.color, color: '#fff',
-                          border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800,
-                          cursor: 'pointer', fontFamily: 'Almarai,sans-serif',
-                        }}
-                      >
-                        {isSelected ? '✓ محددة' : 'اختر هذه الورشة'}
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
-          <div style={{ background: '#0F1928', padding: '10px 14px', fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-            اضغط على أيقونة الورشة لاختيارها مباشرة من الخريطة
-          </div>
-        </div>
-
-      {/* Workshop cards — sorted by proximity */}
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: 0.5 }}>
-          {localArea ? `مرتبة من الأقرب إلى الأبعد من ${localArea}` : 'الورش المتاحة'}
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {sortedWorkshops.map((w, idx) => {
+          {/* Workshop markers — all visible for selection */}
+          {CHECKOUT_WORKSHOPS.map(w => {
             const isSelected = formData.workshopId === w.id;
-            const isNearest = nearest?.id === w.id && !!localArea;
             const dist = userCoord ? distKm(userCoord[0], userCoord[1], w.lat, w.lng).toFixed(1) : null;
             return (
-              <div key={w.id} onClick={() => handleWorkshop(w)}
-                style={{
-                  borderRadius: 16, border: `2px solid ${isSelected ? w.color : 'rgba(255,255,255,0.08)'}`,
-                  background: isSelected ? `${w.color}15` : 'rgba(255,255,255,0.02)',
-                  padding: '14px 16px', cursor: 'pointer', transition: 'all 0.25s',
-                  boxShadow: isSelected ? `0 0 20px ${w.color}25` : 'none',
-                  display: 'flex', gap: 14, alignItems: 'center',
-                }}>
-                {/* Rank circle */}
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                  background: isNearest ? '#22c55e22' : `${w.color}18`,
-                  border: `2px solid ${isNearest ? '#22c55e' : w.color}40`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 900, color: isNearest ? '#22c55e' : w.color,
-                }}>
-                  {isNearest ? '★' : idx + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 900, fontSize: 15, color: isSelected ? w.color : '#fff' }}>{w.name}</span>
-                    {isNearest && (
-                      <span style={{ fontSize: 10, background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: 999, padding: '2px 8px', fontWeight: 800 }}>
-                        الأقرب لك
-                      </span>
-                    )}
-                    {isSelected && <CheckCircle2 size={16} style={{ color: w.color, marginRight: 'auto' }} />}
+              <Marker
+                key={w.id}
+                position={[w.lat, w.lng]}
+                icon={workshopIcon(w.color, isSelected)}
+                eventHandlers={{ click: () => handleWorkshop(w) }}
+              >
+                <Popup>
+                  <div style={{ fontFamily: 'Almarai,sans-serif', direction: 'rtl', minWidth: 170, padding: 4 }}>
+                    <div style={{ fontWeight: 900, fontSize: 14, color: w.color, marginBottom: 4 }}>{w.name}</div>
+                    <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{w.address}</div>
+                    <div style={{ display: 'flex', gap: 8, fontSize: 11, marginBottom: 6 }}>
+                      <span>★ {w.rating}</span>
+                      {dist && <span>📍 {dist} كم</span>}
+                      <span style={{ color: '#22c55e' }}>{w.hours}</span>
+                    </div>
+                    <button
+                      onClick={() => handleWorkshop(w)}
+                      style={{ width: '100%', padding: '6px 0', background: w.color, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: 'Almarai,sans-serif' }}
+                    >
+                      {isSelected ? '✓ محددة' : 'اختر هذه الورشة'}
+                    </button>
                   </div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>{w.address}</div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 11, flexWrap: 'wrap' }}>
-                    <span style={{ color: '#f59e0b' }}>★ {w.rating}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>{w.jobs.toLocaleString('ar-EG')} طلب</span>
-                    <span style={{ color: '#22c55e' }}>{w.hours}</span>
-                    {dist && <span style={{ color: '#4AABCA' }}>📍 {dist} كم</span>}
-                  </div>
-                </div>
-              </div>
+                </Popup>
+              </Marker>
             );
           })}
+        </MapContainer>
+        <div style={{ background: '#0F1928', padding: '8px 14px', fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+          {selectedWorkshop ? `✓ الورشة المختارة: ${selectedWorkshop.name}` : 'اضغط على أيقونة الورشة لاختيارها'}
         </div>
+      </div>
+
+      {/* Workshop display: all if none selected, only selected if chosen */}
+      <div style={{ marginBottom: 20 }}>
+        {!selectedWorkshop ? (
+          <>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 10, letterSpacing: 0.5 }}>
+              {localArea ? `الورش — مرتبة من الأقرب لـ ${localArea}` : 'الورش المتاحة'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {sortedWorkshops.map((w, idx) => {
+                const isNearest = nearest?.id === w.id && !!localArea;
+                const dist = userCoord ? distKm(userCoord[0], userCoord[1], w.lat, w.lng).toFixed(1) : null;
+                return (
+                  <div key={w.id} onClick={() => handleWorkshop(w)}
+                    style={{ borderRadius: 16, border: `1.5px solid rgba(255,255,255,0.08)`, background: 'rgba(255,255,255,0.02)', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', gap: 12, alignItems: 'center' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = `1.5px solid ${w.color}55`; (e.currentTarget as HTMLElement).style.background = `${w.color}08`; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = '1.5px solid rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: isNearest ? '#22c55e22' : `${w.color}18`, border: `2px solid ${isNearest ? '#22c55e' : w.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: isNearest ? '#22c55e' : w.color }}>
+                      {isNearest ? '★' : idx + 1}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{w.name}</span>
+                        {isNearest && <span style={{ fontSize: 10, background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: 999, padding: '2px 7px', fontWeight: 800 }}>الأقرب</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{w.address}</div>
+                      <div style={{ display: 'flex', gap: 10, fontSize: 10, marginTop: 3 }}>
+                        <span style={{ color: '#f59e0b' }}>★ {w.rating}</span>
+                        <span style={{ color: '#22c55e' }}>{w.hours}</span>
+                        {dist && <span style={{ color: '#4AABCA' }}>📍 {dist} كم</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          /* Only selected workshop card */
+          <div style={{ borderRadius: 16, border: `2px solid ${selectedWorkshop.color}`, background: `${selectedWorkshop.color}12`, padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'center', boxShadow: `0 0 24px ${selectedWorkshop.color}20` }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, background: `${selectedWorkshop.color}18`, border: `2px solid ${selectedWorkshop.color}60`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle2 size={20} style={{ color: selectedWorkshop.color }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 900, fontSize: 15, color: selectedWorkshop.color, marginBottom: 2 }}>{selectedWorkshop.name}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 3 }}>{selectedWorkshop.address}</div>
+              <div style={{ display: 'flex', gap: 10, fontSize: 11 }}>
+                <span style={{ color: '#f59e0b' }}>★ {selectedWorkshop.rating}</span>
+                <span style={{ color: '#22c55e' }}>{selectedWorkshop.hours}</span>
+                {userCoord && <span style={{ color: '#4AABCA' }}>📍 {distKm(userCoord[0], userCoord[1], selectedWorkshop.lat, selectedWorkshop.lng).toFixed(1)} كم</span>}
+              </div>
+            </div>
+            <button
+              onClick={() => { onChange(p => ({ ...p, workshopId: 0, workshopName: '', appointmentDate: '', appointmentSlot: '' })); setFullSlots([]); setSlotCounts({}); }}
+              style={{ padding: '6px 12px', borderRadius: 10, border: `1px solid rgba(255,255,255,0.15)`, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", whiteSpace: 'nowrap' }}
+            >
+              تغيير
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Date Selection */}
       {formData.workshopId > 0 && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>اختر اليوم</p>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
             {days.map(d => {
               const isSelected = formData.appointmentDate === d.val;
               return (
                 <div key={d.val} onClick={() => !d.isFriday && handleDate(d.val)}
-                  style={{
-                    minWidth: 62, borderRadius: 14, border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`,
-                    background: isSelected ? `${G}20` : d.isFriday ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
-                    padding: '10px 8px', textAlign: 'center', cursor: d.isFriday ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s', opacity: d.isFriday ? 0.35 : 1,
-                    boxShadow: isSelected ? `0 0 16px ${G}40` : 'none',
-                  }}>
+                  style={{ minWidth: 62, borderRadius: 14, border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`, background: isSelected ? `${G}20` : d.isFriday ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)', padding: '10px 8px', textAlign: 'center', cursor: d.isFriday ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: d.isFriday ? 0.35 : 1, boxShadow: isSelected ? `0 0 16px ${G}40` : 'none' }}>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 3 }}>{d.dow}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? G : '#fff' }}>{d.label}</div>
                   {d.isFriday && <div style={{ fontSize: 9, color: '#ef4444', marginTop: 2 }}>مغلق</div>}
@@ -1509,28 +1501,26 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
 
       {/* Time Slot Selection */}
       {formData.workshopId > 0 && formData.appointmentDate && (
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>
             اختر الوقت
-            {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>يتم التحقق من المتاح...</span>}
+            {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>جارٍ التحقق من المواعيد...</span>}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {ALL_SLOTS.map(s => {
-              const isBooked = bookedSlots.includes(s);
+            {workshopSlots.map(s => {
+              const isFull     = fullSlots.includes(s);
               const isSelected = formData.appointmentSlot === s;
+              const count      = slotCounts[s] || 0;
+              const spotsLeft  = Math.max(0, 2 - count);
               return (
-                <div key={s} onClick={() => !isBooked && onChange(p => ({ ...p, appointmentSlot: s }))}
-                  style={{
-                    borderRadius: 12, border: `2px solid ${isSelected ? G : isBooked ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                    background: isSelected ? `${G}20` : isBooked ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
-                    padding: '12px 8px', textAlign: 'center', cursor: isBooked ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s', opacity: isBooked ? 0.45 : 1,
-                    boxShadow: isSelected ? `0 0 14px ${G}40` : 'none',
-                  }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: isSelected ? G : isBooked ? '#ef4444' : '#fff' }}>
+                <div key={s} onClick={() => !isFull && onChange(p => ({ ...p, appointmentSlot: s }))}
+                  style={{ borderRadius: 12, border: `2px solid ${isSelected ? G : isFull ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`, background: isSelected ? `${G}20` : isFull ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)', padding: '12px 8px', textAlign: 'center', cursor: isFull ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isFull ? 0.45 : 1, boxShadow: isSelected ? `0 0 14px ${G}40` : 'none' }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: isSelected ? G : isFull ? '#ef4444' : '#fff' }}>
                     {slotLabel(s)}
                   </div>
-                  {isBooked && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>محجوز</div>}
+                  <div style={{ fontSize: 9, marginTop: 3, fontWeight: 700, color: isFull ? '#ef4444' : count === 1 ? '#f59e0b' : '#22c55e' }}>
+                    {isFull ? 'مكتمل' : spotsLeft === 2 ? 'متاح' : `مقعد واحد متبقي`}
+                  </div>
                 </div>
               );
             })}
@@ -1538,16 +1528,16 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
         </div>
       )}
 
-      {/* Summary */}
-      {canAdvance && (
-        <div style={{ borderRadius: 16, background: `${G}12`, border: `1px solid ${G}30`, padding: '14px 18px', marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 6 }}>ملخص الموعد</div>
-          <div style={{ fontWeight: 900, color: '#fff', fontSize: 15, marginBottom: 4 }}>{formData.workshopName}</div>
-          <div style={{ color: G, fontWeight: 700, fontSize: 13 }}>
+      {/* Appointment summary */}
+      {canAdvance && selectedWorkshop && (
+        <div style={{ borderRadius: 16, background: `${G}10`, border: `1px solid ${G}30`, padding: '14px 18px', marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 6 }}>ملخص الموعد</div>
+          <div style={{ fontWeight: 900, color: selectedWorkshop.color, fontSize: 15, marginBottom: 3 }}>{formData.workshopName}</div>
+          <div style={{ fontSize: 13, color: '#fff', fontWeight: 700, marginBottom: 2 }}>
             {new Date(formData.appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            {' — '}
-            {slotLabel(formData.appointmentSlot)}
           </div>
+          <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>الساعة {slotLabel(formData.appointmentSlot)}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>📍 {selectedWorkshop.address}</div>
         </div>
       )}
 
@@ -1575,10 +1565,10 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
   );
 }
 
-function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState, appointmentDate, appointmentSlot, workshopName }: {
+function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState, appointmentDate, appointmentSlot, workshopName, workshopId }: {
   orderId: number; paymentMethod: PayMethod; pickupType: PickupType;
   autoUploadState: 'idle' | 'uploading' | 'done' | 'error';
-  appointmentDate?: string; appointmentSlot?: string; workshopName?: string;
+  appointmentDate?: string; appointmentSlot?: string; workshopName?: string; workshopId?: number;
 }) {
   const { getAuthHeaders } = useAuth();
   const { toast } = useToast();
@@ -1662,30 +1652,62 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
         )}
       </div>
 
-      {/* Appointment card */}
-      {workshopName && appointmentDate && appointmentSlot && (
-        <div style={{
-          background: `${G}12`, border: `1.5px solid ${G}40`, borderRadius: 18,
-          padding: '16px 20px', textAlign: 'right', width: '100%', maxWidth: 420,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <Calendar size={18} style={{ color: G }} />
-            <span style={{ fontWeight: 900, fontSize: 15, color: '#fff' }}>موعد التركيب</span>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{workshopName}</div>
-          <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>
-            {new Date(appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
-            الساعة {(() => {
-              const [h] = appointmentSlot.split(':').map(Number);
-              const suffix = h < 12 ? 'ص' : 'م';
-              const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
-              return `${h12}:00 ${suffix}`;
-            })()}
-          </div>
-        </div>
-      )}
+      {/* Appointment card + WA self-send */}
+      {workshopName && appointmentDate && appointmentSlot && (() => {
+        const workshop = CHECKOUT_WORKSHOPS.find(w => w.id === workshopId);
+        const [h] = appointmentSlot.split(':').map(Number);
+        const suffix = h < 12 ? 'ص' : 'م';
+        const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+        const timeLabel = `${h12}:00 ${suffix}`;
+        const dateLabel = new Date(appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const workshopMapsUrl = workshop ? `https://maps.google.com/?q=${workshop.lat},${workshop.lng}` : '';
+        const distCenterMapsUrl = `https://maps.google.com/?q=${DIST_CENTER.lat},${DIST_CENTER.lng}`;
+        const waMsg = [
+          `✅ تم تأكيد موعدك في رينو باك 🎉`,
+          `رقم الطلب: #${orderId}`,
+          '',
+          `🔧 الورشة: ${workshopName}`,
+          `📅 التاريخ: ${dateLabel}`,
+          `🕐 الساعة: ${timeLabel}`,
+          workshop ? `📍 موقع الورشة: ${workshopMapsUrl}` : '',
+          pickupType === 'pickup' ? `\n📦 استلام الباكدج من مركز التوزيع:\n${distCenterMapsUrl}` : '',
+          '',
+          'رينو باك — قطع غيار الإسكندرية 🚗',
+        ].filter(Boolean).join('\n');
+        return (
+          <>
+            <div style={{ background: `${G}12`, border: `1.5px solid ${G}40`, borderRadius: 18, padding: '16px 20px', textAlign: 'right', width: '100%', maxWidth: 420 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <Calendar size={18} style={{ color: G }} />
+                <span style={{ fontWeight: 900, fontSize: 15, color: '#fff' }}>موعد التركيب</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{workshopName}</div>
+              {workshop && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>{workshop.address}</div>}
+              <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>{dateLabel}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>الساعة {timeLabel}</div>
+              {workshop && (
+                <a href={workshopMapsUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, fontSize: 12, color: '#4AABCA', fontWeight: 700, textDecoration: 'none' }}>
+                  📍 فتح موقع الورشة على الخريطة ↗
+                </a>
+              )}
+            </div>
+
+            {/* WA self-send button */}
+            <button
+              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(waMsg)}`, '_blank')}
+              style={{
+                width: '100%', maxWidth: 420, padding: '14px 0', borderRadius: 16,
+                background: 'linear-gradient(135deg, #25D366, #128C7E)', color: '#fff',
+                border: 'none', cursor: 'pointer', fontFamily: "'Almarai',sans-serif",
+                fontSize: 14, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>💬</span>
+              احفظ الموعد على واتساب
+            </button>
+          </>
+        );
+      })()}
 
       {/* Receipt Upload Section */}
       {needsReceipt && (
