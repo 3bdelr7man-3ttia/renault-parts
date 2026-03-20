@@ -1,22 +1,14 @@
-import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc, isNotNull } from "drizzle-orm";
 import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable, workshopPricingTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
+import { normalizeEmployeeRole, normalizeRole, requireRolePermission } from "../lib/permissions";
 
 const router: IRouter = Router();
 
-function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  const authReq = req as AuthenticatedRequest;
-  if (!authReq.user || authReq.user.role !== "admin") {
-    res.status(403).json({ error: "غير مصرح: هذه الصفحة للمديرين فقط" });
-    return;
-  }
-  next();
-}
-
 // GET /admin/stats
-router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/stats", requireAuth, requireRolePermission("reports.financial", "هذه الصفحة متاحة للمديرين ومديري الفرق فقط"), async (req, res): Promise<void> => {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
@@ -84,7 +76,7 @@ router.get("/admin/stats", requireAuth, requireAdmin, async (req, res): Promise<
 });
 
 // GET /admin/orders
-router.get("/admin/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/orders", requireAuth, requireRolePermission("orders.view", "ليس لديك صلاحية لعرض الطلبات"), async (req, res): Promise<void> => {
   const { status, dateFrom, dateTo } = req.query;
 
   const conditions = [];
@@ -140,7 +132,7 @@ router.get("/admin/orders", requireAuth, requireAdmin, async (req, res): Promise
 });
 
 // PATCH /admin/orders/:id/status
-router.patch("/admin/orders/:id/status", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/orders/:id/status", requireAuth, requireRolePermission("orders.update_status", "ليس لديك صلاحية لتحديث حالة الطلب"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const parsed = UpdateOrderStatusBody.safeParse(req.body);
   if (!parsed.success) {
@@ -190,7 +182,7 @@ router.patch("/admin/orders/:id/status", requireAuth, requireAdmin, async (req, 
 });
 
 // GET /admin/users
-router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/users", requireAuth, requireRolePermission("employees.manage", "هذه الصفحة متاحة للمديرين ومديري الفرق فقط"), async (req, res): Promise<void> => {
   const users = await db.select().from(usersTable).orderBy(sql`${usersTable.createdAt} DESC`);
 
   const result = await Promise.all(
@@ -206,7 +198,8 @@ router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<
         name: u.name,
         phone: u.phone,
         email: u.email,
-        role: u.role,
+        role: normalizeRole(u.role),
+        employeeRole: normalizeEmployeeRole(u.employeeRole),
         workshopId: u.workshopId ?? null,
         workshopName,
         carModel: u.carModel,
@@ -222,12 +215,13 @@ router.get("/admin/users", requireAuth, requireAdmin, async (req, res): Promise<
 });
 
 // PATCH /admin/users/:id/workshop — link/unlink user to a workshop
-router.patch("/admin/users/:id/workshop", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/users/:id/workshop", requireAuth, requireRolePermission("employees.manage", "ليس لديك صلاحية لإدارة ربط الورش"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const { workshopId, role } = req.body as { workshopId?: number | null; role?: string };
   const updates: Record<string, unknown> = {};
   if (workshopId !== undefined) updates.workshopId = workshopId ?? null;
-  if (role !== undefined) updates.role = role;
+  if (role !== undefined) updates.role = normalizeRole(role) === "workshop_owner" ? "workshop_owner" : role;
+  updates.employeeRole = null;
 
   const [user] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
   if (!user) { res.status(404).json({ error: "المستخدم غير موجود" }); return; }
@@ -238,11 +232,22 @@ router.patch("/admin/users/:id/workshop", requireAuth, requireAdmin, async (req,
     workshopName = ws?.name ?? null;
   }
   const [countRow] = await db.select({ count: count() }).from(ordersTable).where(eq(ordersTable.userId, user.id));
-  res.json({ id: user.id, name: user.name, phone: user.phone, email: user.email, role: user.role, workshopId: user.workshopId ?? null, workshopName, orderCount: countRow.count, createdAt: user.createdAt });
+  res.json({
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    role: normalizeRole(user.role),
+    employeeRole: normalizeEmployeeRole(user.employeeRole),
+    workshopId: user.workshopId ?? null,
+    workshopName,
+    orderCount: countRow.count,
+    createdAt: user.createdAt,
+  });
 });
 
 // PATCH /admin/users/:id/role
-router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/users/:id/role", requireAuth, requireRolePermission("employees.manage", "ليس لديك صلاحية لإدارة الأدوار"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const parsed = UpdateUserRoleBody.safeParse(req.body);
   if (!parsed.success) {
@@ -250,9 +255,25 @@ router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res
     return;
   }
 
+  if (parsed.data.role === "employee" && !parsed.data.employeeRole) {
+    res.status(400).json({ error: "يجب تحديد نوع الموظف" });
+    return;
+  }
+
+  const role = parsed.data.role;
+  const employeeRole = role === "employee" ? normalizeEmployeeRole(parsed.data.employeeRole) : null;
+  const updates: Partial<typeof usersTable.$inferInsert> = {
+    role,
+    employeeRole,
+  };
+
+  if (role !== "workshop_owner") {
+    updates.workshopId = null;
+  }
+
   const [user] = await db
     .update(usersTable)
-    .set({ role: parsed.data.role })
+    .set(updates)
     .where(eq(usersTable.id, id))
     .returning();
 
@@ -268,7 +289,9 @@ router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res
     name: user.name,
     phone: user.phone,
     email: user.email,
-    role: user.role,
+    role: normalizeRole(user.role),
+    employeeRole: normalizeEmployeeRole(user.employeeRole),
+    workshopId: user.workshopId ?? null,
     carModel: user.carModel,
     carYear: user.carYear,
     area: user.area,
@@ -278,7 +301,7 @@ router.patch("/admin/users/:id/role", requireAuth, requireAdmin, async (req, res
 });
 
 // GET /admin/packages
-router.get("/admin/packages", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/packages", requireAuth, requireRolePermission("packages.edit", "ليس لديك صلاحية لإدارة الباكدجات"), async (_req, res): Promise<void> => {
   const packages = await db.select().from(packagesTable).orderBy(packagesTable.kmService);
   res.json(packages.map(p => ({
     ...p,
@@ -290,7 +313,7 @@ router.get("/admin/packages", requireAuth, requireAdmin, async (_req, res): Prom
 });
 
 // POST /admin/packages
-router.post("/admin/packages", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/packages", requireAuth, requireRolePermission("packages.edit", "ليس لديك صلاحية لإدارة الباكدجات"), async (req, res): Promise<void> => {
   const { name, slug, description, kmService, basePrice, sellPrice, warrantyMonths, imageUrl } = req.body as {
     name: string; slug: string; description: string; kmService: number;
     basePrice: number; sellPrice: number; warrantyMonths: number; imageUrl?: string;
@@ -311,7 +334,7 @@ router.post("/admin/packages", requireAuth, requireAdmin, async (req, res): Prom
 });
 
 // GET /admin/parts
-router.get("/admin/parts", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/parts", requireAuth, requireRolePermission("parts.edit", "ليس لديك صلاحية لإدارة القطع"), async (_req, res): Promise<void> => {
   const parts = await db.select().from(partsTable).orderBy(partsTable.name);
   res.json(parts.map(p => ({
     ...p,
@@ -323,7 +346,7 @@ router.get("/admin/parts", requireAuth, requireAdmin, async (_req, res): Promise
 });
 
 // POST /admin/parts
-router.post("/admin/parts", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/parts", requireAuth, requireRolePermission("parts.edit", "ليس لديك صلاحية لإدارة القطع"), async (req, res): Promise<void> => {
   const { name, type, oemCode, priceOriginal, priceTurkish, priceChinese, compatibleModels, supplier, imageUrl } = req.body as {
     name: string; type: string; oemCode?: string; priceOriginal?: number;
     priceTurkish?: number; priceChinese?: number; compatibleModels?: string;
@@ -353,7 +376,7 @@ router.post("/admin/parts", requireAuth, requireAdmin, async (req, res): Promise
 });
 
 // DELETE /admin/parts/:id
-router.delete("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/parts/:id", requireAuth, requireRolePermission("parts.edit", "ليس لديك صلاحية لإدارة القطع"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const [deleted] = await db.delete(partsTable).where(eq(partsTable.id, id)).returning();
   if (!deleted) {
@@ -364,7 +387,7 @@ router.delete("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): P
 });
 
 // PATCH /admin/parts/:id — update stock, supplier, prices
-router.patch("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/parts/:id", requireAuth, requireRolePermission("parts.edit", "ليس لديك صلاحية لإدارة القطع"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const { stockQty, supplier, priceOriginal, priceTurkish, priceChinese, imageUrl } = req.body as {
     stockQty?: number; supplier?: string; priceOriginal?: number; priceTurkish?: number;
@@ -390,7 +413,7 @@ router.patch("/admin/parts/:id", requireAuth, requireAdmin, async (req, res): Pr
 });
 
 // PATCH /admin/packages/:id
-router.patch("/admin/packages/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/packages/:id", requireAuth, requireRolePermission("packages.edit", "ليس لديك صلاحية لإدارة الباكدجات"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const parsed = UpdatePackageBody.safeParse(req.body);
   if (!parsed.success) {
@@ -415,7 +438,7 @@ router.patch("/admin/packages/:id", requireAuth, requireAdmin, async (req, res):
 });
 
 // GET /admin/workshops
-router.get("/admin/workshops", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/workshops", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة الورش"), async (_req, res): Promise<void> => {
   const workshops = await db.select().from(workshopsTable).orderBy(workshopsTable.name);
   res.json(workshops.map(w => ({
     ...w,
@@ -426,7 +449,7 @@ router.get("/admin/workshops", requireAuth, requireAdmin, async (_req, res): Pro
 });
 
 // POST /admin/workshops
-router.post("/admin/workshops", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/workshops", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة الورش"), async (req, res): Promise<void> => {
   const parsed = CreateWorkshopBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -453,7 +476,7 @@ router.post("/admin/workshops", requireAuth, requireAdmin, async (req, res): Pro
 });
 
 // PATCH /admin/workshops/:id
-router.patch("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/workshops/:id", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة الورش"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const parsed = UpdateWorkshopBody.safeParse(req.body);
   if (!parsed.success) {
@@ -485,7 +508,7 @@ router.patch("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res)
 });
 
 // DELETE /admin/workshops/:id
-router.delete("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/workshops/:id", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة الورش"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const [workshop] = await db.delete(workshopsTable).where(eq(workshopsTable.id, id)).returning();
   if (!workshop) {
@@ -496,7 +519,7 @@ router.delete("/admin/workshops/:id", requireAuth, requireAdmin, async (req, res
 });
 
 // GET /admin/reviews
-router.get("/admin/reviews", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/reviews", requireAuth, requireRolePermission("reviews.view", "ليس لديك صلاحية لعرض التقييمات"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       review: reviewsTable,
@@ -525,7 +548,7 @@ router.get("/admin/reviews", requireAuth, requireAdmin, async (_req, res): Promi
 });
 
 // PATCH /admin/reviews/:id/reply
-router.patch("/admin/reviews/:id/reply", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/reviews/:id/reply", requireAuth, requireRolePermission("reviews.view", "ليس لديك صلاحية لإدارة التقييمات"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const parsed = ReplyToReviewBody.safeParse(req.body);
   if (!parsed.success) {
@@ -569,7 +592,7 @@ router.patch("/admin/reviews/:id/reply", requireAuth, requireAdmin, async (req, 
 });
 
 // PATCH /admin/packages/:id/availability
-router.patch("/admin/packages/:id/availability", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/packages/:id/availability", requireAuth, requireRolePermission("packages.edit", "ليس لديك صلاحية لإدارة الباكدجات"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const { isAvailable } = req.body as { isAvailable: boolean };
   const [pkg] = await db.update(packagesTable).set({ isAvailable }).where(eq(packagesTable.id, id)).returning();
@@ -578,7 +601,7 @@ router.patch("/admin/packages/:id/availability", requireAuth, requireAdmin, asyn
 });
 
 // DELETE /admin/packages/:id
-router.delete("/admin/packages/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/packages/:id", requireAuth, requireRolePermission("packages.edit", "ليس لديك صلاحية لإدارة الباكدجات"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   // prevent deletion if there are existing orders for this package
   const [orderCheck] = await db.select({ count: count() }).from(ordersTable).where(eq(ordersTable.packageId, id));
@@ -592,7 +615,7 @@ router.delete("/admin/packages/:id", requireAuth, requireAdmin, async (req, res)
 });
 
 // GET /admin/workshops/:id/orders
-router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/workshops/:id/orders", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة الورش"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
 
   const rows = await db
@@ -628,13 +651,13 @@ router.get("/admin/workshops/:id/orders", requireAuth, requireAdmin, async (req,
 });
 
 // GET /admin/expenses
-router.get("/admin/expenses", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/expenses", requireAuth, requireRolePermission("reports.financial", "ليس لديك صلاحية لعرض التقارير المالية"), async (_req, res): Promise<void> => {
   const rows = await db.select().from(expensesTable).orderBy(desc(expensesTable.createdAt));
   res.json(rows.map(e => ({ ...e, amount: Number(e.amount) })));
 });
 
 // POST /admin/expenses
-router.post("/admin/expenses", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/expenses", requireAuth, requireRolePermission("reports.financial", "ليس لديك صلاحية لإدارة المصروفات"), async (req, res): Promise<void> => {
   const authReq = req as AuthenticatedRequest;
   const { category, description, amount, date } = req.body as {
     category: string; description: string; amount: number; date: string;
@@ -649,7 +672,7 @@ router.post("/admin/expenses", requireAuth, requireAdmin, async (req, res): Prom
 });
 
 // DELETE /admin/expenses/:id
-router.delete("/admin/expenses/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/expenses/:id", requireAuth, requireRolePermission("reports.financial", "ليس لديك صلاحية لإدارة المصروفات"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id));
   const [deleted] = await db.delete(expensesTable).where(eq(expensesTable.id, id)).returning();
   if (!deleted) { res.status(404).json({ error: "المصروف غير موجود" }); return; }
@@ -657,7 +680,7 @@ router.delete("/admin/expenses/:id", requireAuth, requireAdmin, async (req, res)
 });
 
 // GET /admin/sales
-router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/sales", requireAuth, requireRolePermission("reports.sales", "ليس لديك صلاحية لعرض تقارير المبيعات"), async (_req, res): Promise<void> => {
   // Only count completed orders as revenue
   const completedFilter = eq(ordersTable.status, "completed");
 
@@ -737,7 +760,7 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
   });
 });
 
-router.get("/admin/workshop-applications", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/workshop-applications", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة طلبات الورش"), async (_req, res): Promise<void> => {
   const apps = await db
     .select()
     .from(workshopApplicationsTable)
@@ -745,7 +768,7 @@ router.get("/admin/workshop-applications", requireAuth, requireAdmin, async (_re
   res.json(apps);
 });
 
-router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+router.patch("/admin/workshop-applications/:id", requireAuth, requireRolePermission("workshops.manage", "ليس لديك صلاحية لإدارة طلبات الورش"), async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
   const { status } = req.body as { status: string };
 
@@ -789,7 +812,7 @@ router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, asyn
     if (updated.userId && workshop) {
       await db
         .update(usersTable)
-        .set({ role: "workshop", workshopId: workshop.id })
+        .set({ role: "workshop_owner", employeeRole: null, workshopId: workshop.id })
         .where(eq(usersTable.id, updated.userId));
     }
   }
@@ -798,7 +821,7 @@ router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, asyn
 });
 
 // GET /api/admin/appointments — list all appointments with order + user info
-router.get("/admin/appointments", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/appointments", requireAuth, requireRolePermission("appointments.view", "ليس لديك صلاحية لعرض المواعيد"), async (req, res): Promise<void> => {
   const { workshopId, dateFrom, dateTo, status } = req.query;
   const rows = await db
     .select({
@@ -832,7 +855,7 @@ router.get("/admin/appointments", requireAuth, requireAdmin, async (req, res): P
 });
 
 // PATCH /api/admin/appointments/:id/status
-router.patch("/admin/appointments/:id/status", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/admin/appointments/:id/status", requireAuth, requireRolePermission("appointments.view", "ليس لديك صلاحية لإدارة المواعيد"), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   const { status } = req.body as { status: string };
   if (!status) { res.status(400).json({ error: "status is required" }); return; }
