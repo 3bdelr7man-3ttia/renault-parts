@@ -3,6 +3,7 @@ import { eq, count, sum, gte, and, desc, lte } from "drizzle-orm";
 import { db, appointmentsTable, ordersTable, packagesTable, usersTable, workshopsTable, workshopPricingTable, workshopAvailabilityTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { sql } from "drizzle-orm";
+import { isWorkshopOwner } from "../lib/permissions";
 
 const router: IRouter = Router();
 
@@ -12,7 +13,7 @@ function requireWorkshop(req: Request, res: Response, next: NextFunction): void 
     res.status(401).json({ error: "غير مصرح" });
     return;
   }
-  if (authReq.user.role !== "workshop") {
+  if (!isWorkshopOwner(authReq.user)) {
     res.status(403).json({ error: "هذه الصفحة للورش المعتمدة فقط" });
     return;
   }
