@@ -90,7 +90,7 @@ export default function Checkout() {
   const resolvedCarYear  = user?.carYear  || contextCar?.year  || new Date().getFullYear();
   const hasCar = !!(resolvedCarModel && resolvedCarYear);
 
-  const [step, setStep] = useState<Step>(hasCar ? 2 : 1);
+  const [step, setStep] = useState<Step>(1);
   const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
@@ -241,6 +241,7 @@ export default function Checkout() {
                   onChange={setFormData}
                   onNext={() => setStep(2)}
                   canAdvance={canAdvanceStep1}
+                  carKnown={hasCar}
                 />
               )}
 
@@ -363,22 +364,69 @@ const MODEL_ICONS: Record<string, string> = {
   'Renault Sandero': '🚗', 'Renault Kwid':    '🚗', 'Renault Captur':  '🚙',
 };
 
-function Step1Car({ formData, onChange, onNext, canAdvance }: {
-  formData: FormData; onChange: (f: FormData) => void; onNext: () => void; canAdvance: boolean;
+function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
+  formData: FormData; onChange: (f: FormData) => void; onNext: () => void; canAdvance: boolean; carKnown?: boolean;
 }) {
+  const [changing, setChanging] = React.useState(false);
   const SHORT = (m: string) => m.replace('Renault ', '');
   const gridModels = RENAULT_MODELS.slice(0, 6);
   const moreModels = RENAULT_MODELS.slice(6);
   const recentYears = CAR_YEARS.slice(0, 8);
   const olderYears = CAR_YEARS.slice(8);
 
+  if (carKnown && !changing) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>سيارتك</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>اتحددت تلقائياً من بياناتك</p>
+        </div>
+
+        <div style={{ background: `${G}0D`, border: `2px solid ${G}50`, borderRadius: 20, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 18 }}>
+          <span style={{ fontSize: 48 }}>{MODEL_ICONS[formData.carModel] ?? '🚗'}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#E8F0F8', marginBottom: 4 }}>{formData.carModel}</div>
+            <div style={{ fontSize: 14, color: G, fontWeight: 700 }}>إصدار {formData.carYear}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', background: 'rgba(34,197,94,0.15)' }}>
+            <CheckCircle2 size={22} color="#22c55e" />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Btn onClick={onNext} style={{ flex: 1 }}>
+            هذه سيارتي — متابعة
+          </Btn>
+          <button
+            onClick={() => setChanging(true)}
+            style={{
+              padding: '14px 18px', borderRadius: 14, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+              border: '1.5px solid rgba(255,255,255,0.15)', background: 'transparent',
+              color: 'rgba(255,255,255,0.55)', fontFamily: "'Almarai',sans-serif",
+              display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+            }}
+          >
+            <Car size={14} color={G} /> تغيير السيارة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Title */}
-      <div>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختار سيارتك</h2>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>نضمن لك الباكدج المناسب لموديل وسنة سيارتك بالتحديد</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختار سيارتك</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>نضمن لك الباكدج المناسب لموديل وسنة سيارتك بالتحديد</p>
+        </div>
+        {carKnown && changing && (
+          <button onClick={() => setChanging(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: "'Almarai',sans-serif", paddingTop: 4 }}>
+            إلغاء ←
+          </button>
+        )}
       </div>
 
       {/* ── Model selector ── */}
