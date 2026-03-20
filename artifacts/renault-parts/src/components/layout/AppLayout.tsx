@@ -103,29 +103,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const footerLinks = [
     {
-      t: 'الخدمات',
+      t: 'تصفح',
       items: [
-        { label: 'الباكدجات الجاهزة', href: '/packages' },
-        { label: 'ابني باكدجك',       href: '/packages' },
-        { label: 'قطع أصلية',         href: '/packages' },
-        { label: 'قطع تركية',         href: '/packages' },
+        { label: 'الباكدجات الجاهزة', href: '/packages'  },
+        { label: 'قطع الغيار',        href: '/parts'     },
+        { label: 'الورش المعتمدة',    href: '/workshops' },
+        { label: 'ابني باكدجك',       href: '/#puzzle'   },
       ],
     },
     {
-      t: 'الحساب',
+      t: 'حسابي',
       items: [
-        { label: 'تسجيل الدخول', href: '/login'    },
-        { label: 'حساب جديد',   href: '/register' },
-        { label: 'طلباتي',      href: '/my-orders' },
+        { label: 'تسجيل الدخول',   href: '/login'      },
+        { label: 'حساب جديد',      href: '/register'   },
+        { label: 'طلباتي',         href: '/my-orders'  },
+        { label: 'ملفي الشخصي',    href: '/profile'    },
       ],
     },
     {
-      t: 'مناطق',
+      t: 'للورش',
       items: [
-        { label: 'المنتزه',   href: '/' },
-        { label: 'سيدي جابر', href: '/' },
-        { label: 'العجمي',    href: '/' },
-        { label: 'الميناء',   href: '/' },
+        { label: 'انضم كورشة',        href: '/join-workshop' },
+        { label: 'كل الورش',          href: '/workshops'     },
+        { label: 'لوحة التحكم',       href: '/admin'         },
+        { label: 'الرئيسية',          href: '/'              },
       ],
     },
   ];
@@ -403,33 +404,58 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* ══ FOOTER ══ */}
-      <footer style={{ background: 'rgba(7,9,20,0.95)', borderTop: '1px solid rgba(200,151,74,0.08)', padding: '48px 28px 24px', fontFamily: "'Almarai',sans-serif" }}>
+      <footer style={{ background: '#070914', borderTop: '1px solid rgba(200,151,74,0.1)', padding: '52px 28px 0', fontFamily: "'Almarai',sans-serif" }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 36 }}>
+
+          {/* Main grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 1fr', gap: 40, paddingBottom: 40, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
 
             {/* Brand column */}
             <div>
               <RenoPackLogo size="md" />
-              <p style={{ color: '#7A95AA', fontSize: 13, lineHeight: 1.85, maxWidth: 250, fontWeight: 400, margin: '16px 0' }}>
-                المنصة الأولى بين مراكز قطع غيار رينو والورش المعتمدة في الإسكندرية.
+              <p style={{ color: '#5C7488', fontSize: 13, lineHeight: 1.9, maxWidth: 240, fontWeight: 500, margin: '16px 0 20px' }}>
+                المنصة الأولى التي تربط بين مراكز قطع غيار رينو والورش المعتمدة في الإسكندرية — بأسعار شفافة وضمان حقيقي.
               </p>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+
+              {/* Status */}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 16 }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3DA882', boxShadow: '0 0 8px #3DA882', animation: 'rp-glow-blink 2s infinite' }} />
                 <span style={{ color: '#3DA882', fontWeight: 700, fontSize: 12 }}>متاح ٢٤/٧ في الإسكندرية</span>
+              </div>
+
+              {/* Contact info */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <a href="tel:+201000000000" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5C7488', fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'color .2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#C8974A'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#5C7488'; }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(200,151,74,0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>📞</span>
+                  01000000000
+                </a>
+                <a href="https://wa.me/201000000000" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5C7488', fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'color .2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#25D366'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#5C7488'; }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(37,211,102,0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>💬</span>
+                  واتساب
+                </a>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5C7488', fontSize: 12, fontWeight: 600 }}>
+                  <span style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(122,149,170,0.08)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>📍</span>
+                  الإسكندرية، مصر
+                </span>
               </div>
             </div>
 
             {/* Link columns */}
             {footerLinks.map(col => (
               <div key={col.t}>
-                <p style={{ color: '#C8974A', fontWeight: 700, fontSize: 11, marginBottom: 14, letterSpacing: 1.5, textTransform: 'uppercase' }}>{col.t}</p>
+                <p style={{ color: '#C8974A', fontWeight: 800, fontSize: 11, marginBottom: 18, letterSpacing: 1.8, textTransform: 'uppercase' }}>{col.t}</p>
                 {col.items.map(item => (
                   <Link
                     key={item.label} href={item.href}
-                    style={{ display: 'block', color: 'rgba(160,180,200,0.6)', fontSize: 13, marginBottom: 9, fontWeight: 500, textDecoration: 'none', transition: 'color .2s' }}
-                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = '#C8974A')}
-                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.color = 'rgba(160,180,200,0.6)')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(140,165,185,0.55)', fontSize: 13, marginBottom: 11, fontWeight: 600, textDecoration: 'none', transition: 'color .2s, gap .2s' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = '#C8974A'; e.currentTarget.style.gap = '10px'; }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'rgba(140,165,185,0.55)'; e.currentTarget.style.gap = '6px'; }}
                   >
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
                     {item.label}
                   </Link>
                 ))}
@@ -438,13 +464,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Bottom bar */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            <span style={{ color: 'rgba(122,149,170,0.35)', fontSize: 12 }}>© 2026 RenoPack — الإسكندرية. جميع الحقوق محفوظة.</span>
-            <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              {'★★★★★'.split('').map((s, i) => <span key={i} style={{ color: '#C8974A', fontSize: 12 }}>{s}</span>)}
-              <span style={{ color: 'rgba(122,149,170,0.4)', fontSize: 11, marginRight: 6 }}>4.9 من 1,247 تقييم</span>
+          <div style={{ padding: '18px 0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ color: 'rgba(92,116,136,0.45)', fontSize: 12, fontWeight: 500 }}>© 2026 RenoPack — الإسكندرية. جميع الحقوق محفوظة.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 2 }}>
+                {'★★★★★'.split('').map((s, i) => <span key={i} style={{ color: '#C8974A', fontSize: 12 }}>{s}</span>)}
+              </div>
+              <span style={{ color: 'rgba(92,116,136,0.5)', fontSize: 11, fontWeight: 600 }}>4.9 من 1,247 تقييم</span>
+              <span style={{ color: 'rgba(92,116,136,0.2)', fontSize: 11 }}>|</span>
+              <span style={{ color: 'rgba(92,116,136,0.5)', fontSize: 11, fontWeight: 600 }}>🔒 دفع آمن 100%</span>
             </div>
           </div>
+
         </div>
       </footer>
     </div>
