@@ -162,10 +162,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ── Main ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: 0 }} className="admin-main">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', minWidth: 0, overflow: 'hidden' }} className="admin-main">
 
         {/* Top bar */}
-        <header style={{ position: 'sticky', top: 0, zIndex: 30, background: `${S}CC`, backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <header style={{ flexShrink: 0, zIndex: 30, background: `${S}CC`, backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden"
