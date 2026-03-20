@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle2, XCircle, Loader2, Clock, MapPin, Phone, Wrench, User, Calendar, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Clock, MapPin, Phone, Wrench, User, Calendar, FileText, AlertTriangle, ShieldBan } from 'lucide-react';
 
 const G = '#C8974A';
 const B2 = '#111826';
@@ -26,16 +26,20 @@ type Application = {
 };
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  pending:  { label: 'في الانتظار', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  approved: { label: 'موافق عليه', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-  rejected: { label: 'مرفوض',       color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+  pending:    { label: 'في الانتظار',          color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+  approved:   { label: 'موافق عليه',           color: '#22c55e', bg: 'rgba(34,197,94,0.1)'  },
+  rejected:   { label: 'مرفوض',                color: '#ef4444', bg: 'rgba(239,68,68,0.1)'  },
+  incomplete: { label: 'غير مستوفى الشروط',   color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+  blocked:    { label: 'محظور',                color: '#dc2626', bg: 'rgba(220,38,38,0.1)'  },
 };
 
+// "الكل" shows everything EXCEPT approved (approved → moved to workshops section)
 const FILTER_OPTIONS = [
-  { value: 'all',      label: 'الكل' },
-  { value: 'pending',  label: 'في الانتظار' },
-  { value: 'approved', label: 'موافق عليهم' },
-  { value: 'rejected', label: 'مرفوضون' },
+  { value: 'all',        label: 'الكل'                },
+  { value: 'pending',    label: 'في الانتظار'         },
+  { value: 'rejected',   label: 'مرفوضون'             },
+  { value: 'incomplete', label: 'غير مستوفى الشروط'  },
+  { value: 'blocked',    label: 'محظورون'             },
 ];
 
 export default function AdminWorkshopApplications() {
@@ -64,8 +68,14 @@ export default function AdminWorkshopApplications() {
     }
   };
 
-  const handleAction = async (id: number, status: 'approved' | 'rejected') => {
+  const handleAction = async (id: number, status: 'approved' | 'rejected' | 'incomplete' | 'blocked') => {
     setActionLoading(id);
+    const labels: Record<string, string> = {
+      approved: '✅ تمت الموافقة',
+      rejected: '❌ تم الرفض',
+      incomplete: '⚠️ غير مستوفى الشروط',
+      blocked: '🚫 تم الحظر',
+    };
     try {
       const res = await fetch(`/api/admin/workshop-applications/${id}`, {
         method: 'PATCH',
@@ -74,7 +84,7 @@ export default function AdminWorkshopApplications() {
       });
       if (!res.ok) throw new Error();
       setApps(prev => prev.map(a => a.id === id ? { ...a, status, reviewedAt: new Date().toISOString() } : a));
-      toast({ title: status === 'approved' ? '✅ تمت الموافقة' : '❌ تم الرفض', description: `تم تحديث حالة الطلب` });
+      toast({ title: labels[status], description: 'تم تحديث حالة الطلب' });
     } catch {
       toast({ variant: 'destructive', title: 'خطأ', description: 'تعذر تحديث الحالة' });
     } finally {
@@ -82,7 +92,9 @@ export default function AdminWorkshopApplications() {
     }
   };
 
-  const filtered = filter === 'all' ? apps : apps.filter(a => a.status === filter);
+  // "الكل" excludes approved — approved workshops live in the workshops section
+  const nonApproved = apps.filter(a => a.status !== 'approved');
+  const filtered = filter === 'all' ? nonApproved : nonApproved.filter(a => a.status === filter);
   const pendingCount = apps.filter(a => a.status === 'pending').length;
 
   return (
@@ -178,26 +190,51 @@ export default function AdminWorkshopApplications() {
                       )}
 
                       {app.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button onClick={() => handleAction(app.id, 'approved')} disabled={actionLoading === app.id}
-                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(34,197,94,0.12)', border: '1.5px solid rgba(34,197,94,0.3)', borderRadius: 12, padding: '12px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, color: '#22c55e', cursor: 'pointer', transition: 'all .2s' }}>
-                            {actionLoading === app.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                            موافقة على الطلب
+                            style={{ flex: 1, minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: 'rgba(34,197,94,0.12)', border: '1.5px solid rgba(34,197,94,0.3)', borderRadius: 12, padding: '11px 12px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#22c55e', cursor: 'pointer', transition: 'all .2s' }}>
+                            {actionLoading === app.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                            موافقة
+                          </button>
+                          <button onClick={() => handleAction(app.id, 'incomplete')} disabled={actionLoading === app.id}
+                            style={{ flex: 1, minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: 'rgba(249,115,22,0.08)', border: '1.5px solid rgba(249,115,22,0.25)', borderRadius: 12, padding: '11px 12px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#f97316', cursor: 'pointer', transition: 'all .2s' }}>
+                            {actionLoading === app.id ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
+                            غير مستوفى
                           </button>
                           <button onClick={() => handleAction(app.id, 'rejected')} disabled={actionLoading === app.id}
-                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(239,68,68,0.08)', border: '1.5px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '12px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, color: '#ef4444', cursor: 'pointer', transition: 'all .2s' }}>
-                            {actionLoading === app.id ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
-                            رفض الطلب
+                            style={{ flex: 1, minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: 'rgba(239,68,68,0.08)', border: '1.5px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '11px 12px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#ef4444', cursor: 'pointer', transition: 'all .2s' }}>
+                            {actionLoading === app.id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                            رفض
                           </button>
                         </div>
                       )}
 
-                      {app.status !== 'pending' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: `${st.bg}`, border: `1px solid ${st.color}30`, borderRadius: 10 }}>
-                          {app.status === 'approved' ? <CheckCircle2 size={14} color={st.color} /> : <XCircle size={14} color={st.color} />}
+                      {/* Allow re-review of incomplete applications */}
+                      {app.status === 'incomplete' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: st.bg, border: `1px solid ${st.color}30`, borderRadius: 10 }}>
+                            <AlertTriangle size={14} color={st.color} />
+                            <span style={{ color: st.color, fontSize: 12, fontWeight: 800 }}>غير مستوفى الشروط{app.reviewedAt && ` · ${new Date(app.reviewedAt).toLocaleDateString('ar-EG')}`}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => handleAction(app.id, 'approved')} disabled={actionLoading === app.id}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: 'rgba(34,197,94,0.12)', border: '1.5px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: '9px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#22c55e', cursor: 'pointer' }}>
+                              <CheckCircle2 size={13} /> موافقة
+                            </button>
+                            <button onClick={() => handleAction(app.id, 'rejected')} disabled={actionLoading === app.id}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: 'rgba(239,68,68,0.08)', border: '1.5px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '9px', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>
+                              <XCircle size={13} /> رفض نهائي
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {(app.status === 'rejected' || app.status === 'blocked') && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: st.bg, border: `1px solid ${st.color}30`, borderRadius: 10 }}>
+                          {app.status === 'blocked' ? <ShieldBan size={14} color={st.color} /> : <XCircle size={14} color={st.color} />}
                           <span style={{ color: st.color, fontSize: 12, fontWeight: 800 }}>
-                            {app.status === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}
-                            {app.reviewedAt && ` في ${new Date(app.reviewedAt).toLocaleDateString('ar-EG')}`}
+                            {app.status === 'blocked' ? 'محظور' : 'مرفوض'}
+                            {app.reviewedAt && ` · ${new Date(app.reviewedAt).toLocaleDateString('ar-EG')}`}
                           </span>
                         </div>
                       )}

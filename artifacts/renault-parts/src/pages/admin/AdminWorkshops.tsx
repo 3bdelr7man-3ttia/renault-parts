@@ -3,7 +3,7 @@ import { useListAdminWorkshops, useCreateWorkshop, useUpdateWorkshop, useDeleteW
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, Check, X, Loader2, MapPin, Phone, Wrench, ClipboardList } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Loader2, MapPin, Phone, Wrench, ClipboardList, ShieldBan, ShieldCheck } from 'lucide-react';
 
 const G = '#C8974A';
 
@@ -128,14 +128,37 @@ export default function AdminWorkshops() {
   };
 
   const STATUS_COLORS: Record<string, string> = {
-    active: 'bg-green-500/20 text-green-400 border-green-500/30',
+    active:   'bg-green-500/20 text-green-400 border-green-500/30',
     inactive: 'bg-red-500/20 text-red-400 border-red-500/30',
-    pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    pending:  'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    blocked:  'bg-red-700/20 text-red-300 border-red-700/40',
   };
   const STATUS_LABELS: Record<string, string> = {
-    active: 'نشطة',
+    active:   'نشطة',
     inactive: 'متوقفة',
-    pending: 'قيد المراجعة',
+    pending:  'قيد المراجعة',
+    blocked:  'محظورة',
+  };
+
+  const [blockingId, setBlockingId] = useState<number | null>(null);
+
+  const toggleBlock = async (ws: { id: number; partnershipStatus: string }) => {
+    const newStatus = ws.partnershipStatus === 'blocked' ? 'active' : 'blocked';
+    setBlockingId(ws.id);
+    try {
+      const res = await fetch(`/api/admin/workshops/${ws.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(getAuthHeaders().headers ?? {}) },
+        body: JSON.stringify({ partnershipStatus: newStatus }),
+      });
+      if (!res.ok) throw new Error();
+      toast({ title: newStatus === 'blocked' ? '🚫 تم حظر الورشة' : '✅ تم رفع الحظر' });
+      invalidate();
+    } catch {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'تعذر تغيير حالة الورشة' });
+    } finally {
+      setBlockingId(null);
+    }
   };
 
   const FormFields = ({ form, setForm }: { form: WorkshopForm; setForm: React.Dispatch<React.SetStateAction<WorkshopForm>> }) => (
@@ -189,6 +212,7 @@ export default function AdminWorkshops() {
           <option value="active">نشطة</option>
           <option value="inactive">متوقفة</option>
           <option value="pending">قيد المراجعة</option>
+          <option value="blocked">محظورة</option>
         </select>
       </div>
       <div>
@@ -350,6 +374,19 @@ export default function AdminWorkshops() {
                             style={{ background: `${G}15`, color: G, border: `1px solid ${G}30` }}
                           >
                             <ClipboardList className="w-3.5 h-3.5" /> طلباتها
+                          </button>
+                          <button
+                            onClick={() => toggleBlock(ws)}
+                            disabled={blockingId === ws.id}
+                            title={ws.partnershipStatus === 'blocked' ? 'رفع الحظر' : 'حظر الورشة'}
+                            className={`p-2 rounded-lg transition-all ${ws.partnershipStatus === 'blocked' ? 'bg-green-500/15 text-green-400 hover:bg-green-500/25' : 'bg-red-700/15 text-red-300 hover:bg-red-700/25'}`}
+                          >
+                            {blockingId === ws.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : ws.partnershipStatus === 'blocked'
+                                ? <ShieldCheck className="w-4 h-4" />
+                                : <ShieldBan className="w-4 h-4" />
+                            }
                           </button>
                           <button onClick={() => startEdit(ws)} className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
                             <Edit2 className="w-4 h-4" />

@@ -749,8 +749,8 @@ router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, asyn
   const id = parseInt(String(req.params.id), 10);
   const { status } = req.body as { status: string };
 
-  if (!["approved", "rejected"].includes(status)) {
-    res.status(400).json({ error: "الحالة يجب أن تكون approved أو rejected" });
+  if (!["approved", "rejected", "incomplete", "blocked"].includes(status)) {
+    res.status(400).json({ error: "حالة غير صحيحة" });
     return;
   }
 
