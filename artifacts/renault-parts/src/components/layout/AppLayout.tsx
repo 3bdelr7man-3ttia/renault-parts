@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { usePartCart } from '@/lib/part-cart-context';
-import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search, Settings, Building2, ShoppingCart } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search, Settings, Building2, ShoppingCart, X, Trash2, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import bakoLogoImg from '@/assets/bako-logo.png';
 
 /* ── Brand Logo (reusable across all pages) ── */
@@ -44,16 +44,34 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const { items: cartItems, total: cartTotal, clear: clearCart } = usePartCart();
+  const { items: cartItems, total: cartTotal, clear: clearCart, removePart } = usePartCart();
   const [searchVal, setSearchVal] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
+  const cartBtnRef = useRef<HTMLButtonElement>(null);
+  const cartDropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleGoToCart = () => {
+  useEffect(() => {
+    if (!showCartDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        cartBtnRef.current && !cartBtnRef.current.contains(e.target as Node) &&
+        cartDropdownRef.current && !cartDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowCartDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showCartDropdown]);
+
+  const handleGoToCheckout = () => {
     if (cartItems.length === 0) return;
     sessionStorage.setItem('customPuzzle', JSON.stringify({
       parts: cartItems.map(p => ({ id: p.id, label: p.label, price: p.price })),
       total: cartTotal,
     }));
+    setShowCartDropdown(false);
     setLocation('/checkout/custom');
   };
 
@@ -203,36 +221,111 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Part Cart button — only when logged in and has items */}
             {user && cartItems.length > 0 && (
-              <button
-                onClick={handleGoToCart}
-                style={{
-                  position: 'relative',
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  background: 'rgba(200,151,74,0.12)',
-                  border: '1.5px solid rgba(200,151,74,0.35)',
-                  borderRadius: 999, padding: '7px 16px',
-                  cursor: 'pointer',
-                  fontFamily: "'Almarai',sans-serif",
-                  fontWeight: 800, fontSize: 13, color: '#C8974A',
-                  flexShrink: 0,
-                  transition: 'background .2s, box-shadow .2s',
-                  boxShadow: '0 2px 12px rgba(200,151,74,0.2)',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.22)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.12)'; }}
-              >
-                <ShoppingCart size={15} />
-                باكدجي
-                <span style={{
-                  background: '#C8974A', color: '#0D1220',
-                  borderRadius: 999, fontSize: 11, fontWeight: 900,
-                  minWidth: 18, height: 18,
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '0 5px',
-                }}>
-                  {cartItems.length}
-                </span>
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  ref={cartBtnRef}
+                  onClick={() => setShowCartDropdown(v => !v)}
+                  style={{
+                    position: 'relative',
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    background: showCartDropdown ? 'rgba(200,151,74,0.22)' : 'rgba(200,151,74,0.12)',
+                    border: '1.5px solid rgba(200,151,74,0.35)',
+                    borderRadius: 999, padding: '7px 16px',
+                    cursor: 'pointer',
+                    fontFamily: "'Almarai',sans-serif",
+                    fontWeight: 800, fontSize: 13, color: '#C8974A',
+                    flexShrink: 0,
+                    transition: 'background .2s, box-shadow .2s',
+                    boxShadow: '0 2px 12px rgba(200,151,74,0.2)',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.22)'; }}
+                  onMouseLeave={e => { if (!showCartDropdown) (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.12)'; }}
+                >
+                  <ShoppingCart size={15} />
+                  سلتي
+                  <span style={{
+                    background: '#C8974A', color: '#0D1220',
+                    borderRadius: 999, fontSize: 11, fontWeight: 900,
+                    minWidth: 18, height: 18,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 5px',
+                  }}>
+                    {cartItems.length}
+                  </span>
+                </button>
+
+                {/* Cart Dropdown */}
+                <AnimatePresence>
+                  {showCartDropdown && (
+                    <motion.div
+                      ref={cartDropdownRef}
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.18 }}
+                      style={{
+                        position: 'absolute', top: 'calc(100% + 10px)', left: 0,
+                        width: 320, background: '#111826',
+                        border: '1.5px solid rgba(200,151,74,0.2)',
+                        borderRadius: 18, overflow: 'hidden',
+                        boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+                        zIndex: 9999, direction: 'rtl',
+                        fontFamily: "'Almarai',sans-serif",
+                      }}
+                    >
+                      {/* Header */}
+                      <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 800, fontSize: 13, color: '#E8F0F8' }}>
+                          <ShoppingCart size={14} color="#C8974A" />
+                          سلة القطع
+                          <span style={{ background: 'rgba(200,151,74,0.15)', color: '#C8974A', borderRadius: 999, fontSize: 11, fontWeight: 900, padding: '1px 8px' }}>{cartItems.length}</span>
+                        </div>
+                        <button
+                          onClick={() => { clearCart(); setShowCartDropdown(false); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '4px 10px', color: '#EF4444', fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                          title="إفراغ السلة"
+                        >
+                          <Trash2 size={11} /> إفراغ
+                        </button>
+                      </div>
+
+                      {/* Items list */}
+                      <div style={{ maxHeight: 260, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {cartItems.map(item => (
+                          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#161E30', borderRadius: 12, padding: '10px 12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#D4E0EC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</div>
+                              <div style={{ fontSize: 12, fontWeight: 800, color: '#C8974A', marginTop: 2 }}>{item.price.toLocaleString('ar-EG')} ج.م</div>
+                            </div>
+                            <button
+                              onClick={() => removePart(item.id)}
+                              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                              title="حذف القطعة"
+                            >
+                              <X size={12} color="#EF4444" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Footer — total + checkout */}
+                      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(200,151,74,0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <span style={{ fontSize: 12, color: '#7A95AA', fontWeight: 700 }}>الإجمالي</span>
+                          <span style={{ fontSize: 16, fontWeight: 900, color: '#C8974A' }}>{cartTotal.toLocaleString('ar-EG')} ج.م</span>
+                        </div>
+                        <button
+                          onClick={handleGoToCheckout}
+                          style={{ width: '100%', background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 12, padding: '11px', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+                        >
+                          إتمام الطلب
+                          <ArrowLeft size={14} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* Separator */}

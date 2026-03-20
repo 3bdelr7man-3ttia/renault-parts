@@ -3,6 +3,7 @@ import { useRoute, useLocation, Link } from 'wouter';
 import { useListPackages, useCreateOrder, useInitiatePayment } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { usePartCart } from '@/lib/part-cart-context';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -49,6 +50,7 @@ export default function Checkout() {
   const [, setLocation] = useLocation();
   const { user, getAuthHeaders } = useAuth();
   const { toast } = useToast();
+  const { clear: clearPartCart } = usePartCart();
 
   const customPuzzle = isCustom ? (() => {
     try { return JSON.parse(sessionStorage.getItem('customPuzzle') || 'null'); } catch { return null; }
@@ -107,6 +109,8 @@ export default function Checkout() {
     mutation: {
       onSuccess: async (order) => {
         setConfirmedOrderId(order.id);
+        clearPartCart();
+        sessionStorage.removeItem('customPuzzle');
         if (formData.paymentMethod === 'card') {
           setIsRedirectingToPayment(true);
           try {
