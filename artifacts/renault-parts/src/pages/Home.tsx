@@ -701,8 +701,10 @@ function PackageBox3D({ pkg, selected, onClick }: { pkg: typeof STATIC_PACKAGES[
 /* ── Ready packages section 3D ── */
 function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: number; name: string; slug: string; price: string | number; kmService?: number | null; description?: string }> }) {
   const [active, setActive] = useState('km40');
+  const { isMobile, isTablet } = useBreakpoint();
+  const isMobileOrTablet = isMobile || isTablet;
+  const touchStartX = React.useRef<number | null>(null);
 
-  // Only use km-based packages (20k, 40k, 60k) — exclude custom/emergency (kmService=0 or null)
   const kmPkgs = realPackages
     ? realPackages
         .filter(p => p.kmService && p.kmService > 0)
@@ -722,44 +724,155 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
       }))
     : STATIC_PACKAGES;
 
-  const pkg = pkgs.find(p => p.id === active) ?? pkgs[1];
+  const activeIdx = pkgs.findIndex(p => p.id === active);
+  const pkg = pkgs[activeIdx] ?? pkgs[1];
   const m = PKG_META[active] ?? PKG_META['km40'];
   const pkgSlug = kmPkgs?.find((_, i) => STATIC_PACKAGES[i]?.id === active)?.slug ?? active;
 
+  const goNext = () => setActive(pkgs[(activeIdx + 1) % pkgs.length].id);
+  const goPrev = () => setActive(pkgs[(activeIdx - 1 + pkgs.length) % pkgs.length].id);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) dx > 0 ? goPrev() : goNext();
+    touchStartX.current = null;
+  };
+
+  const navBtnStyle = (side: 'right' | 'left'): React.CSSProperties => ({
+    position: 'absolute',
+    top: '50%',
+    [side]: -4,
+    transform: 'translateY(-50%)',
+    width: 38,
+    height: 38,
+    borderRadius: '50%',
+    background: `${m.accent}18`,
+    border: `1.5px solid ${m.accent}40`,
+    color: m.accent,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    zIndex: 20,
+    fontSize: 18,
+    fontWeight: 800,
+    boxShadow: `0 4px 16px rgba(0,0,0,0.4)`,
+    transition: 'background .2s, transform .2s',
+    userSelect: 'none',
+    flexShrink: 0,
+  });
+
   return (
-    <section style={{ padding: '72px 28px 80px', borderTop: `1px solid ${BD}`, background: BG, overflow: 'hidden' }}>
+    <section style={{ padding: isMobile ? '40px 16px 52px' : isTablet ? '56px 20px 64px' : '72px 28px 80px', borderTop: `1px solid ${BD}`, background: BG, overflow: 'hidden' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
 
         {/* Heading */}
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 56 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 18px', marginBottom: 16 }}>
             <Package size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكدجات جاهزة</span>
           </div>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
-          <p style={{ color: TD, fontSize: 14 }}>كل باكدج بيشمل القطع + التركيب + الضمان + هدية</p>
+          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
+          <p style={{ color: TD, fontSize: isMobile ? 13 : 14 }}>كل باكدج بيشمل القطع + التركيب + الضمان + هدية</p>
         </div>
 
-        {/* ── 3D Shelf Scene ── */}
-        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: 24, alignItems: 'flex-end', paddingBottom: 50 }}>
-          <div style={{ position: 'absolute', bottom: 22, left: '4%', right: '4%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.09) 20%,rgba(255,255,255,0.14) 50%,rgba(255,255,255,0.09) 80%,transparent)', borderRadius: 999 }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '15%', right: '15%', height: 40, background: 'radial-gradient(ellipse at 50% 0%,rgba(200,151,74,0.06),transparent 70%)', filter: 'blur(8px)' }} />
-          {pkgs.map(p => (
-            <PackageBox3D key={p.id} pkg={p} selected={active === p.id} onClick={() => setActive(p.id)} />
-          ))}
-        </div>
+        {isMobileOrTablet ? (
+          /* ── MOBILE: single centered box with nav arrows + swipe ── */
+          <div>
+            <div
+              style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 50, paddingTop: 10, minHeight: 380 }}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              {/* Shelf glow */}
+              <div style={{ position: 'absolute', bottom: 22, left: '5%', right: '5%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.1) 30%,rgba(255,255,255,0.16) 50%,rgba(255,255,255,0.1) 70%,transparent)', borderRadius: 999 }} />
+              <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 40, background: `radial-gradient(ellipse at 50% 0%,${m.glow},transparent 70%)`, filter: 'blur(8px)', transition: 'background .4s' }} />
+
+              {/* Prev arrow */}
+              <button onClick={goPrev} style={navBtnStyle('right')}>›</button>
+
+              {/* Active box */}
+              <div style={{ transition: 'transform .3s ease', transform: 'scale(1.05)' }}>
+                <PackageBox3D pkg={pkg} selected={true} onClick={() => {}} />
+              </div>
+
+              {/* Next arrow */}
+              <button onClick={goNext} style={navBtnStyle('left')}>‹</button>
+            </div>
+
+            {/* Dot indicators */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 4, marginBottom: 24 }}>
+              {pkgs.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => setActive(p.id)}
+                  style={{
+                    width: active === p.id ? 22 : 8,
+                    height: 8,
+                    borderRadius: 999,
+                    background: active === p.id ? m.accent : 'rgba(255,255,255,0.18)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all .3s ease',
+                    padding: 0,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Package name tabs */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+              {pkgs.map(p => {
+                const pm = PKG_META[p.id] ?? PKG_META['km40'];
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setActive(p.id)}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: 999,
+                      border: `1.5px solid ${active === p.id ? pm.accent : 'rgba(255,255,255,0.1)'}`,
+                      background: active === p.id ? `${pm.accent}15` : 'transparent',
+                      color: active === p.id ? pm.accent : 'rgba(255,255,255,0.4)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      transition: 'all .25s ease',
+                      fontFamily: "'Almarai',sans-serif",
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* ── DESKTOP: 3D shelf with all 3 boxes ── */
+          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: 24, alignItems: 'flex-end', paddingBottom: 50 }}>
+            <div style={{ position: 'absolute', bottom: 22, left: '4%', right: '4%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.09) 20%,rgba(255,255,255,0.14) 50%,rgba(255,255,255,0.09) 80%,transparent)', borderRadius: 999 }} />
+            <div style={{ position: 'absolute', bottom: 0, left: '15%', right: '15%', height: 40, background: 'radial-gradient(ellipse at 50% 0%,rgba(200,151,74,0.06),transparent 70%)', filter: 'blur(8px)' }} />
+            {pkgs.map(p => (
+              <PackageBox3D key={p.id} pkg={p} selected={active === p.id} onClick={() => setActive(p.id)} />
+            ))}
+          </div>
+        )}
 
         {/* ── Expanded details panel ── */}
-        <div style={{ maxWidth: 700, margin: '32px auto 0', background: `linear-gradient(145deg,${m.accent}0a,${B3} 60%)`, border: `1.5px solid ${m.accent}22`, borderRadius: 22, padding: '28px 32px', position: 'relative', overflow: 'hidden', transition: 'all .4s ease' }}>
+        <div style={{ maxWidth: 700, margin: isMobileOrTablet ? '0 auto 0' : '32px auto 0', background: `linear-gradient(145deg,${m.accent}0a,${B3} 60%)`, border: `1.5px solid ${m.accent}22`, borderRadius: 22, padding: isMobile ? '20px 16px' : '28px 32px', position: 'relative', overflow: 'hidden', transition: 'all .4s ease' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${m.accent}66,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
             <div>
-              <h3 style={{ fontSize: 19, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>{pkg.name}</h3>
+              <h3 style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>{pkg.name}</h3>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${m.accent}12`, border: `1px solid ${m.accent}28`, borderRadius: 999, padding: '4px 12px' }}>
                 <Gift size={11} color={m.accent} /><span style={{ color: m.accent, fontSize: 11, fontWeight: 700 }}>هديتك: {pkg.gift}</span>
               </div>
             </div>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: 34, fontWeight: 800, color: m.accent, lineHeight: 1, letterSpacing: -1.5 }}>{pkg.price.toLocaleString()}</div>
+              <div style={{ fontSize: isMobile ? 26 : 34, fontWeight: 800, color: m.accent, lineHeight: 1, letterSpacing: -1.5 }}>{pkg.price.toLocaleString()}</div>
               <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700 }}>ج.م شامل التركيب</div>
             </div>
           </div>
@@ -767,7 +880,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
             {pkg.includes.map(s => (
               <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={13} color={m.accent} style={{ flexShrink: 0 }} />
-                <span style={{ color: TX, fontSize: 12, fontWeight: 700 }}>{s}</span>
+                <span style={{ color: TX, fontSize: isMobile ? 11 : 12, fontWeight: 700 }}>{s}</span>
               </div>
             ))}
           </div>
