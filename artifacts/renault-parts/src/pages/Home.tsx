@@ -1087,7 +1087,7 @@ export default function Home() {
 
             {/* How it works bar */}
             <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 10, background: 'rgba(13,18,32,0.9)', backdropFilter: 'blur(12px)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 16, padding: '12px 20px', whiteSpace: 'nowrap', zIndex: 6 }}>
-              {[{ Icon: Package, c: SK, l: 'مراكز القطع' }, { Icon: ArrowLeftRight, c: G, l: 'RenoPack' }, { Icon: Wrench, c: G, l: 'ورش التركيب' }, { Icon: BadgeCheck, c: SG, l: 'ضمان كامل' }].map(({ Icon, c, l }, i) => (
+              {[{ Icon: Package, c: SK, l: 'الموردين' }, { Icon: ArrowLeftRight, c: G, l: 'RenoPack' }, { Icon: Wrench, c: G, l: 'ورش التركيب' }, { Icon: BadgeCheck, c: SG, l: 'ضمان كامل' }].map(({ Icon, c, l }, i) => (
                 <React.Fragment key={l}>
                   {i > 0 && <div style={{ width: 1, background: 'rgba(255,255,255,0.07)', alignSelf: 'stretch' }} />}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px' }}>
