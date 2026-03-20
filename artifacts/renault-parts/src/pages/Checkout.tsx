@@ -151,6 +151,7 @@ export default function Checkout() {
   const hasCar = !!(resolvedCarModel && resolvedCarYear);
 
   const [step, setStep] = useState<Step>(1);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
   const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
