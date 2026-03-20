@@ -195,10 +195,77 @@ function BakoChat({ context, hideHeader }: { context: ComparePart; hideHeader?: 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => { setMsgs([{ from: 'bako', text: context.aiIntro }]); }, [context.id]);
 
-  const getReply = (msg: string) => {
-    const lower = msg.toLowerCase();
-    for (const [k, v] of Object.entries(AI_QA)) if (k !== 'default' && lower.includes(k)) return v;
-    return AI_QA['default'];
+  const getReply = (msg: string): string => {
+    const lower = msg;
+    const { label, orig, turk, chin } = context;
+
+    // أنهي أحسن / مين أحسن / التوصية
+    if (lower.includes('أحسن') || lower.includes('أفضل') || lower.includes('توصية') || lower.includes('بتنصح') || lower.includes('نصيحة')) {
+      if (orig.available)
+        return `بالنسبة لـ ${label}، الأصلي (${orig.origin}) هو الأفضل على الإطلاق — سكور جودة ${orig.score}% وضمان ${orig.warranty}. لو ميزانيتك ${orig.price} ج.م متاحة خده على طول.${turk.available ? ` لو ميزانية محدودة، التركي ${turk.name} بـ ${turk.price} ج.م مقبول جداً.` : ''}`;
+      if (turk.available)
+        return `بالنسبة لـ ${label}، التركي ${turk.name} هو الأفضل المتاح — سكور ${turk.score}% وضمان ${turk.warranty} بسعر ${turk.price} ج.م.`;
+      return `${label} متاح بخيار واحد دلوقتي — تواصل معنا لمزيد من التفاصيل.`;
+    }
+
+    // الفرق في الجودة
+    if (lower.includes('جودة') || lower.includes('فرق') || lower.includes('أداء') || lower.includes('مقارنة')) {
+      const lines: string[] = [];
+      if (orig.available) lines.push(`• الأصلي (${orig.origin}): جودة ${orig.score}% — الأعلى`);
+      if (turk.available) lines.push(`• التركي (${turk.origin}): جودة ${turk.score}% — كويس`);
+      if (chin.available) lines.push(`• الصيني (${chin.origin}): جودة ${chin.score}% — مقبول`);
+      return `الفرق في جودة ${label}:\n${lines.join('\n')}\n\nالفرق في الأداء بيتحس خصوصاً بعد 10,000 كم.`;
+    }
+
+    // الضمان
+    if (lower.includes('ضمان') || lower.includes('كفالة') || lower.includes('يضمن')) {
+      const lines: string[] = [];
+      if (orig.available) lines.push(`الأصلي: ضمان ${orig.warranty}`);
+      if (turk.available) lines.push(`التركي: ضمان ${turk.warranty}`);
+      if (chin.available) lines.push(`الصيني: ضمان ${chin.warranty}`);
+      return `ضمان ${label}:\n${lines.join(' | ')}\n\nالضمان بيشمل القطعة والتركيب — لو في عيب بنستبدلها مجاناً.`;
+    }
+
+    // الأرخص / السعر
+    if (lower.includes('رخيص') || lower.includes('سعر') || lower.includes('فلوس') || lower.includes('تمن') || lower.includes('بكام') || lower.includes('كام')) {
+      const lines: string[] = [];
+      if (orig.available) lines.push(`الأصلي: ${orig.price} ج.م`);
+      if (turk.available) lines.push(`التركي: ${turk.price} ج.م`);
+      if (chin.available) lines.push(`الصيني: ${chin.price} ج.م`);
+      const cheapest = [orig, turk, chin].filter(v => v.available).sort((a, b) => a.price - b.price)[0];
+      return `أسعار ${label}:\n${lines.join(' | ')}\n\nالأرخص هو ${cheapest?.badge ?? 'الصيني'} — لكن تذكر إن السعر بيفرق في الجودة والضمان.`;
+    }
+
+    // الأصلي تحديداً
+    if (lower.includes('أصلي') || lower.includes('اوريجنال') || lower.includes('original')) {
+      if (!orig.available) return `${label} الأصلي مش متاح دلوقتي. ${turk.available ? `عندنا التركي ${turk.name} بـ ${turk.price} ج.م كبديل ممتاز.` : 'تواصل معنا للمزيد.'}`;
+      return `${label} الأصلي: ${orig.name} (${orig.origin}) — سعره ${orig.price} ج.م، ضمان ${orig.warranty}، وجودته ${orig.score}%. ده أفضل اختيار لو سيارتك أقل من 5 سنين.`;
+    }
+
+    // التركي
+    if (lower.includes('تركي') || lower.includes('turkish')) {
+      if (!turk.available) return `${label} التركي مش متاح دلوقتي. ${orig.available ? `عندنا الأصلي بـ ${orig.price} ج.م.` : ''}`;
+      return `${label} التركي: ${turk.name} (${turk.origin}) — سعره ${turk.price} ج.م، ضمان ${turk.warranty}، وجودته ${turk.score}%. اختيار كويس لو ميزانيتك محدودة.`;
+    }
+
+    // الصيني
+    if (lower.includes('صيني') || lower.includes('chinese')) {
+      if (!chin.available) return `${label} الصيني مش متاح عندنا — بنركز على الأصلي والتركي عشان نضمن الجودة.`;
+      return `${label} الصيني: ${chin.name} (${chin.origin}) — سعره ${chin.price} ج.م وضمانه ${chin.warranty}. الجودة ${chin.score}% — مناسب للسيارات الأقدم أو التنقل القصير.`;
+    }
+
+    // متى يتغير / عمر القطعة
+    if (lower.includes('امتى') || lower.includes('كل') || lower.includes('مدة') || lower.includes('عمر') || lower.includes('يتغير')) {
+      return `${label} عادةً بيتغير كل صيانة دورية — سواء كل 10,000 أو 20,000 كم حسب نوع السيارة والاستخدام. الأصلي بيدوم أكتر.`;
+    }
+
+    // باكدج / حجز
+    if (lower.includes('باكدج') || lower.includes('حجز') || lower.includes('موعد') || lower.includes('اطلب')) {
+      return `ممكن تضيف ${label} لباكدجك من صفحة القطع، أو تحجز الباكدج الجاهز من صفحة الباكدجات. بنوصّلك القطعة وبتروح الورشة اللي تختارها.`;
+    }
+
+    // default — but part-specific
+    return `أنا باكو، وأنا مختص في ${label} دلوقتي! اسألني عن: الجودة، الضمان، الأسعار، أو أنهي نوع أحسن ليك 🤖`;
   };
 
   const send = (txt: string) => {
