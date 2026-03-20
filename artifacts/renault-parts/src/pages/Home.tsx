@@ -1357,19 +1357,19 @@ export default function Home() {
           </div>
 
           {/* Join as workshop banner */}
-          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 18, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 20, padding: isMobile ? '18px 16px' : '20px 24px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: isMobile ? 14 : 16, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: 140, height: 140, background: `radial-gradient(circle,rgba(200,151,74,0.06),transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 46, height: 46, borderRadius: 14, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Building2 size={22} color={G} />
+              <div style={{ width: isMobile ? 48 : 46, height: isMobile ? 48 : 46, borderRadius: 14, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Building2 size={isMobile ? 24 : 22} color={G} />
               </div>
               <div>
-                <div style={{ fontWeight: 900, fontSize: 15, color: '#E8F0F8', marginBottom: 4 }}>عندك ورشة في الإسكندرية؟</div>
-                <div style={{ color: TD, fontSize: 12, fontWeight: 700 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر — مجاناً تماماً</div>
+                <div style={{ fontWeight: 900, fontSize: isMobile ? 17 : 15, color: '#E8F0F8', marginBottom: 5 }}>عندك ورشة في الإسكندرية؟</div>
+                <div style={{ color: TD, fontSize: isMobile ? 13 : 12, fontWeight: 700, lineHeight: 1.5 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر — مجاناً تماماً</div>
               </div>
             </div>
-            <Link href="/join-workshop" style={{ background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 12, padding: '11px 24px', fontWeight: 900, fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 20px rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', gap: 6 }}>
-              انضم كورشة <ArrowLeft size={13} />
+            <Link href="/join-workshop" style={{ background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 12, padding: isMobile ? '13px 0' : '11px 24px', fontWeight: 900, fontSize: isMobile ? 15 : 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 20px rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+              انضم كورشة <ArrowLeft size={isMobile ? 15 : 13} />
             </Link>
           </div>
 
