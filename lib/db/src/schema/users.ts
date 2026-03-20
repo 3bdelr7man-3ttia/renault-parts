@@ -14,6 +14,7 @@ export const usersTable = pgTable("users", {
   address: text("address"),
   area: text("area"),
   role: text("role").notNull().default("customer"),
+  employeeRole: text("employee_role"),
   workshopId: integer("workshop_id").references(() => workshopsTable.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
