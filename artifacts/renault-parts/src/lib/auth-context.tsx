@@ -6,6 +6,7 @@ interface AuthContextType {
   token: string | null;
   user: User | null;
   isLoading: boolean;
+  isFetching: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
   getAuthHeaders: () => { headers?: { Authorization: string } };
@@ -18,11 +19,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   
   // We pass the token explicitly to the query to ensure it authenticates
-  const { data: user, isLoading, refetch } = useGetCurrentUser({
+  // refetchInterval: re-check every 30s so role changes (e.g. customer→workshop after approval) apply automatically
+  const { data: user, isLoading, isFetching, refetch } = useGetCurrentUser({
     query: {
       queryKey: getGetCurrentUserQueryKey(),
       enabled: !!token,
       retry: false,
+      refetchOnWindowFocus: true,
+      refetchInterval: 30_000,
+      staleTime: 0,
     },
     request: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   });
@@ -47,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user: user || null, isLoading, login, logout, getAuthHeaders }}>
+    <AuthContext.Provider value={{ token, user: user || null, isLoading, isFetching, login, logout, getAuthHeaders }}>
       {children}
     </AuthContext.Provider>
   );

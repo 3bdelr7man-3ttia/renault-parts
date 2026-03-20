@@ -66,10 +66,21 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const LoadingScreen = () => (
+  <div style={{ minHeight: '100vh', background: '#0D1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ textAlign: 'center', fontFamily: "'Almarai',sans-serif" }}>
+      <div style={{ width: 40, height: 40, border: '3px solid rgba(200,151,74,0.2)', borderTopColor: '#C8974A', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>جارٍ التحقق من الصلاحيات...</div>
+    </div>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
+
 function WorkshopGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isFetching } = useAuth();
   const [, setLocation] = useLocation();
-  if (isLoading) return null;
+  // Show loading while fetching — covers both first load and role-change refresh
+  if (isLoading || (isFetching && user?.role !== 'workshop')) return <LoadingScreen />;
   if (!user) { setLocation('/login'); return null; }
   if (user.role === 'admin') { setLocation('/admin'); return null; }
   if (user.role !== 'workshop') { return <AccessDenied />; }

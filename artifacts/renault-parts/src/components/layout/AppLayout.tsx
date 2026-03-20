@@ -6,7 +6,7 @@ import { usePartCart } from '@/lib/part-cart-context';
 import {
   LogOut, User, ShieldCheck, ClipboardList, PackageSearch, Search,
   Settings, Building2, ShoppingCart, X, Trash2, ArrowLeft,
-  Home, Menu, ChevronLeft,
+  Home, Menu, ChevronLeft, Wrench,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import bakoLogoImg from '@/assets/bako-logo.png';
@@ -106,6 +106,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const authLinks: Array<{ href: string; label: string; Icon: React.ElementType }> = [];
   if (user) authLinks.push({ href: '/my-orders', label: 'طلباتي', Icon: ClipboardList });
+  if (user?.role === 'workshop') authLinks.push({ href: '/workshop', label: 'لوحة الورشة', Icon: Wrench });
   if (user?.role === 'admin') authLinks.push({ href: '/admin', label: 'الإدارة', Icon: ShieldCheck });
 
   const isActive = (href: string) => href === '/' ? location === '/' : location.startsWith(href);
