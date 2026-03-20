@@ -490,6 +490,61 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
+      {/* ══ FLOATING CART BAR (mobile / tablet, when cart has items) ══ */}
+      {isMobileOrTablet && hasCart && (
+        <div style={{
+          position: 'fixed',
+          bottom: 64,
+          left: 0,
+          right: 0,
+          zIndex: 140,
+          padding: '8px 14px',
+          background: 'rgba(13,18,32,0.97)',
+          borderTop: '1px solid rgba(200,151,74,0.25)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          fontFamily: "'Almarai',sans-serif",
+          direction: 'rtl',
+        }}>
+          {/* Cart summary */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <ShoppingCart size={20} color="#C8974A" />
+              <span style={{ position: 'absolute', top: -6, right: -6, background: '#C8974A', color: '#0D1220', borderRadius: 999, fontSize: 9, fontWeight: 900, minWidth: 15, height: 15, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                {cartCount}
+              </span>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>سلتي</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#C8974A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {grandTotal.toLocaleString('ar-EG')} ج.م
+              </div>
+            </div>
+            {/* Items preview */}
+            <div style={{ flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {cartPackage ? cartPackage.name : cartItems[0]?.label}
+              {cartCount > 1 ? ` +${cartCount - 1}` : ''}
+            </div>
+          </div>
+
+          {/* Clear button */}
+          <button
+            onClick={() => { clearCart(); setCartPackage(null); }}
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '6px 10px', color: '#EF4444', fontFamily: "'Almarai',sans-serif", fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Trash2 size={11} /> إفراغ
+          </button>
+
+          {/* Checkout button */}
+          <button
+            onClick={handleGoToCheckout}
+            style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 10, padding: '9px 18px', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 900, fontSize: 13, cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, boxShadow: '0 4px 16px rgba(200,151,74,0.35)' }}>
+            إتمام الطلب <ArrowLeft size={13} />
+          </button>
+        </div>
+      )}
+
       {/* ══ BOTTOM TAB BAR (mobile / tablet) ══ */}
       <nav className="rp-bottom-nav">
         {BOTTOM_NAV.map(n => (
