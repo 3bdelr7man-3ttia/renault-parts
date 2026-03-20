@@ -2,14 +2,29 @@ import { Router, type IRouter, type Request, type Response, type NextFunction } 
 import { eq, and } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 import multer from "multer";
 import { db, ordersTable, packagesTable, workshopsTable, partsTable, packagePartsTable } from "@workspace/db";
 import { CreateOrderBody, GetOrderParams, ListOrdersResponse, GetOrderResponse } from "@workspace/api-zod";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(__dirname, "../../../uploads/receipts");
+function resolveRepoRoot() {
+  const cwd = process.cwd();
+
+  if (fs.existsSync(path.join(cwd, "artifacts"))) {
+    return cwd;
+  }
+
+  if (
+    path.basename(cwd) === "api-server" &&
+    path.basename(path.dirname(cwd)) === "artifacts"
+  ) {
+    return path.dirname(path.dirname(cwd));
+  }
+
+  return path.resolve(cwd, "..", "..");
+}
+
+const uploadsDir = path.resolve(resolveRepoRoot(), "artifacts", "uploads", "receipts");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const receiptStorage = multer.diskStorage({
