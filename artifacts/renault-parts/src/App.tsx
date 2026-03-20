@@ -40,6 +40,9 @@ import AdminWorkshopApplications from "@/pages/admin/AdminWorkshopApplications";
 import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AccessDenied from "@/pages/AccessDenied";
 import JoinWorkshop from "@/pages/JoinWorkshop";
+import EmployeeDashboardPage from "@/pages/admin/employee/dashboard/page";
+import { isWorkshopRole } from "@/lib/permissions";
+import { evaluateRouteAccess } from "../middleware";
 
 // Workshop Portal Pages
 import WorkshopDashboard from "@/pages/workshop/WorkshopDashboard";
@@ -60,10 +63,17 @@ const queryClient = new QueryClient({
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
-  if (isLoading) return null;
-  if (!user) { setLocation('/login'); return null; }
-  if (user.role !== 'admin') { return <AccessDenied />; }
+  const [location, setLocation] = useLocation();
+  const access = evaluateRouteAccess(location, user);
+
+  useEffect(() => {
+    if (!isLoading && !access.allowed && access.redirectTo) {
+      setLocation(access.redirectTo);
+    }
+  }, [access.allowed, access.redirectTo, isLoading, setLocation]);
+
+  if (isLoading && !user) return <LoadingScreen />;
+  if (!access.allowed) return access.redirectTo ? <LoadingScreen /> : <AccessDenied />;
   return <>{children}</>;
 }
 
@@ -79,12 +89,18 @@ const LoadingScreen = () => (
 
 function WorkshopGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isFetching } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const access = evaluateRouteAccess(location, user);
+
+  useEffect(() => {
+    if (!isLoading && !access.allowed && access.redirectTo) {
+      setLocation(access.redirectTo);
+    }
+  }, [access.allowed, access.redirectTo, isLoading, setLocation]);
+
   // Show loading while fetching — covers both first load and role-change refresh
-  if (isLoading || (isFetching && user?.role !== 'workshop')) return <LoadingScreen />;
-  if (!user) { setLocation('/login'); return null; }
-  if (user.role === 'admin') { setLocation('/admin'); return null; }
-  if (user.role !== 'workshop') { return <AccessDenied />; }
+  if ((isLoading && !user) || (isFetching && !isWorkshopRole(user?.role))) return <LoadingScreen />;
+  if (!access.allowed) return access.redirectTo ? <LoadingScreen /> : <AccessDenied />;
   return <>{children}</>;
 }
 
@@ -100,6 +116,7 @@ function Router() {
           <Switch>
             <Route path="/admin" component={AdminDashboard} />
             <Route path="/admin/dashboard" component={AdminDashboard} />
+            <Route path="/admin/employee/dashboard" component={EmployeeDashboardPage} />
             <Route path="/admin/orders" component={AdminOrders} />
             <Route path="/admin/packages" component={AdminPackages} />
             <Route path="/admin/workshops" component={AdminWorkshops} />
