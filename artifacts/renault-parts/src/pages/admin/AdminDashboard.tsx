@@ -67,9 +67,8 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-black text-white mb-1">لوحة التحكم</h1>
-        <p className="text-white/50 text-sm">مرحباً بك في لوحة إدارة رينو بارتس</p>
+        <p className="text-white/50 text-sm">مرحباً بك في لوحة إدارة رينو باك</p>
       </div>
-
       {/* KPI Cards */}
       {statsLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -94,7 +93,6 @@ export default function AdminDashboard() {
           ))}
         </div>
       )}
-
       {/* Charts + Top lists row */}
       {!statsLoading && stats && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -179,7 +177,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
       {/* Recent Orders */}
       <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
