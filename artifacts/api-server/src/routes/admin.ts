@@ -765,6 +765,26 @@ router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, asyn
     return;
   }
 
+  // When approved → auto-create a workshop from application data
+  if (status === "approved") {
+    // Check if a workshop with the same name already exists (idempotent)
+    const [existing] = await db
+      .select({ id: workshopsTable.id })
+      .from(workshopsTable)
+      .where(eq(workshopsTable.name, updated.workshopName))
+      .limit(1);
+
+    if (!existing) {
+      await db.insert(workshopsTable).values({
+        name: updated.workshopName,
+        area: updated.area,
+        address: updated.address,
+        phone: updated.phone,
+        partnershipStatus: "active",
+      });
+    }
+  }
+
   res.json(updated);
 });
 
