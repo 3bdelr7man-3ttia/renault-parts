@@ -98,6 +98,23 @@ export default function Checkout() {
   const [partSelections, setPartSelections] = useState<Record<number, VariantType>>({});
   const [selectedTotal, setSelectedTotal] = useState<number | null>(null);
 
+  // Live-computed total that updates immediately as user picks variants in Step 2
+  const liveTotal = React.useMemo<number | null>(() => {
+    if (!pkg?.parts || pkg.parts.length === 0) return null;
+    let total = 0;
+    for (const part of pkg.parts as PartWithPrices[]) {
+      const variants = getPartVariants(part);
+      if (variants.length <= 1) {
+        total += variants[0]?.price ?? 0;
+      } else {
+        const sel = partSelections[part.id];
+        const found = sel ? variants.find(v => v.key === sel) : null;
+        total += found ? found.price : (variants[0]?.price ?? 0);
+      }
+    }
+    return total > 0 ? total : null;
+  }, [pkg, partSelections]);
+
   const [formData, setFormData] = useState<FormData>({
     carModel: resolvedCarModel,
     carYear:  resolvedCarYear,
@@ -289,7 +306,7 @@ export default function Checkout() {
           </div>
 
           <div>
-            <OrderSummary pkg={pkg} formData={formData} user={user} selectedTotal={selectedTotal} />
+            <OrderSummary pkg={pkg} formData={formData} user={user} selectedTotal={selectedTotal ?? liveTotal} />
           </div>
         </div>
       </div>
