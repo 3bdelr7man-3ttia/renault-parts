@@ -32,7 +32,7 @@ const ALEX_AREAS = [
 const STEP_LABELS = ['السيارة', 'الباكدج', 'الاستلام', 'الدفع', 'الموعد', 'التأكيد'];
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
-type PayMethod = 'card' | 'vodafone_cash' | 'instapay';
+type PayMethod = 'cash_on_delivery' | 'card' | 'vodafone_cash' | 'instapay';
 type PickupType = 'pickup' | 'delivery';
 
 const CHECKOUT_WORKSHOPS = [
@@ -180,7 +180,7 @@ export default function Checkout() {
     deliveryAddress: user?.address ?? '',
     deliveryArea: user?.area ?? '',
     deliveryPhone: user?.phone ?? '',
-    paymentMethod: 'card',
+    paymentMethod: 'cash_on_delivery',
     vodafonePhone: user?.phone ?? '',
     workshopId: 0,
     workshopName: '',
@@ -317,7 +317,9 @@ export default function Checkout() {
     deliveryArea: formData.pickupType === 'delivery'
       ? formData.deliveryArea
       : 'الإسكندرية',
-    notes: formData.paymentMethod === 'vodafone_cash'
+    notes: formData.paymentMethod === 'cash_on_delivery'
+      ? 'دفع عند الاستلام'
+      : formData.paymentMethod === 'vodafone_cash'
       ? `فودافون كاش - ${formData.vodafonePhone}`
       : formData.paymentMethod === 'instapay'
       ? 'انستاباى'
@@ -948,7 +950,13 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
   onReceiptSelect: (file: File | null) => void;
 }) {
   const receiptInputRef = useRef<HTMLInputElement>(null);
-  const methods: { id: PayMethod; icon: React.ReactNode; title: string; desc: string }[] = [
+  const methods: { id: PayMethod; icon: React.ReactNode; title: string; desc: string; badge?: string }[] = [
+    {
+      id: 'cash_on_delivery', title: 'دفع عند الاستلام',
+      icon: <span style={{ fontSize: 26 }}>💵</span>,
+      desc: 'ادفع نقداً لمندوب التركيب عند استلام قطعك في الورشة',
+      badge: 'الأكثر شيوعاً',
+    },
     {
       id: 'card', title: 'فيزا / ماستر كارد',
       icon: <CreditCard size={26} />,
@@ -971,26 +979,50 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
       <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>طريقة الدفع</h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {methods.map(m => (
-          <button
-            key={m.id}
-            onClick={() => onChange({ ...formData, paymentMethod: m.id })}
-            style={{
-              padding: '16px 20px', borderRadius: 18, border: `2px solid ${formData.paymentMethod === m.id ? G : 'rgba(255,255,255,0.08)'}`,
-              background: formData.paymentMethod === m.id ? `${G}12` : 'rgba(255,255,255,0.02)',
-              cursor: 'pointer', textAlign: 'right', display: 'flex', gap: 16, alignItems: 'center',
-              fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
-            }}
-          >
-            <div style={{ color: formData.paymentMethod === m.id ? G : 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{m.icon}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: formData.paymentMethod === m.id ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: 3 }}>{m.title}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{m.desc}</div>
-            </div>
-            {formData.paymentMethod === m.id && <CheckCircle2 size={22} style={{ color: G, flexShrink: 0 }} />}
-          </button>
-        ))}
+        {methods.map(m => {
+          const isSelected = formData.paymentMethod === m.id;
+          return (
+            <button
+              key={m.id}
+              onClick={() => onChange({ ...formData, paymentMethod: m.id })}
+              style={{
+                padding: '16px 20px', borderRadius: 18,
+                border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`,
+                background: isSelected ? `${G}12` : 'rgba(255,255,255,0.02)',
+                cursor: 'pointer', textAlign: 'right', display: 'flex', gap: 16, alignItems: 'center',
+                fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
+                boxShadow: isSelected ? `0 0 20px ${G}20` : 'none',
+                position: 'relative', overflow: 'hidden',
+              }}
+            >
+              <div style={{ color: isSelected ? G : 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{m.icon}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? '#fff' : 'rgba(255,255,255,0.5)' }}>{m.title}</span>
+                  {m.badge && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 999,
+                      background: isSelected ? `${G}30` : 'rgba(34,197,94,0.15)',
+                      color: isSelected ? G : '#22c55e',
+                      border: `1px solid ${isSelected ? `${G}50` : 'rgba(34,197,94,0.3)'}`,
+                    }}>{m.badge}</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{m.desc}</div>
+              </div>
+              {isSelected && <CheckCircle2 size={22} style={{ color: G, flexShrink: 0 }} />}
+            </button>
+          );
+        })}
       </div>
+
+      {formData.paymentMethod === 'cash_on_delivery' && (
+        <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: 14 }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.8 }}>
+            💵 <strong style={{ color: '#22c55e' }}>الدفع عند الاستلام:</strong> ادفع المبلغ نقداً لمندوب التركيب يوم موعدك في الورشة. لا يلزمك تحويل أي مبلغ مسبقاً.
+          </p>
+        </div>
+      )}
 
       {formData.paymentMethod === 'card' && (
         <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 14, padding: 14 }}>
@@ -1506,8 +1538,13 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
   }, [autoUploadState]);
 
   const needsReceipt = paymentMethod === 'vodafone_cash' || paymentMethod === 'instapay';
-  const methodLabel = paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : 'انستاباى';
-  const methodColor = paymentMethod === 'vodafone_cash' ? '#ef4444' : '#10b981';
+  const methodLabel = paymentMethod === 'cash_on_delivery' ? 'دفع عند الاستلام'
+    : paymentMethod === 'vodafone_cash' ? 'فودافون كاش'
+    : paymentMethod === 'card' ? 'فيزا / ماستر كارد'
+    : 'انستاباى';
+  const methodColor = paymentMethod === 'cash_on_delivery' ? '#22c55e'
+    : paymentMethod === 'vodafone_cash' ? '#ef4444'
+    : '#10b981';
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1700,7 +1737,7 @@ function OrderSummary({ pkg, formData, user, selectedTotal }: {
     { label: 'الضمان', value: `${pkg.warrantyMonths} شهور` },
   ].filter(r => r.value);
 
-  const methodLabel: Record<PayMethod, string> = { card: 'فيزا / ماستر', vodafone_cash: 'فودافون كاش', instapay: 'انستاباى' };
+  const methodLabel: Record<PayMethod, string> = { cash_on_delivery: 'دفع عند الاستلام', card: 'فيزا / ماستر', vodafone_cash: 'فودافون كاش', instapay: 'انستاباى' };
 
   return (
     <div style={{ background: B2, border: `2px solid ${G}30`, borderRadius: 24, padding: 22, position: 'sticky', top: 28 }}>
