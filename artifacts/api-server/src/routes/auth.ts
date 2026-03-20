@@ -8,6 +8,7 @@ import {
   GetCurrentUserResponse,
 } from "@workspace/api-zod";
 import { hashPassword, comparePassword, signToken, requireAuth, type AuthenticatedRequest } from "../lib/auth";
+import { normalizeEmployeeRole, normalizeRole } from "../lib/permissions";
 
 const router: IRouter = Router();
 
@@ -21,7 +22,9 @@ function buildUserOut(user: typeof usersTable.$inferSelect) {
     carYear: user.carYear,
     address: user.address,
     area: user.area,
-    role: user.role,
+    role: normalizeRole(user.role),
+    employeeRole: normalizeEmployeeRole(user.employeeRole),
+    workshopId: user.workshopId ?? null,
     createdAt: user.createdAt,
   };
 }
@@ -63,7 +66,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     role: "customer",
   }).returning();
 
-  const token = signToken(user.id);
+  const token = signToken(user.id, user.role, user.employeeRole);
   res.status(201).json(LoginUserResponse.parse({ user: buildUserOut(user), token }));
 });
 
@@ -92,7 +95,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = signToken(user.id);
+  const token = signToken(user.id, user.role, user.employeeRole);
   res.json(LoginUserResponse.parse({ user: buildUserOut(user), token }));
 });
 
