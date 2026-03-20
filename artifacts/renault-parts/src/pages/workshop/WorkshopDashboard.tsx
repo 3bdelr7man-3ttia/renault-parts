@@ -21,7 +21,10 @@ function useWorkshopStats(headers: Record<string, string>) {
   React.useEffect(() => {
     const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, '') ?? '';
     fetch(`${base}/api/workshop/stats`, { headers })
-      .then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
+      .then(r => r.json())
+      .then(d => { if (!d?.error) setData(d); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
   return { data, loading };
 }
@@ -57,11 +60,12 @@ export default function WorkshopDashboard() {
   const todayApts = appointments.filter(a => a.date === todayStr);
   const upcomingApts = appointments.filter(a => a.date > todayStr).slice(0, 5);
 
-  const statCards = stats ? [
-    { icon: Package2,     label: 'إجمالي الطلبات', value: stats.totalOrders,      color: '#3B82F6', sub: `منتظرة: ${stats.pendingOrders}` },
-    { icon: CalendarCheck,label: 'مواعيد اليوم',   value: stats.appointmentsToday, color: G,        sub: 'موعد محجوز' },
-    { icon: CheckCircle2, label: 'طلبات مكتملة',   value: stats.completedOrders,   color: '#22C55E', sub: `مؤكدة: ${stats.confirmedOrders}` },
-    { icon: DollarSign,   label: 'إجمالي الأرباح', value: `${(stats.totalEarnings as number).toLocaleString('ar-EG')} ج.م`, color: GL, sub: 'من الطلبات المكتملة' },
+  const validStats = stats && typeof stats.totalOrders !== 'undefined';
+  const statCards = validStats ? [
+    { icon: Package2,     label: 'إجمالي الطلبات', value: stats.totalOrders ?? 0,      color: '#3B82F6', sub: `منتظرة: ${stats.pendingOrders ?? 0}` },
+    { icon: CalendarCheck,label: 'مواعيد اليوم',   value: stats.appointmentsToday ?? 0, color: G,        sub: 'موعد محجوز' },
+    { icon: CheckCircle2, label: 'طلبات مكتملة',   value: stats.completedOrders ?? 0,   color: '#22C55E', sub: `مؤكدة: ${stats.confirmedOrders ?? 0}` },
+    { icon: DollarSign,   label: 'إجمالي الأرباح', value: `${Number(stats.totalEarnings ?? 0).toLocaleString('ar-EG')} ج.م`, color: GL, sub: 'من الطلبات المكتملة' },
   ] : [];
 
   return (
