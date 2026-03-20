@@ -81,6 +81,10 @@ export default function Checkout() {
   const [confirmedOrderId, setConfirmedOrderId] = useState<number | null>(null);
   const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
 
+  type VariantType = 'orig' | 'turk' | 'chin';
+  const [partSelections, setPartSelections] = useState<Record<number, VariantType>>({});
+  const [selectedTotal, setSelectedTotal] = useState<number | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
     carModel: user?.carModel ?? '',
     carYear: user?.carYear ?? new Date().getFullYear(),
@@ -228,8 +232,10 @@ export default function Checkout() {
               {step === 2 && (
                 <Step2Package
                   pkg={pkg}
-                  onNext={() => setStep(3)}
-                  onBack={() => setStep(userHasCar ? 1 : 1)}
+                  partSelections={partSelections}
+                  onSelectPart={(partId, variant) => setPartSelections(s => ({ ...s, [partId]: variant }))}
+                  onNext={(total) => { setSelectedTotal(total); setStep(3); }}
+                  onBack={() => setStep(1)}
                   userHasCar={userHasCar}
                   user={user}
                 />
@@ -267,7 +273,7 @@ export default function Checkout() {
           </div>
 
           <div>
-            <OrderSummary pkg={pkg} formData={formData} user={user} />
+            <OrderSummary pkg={pkg} formData={formData} user={user} selectedTotal={selectedTotal} />
           </div>
         </div>
       </div>
@@ -473,42 +479,172 @@ function Step1Car({ formData, onChange, onNext, canAdvance }: {
   );
 }
 
-function Step2Package({ pkg, onNext, onBack, userHasCar, user }: {
-  pkg: { id: number; name: string; description?: string | null; sellPrice: string | number; warrantyMonths: number };
-  onNext: () => void; onBack: () => void; userHasCar: boolean;
+type VariantKey = 'orig' | 'turk' | 'chin';
+
+interface PartWithPrices {
+  id: number;
+  name: string;
+  priceOriginal?: number | null;
+  priceTurkish?: number | null;
+  priceChinese?: number | null;
+}
+
+const VARIANT_META: Record<VariantKey, { label: string; flag: string; color: string }> = {
+  orig: { label: 'أصلي', flag: '🇫🇷', color: '#3B82F6' },
+  turk: { label: 'تركي', flag: '🇹🇷', color: '#EF4444' },
+  chin: { label: 'صيني', flag: '🇨🇳', color: '#E53935' },
+};
+
+function getPartVariants(part: PartWithPrices): { key: VariantKey; price: number }[] {
+  const variants: { key: VariantKey; price: number }[] = [];
+  if (part.priceOriginal != null && part.priceOriginal > 0) variants.push({ key: 'orig', price: part.priceOriginal });
+  if (part.priceTurkish != null && part.priceTurkish > 0) variants.push({ key: 'turk', price: part.priceTurkish });
+  if (part.priceChinese != null && part.priceChinese > 0) variants.push({ key: 'chin', price: part.priceChinese });
+  return variants;
+}
+
+function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userHasCar, user }: {
+  pkg: {
+    id: number; name: string; description?: string | null;
+    sellPrice: string | number; warrantyMonths: number;
+    parts?: PartWithPrices[];
+  };
+  partSelections: Record<number, VariantKey>;
+  onSelectPart: (partId: number, variant: VariantKey) => void;
+  onNext: (total: number) => void;
+  onBack: () => void;
+  userHasCar: boolean;
   user: { carModel?: string | null; carYear?: number | null } | null;
 }) {
+  const partsWithVariants = (pkg.parts ?? []).filter(p => getPartVariants(p).length > 1);
+  const partsFixed = (pkg.parts ?? []).filter(p => getPartVariants(p).length <= 1);
+
+  const calcTotal = (): number => {
+    let total = 0;
+    for (const part of pkg.parts ?? []) {
+      const variants = getPartVariants(part);
+      if (variants.length <= 1) {
+        total += variants[0]?.price ?? 0;
+      } else {
+        const sel = partSelections[part.id];
+        const found = sel ? variants.find(v => v.key === sel) : null;
+        total += found ? found.price : (variants[0]?.price ?? 0);
+      }
+    }
+    return total;
+  };
+
+  const dynamicTotal = calcTotal();
+  const allSelected = partsWithVariants.every(p => partSelections[p.id] !== undefined);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>الباكدج المختار</h2>
-      <div style={{ background: `${G}12`, border: `2px solid ${G}40`, borderRadius: 20, padding: 20 }}>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ width: 52, height: 52, background: `${G}25`, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Package2 size={24} style={{ color: G }} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: 18, fontWeight: 900, color: G, margin: '0 0 4px' }}>{pkg.name}</h3>
-            {pkg.description && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: '0 0 10px', lineHeight: 1.5 }}>{pkg.description}</p>}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <span style={{ background: G, color: NV, fontWeight: 900, borderRadius: 999, padding: '3px 14px', fontSize: 14 }}>
-                {Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م
-              </span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>ضمان {pkg.warrantyMonths} شهور</span>
-            </div>
-          </div>
+      <div>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختر نوع كل قطعة</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>حدد نوع القطعة (أصلي / تركي / صيني) حسب ميزانيتك</p>
+      </div>
+
+      {/* Package header */}
+      <div style={{ background: `${G}10`, border: `1.5px solid ${G}35`, borderRadius: 18, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ width: 44, height: 44, background: `${G}22`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Package2 size={22} style={{ color: G }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 16, fontWeight: 900, color: G }}>{pkg.name}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>ضمان {pkg.warrantyMonths} شهور</div>
         </div>
       </div>
+
+      {/* Parts with multiple variants - require selection */}
+      {partsWithVariants.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {partsWithVariants.map(part => {
+            const variants = getPartVariants(part);
+            const selected = partSelections[part.id] ?? variants[0]?.key;
+            return (
+              <div key={part.id} style={{ background: '#0F1928', border: `1.5px solid ${partSelections[part.id] ? `${G}40` : 'rgba(255,255,255,0.08)'}`, borderRadius: 18, padding: 16, transition: 'border-color 0.2s' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#D4E0EC', marginBottom: 12 }}>
+                  {part.name}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {variants.map(v => {
+                    const meta = VARIANT_META[v.key];
+                    const isSelected = selected === v.key;
+                    return (
+                      <button
+                        key={v.key}
+                        onClick={() => onSelectPart(part.id, v.key)}
+                        style={{
+                          flex: 1, minWidth: 90,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                          padding: '10px 12px', borderRadius: 14, cursor: 'pointer',
+                          border: `2px solid ${isSelected ? meta.color : 'rgba(255,255,255,0.1)'}`,
+                          background: isSelected ? `${meta.color}18` : 'rgba(255,255,255,0.03)',
+                          transition: 'all 0.18s', fontFamily: "'Almarai',sans-serif",
+                        }}
+                      >
+                        <span style={{ fontSize: 18 }}>{meta.flag}</span>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: isSelected ? meta.color : 'rgba(255,255,255,0.45)' }}>{meta.label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: isSelected ? '#fff' : 'rgba(255,255,255,0.4)' }}>
+                          {v.price.toLocaleString('ar-EG')} ج.م
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Parts with single/no variant - just display */}
+      {partsFixed.length > 0 && (
+        <div style={{ background: '#0F1928', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.35)', marginBottom: 10, letterSpacing: 0.5 }}>قطع بسعر ثابت</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {partsFixed.map(part => {
+              const variants = getPartVariants(part);
+              return (
+                <div key={part.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#7A95AA' }}>{part.name}</span>
+                  {variants.length === 1 && (
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#D4E0EC' }}>{variants[0].price.toLocaleString('ar-EG')} ج.م</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Car info */}
       {userHasCar && user && (
-        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <CheckCircle2 size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
-            بيانات سيارتك محفوظة: {user.carModel} — {user.carYear}
+        <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
+          <CheckCircle2 size={15} style={{ color: '#22c55e', flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>
+            سيارتك: {user.carModel} — {user.carYear}
           </span>
         </div>
       )}
+
+      {/* Dynamic total */}
+      <div style={{ background: `${G}12`, border: `2px solid ${G}45`, borderRadius: 18, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>الإجمالي المتوقع</span>
+        <span style={{ fontSize: 24, fontWeight: 900, color: G }}>
+          {dynamicTotal > 0 ? `${dynamicTotal.toLocaleString('ar-EG')} ج.م` : '—'}
+        </span>
+      </div>
+
+      {partsWithVariants.length > 0 && !allSelected && (
+        <p style={{ fontSize: 12, color: '#E53935', fontWeight: 700, margin: 0, textAlign: 'center' }}>
+          ⚠️ اختر نوع القطعة لكل العناصر أعلاه للمتابعة
+        </p>
+      )}
+
       <div style={{ display: 'flex', gap: 12 }}>
         <Btn variant="outline" onClick={onBack} style={{ flex: '0 0 auto', paddingRight: 20, paddingLeft: 20 }}>رجوع</Btn>
-        <Btn onClick={onNext} style={{ flex: 1 }}>متابعة لاستلام الباكدج</Btn>
+        <Btn onClick={() => onNext(dynamicTotal)} style={{ flex: 1 }}>متابعة لاستلام الباكدج</Btn>
       </div>
     </div>
   );
@@ -856,10 +992,11 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType }: {
   );
 }
 
-function OrderSummary({ pkg, formData, user }: {
+function OrderSummary({ pkg, formData, user, selectedTotal }: {
   pkg: { name: string; sellPrice: string | number; warrantyMonths: number };
   formData: FormData;
   user: { carModel?: string | null; carYear?: number | null } | null;
+  selectedTotal?: number | null;
 }) {
   const rows = [
     { label: 'الباكدج', value: pkg.name },
@@ -888,8 +1025,17 @@ function OrderSummary({ pkg, formData, user }: {
       <div style={{ borderTop: `1px solid ${G}25`, paddingTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>الإجمالي</span>
-          <span style={{ fontSize: 24, fontWeight: 900, color: G }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</span>
+          <span style={{ fontSize: 24, fontWeight: 900, color: G }}>
+            {selectedTotal != null && selectedTotal > 0
+              ? `${selectedTotal.toLocaleString('ar-EG')} ج.م`
+              : `${Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م`}
+          </span>
         </div>
+        {selectedTotal != null && selectedTotal > 0 && (
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0', textAlign: 'left' }}>
+            بناءً على اختياراتك للقطع
+          </p>
+        )}
       </div>
     </div>
   );

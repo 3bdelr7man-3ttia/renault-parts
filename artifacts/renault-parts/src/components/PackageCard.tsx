@@ -17,16 +17,39 @@ interface PackageCardProps {
   recommended?: boolean;
 }
 
+function fmt(n: number) {
+  return n.toLocaleString('ar-EG');
+}
+
+function computePriceRange(pkg: Package): { min: number; max: number } | null {
+  if (!pkg.parts || pkg.parts.length === 0) return null;
+  let minTotal = 0;
+  let maxTotal = 0;
+  let hasVariants = false;
+  for (const part of pkg.parts) {
+    const prices = [
+      (part as any).priceOriginal,
+      (part as any).priceTurkish,
+      (part as any).priceChinese,
+    ].filter((p): p is number => typeof p === 'number' && p > 0);
+    if (prices.length > 0) {
+      hasVariants = true;
+      minTotal += Math.min(...prices);
+      maxTotal += Math.max(...prices);
+    }
+  }
+  if (!hasVariants || minTotal === 0) return null;
+  return { min: minTotal, max: maxTotal };
+}
+
 export function PackageCard({ pkg, recommended }: PackageCardProps) {
-  const formattedPrice = new Intl.NumberFormat('ar-EG', {
-    style: 'currency', currency: 'EGP', maximumFractionDigits: 0,
-  }).format(pkg.sellPrice);
+  const range = computePriceRange(pkg);
+  const showRange = range && range.min !== range.max;
+  const singleRangePrice = range && range.min === range.max ? range.min : null;
 
   const formattedBasePrice = new Intl.NumberFormat('ar-EG', {
     style: 'currency', currency: 'EGP', maximumFractionDigits: 0,
   }).format(pkg.basePrice);
-
-  const savings = pkg.basePrice - pkg.sellPrice;
 
   return (
     <div style={{
@@ -111,11 +134,41 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
         <div style={{ borderTop: `1px solid rgba(255,255,255,0.07)`, paddingTop: 16 }}>
           {/* Price */}
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>سعر السوق</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
+              {showRange ? 'نطاق السعر (حسب نوع القطع)' : 'سعر الباكدج'}
+            </div>
+
+            {/* Crossed base price */}
             <div style={{ fontSize: 13, color: TD, textDecoration: 'line-through', marginBottom: 4 }}>{formattedBasePrice}</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: G, lineHeight: 1, letterSpacing: -1 }}>{formattedPrice}</div>
-            {savings > 0 && (
-              <div style={{ fontSize: 11, fontWeight: 800, color: SG, marginTop: 4 }}>💚 وفر {savings.toLocaleString()} ج.م</div>
+
+            {showRange ? (
+              <>
+                {/* Price range */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>من</span>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: SG, lineHeight: 1 }}>
+                    {fmt(range!.min)} ج.م
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>إلى</span>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: G, lineHeight: 1 }}>
+                    {fmt(range!.max)} ج.م
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TD, marginTop: 5 }}>
+                  💡 السعر يتحدد عند اختيار نوع كل قطعة
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 28, fontWeight: 900, color: G, lineHeight: 1, letterSpacing: -1 }}>
+                  {singleRangePrice ? fmt(singleRangePrice) : fmt(pkg.sellPrice)} ج.م
+                </div>
+                {(pkg.basePrice - pkg.sellPrice) > 0 && (
+                  <div style={{ fontSize: 11, fontWeight: 800, color: SG, marginTop: 4 }}>
+                    💚 وفر {(pkg.basePrice - pkg.sellPrice).toLocaleString()} ج.م
+                  </div>
+                )}
+              </>
             )}
           </div>
 
