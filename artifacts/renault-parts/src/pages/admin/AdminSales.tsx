@@ -29,6 +29,8 @@ type SalesData = {
   totalRevenue: number;
   totalOrders: number;
   totalExpenses: number;
+  totalWorkshopEarnings: number;
+  netProfit: number;
   byWorkshop: { workshopId: number | null; workshopName: string; workshopPhone: string | null; total: number; orderCount: number }[];
   exportCsv: string;
 };
@@ -59,8 +61,8 @@ export default function AdminSales() {
     URL.revokeObjectURL(url);
   };
 
-  const netProfit = data ? data.totalRevenue - data.totalExpenses : 0;
-  const totalWorkshopEarnings = data ? data.byWorkshop.filter(w => w.workshopId !== null).reduce((s, w) => s + w.total, 0) : 0;
+  const netProfit = data?.netProfit ?? 0;
+  const totalWorkshopEarnings = data?.totalWorkshopEarnings ?? 0;
 
   return (
     <div className="space-y-6">
@@ -87,34 +89,38 @@ export default function AdminSales() {
         <>
           {/* KPI Cards — 2 cols mobile, 5 cols desktop */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* 1 — إجمالي الإيرادات (completed orders only) */}
             <div className="bg-gradient-to-br from-[#1E2761] to-[#2a3580] rounded-2xl p-4 border border-[#F9E795]/20">
               <DollarSign className="w-5 h-5 text-[#F9E795] mb-2" />
               <p className="text-lg font-black text-white mb-0.5">{data.totalRevenue.toLocaleString()} ج.م</p>
               <p className="text-white/60 text-xs font-bold">إجمالي الإيرادات</p>
             </div>
+            {/* 2 — إجمالي الطلبات */}
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-4 border border-white/10">
               <ShoppingBag className="w-5 h-5 text-white/70 mb-2" />
               <p className="text-lg font-black text-white mb-0.5">{data.totalOrders}</p>
               <p className="text-white/60 text-xs font-bold">إجمالي الطلبات</p>
             </div>
+            {/* 3 — إجمالي المصروفات */}
             <div className="rounded-2xl p-4 border" style={{ background: 'linear-gradient(135deg,#7f1d1d50,#991b1b30)', borderColor: '#ef444430' }}>
               <TrendingDown className="w-5 h-5 text-red-400 mb-2" />
               <p className="text-lg font-black text-red-400 mb-0.5">{(data.totalExpenses ?? 0).toLocaleString()} ج.م</p>
               <p className="text-white/60 text-xs font-bold">إجمالي المصروفات</p>
             </div>
-            <div className="rounded-2xl p-4 border" style={{
+            {/* 4 — أرباح الورش */}
+            <div className="rounded-2xl p-4 border" style={{ background: 'linear-gradient(135deg,#2e1a0050,#92400e30)', borderColor: '#C8974A30' }}>
+              <Store className="w-5 h-5 text-[#C8974A] mb-2" />
+              <p className="text-lg font-black text-[#C8974A] mb-0.5">{totalWorkshopEarnings.toLocaleString()} ج.م</p>
+              <p className="text-white/60 text-xs font-bold">أرباح الورش</p>
+            </div>
+            {/* 5 — صافي الربح = الإيرادات − أرباح الورش − المصروفات */}
+            <div className="col-span-2 sm:col-span-1 rounded-2xl p-4 border" style={{
               background: netProfit >= 0 ? 'linear-gradient(135deg,#14532d50,#15803d30)' : 'linear-gradient(135deg,#7f1d1d50,#991b1b30)',
               borderColor: netProfit >= 0 ? '#22c55e30' : '#ef444430',
             }}>
               <TrendingUp className="w-5 h-5 mb-2" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }} />
               <p className="text-lg font-black mb-0.5" style={{ color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>{netProfit.toLocaleString()} ج.م</p>
               <p className="text-white/60 text-xs font-bold">صافي الربح</p>
-            </div>
-            {/* Workshop earnings KPI */}
-            <div className="col-span-2 sm:col-span-1 rounded-2xl p-4 border" style={{ background: 'linear-gradient(135deg,#2e1a0050,#92400e30)', borderColor: '#C8974A30' }}>
-              <Store className="w-5 h-5 text-[#C8974A] mb-2" />
-              <p className="text-lg font-black text-[#C8974A] mb-0.5">{totalWorkshopEarnings.toLocaleString()} ج.م</p>
-              <p className="text-white/60 text-xs font-bold">أرباح الورش</p>
             </div>
           </div>
 

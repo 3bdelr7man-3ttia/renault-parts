@@ -651,6 +651,9 @@ router.delete("/admin/expenses/:id", requireAuth, requireAdmin, async (req, res)
 
 // GET /admin/sales
 router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
+  // Only count completed orders as revenue
+  const completedFilter = eq(ordersTable.status, "completed");
+
   const rows = await db
     .select({
       week: sql<string>`to_char(date_trunc('week', ${ordersTable.createdAt}), 'YYYY-MM-DD')`,
@@ -658,12 +661,16 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
       count: count(),
     })
     .from(ordersTable)
+    .where(completedFilter)
     .groupBy(sql`date_trunc('week', ${ordersTable.createdAt})`)
     .orderBy(sql`date_trunc('week', ${ordersTable.createdAt})`);
 
-  const [totals] = await db.select({ revenue: sum(ordersTable.total), orders: count() }).from(ordersTable);
+  const [totals] = await db
+    .select({ revenue: sum(ordersTable.total), orders: count() })
+    .from(ordersTable)
+    .where(completedFilter);
 
-  // Sales breakdown by workshop
+  // Sales breakdown by workshop — completed orders only
   const byWorkshop = await db
     .select({
       workshopId: ordersTable.workshopId,
@@ -673,12 +680,32 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
       orderCount: count(),
     })
     .from(ordersTable)
+    .where(completedFilter)
     .leftJoin(workshopsTable, eq(ordersTable.workshopId, workshopsTable.id))
     .groupBy(ordersTable.workshopId, workshopsTable.name, workshopsTable.phone)
     .orderBy(sql`sum(${ordersTable.total}) DESC`);
 
-  // Total expenses for net profit
+  // Total expenses
   const [expenseTotal] = await db.select({ total: sum(expensesTable.amount) }).from(expensesTable);
+
+  const totalRevenue = Number(totals?.revenue ?? 0);
+  const totalExpenses = Number(expenseTotal?.total ?? 0);
+
+  const workshopList = byWorkshop.map(w => ({
+    workshopId: w.workshopId,
+    workshopName: w.workshopName ?? "بدون ورشة",
+    workshopPhone: w.workshopPhone ?? null,
+    total: Number(w.total ?? 0),
+    orderCount: w.orderCount,
+  }));
+
+  // Workshop earnings = sum of all workshop-assigned completed order revenue
+  const totalWorkshopEarnings = workshopList
+    .filter(w => w.workshopId !== null)
+    .reduce((s, w) => s + w.total, 0);
+
+  // Net profit = Revenue - Workshop Earnings - Expenses
+  const netProfit = totalRevenue - totalWorkshopEarnings - totalExpenses;
 
   const weeks = rows.map(r => ({
     week: r.week,
@@ -691,16 +718,12 @@ router.get("/admin/sales", requireAuth, requireAdmin, async (_req, res): Promise
 
   res.json({
     weeks,
-    totalRevenue: Number(totals.revenue ?? 0),
-    totalOrders: totals.orders,
-    totalExpenses: Number(expenseTotal.total ?? 0),
-    byWorkshop: byWorkshop.map(w => ({
-      workshopId: w.workshopId,
-      workshopName: w.workshopName ?? "بدون ورشة",
-      workshopPhone: w.workshopPhone ?? null,
-      total: Number(w.total ?? 0),
-      orderCount: w.orderCount,
-    })),
+    totalRevenue,
+    totalOrders: totals?.orders ?? 0,
+    totalExpenses,
+    totalWorkshopEarnings,
+    netProfit,
+    byWorkshop: workshopList,
     exportCsv,
   });
 });
