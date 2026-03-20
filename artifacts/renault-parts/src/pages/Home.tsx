@@ -1316,7 +1316,7 @@ export default function Home() {
                 <span style={{ color: G, fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>الورش المعتمدة</span>
               </div>
               <h2 style={{ fontSize: 28, fontWeight: 900, color: '#E8F0F8', marginBottom: 6, lineHeight: 1.2 }}>ورشنا في الإسكندرية</h2>
-              <p style={{ color: TD, fontSize: 13, fontWeight: 600 }}>كل ورشة اتاختارت بمعايير صارمة للجودة والخدمة</p>
+              <p style={{ color: TD, fontSize: 13, fontWeight: 600 }}>كل ورشة اتختارت بمعايير صارمة للجودة والخدمة</p>
             </div>
             <Link href="/workshops" style={{ display: 'flex', alignItems: 'center', gap: 6, color: G, background: 'rgba(200,151,74,0.08)', border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '8px 18px', fontWeight: 800, fontSize: 13, textDecoration: 'none', transition: 'background .2s' }}>
               كل الورش <ArrowLeft size={13} />
