@@ -36,6 +36,7 @@ import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminSales from "@/pages/admin/AdminSales";
 import AdminExpenses from "@/pages/admin/AdminExpenses";
 import AdminWorkshopApplications from "@/pages/admin/AdminWorkshopApplications";
+import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AccessDenied from "@/pages/AccessDenied";
 import JoinWorkshop from "@/pages/JoinWorkshop";
 
@@ -77,6 +78,7 @@ function Router() {
             <Route path="/admin/expenses" component={AdminExpenses} />
             <Route path="/admin/users" component={AdminUsers} />
             <Route path="/admin/workshop-applications" component={AdminWorkshopApplications} />
+            <Route path="/admin/appointments" component={AdminAppointments} />
             <Route component={NotFound} />
           </Switch>
         </AdminLayout>

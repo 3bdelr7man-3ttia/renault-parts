@@ -17,6 +17,7 @@ import {
   TrendingDown,
   FileCheck,
   Store,
+  CalendarCheck,
 } from 'lucide-react';
 import bakoLogo from '@/assets/bako-logo.png';
 
@@ -29,6 +30,7 @@ const S2 = '#161E30';
 const navItems = [
   { href: '/admin',                        label: 'الرئيسية',       icon: LayoutDashboard, exact: true },
   { href: '/admin/orders',                 label: 'الطلبات',        icon: ClipboardList },
+  { href: '/admin/appointments',           label: 'المواعيد',       icon: CalendarCheck },
   { href: '/admin/packages',               label: 'الباكدجات',      icon: Package2 },
   { href: '/admin/workshops',              label: 'الورش',          icon: Wrench },
   { href: '/admin/workshop-applications',  label: 'طلبات الانضمام', icon: FileCheck },

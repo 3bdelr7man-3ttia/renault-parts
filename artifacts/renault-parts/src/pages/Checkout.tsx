@@ -36,10 +36,10 @@ type PayMethod = 'cash_on_delivery' | 'card' | 'vodafone_cash' | 'instapay';
 type PickupType = 'pickup' | 'delivery';
 
 const CHECKOUT_WORKSHOPS = [
-  { id: 1, name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: '#4AABCA', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م',  lat: 31.1938, lng: 29.8821 },
-  { id: 2, name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: '#C8974A', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م', lat: 31.2524, lng: 30.0549 },
-  { id: 3, name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: '#9B59B6', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م',  lat: 31.0849, lng: 29.7403 },
-  { id: 4, name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: '#3DA882', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م', lat: 31.2175, lng: 29.9524 },
+  { id: 1, name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: '#4AABCA', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م',  lat: 31.1938, lng: 29.8821, phone: '01091234567' },
+  { id: 2, name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: '#C8974A', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م', lat: 31.2524, lng: 30.0549, phone: '01091234568' },
+  { id: 3, name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: '#9B59B6', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م',  lat: 31.0849, lng: 29.7403, phone: '01091234569' },
+  { id: 4, name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: '#3DA882', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م', lat: 31.2175, lng: 29.9524, phone: '01091234570' },
 ];
 
 /* ── Area → approximate lat/lng ── */
@@ -240,6 +240,28 @@ export default function Checkout() {
                 timeSlot: formData.appointmentSlot,
               }),
             });
+
+            // WhatsApp notification to customer
+            const workshop = CHECKOUT_WORKSHOPS.find(w => w.id === formData.workshopId);
+            const customerPhone = (formData.deliveryPhone || user?.phone || '').replace(/^0/, '2');
+            const dateLabel = new Date(formData.appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const [h] = formData.appointmentSlot.split(':');
+            const hour = Number(h);
+            const timeLabel = `${hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}:00 ${hour < 12 ? 'ص' : 'م'}`;
+
+            if (customerPhone.length >= 11) {
+              const customerMsg = `مرحباً ${user?.name ?? ''}،\n✅ تم تأكيد موعدك في رينو باك\n🔧 الورشة: ${formData.workshopName}\n📅 التاريخ: ${dateLabel}\n🕐 الساعة: ${timeLabel}\n🚗 سيارتك: ${formData.carModel} ${formData.carYear}\n📌 رقم الطلب: #${order.id}\n\nللاستفسار: 01000000000`;
+              window.open(`https://wa.me/${customerPhone}?text=${encodeURIComponent(customerMsg)}`, '_blank');
+            }
+
+            // WhatsApp notification to workshop (after short delay so browser allows both)
+            if (workshop?.phone) {
+              const wsPhone = workshop.phone.replace(/^0/, '2');
+              const wsMsg = `📋 *حجز جديد - رينو باك*\n🚗 ${formData.carModel} ${formData.carYear}\n👤 ${user?.name ?? ''}\n📱 ${formData.deliveryPhone || user?.phone || ''}\n📅 ${dateLabel}\n🕐 ${timeLabel}\n#طلب: ${order.id}`;
+              setTimeout(() => {
+                window.open(`https://wa.me/${wsPhone}?text=${encodeURIComponent(wsMsg)}`, '_blank');
+              }, 1500);
+            }
           } catch {
             toast({ variant: 'destructive', title: 'تنبيه', description: 'تم تأكيد الطلب — لكن فشل حجز الموعد. تواصل معنا.' });
           }

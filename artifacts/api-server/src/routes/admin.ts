@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
 import { eq, count, sum, sql, gte, lte, and, desc } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable } from "@workspace/db";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 
@@ -719,6 +719,54 @@ router.patch("/admin/workshop-applications/:id", requireAuth, requireAdmin, asyn
     return;
   }
 
+  res.json(updated);
+});
+
+// GET /api/admin/appointments — list all appointments with order + user info
+router.get("/admin/appointments", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const { workshopId, dateFrom, dateTo, status } = req.query;
+  const rows = await db
+    .select({
+      id:           appointmentsTable.id,
+      orderId:      appointmentsTable.orderId,
+      workshopId:   appointmentsTable.workshopId,
+      workshopName: appointmentsTable.workshopName,
+      date:         appointmentsTable.date,
+      timeSlot:     appointmentsTable.timeSlot,
+      status:       appointmentsTable.status,
+      changeNote:   appointmentsTable.changeNote,
+      createdAt:    appointmentsTable.createdAt,
+      customerName: usersTable.name,
+      customerPhone: usersTable.phone,
+      carModel:     ordersTable.carModel,
+      carYear:      ordersTable.carYear,
+      orderTotal:   ordersTable.total,
+    })
+    .from(appointmentsTable)
+    .leftJoin(ordersTable, eq(ordersTable.id, appointmentsTable.orderId))
+    .leftJoin(usersTable, eq(usersTable.id, ordersTable.userId))
+    .orderBy(desc(appointmentsTable.date), desc(appointmentsTable.timeSlot));
+
+  let filtered = rows as typeof rows;
+  if (workshopId) filtered = filtered.filter(r => String(r.workshopId) === String(workshopId));
+  if (status)    filtered = filtered.filter(r => r.status === String(status));
+  if (dateFrom)  filtered = filtered.filter(r => r.date >= String(dateFrom));
+  if (dateTo)    filtered = filtered.filter(r => r.date <= String(dateTo));
+
+  res.json(filtered);
+});
+
+// PATCH /api/admin/appointments/:id/status
+router.patch("/admin/appointments/:id/status", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const { status } = req.body as { status: string };
+  if (!status) { res.status(400).json({ error: "status is required" }); return; }
+  const [updated] = await db
+    .update(appointmentsTable)
+    .set({ status })
+    .where(eq(appointmentsTable.id, id))
+    .returning();
+  if (!updated) { res.status(404).json({ error: "الموعد غير موجود" }); return; }
   res.json(updated);
 });
 
