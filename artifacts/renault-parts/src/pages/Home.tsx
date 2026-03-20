@@ -170,10 +170,10 @@ const AI_COMPARE: ComparePart[] = [
 ];
 
 const WORKSHOPS = [
-  { name: 'ورشة الميناء',     area: 'الميناء',     rating: 4.9, jobs: 847,  color: SK },
-  { name: 'سنتر المنتزه',     area: 'المنتزه',     rating: 4.8, jobs: 1204, color: G  },
-  { name: 'ورشة العجمي',      area: 'العجمي',      rating: 4.7, jobs: 632,  color: LV },
-  { name: 'سنتر سيدي جابر',  area: 'سيدي جابر',  rating: 4.9, jobs: 980,  color: SG },
+  { name: 'ورشة الميناء',    area: 'الميناء',    rating: 4.9, jobs: 847,  color: SK, phone: '201001234567', address: 'شارع الميناء الكبير، بجوار كوبري القباري', hours: '٩ ص – ٩ م' },
+  { name: 'سنتر المنتزه',    area: 'المنتزه',    rating: 4.8, jobs: 1204, color: G,  phone: '201112345678', address: 'شارع خالد بن الوليد، المنتزه الجنوبي',     hours: '٨ ص – ١٠ م' },
+  { name: 'ورشة العجمي',     area: 'العجمي',     rating: 4.7, jobs: 632,  color: LV, phone: '201223456789', address: 'شارع الهانوفيل، بجوار دوار العجمي',       hours: '٩ ص – ٩ م' },
+  { name: 'سنتر سيدي جابر', area: 'سيدي جابر', rating: 4.9, jobs: 980,  color: SG, phone: '201334567890', address: 'شارع النصر، أمام محطة سيدي جابر',         hours: '٨ ص – ١١ م' },
 ];
 
 /* ── Score bar ── */
@@ -772,6 +772,154 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
   );
 }
 
+/* ══════════════════ BOOKING MODAL ══════════════════ */
+type Workshop = typeof WORKSHOPS[0];
+
+const TIME_SLOTS = ['٩:٠٠ ص', '١٠:٠٠ ص', '١١:٠٠ ص', '١٢:٠٠ م', '٢:٠٠ م', '٣:٠٠ م', '٤:٠٠ م', '٦:٠٠ م'];
+
+function BookingModal({ workshop, onClose }: { workshop: Workshop; onClose: () => void }) {
+  const today = new Date();
+  const minDate = today.toISOString().split('T')[0];
+  const [date, setDate] = useState(minDate);
+  const [slot, setSlot] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const dateLabel = date ? new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(date + 'T12:00:00')) : '';
+
+  const waMsg = encodeURIComponent(
+    `مرحباً ${workshop.name} 👋\nأنا عميل من RenoPack وعايز أحجز موعد لتركيب باكدج الصيانة.\n📅 التاريخ: ${dateLabel}\n⏰ الوقت: ${slot}\n\nالرجاء التأكيد، شكراً!`
+  );
+  const waLink = `https://wa.me/${workshop.phone}?text=${waMsg}`;
+
+  const canBook = date && slot;
+
+  const handleBook = () => {
+    setSent(true);
+    window.open(waLink, '_blank');
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(7,9,20,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#111826', border: `1.5px solid ${workshop.color}30`, borderRadius: 24, padding: '0', width: '100%', maxWidth: 500, overflow: 'hidden', boxShadow: `0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px ${workshop.color}15` }}>
+
+        {/* Header */}
+        <div style={{ background: `linear-gradient(135deg,${workshop.color}14,rgba(26,35,86,0.6))`, padding: '20px 24px 16px', borderBottom: `1px solid ${workshop.color}18`, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${workshop.color},${workshop.color}44)` }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: `${workshop.color}15`, border: `1.5px solid ${workshop.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Building2 size={22} color={workshop.color} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 16, color: '#E8F0F8', lineHeight: 1.2 }}>{workshop.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <MapPin size={10} color={TD} />
+                  <span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{workshop.address}</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: TD, fontSize: 18, flexShrink: 0 }}>×</button>
+          </div>
+
+          {/* Quick stats */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Star size={11} color={G} fill={G} />
+              <span style={{ color: G, fontWeight: 800, fontSize: 13 }}>{workshop.rating}</span>
+              <span style={{ color: TD, fontSize: 10, fontWeight: 600 }}>تقييم</span>
+            </div>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12 }}>🕐</span>
+              <span style={{ color: TD, fontSize: 11, fontWeight: 700 }}>{workshop.hours}</span>
+            </div>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12 }}>🚗</span>
+              <span style={{ color: workshop.color, fontWeight: 800, fontSize: 12 }}>{workshop.jobs.toLocaleString()}</span>
+              <span style={{ color: TD, fontSize: 10 }}>سيارة</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* Date picker */}
+          <div>
+            <label style={{ display: 'block', color: G, fontWeight: 800, fontSize: 12, marginBottom: 8, letterSpacing: 0.5 }}>📅 اختار يوم الموعد</label>
+            <input
+              type="date"
+              value={date}
+              min={minDate}
+              onChange={e => setDate(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: `1.5px solid ${date ? workshop.color + '40' : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '11px 14px', color: '#E8F0F8', fontSize: 14, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
+            />
+            {date && <div style={{ color: TD, fontSize: 11, fontWeight: 600, marginTop: 5 }}>📆 {dateLabel}</div>}
+          </div>
+
+          {/* Time slots */}
+          <div>
+            <label style={{ display: 'block', color: G, fontWeight: 800, fontSize: 12, marginBottom: 10, letterSpacing: 0.5 }}>⏰ اختار الوقت المناسب</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+              {TIME_SLOTS.map(s => (
+                <button key={s} onClick={() => setSlot(s)} style={{
+                  background: slot === s ? `${workshop.color}18` : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${slot === s ? workshop.color + '60' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: 10, padding: '9px 4px', color: slot === s ? workshop.color : TD,
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: "'Almarai',sans-serif",
+                  transition: 'all .15s', transform: slot === s ? 'scale(1.03)' : 'scale(1)',
+                }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact fallback */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ color: TD, fontSize: 11, fontWeight: 600, marginBottom: 2 }}>أو تواصل مباشرة</div>
+              <div style={{ color: '#E8F0F8', fontWeight: 800, fontSize: 14, direction: 'ltr' }}>+{workshop.phone}</div>
+            </div>
+            <a href={`tel:+${workshop.phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(74,171,202,0.1)', border: '1px solid rgba(74,171,202,0.2)', borderRadius: 10, padding: '8px 14px', color: SK, fontWeight: 800, fontSize: 12, textDecoration: 'none' }}>
+              📞 اتصال
+            </a>
+          </div>
+
+          {/* Book button */}
+          {!sent ? (
+            <button
+              onClick={handleBook}
+              disabled={!canBook}
+              style={{
+                width: '100%', border: 'none', borderRadius: 14, padding: '14px',
+                background: canBook ? 'linear-gradient(135deg,#25D366,#1da851)' : 'rgba(255,255,255,0.06)',
+                color: canBook ? '#fff' : 'rgba(255,255,255,0.25)',
+                fontFamily: "'Almarai',sans-serif", fontWeight: 900, fontSize: 15,
+                cursor: canBook ? 'pointer' : 'not-allowed',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: canBook ? '0 8px 24px rgba(37,211,102,0.3)' : 'none',
+                transition: 'all .2s',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>💬</span>
+              {canBook ? `تأكيد الحجز عبر واتساب` : 'اختار التاريخ والوقت أولاً'}
+            </button>
+          ) : (
+            <div style={{ background: 'rgba(37,211,102,0.1)', border: '1.5px solid rgba(37,211,102,0.3)', borderRadius: 14, padding: '14px', textAlign: 'center' }}>
+              <div style={{ color: '#4ADE80', fontWeight: 900, fontSize: 15, marginBottom: 4 }}>✅ تم فتح واتساب!</div>
+              <div style={{ color: TD, fontSize: 12, fontWeight: 600 }}>راسل الورشة وهيتواصلوا معاك لتأكيد الموعد</div>
+            </div>
+          )}
+
+          <div style={{ textAlign: 'center', color: 'rgba(122,149,170,0.4)', fontSize: 11, fontWeight: 600 }}>
+            هتوصلك رسالة تأكيد من الورشة على واتساب بعد تأكيد الموعد
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════ MAIN HOME PAGE ══════════════════ */
 export default function Home() {
   const { data: packages, isLoading } = useListPackages();
@@ -782,6 +930,7 @@ export default function Home() {
   );
   const [activeService, setActiveService] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bookingWorkshop, setBookingWorkshop] = useState<Workshop | null>(null);
   const [, navigate] = useLocation();
 
   const togglePart = (id: string) => setSelected(prev => {
@@ -1227,9 +1376,11 @@ export default function Home() {
                   </div>
 
                   {/* CTA */}
-                  <Link href="/packages" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${w.color}10`, border: `1px solid ${w.color}25`, borderRadius: 10, padding: '8px', color: w.color, fontWeight: 800, fontSize: 12, textDecoration: 'none', transition: 'background .2s' }}>
+                  <button onClick={() => setBookingWorkshop(w)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${w.color}10`, border: `1px solid ${w.color}25`, borderRadius: 10, padding: '8px', color: w.color, fontWeight: 800, fontSize: 12, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", transition: 'background .2s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = `${w.color}1e`; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = `${w.color}10`; }}>
                     احجز موعد <ArrowLeft size={11} />
-                  </Link>
+                  </button>
                 </div>
               </div>
             ))}
@@ -1254,6 +1405,10 @@ export default function Home() {
 
         </div>
       </section>
+
+      {/* Booking Modal */}
+      {bookingWorkshop && <BookingModal workshop={bookingWorkshop} onClose={() => setBookingWorkshop(null)} />}
+
     </div>
   );
 }
