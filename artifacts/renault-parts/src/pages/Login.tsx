@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { getEmployeeHomePath } from '@/lib/permissions';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'يرجى إدخال رقم الهاتف أو البريد الإلكتروني'),
@@ -35,7 +36,7 @@ export default function Login() {
         login(data.token, data.user);
         toast({ title: 'مرحباً بك مجدداً!', description: 'تم تسجيل الدخول بنجاح.' });
         const params = new URLSearchParams(window.location.search);
-        const redirect = params.get('redirect') || '/';
+        const redirect = params.get('redirect') || getEmployeeHomePath(data.user);
         setLocation(redirect);
       },
       onError: (error: LoginUserMutationError) => {
