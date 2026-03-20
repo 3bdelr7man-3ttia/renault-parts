@@ -78,7 +78,7 @@ function WorkshopGuard({ children }: { children: React.ReactNode }) {
 function Router() {
   const [location] = useLocation();
   const isAdmin = location.startsWith('/admin');
-  const isWorkshop = location.startsWith('/workshop');
+  const isWorkshop = location === '/workshop' || location.startsWith('/workshop/');
 
   if (isAdmin) {
     return (
