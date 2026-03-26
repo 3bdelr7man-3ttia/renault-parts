@@ -6,6 +6,9 @@ export type Permission =
   | "customers.view"
   | "customers.contact"
   | "reports.sales"
+  | "sales.dashboard.view"
+  | "sales.customers.view_own"
+  | "sales.workshops.view_own"
   | "parts.create"
   | "parts.edit"
   | "packages.create"
@@ -19,7 +22,7 @@ export type Permission =
   | "workshops.manage";
 
 export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">> = {
-  sales: ["orders.view", "orders.update_status", "customers.view", "customers.contact", "reports.sales"],
+  sales: ["sales.dashboard.view", "sales.customers.view_own", "sales.workshops.view_own", "customers.contact"],
   data_entry: ["parts.create", "parts.edit", "packages.create", "packages.edit", "cars.create", "cars.edit"],
   customer_service: ["orders.view", "appointments.view", "reviews.view", "customers.view", "customers.contact"],
   manager: ["*"],
@@ -51,6 +54,8 @@ const MANAGER_ONLY_PERMISSIONS: Permission[] = ["reports.financial", "employees.
 
 const ADMIN_ROUTE_RULES: Array<{ match: RegExp; rule: AdminRouteRule }> = [
   { match: /^\/admin\/employee\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: true } },
+  { match: /^\/admin\/employee\/customers\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.customers.view_own" } },
+  { match: /^\/admin\/employee\/workshops\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.workshops.view_own" } },
   { match: /^\/admin\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/orders(\/.*)?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "orders.view" } },
@@ -97,6 +102,9 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
   if (!normalized) return [];
   if (normalized === "manager") {
     return [
+      "sales.dashboard.view",
+      "sales.customers.view_own",
+      "sales.workshops.view_own",
       "orders.view",
       "orders.update_status",
       "customers.view",
@@ -156,6 +164,10 @@ export function canAccessAdminPath(user: AppUser | null | undefined, path: strin
   if (isAdminRole(user.role)) return { allowed: true };
   if (!isEmployeeRole(user.role)) return { allowed: false, redirectTo: "/" };
 
+  if (path === "/admin" || path === "/admin/" || path === "/admin/dashboard" || path === "/admin/dashboard/") {
+    return { allowed: false, redirectTo: getEmployeeHomePath(user) };
+  }
+
   const matchedRule = ADMIN_ROUTE_RULES.find((entry) => entry.match.test(path));
   if (!matchedRule) return { allowed: false, redirectTo: "/admin/employee/dashboard" };
 
@@ -180,7 +192,11 @@ export function canAccessWorkshopPath(user: AppUser | null | undefined): { allow
 export function getEmployeeHomePath(user: AppUser | null | undefined): string {
   if (!user) return "/";
   if (isAdminRole(user.role)) return "/admin";
-  if (isEmployeeRole(user.role)) return "/admin/employee/dashboard";
+  if (isEmployeeRole(user.role)) {
+    return normalizeEmployeeRole(user.employeeRole) === "sales"
+      ? "/admin/employee/dashboard"
+      : "/admin/employee/dashboard";
+  }
   if (isWorkshopRole(user.role)) return "/workshop";
   return "/";
 }

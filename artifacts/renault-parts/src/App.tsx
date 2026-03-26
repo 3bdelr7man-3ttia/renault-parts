@@ -41,7 +41,8 @@ import AdminAppointments from "@/pages/admin/AdminAppointments";
 import AccessDenied from "@/pages/AccessDenied";
 import JoinWorkshop from "@/pages/JoinWorkshop";
 import EmployeeDashboardPage from "@/pages/admin/employee/dashboard/page";
-import { isWorkshopRole } from "@/lib/permissions";
+import EmployeeCustomersPage from "@/pages/admin/employee/customers/page";
+import EmployeeWorkshopsPage from "@/pages/admin/employee/workshops/page";
 import { evaluateRouteAccess } from "../middleware";
 
 // Workshop Portal Pages
@@ -149,6 +150,8 @@ function Router() {
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/dashboard" component={AdminDashboard} />
               <Route path="/admin/employee/dashboard" component={EmployeeDashboardPage} />
+              <Route path="/admin/employee/customers" component={EmployeeCustomersPage} />
+              <Route path="/admin/employee/workshops" component={EmployeeWorkshopsPage} />
               <Route path="/admin/orders" component={AdminOrders} />
               <Route path="/admin/packages" component={AdminPackages} />
               <Route path="/admin/workshops" component={AdminWorkshops} />

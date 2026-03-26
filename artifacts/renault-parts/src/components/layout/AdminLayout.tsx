@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
-import { getRoleLabel } from '@/lib/permissions';
+import { getRoleLabel, normalizeEmployeeRole, type Permission } from '@/lib/permissions';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -29,9 +29,22 @@ const BG = '#0D1220';
 const S  = '#111826';
 const S2 = '#161E30';
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  exact?: boolean;
+  adminOnly?: boolean;
+  employeeOnly?: boolean;
+  permission?: Permission;
+  employeeRoles?: Array<'sales' | 'data_entry' | 'customer_service' | 'manager'>;
+};
+
+const navItems: NavItem[] = [
   { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, exact: true, adminOnly: true },
   { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, employeeOnly: true },
+  { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales'] },
+  { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales'] },
   { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, permission: 'orders.view' as const },
   { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, permission: 'appointments.view' as const },
   { href: '/admin/packages',               label: 'الباكدجات',        icon: Package2, permission: 'packages.edit' as const },
@@ -49,6 +62,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, hasPermission, isRole } = useAuth();
   const { isMobile } = useBreakpoint();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const employeeRole = normalizeEmployeeRole(user?.employeeRole);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
@@ -56,13 +70,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const visibleNavItems = useMemo(() => {
     return navItems.filter((item) => {
       if (item.adminOnly) return isRole('admin');
-      if (item.employeeOnly) return isRole('employee');
+      if (item.employeeOnly && !isRole('employee')) return false;
+      if (item.employeeRoles && (!employeeRole || !item.employeeRoles.includes(employeeRole))) return false;
       if (isRole('admin')) return true;
       if (!isRole('employee')) return false;
       if (!item.permission) return true;
       return hasPermission(item.permission);
     });
-  }, [hasPermission, isRole]);
+  }, [employeeRole, hasPermission, isRole]);
 
   const mobileNavItems = visibleNavItems.slice(0, 5);
 
