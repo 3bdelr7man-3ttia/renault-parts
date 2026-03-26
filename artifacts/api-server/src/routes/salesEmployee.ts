@@ -80,6 +80,10 @@ type TechnicalCaseRow = {
   area?: string | null;
   source: string;
   status: string;
+  technicalCategory?: string | null;
+  technicalPriority?: string | null;
+  transferDecision?: string | null;
+  knowledgeNotes?: string | null;
   notes?: string | null;
   nextFollowUpAt?: Date | string | null;
   createdAt?: Date | string | null;
@@ -230,6 +234,10 @@ type CreateDataEntryLeadInput = {
 
 type UpdateTechnicalCaseInput = {
   status: string;
+  technicalCategory: string | null;
+  technicalPriority: string;
+  transferDecision: string | null;
+  knowledgeNotes: string | null;
   notes: string | null;
   nextFollowUpAt: string | null;
 };
@@ -258,7 +266,23 @@ const VALID_TECHNICAL_CASE_STATUSES = [
   "registered_on_platform",
   "converted_to_order",
   "converted_to_application",
+  "closed",
 ] as const;
+const VALID_TECHNICAL_CATEGORIES = [
+  "engine",
+  "electrical",
+  "cooling",
+  "suspension",
+  "brakes",
+  "transmission",
+  "diagnostics",
+  "parts_return",
+  "warranty",
+  "workshop_relation",
+  "other",
+] as const;
+const VALID_TECHNICAL_PRIORITIES = ["low", "medium", "high", "critical"] as const;
+const VALID_TRANSFER_DECISIONS = ["sales", "workshop", "management", "parts", "keep_with_technical"] as const;
 
 function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
   return req.user?.id ?? null;
@@ -475,9 +499,24 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
   const payload = (body ?? {}) as Record<string, unknown>;
   const status = asNullableString(payload.status);
   const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+  const technicalCategory = asNullableString(payload.technicalCategory);
+  const technicalPriority = asNullableString(payload.technicalPriority) ?? "medium";
+  const transferDecision = asNullableString(payload.transferDecision);
 
   if (!status || !VALID_TECHNICAL_CASE_STATUSES.includes(status as (typeof VALID_TECHNICAL_CASE_STATUSES)[number])) {
     return { success: false, error: "حالة الحالة الفنية غير صحيحة" };
+  }
+
+  if (technicalCategory && !VALID_TECHNICAL_CATEGORIES.includes(technicalCategory as (typeof VALID_TECHNICAL_CATEGORIES)[number])) {
+    return { success: false, error: "التصنيف الفني غير صحيح" };
+  }
+
+  if (!VALID_TECHNICAL_PRIORITIES.includes(technicalPriority as (typeof VALID_TECHNICAL_PRIORITIES)[number])) {
+    return { success: false, error: "أولوية الحالة غير صحيحة" };
+  }
+
+  if (transferDecision && !VALID_TRANSFER_DECISIONS.includes(transferDecision as (typeof VALID_TRANSFER_DECISIONS)[number])) {
+    return { success: false, error: "قرار التحويل غير صحيح" };
   }
 
   if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) {
@@ -488,6 +527,10 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
     success: true,
     data: {
       status,
+      technicalCategory,
+      technicalPriority,
+      transferDecision,
+      knowledgeNotes: asNullableString(payload.knowledgeNotes),
       notes: asNullableString(payload.notes),
       nextFollowUpAt,
     },
@@ -925,6 +968,10 @@ router.get(
         area: leadsTable.area,
         source: leadsTable.source,
         status: leadsTable.status,
+        technicalCategory: leadsTable.technicalCategory,
+        technicalPriority: leadsTable.technicalPriority,
+        transferDecision: leadsTable.transferDecision,
+        knowledgeNotes: leadsTable.knowledgeNotes,
         notes: leadsTable.notes,
         nextFollowUpAt: leadsTable.nextFollowUpAt,
         createdAt: leadsTable.createdAt,
@@ -1439,6 +1486,10 @@ router.patch(
       .update(leadsTable)
       .set({
         status: parsed.data.status,
+        technicalCategory: parsed.data.technicalCategory,
+        technicalPriority: parsed.data.technicalPriority,
+        transferDecision: parsed.data.transferDecision,
+        knowledgeNotes: parsed.data.knowledgeNotes,
         notes: parsed.data.notes,
         nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
         lastContactAt: new Date(),
@@ -1449,6 +1500,10 @@ router.patch(
         type: leadsTable.type,
         name: leadsTable.name,
         status: leadsTable.status,
+        technicalCategory: leadsTable.technicalCategory,
+        technicalPriority: leadsTable.technicalPriority,
+        transferDecision: leadsTable.transferDecision,
+        knowledgeNotes: leadsTable.knowledgeNotes,
         notes: leadsTable.notes,
         nextFollowUpAt: leadsTable.nextFollowUpAt,
       });

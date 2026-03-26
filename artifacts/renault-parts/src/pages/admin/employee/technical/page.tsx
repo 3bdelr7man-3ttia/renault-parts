@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { BadgeCheck, Building2, CalendarClock, ClipboardList, Loader2, Save, Stethoscope, Users } from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, BadgeCheck, BookOpenText, Building2, CalendarClock, ClipboardList, Loader2, Save, Stethoscope, Users } from "lucide-react";
 
 type TechnicalCase = {
   id: number;
@@ -13,6 +13,10 @@ type TechnicalCase = {
   area?: string | null;
   source: string;
   status: string;
+  technicalCategory?: string | null;
+  technicalPriority?: string | null;
+  transferDecision?: string | null;
+  knowledgeNotes?: string | null;
   notes?: string | null;
   nextFollowUpAt?: string | null;
   createdAt?: string | null;
@@ -23,6 +27,10 @@ type TechnicalCase = {
 
 type DraftState = {
   status: string;
+  technicalCategory: string;
+  technicalPriority: string;
+  transferDecision: string;
+  knowledgeNotes: string;
   notes: string;
   nextFollowUpAt: string;
 };
@@ -50,9 +58,42 @@ const statusOptions = [
   { value: "registered_on_platform", label: "سجل على المنصة" },
   { value: "converted_to_order", label: "تحول إلى طلب" },
   { value: "converted_to_application", label: "تحول إلى طلب انضمام" },
+  { value: "closed", label: "أغلقت فنيًا" },
+] as const;
+
+const technicalCategoryOptions = [
+  { value: "engine", label: "محرك" },
+  { value: "electrical", label: "كهرباء" },
+  { value: "cooling", label: "تبريد" },
+  { value: "suspension", label: "عفشة" },
+  { value: "brakes", label: "فرامل" },
+  { value: "transmission", label: "ناقل حركة" },
+  { value: "diagnostics", label: "فحص وتشخيص" },
+  { value: "parts_return", label: "قطع ومرتجعات" },
+  { value: "warranty", label: "ضمان" },
+  { value: "workshop_relation", label: "علاقة ورشة" },
+  { value: "other", label: "أخرى" },
+] as const;
+
+const priorityOptions = [
+  { value: "low", label: "منخفضة" },
+  { value: "medium", label: "متوسطة" },
+  { value: "high", label: "مرتفعة" },
+  { value: "critical", label: "حرجة" },
+] as const;
+
+const transferDecisionOptions = [
+  { value: "keep_with_technical", label: "تبقى مع الخبير الفني" },
+  { value: "sales", label: "تحويل إلى المبيعات" },
+  { value: "workshop", label: "تحويل إلى ورشة" },
+  { value: "management", label: "رفع للإدارة" },
+  { value: "parts", label: "رفع لمسؤول القطع" },
 ] as const;
 
 const statusLabels = Object.fromEntries(statusOptions.map((status) => [status.value, status.label])) as Record<string, string>;
+const technicalCategoryLabels = Object.fromEntries(technicalCategoryOptions.map((item) => [item.value, item.label])) as Record<string, string>;
+const priorityLabels = Object.fromEntries(priorityOptions.map((item) => [item.value, item.label])) as Record<string, string>;
+const transferDecisionLabels = Object.fromEntries(transferDecisionOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 
 const taskTypeLabels: Record<string, string> = {
   issue_resolution: "حل مشكلة",
@@ -75,6 +116,16 @@ const taskStatusLabels: Record<string, string> = {
   cancelled: "ملغية",
 };
 
+const emptyDraft = (): DraftState => ({
+  status: "new",
+  technicalCategory: "other",
+  technicalPriority: "medium",
+  transferDecision: "keep_with_technical",
+  knowledgeNotes: "",
+  notes: "",
+  nextFollowUpAt: "",
+});
+
 export default function EmployeeTechnicalPage() {
   const { token } = useAuth();
   const { toast } = useToast();
@@ -89,6 +140,7 @@ export default function EmployeeTechnicalPage() {
   const loadCases = React.useCallback(async () => {
     if (!token) {
       setCases([]);
+      setTasks([]);
       setLoading(false);
       return;
     }
@@ -96,34 +148,46 @@ export default function EmployeeTechnicalPage() {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [casesResponse, tasksResponse] = await Promise.all([
+      const [casesResponse, tasksResponse] = await Promise.allSettled([
         fetch(`${base}/api/admin/employee/technical/cases`, { headers }),
         fetch(`${base}/api/admin/employee/sales/tasks`, { headers }),
       ]);
 
-      const [casesResult, tasksResult] = await Promise.all([
-        casesResponse.json().catch(() => null),
-        tasksResponse.json().catch(() => null),
-      ]);
+      if (casesResponse.status !== "fulfilled") {
+        throw new Error("تعذر الوصول إلى الحالات الفنية الآن.");
+      }
 
-      if (!casesResponse.ok || !tasksResponse.ok) {
-        throw new Error(casesResult?.error || tasksResult?.error || "تعذر تحميل مساحة الخبير الفني الآن.");
+      const casesResult = await casesResponse.value.json().catch(() => null);
+      if (!casesResponse.value.ok) {
+        throw new Error(casesResult?.error || "تعذر تحميل الحالات الفنية الآن.");
       }
 
       const rows = Array.isArray(casesResult) ? casesResult : [];
       setCases(rows);
-      setTasks(Array.isArray(tasksResult) ? tasksResult : []);
       setDrafts(
         rows.reduce<Record<number, DraftState>>((acc, item) => {
           acc[item.id] = {
             status: item.status ?? "new",
+            technicalCategory: item.technicalCategory ?? "other",
+            technicalPriority: item.technicalPriority ?? "medium",
+            transferDecision: item.transferDecision ?? "keep_with_technical",
+            knowledgeNotes: item.knowledgeNotes ?? "",
             notes: item.notes ?? "",
             nextFollowUpAt: item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toISOString().slice(0, 16) : "",
           };
           return acc;
         }, {}),
       );
+
+      if (tasksResponse.status === "fulfilled") {
+        const taskResult = await tasksResponse.value.json().catch(() => null);
+        setTasks(tasksResponse.value.ok && Array.isArray(taskResult) ? taskResult : []);
+      } else {
+        setTasks([]);
+      }
     } catch (error) {
+      setCases([]);
+      setTasks([]);
       toast({
         variant: "destructive",
         title: "خطأ",
@@ -137,6 +201,16 @@ export default function EmployeeTechnicalPage() {
   React.useEffect(() => {
     loadCases();
   }, [loadCases]);
+
+  const updateDraft = (caseId: number, patch: Partial<DraftState>) => {
+    setDrafts((current) => ({
+      ...current,
+      [caseId]: {
+        ...(current[caseId] ?? emptyDraft()),
+        ...patch,
+      },
+    }));
+  };
 
   const handleSave = async (caseId: number) => {
     if (!token) return;
@@ -153,6 +227,10 @@ export default function EmployeeTechnicalPage() {
         },
         body: JSON.stringify({
           status: draft.status,
+          technicalCategory: draft.technicalCategory || null,
+          technicalPriority: draft.technicalPriority,
+          transferDecision: draft.transferDecision || null,
+          knowledgeNotes: draft.knowledgeNotes || null,
           notes: draft.notes || null,
           nextFollowUpAt: draft.nextFollowUpAt ? new Date(draft.nextFollowUpAt).toISOString() : null,
         }),
@@ -163,7 +241,7 @@ export default function EmployeeTechnicalPage() {
         throw new Error(result?.error || "فشل تحديث الحالة الفنية");
       }
 
-      toast({ title: "تم الحفظ", description: "تم تحديث الحالة الفنية وملاحظاتها بنجاح." });
+      toast({ title: "تم الحفظ", description: "تم تحديث الحالة الفنية وقرارها التشغيلي بنجاح." });
       await loadCases();
     } catch (error) {
       toast({
@@ -180,115 +258,187 @@ export default function EmployeeTechnicalPage() {
   const customerCases = cases.filter((item) => item.type === "customer");
   const workshopCases = cases.filter((item) => item.type === "workshop");
   const issueTasks = tasks.filter((task) => ["issue_resolution", "quotation", "collection"].includes(task.taskType));
+  const urgentCases = cases.filter((item) => ["high", "critical"].includes(item.technicalPriority ?? "medium")).length;
+  const pendingTransferCases = cases.filter((item) => !item.transferDecision || item.transferDecision === "keep_with_technical").length;
 
-  const renderCaseCard = (item: TechnicalCase) => (
-    <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-white font-black text-lg">{item.name}</h2>
-            <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
-              {item.type === "workshop" ? "ورشة" : "عميل"}
+  const renderCaseCard = (item: TechnicalCase) => {
+    const draft = drafts[item.id] ?? emptyDraft();
+
+    return (
+      <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5 space-y-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-white font-black text-lg">{item.name}</h2>
+              <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                {item.type === "workshop" ? "ورشة" : "عميل"}
+              </span>
+              {item.registeredUserId ? <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">مسجل على المنصة</span> : null}
+            </div>
+            <p className="text-white/45 text-sm mt-2">
+              {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
+            </p>
+            {item.contactPerson ? <p className="text-white/35 text-xs mt-1">المسؤول: {item.contactPerson}</p> : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70">
+              {technicalCategoryLabels[draft.technicalCategory] ?? "بدون تصنيف"}
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-[#F9E795]/10 border border-[#F9E795]/20 text-[#F9E795]">
+              {priorityLabels[draft.technicalPriority] ?? "متوسطة"}
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
+              {transferDecisionLabels[draft.transferDecision] ?? "بدون قرار"}
             </span>
           </div>
-          <p className="text-white/45 text-sm mt-2">
-            {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
-          </p>
-          {item.contactPerson && <p className="text-white/35 text-xs mt-1">المسؤول: {item.contactPerson}</p>}
         </div>
-        <div className="text-sm text-white/55 space-y-2">
-          <p>المصدر: <span className="text-white">{item.source}</span></p>
-          <p>الحالة الحالية: <span className="text-[#F9E795]">{statusLabels[item.status] ?? item.status}</span></p>
-          <p>
-            متابعة قادمة:
-            <span className="text-white"> {item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toLocaleString("ar-EG") : "غير محددة"}</span>
-          </p>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-        <div>
-          <label className="block text-white/50 text-xs font-bold mb-2">الحالة</label>
-          <select
-            value={drafts[item.id]?.status ?? "new"}
-            onChange={(event) =>
-              setDrafts((current) => ({
-                ...current,
-                [item.id]: { ...(current[item.id] ?? { status: "new", notes: "", nextFollowUpAt: "" }), status: event.target.value },
-              }))
-            }
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-white/50 text-xs font-bold mb-2">حالة المتابعة</label>
+            <select
+              value={draft.status}
+              onChange={(event) => updateDraft(item.id, { status: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            >
+              {statusOptions.map((status) => (
+                <option key={status.value} value={status.value} className="bg-[#111826]">
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/50 text-xs font-bold mb-2">التصنيف الفني</label>
+            <select
+              value={draft.technicalCategory}
+              onChange={(event) => updateDraft(item.id, { technicalCategory: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            >
+              {technicalCategoryOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-[#111826]">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/50 text-xs font-bold mb-2">أولوية الحالة</label>
+            <select
+              value={draft.technicalPriority}
+              onChange={(event) => updateDraft(item.id, { technicalPriority: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            >
+              {priorityOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-[#111826]">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/50 text-xs font-bold mb-2">قرار التحويل</label>
+            <select
+              value={draft.transferDecision}
+              onChange={(event) => updateDraft(item.id, { transferDecision: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            >
+              {transferDecisionOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-[#111826]">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-white/50 text-xs font-bold mb-2">ملاحظات الخبير الفني</label>
+            <textarea
+              value={draft.notes}
+              onChange={(event) => updateDraft(item.id, { notes: event.target.value })}
+              className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+              placeholder="اكتب التشخيص الأولي أو ما الذي يحتاج مراجعة أو موافقة..."
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-white/50 text-xs font-bold mb-2">سجل المعرفة الفنية / اقتراحات قطع وبدائل ومرتجعات</label>
+            <textarea
+              value={draft.knowledgeNotes}
+              onChange={(event) => updateDraft(item.id, { knowledgeNotes: event.target.value })}
+              className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+              placeholder="مثال: القطعة الأصلية يفضل استبدالها بالبديل التركي X عند عدم التوفر، أو المرتجع يقبل إذا كانت العبوة سليمة..."
+            />
+          </div>
+          <div className="md:col-span-2 xl:col-span-1">
+            <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
+            <input
+              type="datetime-local"
+              value={draft.nextFollowUpAt}
+              onChange={(event) => updateDraft(item.id, { nextFollowUpAt: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            />
+          </div>
+          <div className="md:col-span-2 xl:col-span-1">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 h-full text-sm text-white/65 space-y-2">
+              <p>المصدر: <span className="text-white">{item.source}</span></p>
+              <p>الحالة الحالية: <span className="text-[#F9E795]">{statusLabels[item.status] ?? item.status}</span></p>
+              <p>آخر متابعة: <span className="text-white">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("ar-EG") : "غير متاحة"}</span></p>
+              <p>المتابعة القادمة: <span className="text-white">{item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toLocaleString("ar-EG") : "غير محددة"}</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="text-white/35 text-xs inline-flex items-center gap-2">
+            <CalendarClock className="w-4 h-4" />
+            {item.createdAt ? `أضيفت ${new Date(item.createdAt).toLocaleDateString("ar-EG")}` : "سجل موجود داخل المسار الفني"}
+          </div>
+          <button
+            onClick={() => handleSave(item.id)}
+            disabled={savingId === item.id}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
           >
-            {statusOptions.map((status) => (
-              <option key={status.value} value={status.value} className="bg-[#111826]">
-                {status.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
-          <input
-            type="datetime-local"
-            value={drafts[item.id]?.nextFollowUpAt ?? ""}
-            onChange={(event) =>
-              setDrafts((current) => ({
-                ...current,
-                [item.id]: { ...(current[item.id] ?? { status: "new", notes: "", nextFollowUpAt: "" }), nextFollowUpAt: event.target.value },
-              }))
-            }
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-white/50 text-xs font-bold mb-2">ملاحظات الخبير الفني</label>
-          <textarea
-            value={drafts[item.id]?.notes ?? ""}
-            onChange={(event) =>
-              setDrafts((current) => ({
-                ...current,
-                [item.id]: { ...(current[item.id] ?? { status: "new", notes: "", nextFollowUpAt: "" }), notes: event.target.value },
-              }))
-            }
-            className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
-            placeholder="اكتب التشخيص الأولي أو القرار المطلوب أو ما يجب تحويله للمبيعات أو الإدارة أو الورش..."
-          />
+            <Save className="w-4 h-4" />
+            {savingId === item.id ? "جارٍ الحفظ..." : "حفظ التحديث"}
+          </button>
         </div>
       </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="text-white/35 text-xs inline-flex items-center gap-2">
-          <CalendarClock className="w-4 h-4" />
-          {item.createdAt ? `أضيفت ${new Date(item.createdAt).toLocaleDateString("ar-EG")}` : "سجل موجود داخل المسار الفني"}
-        </div>
-        <button
-          onClick={() => handleSave(item.id)}
-          disabled={savingId === item.id}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
-        >
-          <Save className="w-4 h-4" />
-          {savingId === item.id ? "جارٍ الحفظ..." : "حفظ التحديث"}
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-8">
       <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
         <p className="text-[#F9E795] text-sm font-bold mb-2">الحالات الفنية</p>
         <h1 className="text-3xl font-black text-white mb-3">مساحة الخبير الفني</h1>
-        <p className="text-white/60 text-sm leading-7 max-w-3xl">
-          هذه المساحة تجمع الحالات التي تحتاج رأيًا فنيًا أو مراجعة تشغيلية من الورش، مع إمكانية تحديث الحالة وتسجيل الملاحظات وموعد المتابعة القادم من مكان واحد.
+        <p className="text-white/60 text-sm leading-7 max-w-4xl">
+          هذه المساحة تجمع الحالات التي تحتاج رأيًا فنيًا، مع تصنيف فني واضح، أولوية، قرار تحويل، وسجل معرفة خاص بالقطع والبدائل والمرتجعات حتى لا تتحول المتابعة إلى ملاحظات متناثرة.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <Stethoscope className="w-5 h-5 text-[#F9E795] mb-4" />
           <p className="text-white/40 text-xs font-bold mb-2">إجمالي الحالات</p>
           <p className="text-white font-black text-2xl">{totalCases}</p>
         </div>
+        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+          <AlertTriangle className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">أولوية عالية أو حرجة</p>
+          <p className="text-white font-black text-2xl">{urgentCases}</p>
+        </div>
+        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+          <ArrowRightLeft className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">تنتظر قرار تحويل</p>
+          <p className="text-white font-black text-2xl">{pendingTransferCases}</p>
+        </div>
+        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+          <BookOpenText className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">مشاكل قطع ومرتجعات</p>
+          <p className="text-white font-black text-2xl">{issueTasks.length}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <Users className="w-5 h-5 text-[#F9E795] mb-4" />
           <p className="text-white/40 text-xs font-bold mb-2">أسئلة وحالات العملاء</p>
@@ -300,9 +450,9 @@ export default function EmployeeTechnicalPage() {
           <p className="text-white font-black text-2xl">{workshopCases.length}</p>
         </div>
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <ClipboardList className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">مشاكل قطع ومرتجعات</p>
-          <p className="text-white font-black text-2xl">{issueTasks.length}</p>
+          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">حالات سُجلت أو تحولت</p>
+          <p className="text-white font-black text-2xl">{cases.filter((item) => item.registeredUserId || item.convertedOrderId || item.convertedWorkshopId).length}</p>
         </div>
       </div>
 
@@ -346,17 +496,17 @@ export default function EmployeeTechnicalPage() {
                           <p className="text-white/45 text-sm mt-2">
                             {taskTypeLabels[task.taskType] ?? task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
                           </p>
-                          {(task.leadName || task.leadType) && (
+                          {(task.leadName || task.leadType) ? (
                             <p className="text-white/35 text-xs mt-1">
                               مرتبطة بـ: {task.leadName ?? "حالة غير مسماة"} {task.leadType ? `· ${task.leadType === "workshop" ? "ورشة" : "عميل"}` : ""}
                             </p>
-                          )}
+                          ) : null}
                         </div>
                         <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
                           {taskStatusLabels[task.status] ?? task.status}
                         </span>
                       </div>
-                      {task.result && <p className="text-white/55 text-sm mt-3">النتيجة: {task.result}</p>}
+                      {task.result ? <p className="text-white/55 text-sm mt-3">النتيجة: {task.result}</p> : null}
                     </div>
                   ))}
                 </div>
