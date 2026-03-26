@@ -59,6 +59,10 @@ type TaskFormState = {
     | "meeting"
     | "data_entry"
     | "issue_resolution"
+    | "technical_review"
+    | "expert_opinion"
+    | "parts_return_review"
+    | "workshop_support"
     | "quotation"
     | "collection"
     | "field_follow_up";
@@ -85,6 +89,10 @@ const taskTypeLabels: Record<TaskFormState["taskType"], string> = {
   meeting: "اجتماع",
   data_entry: "إدخال بيانات",
   issue_resolution: "حل مشكلة",
+  technical_review: "مراجعة فنية",
+  expert_opinion: "رأي خبير",
+  parts_return_review: "مراجعة مرتجع",
+  workshop_support: "دعم ورشة",
   quotation: "عرض سعر",
   collection: "تحصيل/إغلاق",
   field_follow_up: "متابعة ميدانية",
@@ -123,6 +131,37 @@ function isOpenTask(status: string) {
   return status === "pending" || status === "in_progress" || status === "postponed";
 }
 
+function getTaskTypesForAssignee(employeeRole?: TeamEmployee["employeeRole"]) {
+  if (employeeRole === "technical_expert") {
+    return (["technical_review", "expert_opinion", "issue_resolution", "parts_return_review", "workshop_support", "follow_up"] as const).map((value) => ({
+      value,
+      label: taskTypeLabels[value],
+    }));
+  }
+  if (employeeRole === "data_entry") {
+    return (["data_entry", "follow_up", "quotation"] as const).map((value) => ({
+      value,
+      label: taskTypeLabels[value],
+    }));
+  }
+  if (employeeRole === "marketing_tech") {
+    return (["meeting", "follow_up", "data_entry"] as const).map((value) => ({
+      value,
+      label: taskTypeLabels[value],
+    }));
+  }
+  if (employeeRole === "manager") {
+    return (["follow_up", "meeting", "field_follow_up"] as const).map((value) => ({
+      value,
+      label: taskTypeLabels[value],
+    }));
+  }
+  return (["call", "visit", "follow_up", "whatsapp", "meeting", "quotation", "collection", "field_follow_up"] as const).map((value) => ({
+    value,
+    label: taskTypeLabels[value],
+  }));
+}
+
 export default function EmployeeTeamPage() {
   const { token } = useAuth();
   const { toast } = useToast();
@@ -139,6 +178,8 @@ export default function EmployeeTeamPage() {
   const [tasks, setTasks] = React.useState<TeamTask[]>([]);
   const [assignmentDrafts, setAssignmentDrafts] = React.useState<Record<number, string>>({});
   const [taskForm, setTaskForm] = React.useState<TaskFormState>(emptyTaskForm);
+  const selectedEmployee = React.useMemo(() => employees.find((employee) => String(employee.id) === taskForm.employeeId) ?? null, [employees, taskForm.employeeId]);
+  const taskTypeOptions = React.useMemo(() => getTaskTypesForAssignee(selectedEmployee?.employeeRole ?? null), [selectedEmployee?.employeeRole]);
 
   const loadPage = React.useCallback(async () => {
     if (!token) {
@@ -200,6 +241,15 @@ export default function EmployeeTeamPage() {
   React.useEffect(() => {
     loadPage();
   }, [loadPage]);
+
+  React.useEffect(() => {
+    if (!taskTypeOptions.some((option) => option.value === taskForm.taskType)) {
+      setTaskForm((prev) => ({
+        ...prev,
+        taskType: taskTypeOptions[0]?.value ?? "follow_up",
+      }));
+    }
+  }, [taskForm.taskType, taskTypeOptions]);
 
   const saveAssignment = async (lead: TeamLead) => {
     if (!token) return;
@@ -687,9 +737,9 @@ export default function EmployeeTeamPage() {
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, taskType: event.target.value as TaskFormState["taskType"] }))}
                 className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
               >
-                {Object.entries(taskTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value} className="bg-[#111826]">
-                    {label}
+                {taskTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value} className="bg-[#111826]">
+                    {option.label}
                   </option>
                 ))}
               </select>

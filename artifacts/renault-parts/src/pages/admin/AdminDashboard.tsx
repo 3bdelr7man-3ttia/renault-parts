@@ -17,6 +17,29 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   cancelled:  { label: 'ملغي',         color: 'bg-red-500/20 text-red-300 border border-red-500/30' },
 };
 
+type TechnicalOverview = {
+  totalCases: number;
+  returnsCases: number;
+  urgentCases: number;
+  pendingTransferCases: number;
+  topCategories: Array<{ category: string | null; count: number }>;
+  topReturnedContexts: Array<{ name: string; area: string | null; count: number }>;
+};
+
+const technicalCategoryLabels: Record<string, string> = {
+  engine: 'محرك',
+  electrical: 'كهرباء',
+  cooling: 'تبريد',
+  suspension: 'عفشة',
+  brakes: 'فرامل',
+  transmission: 'ناقل حركة',
+  diagnostics: 'تشخيص',
+  parts_return: 'مرتجعات وقطع',
+  warranty: 'ضمان',
+  workshop_relation: 'علاقة ورش',
+  other: 'أخرى',
+};
+
 function MiniBarChart({ data }: { data: { week: string; total: number; count: number }[] }) {
   const maxTotal = Math.max(...data.map(d => d.total), 1);
   return (
@@ -38,11 +61,51 @@ function MiniBarChart({ data }: { data: { week: string; total: number; count: nu
 }
 
 export default function AdminDashboard() {
-  const { getAuthHeaders } = useAuth();
+  const { token, getAuthHeaders } = useAuth();
   const headers = getAuthHeaders();
+  const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, '') ?? '';
 
   const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats({ request: headers });
   const { data: orders, isLoading: ordersLoading, isError: ordersError } = useListAdminOrders({}, { request: headers });
+  const [technicalOverview, setTechnicalOverview] = React.useState<TechnicalOverview | null>(null);
+  const [technicalLoading, setTechnicalLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!token) {
+      setTechnicalOverview(null);
+      return;
+    }
+
+    let cancelled = false;
+    setTechnicalLoading(true);
+
+    fetch(`${base}/api/admin/technical-overview`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || 'تعذر تحميل الملخص الفني الآن.');
+        }
+        if (!cancelled) {
+          setTechnicalOverview(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTechnicalOverview(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setTechnicalLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [base, token]);
 
   const weeklySales = Array.isArray(stats?.weeklySales) ? stats.weeklySales : [];
   const topPackages = Array.isArray(stats?.topPackages) ? stats.topPackages : [];
@@ -219,6 +282,80 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
+        <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-white font-bold">الحالات الفنية والمرتجعات</h2>
+              <p className="text-white/40 text-xs mt-1">لمساعدة الإدارة على التقاط المشاكل المتكررة واتخاذ قرار سريع.</p>
+            </div>
+            <Wrench className="w-5 h-5 text-[#F9E795]" />
+          </div>
+          {technicalLoading ? (
+            <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 text-[#F9E795] animate-spin" /></div>
+          ) : technicalOverview ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                <p className="text-white/40 text-xs font-bold mb-2">إجمالي الحالات</p>
+                <p className="text-white font-black text-2xl">{technicalOverview.totalCases}</p>
+              </div>
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                <p className="text-white/40 text-xs font-bold mb-2">مرتجعات ومشاكل قطع</p>
+                <p className="text-white font-black text-2xl">{technicalOverview.returnsCases}</p>
+              </div>
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                <p className="text-white/40 text-xs font-bold mb-2">أولوية مرتفعة/حرجة</p>
+                <p className="text-white font-black text-2xl">{technicalOverview.urgentCases}</p>
+              </div>
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                <p className="text-white/40 text-xs font-bold mb-2">تحتاج قرارًا</p>
+                <p className="text-white font-black text-2xl">{technicalOverview.pendingTransferCases}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-white/35 text-sm py-8 text-center">تعذر تحميل الملخص الفني الآن.</p>
+          )}
+        </div>
+
+        <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-white font-bold">أكثر الأنماط تكرارًا</h2>
+              <p className="text-white/40 text-xs mt-1">لتحديد مشكلة قطعة متكررة أو فئة تحتاج تدخلًا تشغيليًا.</p>
+            </div>
+            <Star className="w-5 h-5 text-[#F9E795]" />
+          </div>
+          {technicalLoading ? (
+            <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 text-[#F9E795] animate-spin" /></div>
+          ) : technicalOverview ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                {technicalOverview.topCategories.length === 0 ? (
+                  <p className="text-white/35 text-sm">لا توجد تصنيفات فنية كافية بعد.</p>
+                ) : technicalOverview.topCategories.map((item, index) => (
+                  <div key={`${item.category ?? 'unknown'}-${index}`} className="flex items-center justify-between bg-[#10182C] border border-white/10 rounded-xl px-4 py-3">
+                    <span className="text-white/80 text-sm font-bold">{item.category ? (technicalCategoryLabels[item.category] ?? item.category) : 'غير مصنف'}</span>
+                    <span className="text-[#F9E795] text-sm font-black">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/45 text-xs font-bold mb-3">أكثر السياقات التي يظهر فيها مرتجع/مشكلة</p>
+                {technicalOverview.topReturnedContexts.length === 0 ? (
+                  <p className="text-white/35 text-sm">لا توجد مرتجعات متكررة مرصودة بعد.</p>
+                ) : technicalOverview.topReturnedContexts.map((item, index) => (
+                  <div key={`${item.name}-${index}`} className="flex items-center justify-between py-2">
+                    <span className="text-white/75 text-sm">{item.name}{item.area ? ` · ${item.area}` : ''}</span>
+                    <span className="text-[#F9E795] text-sm font-black">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-white/35 text-sm py-8 text-center">لا توجد بيانات فنية معروضة الآن.</p>
+          )}
+        </div>
+      </div>
       {/* Recent Orders */}
       <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">

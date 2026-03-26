@@ -82,6 +82,7 @@ type TechnicalCaseRow = {
   status: string;
   technicalCategory?: string | null;
   technicalPriority?: string | null;
+  technicalActionMode?: string | null;
   transferDecision?: string | null;
   knowledgeNotes?: string | null;
   notes?: string | null;
@@ -182,6 +183,10 @@ type CreateSalesTaskInput = {
     | "meeting"
     | "data_entry"
     | "issue_resolution"
+    | "technical_review"
+    | "expert_opinion"
+    | "parts_return_review"
+    | "workshop_support"
     | "quotation"
     | "collection"
     | "field_follow_up";
@@ -237,6 +242,7 @@ type UpdateTechnicalCaseInput = {
   status: string;
   technicalCategory: string | null;
   technicalPriority: string;
+  technicalActionMode: string;
   transferDecision: string | null;
   knowledgeNotes: string | null;
   notes: string | null;
@@ -251,6 +257,10 @@ const VALID_TASK_TYPES = [
   "meeting",
   "data_entry",
   "issue_resolution",
+  "technical_review",
+  "expert_opinion",
+  "parts_return_review",
+  "workshop_support",
   "quotation",
   "collection",
   "field_follow_up",
@@ -283,6 +293,7 @@ const VALID_TECHNICAL_CATEGORIES = [
   "other",
 ] as const;
 const VALID_TECHNICAL_PRIORITIES = ["low", "medium", "high", "critical"] as const;
+const VALID_TECHNICAL_ACTION_MODES = ["contact_directly", "write_opinion_for_sales", "coordinate_with_workshop", "escalate_management"] as const;
 const VALID_TRANSFER_DECISIONS = ["sales", "workshop", "management", "parts", "keep_with_technical"] as const;
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -540,6 +551,7 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
   const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
   const technicalCategory = asNullableString(payload.technicalCategory);
   const technicalPriority = asNullableString(payload.technicalPriority) ?? "medium";
+  const technicalActionMode = asNullableString(payload.technicalActionMode) ?? "write_opinion_for_sales";
   const transferDecision = asNullableString(payload.transferDecision);
 
   if (!status || !VALID_TECHNICAL_CASE_STATUSES.includes(status as (typeof VALID_TECHNICAL_CASE_STATUSES)[number])) {
@@ -552,6 +564,10 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
 
   if (!VALID_TECHNICAL_PRIORITIES.includes(technicalPriority as (typeof VALID_TECHNICAL_PRIORITIES)[number])) {
     return { success: false, error: "أولوية الحالة غير صحيحة" };
+  }
+
+  if (!VALID_TECHNICAL_ACTION_MODES.includes(technicalActionMode as (typeof VALID_TECHNICAL_ACTION_MODES)[number])) {
+    return { success: false, error: "أسلوب التعامل الفني غير صحيح" };
   }
 
   if (transferDecision && !VALID_TRANSFER_DECISIONS.includes(transferDecision as (typeof VALID_TRANSFER_DECISIONS)[number])) {
@@ -568,6 +584,7 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
       status,
       technicalCategory,
       technicalPriority,
+      technicalActionMode,
       transferDecision,
       knowledgeNotes: asNullableString(payload.knowledgeNotes),
       notes: asNullableString(payload.notes),
@@ -743,6 +760,7 @@ async function maybeCreateTechnicalTransferTask(params: {
   decision: UpdateTechnicalCaseInput["transferDecision"];
   technicalCategory: string | null;
   technicalPriority: string;
+  technicalActionMode: string;
   knowledgeNotes: string | null;
   notes: string | null;
   nextFollowUpAt: string | null;
@@ -772,6 +790,14 @@ async function maybeCreateTechnicalTransferTask(params: {
   const leadTypeLabel = params.leadType === "workshop" ? "ورشة" : "عميل";
   const categoryLabel = params.technicalCategory ?? "غير محدد";
   const priorityLabel = params.technicalPriority ?? "medium";
+  const actionModeLabel =
+    params.technicalActionMode === "contact_directly"
+      ? "الخبير سيتواصل مباشرة"
+      : params.technicalActionMode === "coordinate_with_workshop"
+        ? "تنسيق مباشر مع ورشة"
+        : params.technicalActionMode === "escalate_management"
+          ? "تصعيد للإدارة"
+          : "رأي فني للمبيعات";
 
   const [createdTask] = await db
     .insert(employeeTasksTable)
@@ -788,6 +814,7 @@ async function maybeCreateTechnicalTransferTask(params: {
         `نوع السجل: ${leadTypeLabel}`,
         `التصنيف الفني: ${categoryLabel}`,
         `الأولوية: ${priorityLabel}`,
+        `أسلوب التعامل الفني: ${actionModeLabel}`,
         params.notes ? `ملاحظات الخبير الفني: ${params.notes}` : null,
         params.knowledgeNotes ? `سجل المعرفة الفنية: ${params.knowledgeNotes}` : null,
       ]
@@ -1103,6 +1130,7 @@ router.get(
         status: leadsTable.status,
         technicalCategory: leadsTable.technicalCategory,
         technicalPriority: leadsTable.technicalPriority,
+        technicalActionMode: leadsTable.technicalActionMode,
         transferDecision: leadsTable.transferDecision,
         knowledgeNotes: leadsTable.knowledgeNotes,
         notes: leadsTable.notes,
@@ -1632,6 +1660,7 @@ router.patch(
         status: parsed.data.status,
         technicalCategory: parsed.data.technicalCategory,
         technicalPriority: parsed.data.technicalPriority,
+        technicalActionMode: parsed.data.technicalActionMode,
         transferDecision: parsed.data.transferDecision,
         knowledgeNotes: parsed.data.knowledgeNotes,
         notes: parsed.data.notes,
@@ -1646,6 +1675,7 @@ router.patch(
         status: leadsTable.status,
         technicalCategory: leadsTable.technicalCategory,
         technicalPriority: leadsTable.technicalPriority,
+        technicalActionMode: leadsTable.technicalActionMode,
         transferDecision: leadsTable.transferDecision,
         knowledgeNotes: leadsTable.knowledgeNotes,
         notes: leadsTable.notes,
@@ -1662,6 +1692,7 @@ router.patch(
       decision: parsed.data.transferDecision,
       technicalCategory: parsed.data.technicalCategory,
       technicalPriority: parsed.data.technicalPriority,
+      technicalActionMode: parsed.data.technicalActionMode,
       knowledgeNotes: parsed.data.knowledgeNotes,
       notes: parsed.data.notes,
       nextFollowUpAt: parsed.data.nextFollowUpAt,

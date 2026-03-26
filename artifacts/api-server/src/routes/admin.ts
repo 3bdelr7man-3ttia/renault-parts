@@ -1,11 +1,78 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq, count, sum, sql, gte, lte, and, desc, isNotNull } from "drizzle-orm";
-import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable, workshopPricingTable } from "@workspace/db";
+import { eq, count, sum, sql, gte, lte, and, desc, isNotNull, inArray, or } from "drizzle-orm";
+import { db, usersTable, ordersTable, packagesTable, workshopsTable, reviewsTable, partsTable, expensesTable, workshopApplicationsTable, appointmentsTable, workshopPricingTable, leadsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { UpdateOrderStatusBody, UpdateUserRoleBody, UpdatePackageBody, CreateWorkshopBody, UpdateWorkshopBody, ReplyToReviewBody } from "@workspace/api-zod";
 import { normalizeEmployeeRole, normalizeRole, requireRolePermission } from "../lib/permissions";
 
 const router: IRouter = Router();
+
+router.get("/admin/technical-overview", requireAuth, requireRolePermission("reports.financial", "هذه الصفحة متاحة للمديرين ومديري الفرق فقط"), async (_req, res): Promise<void> => {
+  const technicalEmployees = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(and(eq(usersTable.role, "employee"), eq(usersTable.employeeRole, "technical_expert")));
+
+  const technicalEmployeeIds = technicalEmployees.map((employee) => employee.id);
+  const technicalScope = technicalEmployeeIds.length
+    ? or(isNotNull(leadsTable.technicalCategory), inArray(leadsTable.assignedEmployeeId, technicalEmployeeIds))
+    : isNotNull(leadsTable.technicalCategory);
+
+  const [totalCasesRow] = await db
+    .select({ count: count() })
+    .from(leadsTable)
+    .where(technicalScope);
+
+  const [returnsRow] = await db
+    .select({ count: count() })
+    .from(leadsTable)
+    .where(and(technicalScope, eq(leadsTable.technicalCategory, "parts_return")));
+
+  const [urgentRow] = await db
+    .select({ count: count() })
+    .from(leadsTable)
+    .where(and(technicalScope, inArray(leadsTable.technicalPriority, ["high", "critical"])));
+
+  const [pendingTransferRow] = await db
+    .select({ count: count() })
+    .from(leadsTable)
+    .where(and(technicalScope, or(eq(leadsTable.transferDecision, "keep_with_technical"), sql`${leadsTable.transferDecision} is null`)));
+
+  const topCategories = await db
+    .select({
+      category: leadsTable.technicalCategory,
+      count: count(),
+    })
+    .from(leadsTable)
+    .where(and(technicalScope, isNotNull(leadsTable.technicalCategory)))
+    .groupBy(leadsTable.technicalCategory)
+    .orderBy(sql`count(*) DESC`)
+    .limit(5);
+
+  const topReturnedContexts = await db
+    .select({
+      name: leadsTable.name,
+      area: leadsTable.area,
+      count: count(),
+    })
+    .from(leadsTable)
+    .where(and(technicalScope, eq(leadsTable.technicalCategory, "parts_return")))
+    .groupBy(leadsTable.name, leadsTable.area)
+    .orderBy(sql`count(*) DESC`)
+    .limit(5);
+
+  res.json({
+    totalCases: totalCasesRow.count,
+    returnsCases: returnsRow.count,
+    urgentCases: urgentRow.count,
+    pendingTransferCases: pendingTransferRow.count,
+    topCategories: topCategories.map((item) => ({
+      category: item.category,
+      count: item.count,
+    })),
+    topReturnedContexts,
+  });
+});
 
 // GET /admin/stats
 router.get("/admin/stats", requireAuth, requireRolePermission("reports.financial", "هذه الصفحة متاحة للمديرين ومديري الفرق فقط"), async (req, res): Promise<void> => {

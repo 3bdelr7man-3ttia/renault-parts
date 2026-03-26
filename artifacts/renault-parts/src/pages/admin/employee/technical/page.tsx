@@ -15,6 +15,7 @@ type TechnicalCase = {
   status: string;
   technicalCategory?: string | null;
   technicalPriority?: string | null;
+  technicalActionMode?: string | null;
   transferDecision?: string | null;
   knowledgeNotes?: string | null;
   notes?: string | null;
@@ -30,6 +31,7 @@ type DraftState = {
   status: string;
   technicalCategory: string;
   technicalPriority: string;
+  technicalActionMode: string;
   transferDecision: string;
   knowledgeNotes: string;
   notes: string;
@@ -90,10 +92,17 @@ const transferDecisionOptions = [
   { value: "management", label: "رفع للإدارة" },
   { value: "parts", label: "رفع لمسؤول القطع" },
 ] as const;
+const technicalActionModeOptions = [
+  { value: "contact_directly", label: "الخبير يتواصل مباشرة" },
+  { value: "write_opinion_for_sales", label: "يكتب رأيًا للمبيعات" },
+  { value: "coordinate_with_workshop", label: "ينسق مع الورشة مباشرة" },
+  { value: "escalate_management", label: "يرفعها للإدارة" },
+] as const;
 
 const statusLabels = Object.fromEntries(statusOptions.map((status) => [status.value, status.label])) as Record<string, string>;
 const technicalCategoryLabels = Object.fromEntries(technicalCategoryOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 const priorityLabels = Object.fromEntries(priorityOptions.map((item) => [item.value, item.label])) as Record<string, string>;
+const technicalActionModeLabels = Object.fromEntries(technicalActionModeOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 const transferDecisionLabels = Object.fromEntries(transferDecisionOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 const sourceLabels: Record<string, string> = {
   sales_self: "جاءت من المبيعات",
@@ -131,6 +140,7 @@ const emptyDraft = (): DraftState => ({
   status: "new",
   technicalCategory: "other",
   technicalPriority: "medium",
+  technicalActionMode: "write_opinion_for_sales",
   transferDecision: "keep_with_technical",
   knowledgeNotes: "",
   notes: "",
@@ -181,6 +191,7 @@ export default function EmployeeTechnicalPage() {
             status: item.status ?? "new",
             technicalCategory: item.technicalCategory ?? "other",
             technicalPriority: item.technicalPriority ?? "medium",
+            technicalActionMode: item.technicalActionMode ?? "write_opinion_for_sales",
             transferDecision: item.transferDecision ?? "keep_with_technical",
             knowledgeNotes: item.knowledgeNotes ?? "",
             notes: item.notes ?? "",
@@ -240,6 +251,7 @@ export default function EmployeeTechnicalPage() {
           status: draft.status,
           technicalCategory: draft.technicalCategory || null,
           technicalPriority: draft.technicalPriority,
+          technicalActionMode: draft.technicalActionMode,
           transferDecision: draft.transferDecision || null,
           knowledgeNotes: draft.knowledgeNotes || null,
           notes: draft.notes || null,
@@ -303,6 +315,9 @@ export default function EmployeeTechnicalPage() {
             <span className="px-3 py-1.5 rounded-xl bg-[#F9E795]/10 border border-[#F9E795]/20 text-[#F9E795]">
               {priorityLabels[draft.technicalPriority] ?? "متوسطة"}
             </span>
+            <span className="px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+              {technicalActionModeLabels[draft.technicalActionMode] ?? "أسلوب غير محدد"}
+            </span>
             <span className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
               {transferDecisionLabels[draft.transferDecision] ?? "بدون قرار"}
             </span>
@@ -346,6 +361,20 @@ export default function EmployeeTechnicalPage() {
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
             >
               {priorityOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-[#111826]">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/50 text-xs font-bold mb-2">أسلوب التعامل الفني</label>
+            <select
+              value={draft.technicalActionMode}
+              onChange={(event) => updateDraft(item.id, { technicalActionMode: event.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+            >
+              {technicalActionModeOptions.map((option) => (
                 <option key={option.value} value={option.value} className="bg-[#111826]">
                   {option.label}
                 </option>

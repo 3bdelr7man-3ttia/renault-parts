@@ -29,6 +29,10 @@ type TaskFormState = {
     | "meeting"
     | "data_entry"
     | "issue_resolution"
+    | "technical_review"
+    | "expert_opinion"
+    | "parts_return_review"
+    | "workshop_support"
     | "quotation"
     | "collection"
     | "field_follow_up";
@@ -53,6 +57,10 @@ const taskTypes = [
   { value: "meeting", label: "اجتماع" },
   { value: "data_entry", label: "إدخال بيانات" },
   { value: "issue_resolution", label: "حل مشكلة" },
+  { value: "technical_review", label: "مراجعة فنية" },
+  { value: "expert_opinion", label: "رأي خبير" },
+  { value: "parts_return_review", label: "مراجعة مرتجع" },
+  { value: "workshop_support", label: "دعم ورشة" },
   { value: "quotation", label: "عرض سعر" },
   { value: "collection", label: "تحصيل/إغلاق" },
   { value: "field_follow_up", label: "متابعة ميدانية" },
@@ -69,6 +77,27 @@ const taskStatusOptions = [
 const taskTypeLabels = Object.fromEntries(taskTypes.map((type) => [type.value, type.label])) as Record<string, string>;
 const taskStatusLabels = Object.fromEntries(taskStatusOptions.map((status) => [status.value, status.label])) as Record<string, string>;
 
+function getTaskTypesForEmployeeRole(employeeRole?: string | null) {
+  if (employeeRole === "technical_expert") {
+    return taskTypes.filter((type) =>
+      ["technical_review", "expert_opinion", "issue_resolution", "parts_return_review", "workshop_support", "follow_up"].includes(type.value),
+    );
+  }
+  if (employeeRole === "data_entry") {
+    return taskTypes.filter((type) =>
+      ["data_entry", "follow_up", "quotation"].includes(type.value),
+    );
+  }
+  if (employeeRole === "marketing_tech") {
+    return taskTypes.filter((type) =>
+      ["meeting", "follow_up", "data_entry"].includes(type.value),
+    );
+  }
+  return taskTypes.filter((type) =>
+    ["call", "visit", "follow_up", "whatsapp", "meeting", "quotation", "collection", "field_follow_up"].includes(type.value),
+  );
+}
+
 function ownershipMeta(source?: "self_created" | "assigned") {
   if (source === "self_created") {
     return { label: "أنشأتها بنفسك", className: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" };
@@ -77,7 +106,7 @@ function ownershipMeta(source?: "self_created" | "assigned") {
 }
 
 export default function EmployeeTasksPage() {
-  const { token, hasPermission } = useAuth();
+  const { token, hasPermission, user } = useAuth();
   const { toast } = useToast();
 
   const [data, setData] = React.useState<SalesTask[]>([]);
@@ -89,8 +118,18 @@ export default function EmployeeTasksPage() {
   const [form, setForm] = React.useState<TaskFormState>(emptyTaskForm);
 
   const canCreate = hasPermission("employee.tasks.create_own");
+  const availableTaskTypes = React.useMemo(() => getTaskTypesForEmployeeRole(user?.employeeRole), [user?.employeeRole]);
   const selfCreatedCount = data.filter((task) => task.ownershipSource === "self_created").length;
   const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
+
+  React.useEffect(() => {
+    if (!availableTaskTypes.some((type) => type.value === form.taskType)) {
+      setForm((prev) => ({
+        ...prev,
+        taskType: availableTaskTypes[0]?.value ?? "call",
+      }));
+    }
+  }, [availableTaskTypes, form.taskType]);
 
   const loadTasks = React.useCallback(async () => {
     if (!token) {
@@ -376,7 +415,7 @@ export default function EmployeeTasksPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="عنوان المهمة" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
               <select className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" value={form.taskType} onChange={(e) => setForm((prev) => ({ ...prev, taskType: e.target.value as TaskFormState["taskType"] }))}>
-                {taskTypes.map((type) => (
+                {availableTaskTypes.map((type) => (
                   <option key={type.value} value={type.value} className="bg-[#111826]">
                     {type.label}
                   </option>
