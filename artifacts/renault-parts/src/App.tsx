@@ -43,6 +43,7 @@ import JoinWorkshop from "@/pages/JoinWorkshop";
 import EmployeeDashboardPage from "@/pages/admin/employee/dashboard/page";
 import EmployeeCustomersPage from "@/pages/admin/employee/customers/page";
 import EmployeeWorkshopsPage from "@/pages/admin/employee/workshops/page";
+import EmployeeTasksPage from "@/pages/admin/employee/tasks/page";
 import { evaluateRouteAccess } from "../middleware";
 
 // Workshop Portal Pages
@@ -152,6 +153,7 @@ function Router() {
               <Route path="/admin/employee/dashboard" component={EmployeeDashboardPage} />
               <Route path="/admin/employee/customers" component={EmployeeCustomersPage} />
               <Route path="/admin/employee/workshops" component={EmployeeWorkshopsPage} />
+              <Route path="/admin/employee/tasks" component={EmployeeTasksPage} />
               <Route path="/admin/orders" component={AdminOrders} />
               <Route path="/admin/packages" component={AdminPackages} />
               <Route path="/admin/workshops" component={AdminWorkshops} />

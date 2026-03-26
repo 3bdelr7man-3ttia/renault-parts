@@ -12,6 +12,7 @@ export type Permission =
   | "sales.dashboard.view"
   | "sales.customers.view_own"
   | "sales.workshops.view_own"
+  | "sales.tasks.view_own"
   | "parts.create"
   | "parts.edit"
   | "packages.create"
@@ -25,7 +26,7 @@ export type Permission =
   | "workshops.manage";
 
 export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">> = {
-  sales: ["sales.dashboard.view", "sales.customers.view_own", "sales.workshops.view_own", "customers.contact"],
+  sales: ["sales.dashboard.view", "sales.customers.view_own", "sales.workshops.view_own", "sales.tasks.view_own", "customers.contact"],
   data_entry: ["parts.create", "parts.edit", "packages.create", "packages.edit", "cars.create", "cars.edit"],
   customer_service: ["orders.view", "appointments.view", "reviews.view", "customers.view", "customers.contact"],
   manager: ["*"],

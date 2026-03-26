@@ -1,7 +1,9 @@
 import {
   appointmentsTable,
   db,
+  employeeTasksTable,
   expensesTable,
+  leadsTable,
   ordersTable,
   packagePartsTable,
   packagesTable,
@@ -60,6 +62,40 @@ type SeedUser = {
   carModel?: string | null;
   carYear?: number | null;
   address?: string | null;
+};
+
+type SeedLead = {
+  type: "customer" | "workshop";
+  name: string;
+  contactPerson?: string | null;
+  phone: string;
+  email?: string | null;
+  area: string;
+  address?: string | null;
+  carModel?: string | null;
+  carYear?: number | null;
+  source: string;
+  status: string;
+  assignedEmployeeId: number;
+  createdByUserId: number;
+  lastContactAt?: Date | null;
+  nextFollowUpAt?: Date | null;
+  notes?: string | null;
+  convertedOrderId?: number | null;
+  convertedWorkshopId?: number | null;
+};
+
+type SeedEmployeeTask = {
+  employeeId: number;
+  leadId?: number | null;
+  title: string;
+  taskType: string;
+  area?: string | null;
+  dueAt: Date;
+  status: string;
+  result?: string | null;
+  notes?: string | null;
+  createdByUserId: number;
 };
 
 const seedPackages: SeedPackage[] = [
@@ -355,6 +391,42 @@ async function ensureWorkshopApplication(values: typeof workshopApplicationsTabl
   return inserted.id;
 }
 
+async function upsertLead(lead: SeedLead) {
+  const existing = await db.query.leadsTable.findFirst({
+    where: and(eq(leadsTable.type, lead.type), eq(leadsTable.phone, lead.phone)),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(leadsTable)
+      .set(lead)
+      .where(eq(leadsTable.id, existing.id))
+      .returning({ id: leadsTable.id });
+    return updated.id;
+  }
+
+  const [inserted] = await db.insert(leadsTable).values(lead).returning({ id: leadsTable.id });
+  return inserted.id;
+}
+
+async function upsertEmployeeTask(task: SeedEmployeeTask) {
+  const existing = await db.query.employeeTasksTable.findFirst({
+    where: and(eq(employeeTasksTable.employeeId, task.employeeId), eq(employeeTasksTable.title, task.title)),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(employeeTasksTable)
+      .set(task)
+      .where(eq(employeeTasksTable.id, existing.id))
+      .returning({ id: employeeTasksTable.id });
+    return updated.id;
+  }
+
+  const [inserted] = await db.insert(employeeTasksTable).values(task).returning({ id: employeeTasksTable.id });
+  return inserted.id;
+}
+
 async function seed() {
   console.log("🌱 Seeding RenoPack staging data...");
 
@@ -433,6 +505,7 @@ async function seed() {
     employeeRole: "sales",
     area: "سموحة",
   });
+  const salesUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "sales@renaultparts.eg") });
 
   await upsertUser({
     name: "موظف إدخال بيانات",
@@ -464,6 +537,10 @@ async function seed() {
     area: "سموحة",
   });
   console.log("✅ Demo users ready");
+
+  if (!salesUser) {
+    throw new Error("Sales employee was not created");
+  }
 
   const pkg20kId = packageIds.get("pkg-20k");
   const pkg40kId = packageIds.get("pkg-40k");
@@ -550,7 +627,138 @@ async function seed() {
     notes: "طلب انضمام تجريبي لاختبار شاشة الإدارة.",
   });
 
-  console.log("✅ Orders, appointment, review, expense, and workshop application ready");
+  const now = new Date();
+  const inTwoHours = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const tomorrowMorning = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  tomorrowMorning.setHours(10, 0, 0, 0);
+  const tomorrowAfternoon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  tomorrowAfternoon.setHours(14, 30, 0, 0);
+
+  const assignedCustomerLeadId = await upsertLead({
+    type: "customer",
+    name: "أحمد رمضان",
+    phone: "01020000001",
+    email: "ahmad.ramadan@example.com",
+    area: "سيدي بشر",
+    address: "شارع 45، سيدي بشر",
+    carModel: "Renault Logan",
+    carYear: 2018,
+    source: "data_entry",
+    status: "follow_up_later",
+    assignedEmployeeId: salesUser.id,
+    createdByUserId: adminUserId,
+    lastContactAt: now,
+    nextFollowUpAt: inTwoHours,
+    notes: "طلب عرض سعر لباكدج 40 ألف كم، ويفضل التواصل بعد المغرب.",
+  });
+
+  await upsertLead({
+    type: "customer",
+    name: "محمد جابر",
+    phone: "01020000002",
+    email: "m.gaber@example.com",
+    area: "سموحة",
+    address: "ميدان فيكتور عمانويل",
+    carModel: "Renault Duster",
+    carYear: 2020,
+    source: "sales_walkin",
+    status: "new",
+    assignedEmployeeId: salesUser.id,
+    createdByUserId: salesUser.id,
+    nextFollowUpAt: tomorrowMorning,
+    notes: "عميل جديد يحتاج تحديد موعد مكالمة أولى.",
+  });
+
+  await upsertLead({
+    type: "customer",
+    name: "كريم السعيد",
+    phone: "01020000003",
+    email: "karim.elsaeed@example.com",
+    area: "لوران",
+    address: "شارع مصطفى كامل",
+    carModel: "Renault Megane",
+    carYear: 2019,
+    source: "landing_page",
+    status: "converted_to_order",
+    assignedEmployeeId: salesUser.id,
+    createdByUserId: adminUserId,
+    lastContactAt: now,
+    nextFollowUpAt: null,
+    convertedOrderId: confirmedOrderId,
+    notes: "تم تحويله إلى طلب فعلي بعد مكالمة متابعة ناجحة.",
+  });
+
+  const assignedWorkshopLeadId = await upsertLead({
+    type: "workshop",
+    name: "ورشة النخبة",
+    contactPerson: "م. حسام",
+    phone: "01030000001",
+    email: "elite.workshop@example.com",
+    area: "ميامي",
+    address: "شارع جمال عبد الناصر، ميامي",
+    source: "sales_visit",
+    status: "negotiation",
+    assignedEmployeeId: salesUser.id,
+    createdByUserId: salesUser.id,
+    lastContactAt: now,
+    nextFollowUpAt: tomorrowAfternoon,
+    notes: "الورشة مهتمة بالشراكة وتطلب تفاصيل العمولة وسرعة التوريد.",
+  });
+
+  await upsertLead({
+    type: "workshop",
+    name: "جراج الصفوة",
+    contactPerson: "أ. وليد",
+    phone: "01030000002",
+    email: "safwa.garage@example.com",
+    area: "العصافرة",
+    address: "شارع 30، العصافرة",
+    source: "data_entry",
+    status: "converted_to_application",
+    assignedEmployeeId: salesUser.id,
+    createdByUserId: adminUserId,
+    lastContactAt: now,
+    nextFollowUpAt: null,
+    convertedWorkshopId: primaryWorkshopId,
+    notes: "تمت المتابعة ورفعها كحالة انضمام، وهي الآن تحت متابعة الإدارة.",
+  });
+
+  await upsertEmployeeTask({
+    employeeId: salesUser.id,
+    leadId: assignedCustomerLeadId,
+    title: "متابعة عرض سعر أحمد رمضان",
+    taskType: "call",
+    area: "سيدي بشر",
+    dueAt: inTwoHours,
+    status: "pending",
+    notes: "تأكيد اهتمامه بباكدج 40 ألف كم وإرسال عرض مناسب.",
+    createdByUserId: adminUserId,
+  });
+
+  await upsertEmployeeTask({
+    employeeId: salesUser.id,
+    leadId: assignedWorkshopLeadId,
+    title: "زيارة ورشة النخبة",
+    taskType: "visit",
+    area: "ميامي",
+    dueAt: tomorrowAfternoon,
+    status: "in_progress",
+    notes: "مراجعة احتياجات الورشة والاتفاق على خطوات الانضمام.",
+    createdByUserId: adminUserId,
+  });
+
+  await upsertEmployeeTask({
+    employeeId: salesUser.id,
+    title: "تجهيز كشف متابعة اليوم",
+    taskType: "follow_up",
+    area: "سموحة",
+    dueAt: tomorrowMorning,
+    status: "pending",
+    notes: "ترتيب العملاء المطلوب التواصل معهم قبل نهاية اليوم.",
+    createdByUserId: adminUserId,
+  });
+
+  console.log("✅ Orders, appointment, review, expense, workshop application, and sales workspace data ready");
   console.log("🔐 Admin: admin@renaultparts.eg / admin123");
   console.log("👤 Customer: customer@renaultparts.eg / customer123");
   console.log("🛠️ Workshop: workshop@renaultparts.eg / workshop123");

@@ -12,6 +12,7 @@ import adminRouter from "./admin";
 import paymentRouter from "./payment";
 import appointmentsRouter from "./appointments";
 import workshopRouter from "./workshop";
+import salesEmployeeRouter from "./salesEmployee";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(adminRouter);
 router.use(paymentRouter);
 router.use(appointmentsRouter);
 router.use(workshopRouter);
+router.use(salesEmployeeRouter);
 
 export default router;

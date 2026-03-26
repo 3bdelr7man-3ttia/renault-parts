@@ -9,6 +9,7 @@ export type Permission =
   | "sales.dashboard.view"
   | "sales.customers.view_own"
   | "sales.workshops.view_own"
+  | "sales.tasks.view_own"
   | "parts.create"
   | "parts.edit"
   | "packages.create"
@@ -22,7 +23,7 @@ export type Permission =
   | "workshops.manage";
 
 export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">> = {
-  sales: ["sales.dashboard.view", "sales.customers.view_own", "sales.workshops.view_own", "customers.contact"],
+  sales: ["sales.dashboard.view", "sales.customers.view_own", "sales.workshops.view_own", "sales.tasks.view_own", "customers.contact"],
   data_entry: ["parts.create", "parts.edit", "packages.create", "packages.edit", "cars.create", "cars.edit"],
   customer_service: ["orders.view", "appointments.view", "reviews.view", "customers.view", "customers.contact"],
   manager: ["*"],
@@ -56,6 +57,7 @@ const ADMIN_ROUTE_RULES: Array<{ match: RegExp; rule: AdminRouteRule }> = [
   { match: /^\/admin\/employee\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: true } },
   { match: /^\/admin\/employee\/customers\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.customers.view_own" } },
   { match: /^\/admin\/employee\/workshops\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.workshops.view_own" } },
+  { match: /^\/admin\/employee\/tasks\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.tasks.view_own" } },
   { match: /^\/admin\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/orders(\/.*)?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "orders.view" } },
@@ -105,6 +107,7 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
       "sales.dashboard.view",
       "sales.customers.view_own",
       "sales.workshops.view_own",
+      "sales.tasks.view_own",
       "orders.view",
       "orders.update_status",
       "customers.view",
