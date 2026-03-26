@@ -41,9 +41,10 @@ const ROLE_COLORS: Record<string, string> = {
   workshop: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
 };
 const EMPLOYEE_ROLE_LABELS: Record<EmployeeRole, string> = {
-  sales: 'مبيعات',
-  data_entry: 'إدخال بيانات',
-  customer_service: 'خدمة العملاء',
+  sales: 'مبيعات ومتابعة',
+  data_entry: 'داتا وقطع',
+  technical_expert: 'خبير فني',
+  marketing_tech: 'تسويق وتقنية',
   manager: 'مدير فريق',
 };
 

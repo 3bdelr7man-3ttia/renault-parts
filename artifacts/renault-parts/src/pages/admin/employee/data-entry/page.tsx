@@ -29,7 +29,7 @@ type DataEntryLead = {
 type Assignee = {
   id: number;
   name: string;
-  employeeRole?: "sales" | "customer_service" | "manager" | null;
+  employeeRole?: "sales" | "technical_expert" | "marketing_tech" | "manager" | null;
 };
 
 type LeadFormState = {
@@ -63,8 +63,9 @@ const emptyForm: LeadFormState = {
 };
 
 const employeeRoleLabels: Record<NonNullable<Assignee["employeeRole"]>, string> = {
-  sales: "مبيعات",
-  customer_service: "خدمة العملاء",
+  sales: "مبيعات ومتابعة",
+  technical_expert: "خبير فني",
+  marketing_tech: "تسويق وتقنية",
   manager: "مدير فريق",
 };
 
@@ -190,7 +191,7 @@ export default function EmployeeDataEntryPage() {
             <p className="text-[#F9E795] text-sm font-bold mb-2">إدخال البيانات</p>
             <h1 className="text-3xl font-black text-white mb-3">مساحة تجهيز العملاء والورش</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
-              هذه المساحة مخصصة لإدخال العملاء والورش الجديدة، وتجهيز بياناتها، ثم تمريرها إلى المبيعات أو خدمة العملاء أو مدير الفريق حسب الحالة.
+              هذه المساحة مخصصة لإدخال العملاء والورش الجديدة، وتجهيز بياناتها، ثم تمريرها إلى المبيعات أو الخبير الفني أو مدير الفريق حسب الحالة.
             </p>
           </div>
           <button

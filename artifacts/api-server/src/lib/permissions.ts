@@ -2,7 +2,7 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest } from "./auth";
 
 export type AppRole = "customer" | "employee" | "workshop_owner" | "workshop" | "admin";
-export type EmployeeRole = "sales" | "data_entry" | "customer_service" | "manager";
+export type EmployeeRole = "sales" | "data_entry" | "technical_expert" | "marketing_tech" | "manager";
 export type Permission =
   | "orders.view"
   | "orders.update_status"
@@ -66,17 +66,24 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "cars.create",
     "cars.edit",
   ],
-  customer_service: [
+  technical_expert: [
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",
     "employee.reports.view_own",
     "employee.reports.create_own",
-    "orders.view",
     "appointments.view",
     "reviews.view",
-    "customers.view",
-    "customers.contact",
+    "workshops.manage",
+  ],
+  marketing_tech: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "reports.sales",
+    "reviews.view",
   ],
   manager: ["*"],
 };
@@ -88,7 +95,8 @@ export function normalizeRole(role?: string | null): AppRole | "unknown" {
 }
 
 export function normalizeEmployeeRole(employeeRole?: string | null): EmployeeRole | null {
-  if (employeeRole === "sales" || employeeRole === "data_entry" || employeeRole === "customer_service" || employeeRole === "manager") {
+  if (employeeRole === "customer_service") return "sales";
+  if (employeeRole === "sales" || employeeRole === "data_entry" || employeeRole === "technical_expert" || employeeRole === "marketing_tech" || employeeRole === "manager") {
     return employeeRole;
   }
   return null;

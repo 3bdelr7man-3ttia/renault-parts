@@ -9,7 +9,7 @@ type TeamEmployee = {
   phone?: string | null;
   email?: string | null;
   role?: string | null;
-  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
+  employeeRole?: "sales" | "data_entry" | "technical_expert" | "marketing_tech" | "manager" | null;
   area?: string | null;
 };
 
@@ -99,9 +99,10 @@ const taskStatusLabels: Record<string, string> = {
 };
 
 const employeeRoleLabels: Record<NonNullable<TeamEmployee["employeeRole"]>, string> = {
-  sales: "موظف مبيعات",
-  data_entry: "إدخال بيانات",
-  customer_service: "خدمة العملاء",
+  sales: "مبيعات ومتابعة",
+  data_entry: "داتا وقطع",
+  technical_expert: "خبير فني",
+  marketing_tech: "تسويق وتقنية",
   manager: "مدير فريق",
 };
 
@@ -618,7 +619,7 @@ export default function EmployeeTeamPage() {
                           </button>
                         </div>
                         <p className="text-white/35 text-xs">
-                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · يمكن توجيه الحالة إلى المبيعات أو خدمة العملاء أو الإدخال حسب الحاجة
+                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · يمكن توجيه الحالة إلى المبيعات والمتابعة أو الخبير الفني أو إدخال البيانات حسب الحاجة
                         </p>
                       </div>
                     </div>

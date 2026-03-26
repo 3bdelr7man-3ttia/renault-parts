@@ -78,7 +78,7 @@ export interface User {
   area?: string | null;
   role: string;
   /** @nullable */
-  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
+  employeeRole?: "sales" | "data_entry" | "technical_expert" | "marketing_tech" | "manager" | null;
   /** @nullable */
   workshopId?: number | null;
   createdAt: string;
@@ -381,7 +381,7 @@ export const UpdateUserRoleBodyRole = {
 export interface UpdateUserRoleBody {
   role: UpdateUserRoleBodyRole;
   /** @nullable */
-  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
+  employeeRole?: "sales" | "data_entry" | "technical_expert" | "marketing_tech" | "manager" | null;
 }
 
 export interface UpdatePackageBody {

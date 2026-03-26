@@ -548,15 +548,26 @@ async function seed() {
   const dataEntryUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "dataentry@renaultparts.eg") });
 
   await upsertUser({
-    name: "خدمة العملاء",
+    name: "خبير فني",
     phone: "01010000012",
-    email: "support@renaultparts.eg",
-    password: "support123",
+    email: "technical@renaultparts.eg",
+    password: "technical123",
     role: "employee",
-    employeeRole: "customer_service",
+    employeeRole: "technical_expert",
     area: "ميامي",
   });
-  const supportUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "support@renaultparts.eg") });
+  const technicalUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "technical@renaultparts.eg") });
+
+  await upsertUser({
+    name: "تسويق وتقنية",
+    phone: "01010000014",
+    email: "marketing@renaultparts.eg",
+    password: "marketing123",
+    role: "employee",
+    employeeRole: "marketing_tech",
+    area: "الإسكندرية",
+  });
+  const marketingUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "marketing@renaultparts.eg") });
 
   await upsertUser({
     name: "مدير فريق",
@@ -570,7 +581,7 @@ async function seed() {
   const managerUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "manager@renaultparts.eg") });
   console.log("✅ Demo users ready");
 
-  if (!salesUser || !dataEntryUser || !supportUser || !managerUser) {
+  if (!salesUser || !dataEntryUser || !technicalUser || !marketingUser || !managerUser) {
     throw new Error("Sales workspace demo employees were not created");
   }
 
@@ -729,11 +740,11 @@ async function seed() {
     carYear: 2017,
     source: "data_entry",
     status: "attempted_contact",
-    assignedEmployeeId: supportUser.id,
+    assignedEmployeeId: technicalUser.id,
     createdByUserId: dataEntryUser.id,
     lastContactAt: now,
     nextFollowUpAt: tomorrowMorning,
-    notes: "تحتاج متابعة من خدمة العملاء لتأكيد المشكلة قبل تحويلها للمبيعات.",
+    notes: "تحتاج متابعة فنية أولية لتأكيد المشكلة قبل تحويلها للمبيعات.",
   });
 
   await upsertLead({
@@ -816,11 +827,11 @@ async function seed() {
     address: "شارع بورسعيد، كامب شيزار",
     source: "data_entry",
     status: "follow_up_later",
-    assignedEmployeeId: supportUser.id,
+    assignedEmployeeId: technicalUser.id,
     createdByUserId: dataEntryUser.id,
     lastContactAt: now,
     nextFollowUpAt: tomorrowAfternoon,
-    notes: "الورشة بحاجة لشرح شروط الشراكة أولًا من خدمة العملاء قبل الإحالة لفريق المبيعات.",
+    notes: "الورشة بحاجة لشرح فني وتشغيلي أولًا قبل الإحالة لفريق المبيعات.",
   });
 
   await upsertEmployeeTask({
@@ -876,18 +887,18 @@ async function seed() {
     area: "سموحة",
     dueAt: tomorrowMorning,
     status: "pending",
-    notes: "إدخال البيانات مع تحديد الأولوية وتعيين الحالات العاجلة لخدمة العملاء.",
+    notes: "إدخال البيانات مع تحديد الأولوية وتعيين الحالات العاجلة للمبيعات أو الخبير الفني.",
     createdByUserId: managerUser.id,
   });
 
   await upsertEmployeeTask({
-    employeeId: supportUser.id,
+    employeeId: technicalUser.id,
     title: "متابعة الشكاوى المفتوحة من leads إدخال البيانات",
     taskType: "issue_resolution",
     area: "لوران",
     dueAt: tomorrowAfternoon,
     status: "pending",
-    notes: "التأكد من استكمال بيانات الحالات التي تحتاج دعمًا قبل تحويلها إلى المبيعات.",
+    notes: "التأكد من استكمال بيانات الحالات التي تحتاج دعمًا فنيًا قبل تحويلها إلى المبيعات.",
     createdByUserId: managerUser.id,
   });
 
@@ -898,7 +909,7 @@ async function seed() {
     area: "الإسكندرية",
     dueAt: tomorrowMorning,
     status: "in_progress",
-    notes: "مراجعة العملاء والورش غير المسندة وإعادة توزيعها على المبيعات وخدمة العملاء.",
+    notes: "مراجعة العملاء والورش غير المسندة وإعادة توزيعها على المبيعات والخبير الفني.",
     createdByUserId: adminUserId,
   });
 
@@ -917,23 +928,32 @@ async function seed() {
     summary: "تم إدخال دفعة جديدة من العملاء والورش مع تصنيفها وتوجيه جزء منها للفريق.",
     achievements: "إضافة سجلات جديدة من منطقة لوران وكامب شيزار وربطها بمسار المتابعة.",
     blockers: "بعض الأرقام تحتاج مراجعة بسبب نقص البيانات.",
-    nextSteps: "استكمال تدقيق الدفعة القادمة وتوزيع الحالات الساخنة على المبيعات وخدمة العملاء.",
+    nextSteps: "استكمال تدقيق الدفعة القادمة وتوزيع الحالات الساخنة على المبيعات أو الخبير الفني.",
   });
 
   await upsertEmployeeDailyReport({
-    employeeId: supportUser.id,
+    employeeId: technicalUser.id,
     reportDate: "2026-03-25",
-    summary: "تمت متابعة الحالات التي تحتاج خدمة عملاء وتم تحديث وضعها داخل النظام.",
-    achievements: "التواصل مع حالتين مفتوحتين وتأكيد بيانات التواصل ومواعيد المتابعة.",
+    summary: "تمت متابعة الحالات الفنية المفتوحة وتم تحديث وضعها داخل النظام.",
+    achievements: "مراجعة حالتين مفتوحتين وتأكيد البيانات الفنية ومواعيد المتابعة.",
     blockers: "عدد من الحالات يحتاج معلومات فنية إضافية من الورش.",
-    nextSteps: "إغلاق الحالات المكتملة ورفع غير المكتمل لمدير الفريق.",
+    nextSteps: "إغلاق الحالات المكتملة ورفع غير المكتمل لمدير الفريق أو تحويله للمبيعات.",
+  });
+
+  await upsertEmployeeDailyReport({
+    employeeId: marketingUser.id,
+    reportDate: "2026-03-25",
+    summary: "تمت مراجعة رسائل المتابعة التسويقية ولوحة النظام وتحديد عناصر التحسين.",
+    achievements: "تحديث أولويات المتابعة واقتراح تحسينات على رحلة التحويل داخل المنصة.",
+    blockers: "نقص بيانات كافية عن بعض الحملات ومصادر العملاء.",
+    nextSteps: "مراجعة مصادر العملاء وتحسين رسائل المتابعة وربطها بالتقارير.",
   });
 
   await upsertEmployeeDailyReport({
     employeeId: managerUser.id,
     reportDate: "2026-03-25",
     summary: "تم توزيع فرص اليوم ومراجعة أداء الفريق وتحديد أولويات اليوم التالي.",
-    achievements: "إسناد مهام جديدة للمبيعات وإدخال البيانات وخدمة العملاء.",
+    achievements: "إسناد مهام جديدة للمبيعات، والداتا، والخبرة الفنية.",
     blockers: "وجود فرص غير مكتملة البيانات تحتاج متابعة إضافية.",
     nextSteps: "إعادة توزيع الـ pipeline المفتوح ومراجعة التقارير اليومية صباحًا.",
   });
@@ -942,7 +962,7 @@ async function seed() {
   console.log("🔐 Admin: admin@renaultparts.eg / admin123");
   console.log("👤 Customer: customer@renaultparts.eg / customer123");
   console.log("🛠️ Workshop: workshop@renaultparts.eg / workshop123");
-  console.log("💼 Employees: sales / dataentry / support / manager @renaultparts.eg");
+  console.log("💼 Employees: sales / dataentry / technical / marketing / manager @renaultparts.eg");
   console.log("🎉 Staging seed complete!");
 }
 

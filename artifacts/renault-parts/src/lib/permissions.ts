@@ -1,5 +1,5 @@
 export type AppRole = "customer" | "employee" | "workshop_owner" | "workshop" | "admin";
-export type EmployeeRole = "sales" | "data_entry" | "customer_service" | "manager";
+export type EmployeeRole = "sales" | "data_entry" | "technical_expert" | "marketing_tech" | "manager";
 export type Permission =
   | "orders.view"
   | "orders.update_status"
@@ -63,17 +63,24 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "cars.create",
     "cars.edit",
   ],
-  customer_service: [
+  technical_expert: [
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",
     "employee.reports.view_own",
     "employee.reports.create_own",
-    "orders.view",
     "appointments.view",
     "reviews.view",
-    "customers.view",
-    "customers.contact",
+    "workshops.manage",
+  ],
+  marketing_tech: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "reports.sales",
+    "reviews.view",
   ],
   manager: ["*"],
 };
@@ -133,7 +140,8 @@ export function normalizeRole(role?: string | null): AppRole | "unknown" {
 }
 
 export function normalizeEmployeeRole(employeeRole?: string | null): EmployeeRole | null {
-  if (employeeRole === "sales" || employeeRole === "data_entry" || employeeRole === "customer_service" || employeeRole === "manager") {
+  if (employeeRole === "customer_service") return "sales";
+  if (employeeRole === "sales" || employeeRole === "data_entry" || employeeRole === "technical_expert" || employeeRole === "marketing_tech" || employeeRole === "manager") {
     return employeeRole;
   }
   return null;
@@ -184,6 +192,7 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
       "cars.edit",
       "appointments.view",
       "reviews.view",
+      "workshops.manage",
       ...MANAGER_ONLY_PERMISSIONS,
     ];
   }
@@ -216,9 +225,10 @@ export function getRoleLabel(role?: string | null, employeeRole?: string | null)
   if (normalizedRole === "customer") return "عميل";
   if (normalizedRole === "workshop_owner") return "صاحب ورشة";
   if (normalizedRole === "employee") {
-    if (normalizedEmployeeRole === "sales") return "موظف مبيعات";
-    if (normalizedEmployeeRole === "data_entry") return "موظف إدخال بيانات";
-    if (normalizedEmployeeRole === "customer_service") return "خدمة العملاء";
+    if (normalizedEmployeeRole === "sales") return "مبيعات ومتابعة";
+    if (normalizedEmployeeRole === "data_entry") return "داتا وقطع";
+    if (normalizedEmployeeRole === "technical_expert") return "خبير فني";
+    if (normalizedEmployeeRole === "marketing_tech") return "تسويق وتقنية";
     if (normalizedEmployeeRole === "manager") return "مدير فريق";
     return "موظف";
   }

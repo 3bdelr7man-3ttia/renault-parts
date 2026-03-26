@@ -41,7 +41,7 @@ type NavItem = {
   adminOnly?: boolean;
   employeeOnly?: boolean;
   permission?: Permission;
-  employeeRoles?: Array<'sales' | 'data_entry' | 'customer_service' | 'manager'>;
+  employeeRoles?: Array<'sales' | 'data_entry' | 'technical_expert' | 'marketing_tech' | 'manager'>;
 };
 
 const navItems: NavItem[] = [

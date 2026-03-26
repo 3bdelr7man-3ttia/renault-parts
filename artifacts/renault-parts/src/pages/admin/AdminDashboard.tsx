@@ -103,7 +103,7 @@ export default function AdminDashboard() {
           <h2 className="text-white text-lg font-black mb-3">Admin → Team Manager → Employees</h2>
           <p className="text-white/55 text-sm leading-7">
             الأدمن يحدد الأولويات العامة ويكلف مدير الفريق، ثم يقوم مدير الفريق بتوزيع العملاء والورش والمهام اليومية
-            على المبيعات وإدخال البيانات وخدمة العملاء.
+            على المبيعات والمتابعة، والداتا والقطع، والخبرات التشغيلية المتخصصة.
           </p>
         </div>
       </div>

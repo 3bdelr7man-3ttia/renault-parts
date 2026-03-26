@@ -553,15 +553,15 @@ async function ensureDataEntryAssignee(actor: AuthenticatedRequest["user"], empl
     return null;
   }
 
-  if (actor?.role === "admin" && ["manager", "sales", "customer_service"].includes(employee.employeeRole)) {
+  if (actor?.role === "admin" && ["manager", "sales", "technical_expert", "marketing_tech", "customer_service"].includes(employee.employeeRole)) {
     return employee;
   }
 
-  if (actor?.role === "employee" && actor.employeeRole === "manager" && ["sales", "customer_service"].includes(employee.employeeRole)) {
+  if (actor?.role === "employee" && actor.employeeRole === "manager" && ["sales", "technical_expert", "marketing_tech", "customer_service"].includes(employee.employeeRole)) {
     return employee;
   }
 
-  if (actor?.role === "employee" && actor.employeeRole === "data_entry" && ["sales", "customer_service"].includes(employee.employeeRole)) {
+  if (actor?.role === "employee" && actor.employeeRole === "data_entry" && ["sales", "technical_expert", "marketing_tech", "customer_service"].includes(employee.employeeRole)) {
     return employee;
   }
 
@@ -798,8 +798,8 @@ router.get(
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const allowedEmployeeRoles =
       req.user?.role === "admin"
-        ? ["manager", "sales", "data_entry", "customer_service"]
-        : ["sales", "data_entry", "customer_service"];
+        ? ["manager", "sales", "data_entry", "technical_expert", "marketing_tech", "customer_service"]
+        : ["sales", "data_entry", "technical_expert", "marketing_tech", "customer_service"];
 
     const rows = await db
       .select({
@@ -1314,7 +1314,10 @@ router.get(
   requireAuth,
   requireRolePermission("data_entry.leads.view", "هذه الصفحة متاحة لفريق إدخال البيانات فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const allowedRoles = req.user?.role === "admin" ? ["manager", "sales", "customer_service"] : ["sales", "customer_service"];
+    const allowedRoles =
+      req.user?.role === "admin"
+        ? ["manager", "sales", "technical_expert", "marketing_tech", "customer_service"]
+        : ["sales", "technical_expert", "marketing_tech", "customer_service"];
 
     const rows = await db
       .select({
