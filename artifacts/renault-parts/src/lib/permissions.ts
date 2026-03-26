@@ -279,9 +279,10 @@ export function getEmployeeHomePath(user: AppUser | null | undefined): string {
   if (!user) return "/";
   if (isAdminRole(user.role)) return "/admin";
   if (isEmployeeRole(user.role)) {
-    return normalizeEmployeeRole(user.employeeRole) === "sales"
-      ? "/admin/employee/dashboard"
-      : "/admin/employee/dashboard";
+    const employeeRole = normalizeEmployeeRole(user.employeeRole);
+    if (employeeRole === "technical_expert") return "/admin/employee/technical";
+    if (employeeRole === "data_entry") return "/admin/employee/data-entry";
+    return "/admin/employee/dashboard";
   }
   if (isWorkshopRole(user.role)) return "/workshop";
   return "/";

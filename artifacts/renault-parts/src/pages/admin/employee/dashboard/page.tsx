@@ -323,8 +323,6 @@ export default function EmployeeDashboardPage() {
       hasPermission("technical.cases.view_own") ? { href: "/admin/employee/technical", label: "الحالات الفنية", icon: Stethoscope } : null,
       hasPermission("employee.tasks.view_own") ? { href: "/admin/employee/tasks", label: "مهامي", icon: ClipboardList } : null,
       hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "تقاريري اليومية", icon: FileText } : null,
-      hasPermission("appointments.view") ? { href: "/admin/appointments", label: "المواعيد", icon: Wrench } : null,
-      hasPermission("reviews.view") ? { href: "/admin/reviews", label: "التقييمات", icon: Building2 } : null,
     ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Stethoscope }>;
 
     return (
