@@ -77,6 +77,10 @@ export interface User {
   /** @nullable */
   area?: string | null;
   role: string;
+  /** @nullable */
+  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
+  /** @nullable */
+  workshopId?: number | null;
   createdAt: string;
 }
 
@@ -369,11 +373,15 @@ export type UpdateUserRoleBodyRole =
 
 export const UpdateUserRoleBodyRole = {
   customer: "customer",
+  employee: "employee",
+  workshop_owner: "workshop_owner",
   admin: "admin",
 } as const;
 
 export interface UpdateUserRoleBody {
   role: UpdateUserRoleBodyRole;
+  /** @nullable */
+  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
 }
 
 export interface UpdatePackageBody {

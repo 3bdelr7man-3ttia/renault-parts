@@ -69,6 +69,8 @@ export const LoginUserResponse = zod.object({
     address: zod.string().nullish(),
     area: zod.string().nullish(),
     role: zod.string(),
+    employeeRole: zod.enum(["sales", "data_entry", "customer_service", "manager"]).nullish(),
+    workshopId: zod.number().nullish(),
     createdAt: zod.date(),
   }),
   token: zod.string(),
@@ -100,6 +102,8 @@ export const GetCurrentUserResponse = zod.object({
   address: zod.string().nullish(),
   area: zod.string().nullish(),
   role: zod.string(),
+  employeeRole: zod.enum(["sales", "data_entry", "customer_service", "manager"]).nullish(),
+  workshopId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 
@@ -135,6 +139,8 @@ export const UpdateUserResponse = zod.object({
   address: zod.string().nullish(),
   area: zod.string().nullish(),
   role: zod.string(),
+  employeeRole: zod.enum(["sales", "data_entry", "customer_service", "manager"]).nullish(),
+  workshopId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 
@@ -564,7 +570,8 @@ export const UpdateUserRoleParams = zod.object({
 });
 
 export const UpdateUserRoleBody = zod.object({
-  role: zod.enum(["customer", "admin"]),
+  role: zod.enum(["customer", "employee", "workshop_owner", "admin"]),
+  employeeRole: zod.enum(["sales", "data_entry", "customer_service", "manager"]).nullish(),
 });
 
 export const UpdateUserRoleResponse = zod.object({
@@ -573,6 +580,9 @@ export const UpdateUserRoleResponse = zod.object({
   phone: zod.string().nullish(),
   email: zod.string().nullish(),
   role: zod.string(),
+  employeeRole: zod.enum(["sales", "data_entry", "customer_service", "manager"]).nullish(),
+  workshopId: zod.number().nullish(),
+  workshopName: zod.string().nullish(),
   carModel: zod.string().nullish(),
   carYear: zod.number().nullish(),
   area: zod.string().nullish(),
