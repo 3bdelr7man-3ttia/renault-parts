@@ -48,6 +48,7 @@ import EmployeeTeamPage from "@/pages/admin/employee/team/page";
 import EmployeeDataEntryPage from "@/pages/admin/employee/data-entry/page";
 import EmployeeReportsPage from "@/pages/admin/employee/reports/page";
 import EmployeeTechnicalPage from "@/pages/admin/employee/technical/page";
+import EmployeeReturnsPage from "@/pages/admin/employee/returns/page";
 import { evaluateRouteAccess } from "../middleware";
 
 // Workshop Portal Pages
@@ -158,6 +159,7 @@ function Router() {
               <Route path="/admin/employee/customers" component={EmployeeCustomersPage} />
               <Route path="/admin/employee/workshops" component={EmployeeWorkshopsPage} />
               <Route path="/admin/employee/technical" component={EmployeeTechnicalPage} />
+              <Route path="/admin/employee/returns" component={EmployeeReturnsPage} />
               <Route path="/admin/employee/tasks" component={EmployeeTasksPage} />
               <Route path="/admin/employee/data-entry" component={EmployeeDataEntryPage} />
               <Route path="/admin/employee/reports" component={EmployeeReportsPage} />

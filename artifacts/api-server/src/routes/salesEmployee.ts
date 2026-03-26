@@ -249,6 +249,33 @@ type UpdateTechnicalCaseInput = {
   nextFollowUpAt: string | null;
 };
 
+type ReturnCaseRow = TechnicalCaseRow & {
+  returnRequestType?: string | null;
+  returnStatus?: string | null;
+  returnReceiptStatus?: string | null;
+  returnResolution?: string | null;
+  returnPartName?: string | null;
+  returnPackageName?: string | null;
+  returnInspectionNotes?: string | null;
+};
+
+type UpdateReturnCaseInput = {
+  status: string;
+  technicalPriority: string;
+  technicalActionMode: string;
+  transferDecision: string | null;
+  returnRequestType: string;
+  returnStatus: string;
+  returnReceiptStatus: string;
+  returnResolution: string;
+  returnPartName: string | null;
+  returnPackageName: string | null;
+  returnInspectionNotes: string | null;
+  knowledgeNotes: string | null;
+  notes: string | null;
+  nextFollowUpAt: string | null;
+};
+
 const VALID_TASK_TYPES = [
   "call",
   "visit",
@@ -295,6 +322,21 @@ const VALID_TECHNICAL_CATEGORIES = [
 const VALID_TECHNICAL_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 const VALID_TECHNICAL_ACTION_MODES = ["contact_directly", "write_opinion_for_sales", "coordinate_with_workshop", "escalate_management"] as const;
 const VALID_TRANSFER_DECISIONS = ["sales", "workshop", "management", "parts", "keep_with_technical"] as const;
+const VALID_RETURN_REQUEST_TYPES = ["refund", "exchange", "technical_review", "wrong_part", "damaged_part"] as const;
+const VALID_RETURN_STATUSES = [
+  "reported",
+  "awaiting_customer_handover",
+  "scheduled_receipt",
+  "received",
+  "under_inspection",
+  "awaiting_management_decision",
+  "approved_exchange",
+  "approved_refund",
+  "rejected",
+  "closed",
+] as const;
+const VALID_RETURN_RECEIPT_STATUSES = ["not_received", "scheduled_pickup", "received_at_workshop", "received_at_hub"] as const;
+const VALID_RETURN_RESOLUTIONS = ["pending", "exchange", "refund", "reject", "technical_review", "need_more_info"] as const;
 
 const SOURCE_LABELS: Record<string, string> = {
   sales_self: "جاءت من المبيعات",
@@ -593,6 +635,75 @@ function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechni
   };
 }
 
+function parseReturnCaseUpdateInput(body: unknown): ParsedResult<UpdateReturnCaseInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const status = asNullableString(payload.status);
+  const technicalPriority = asNullableString(payload.technicalPriority) ?? "medium";
+  const technicalActionMode = asNullableString(payload.technicalActionMode) ?? "write_opinion_for_sales";
+  const transferDecision = asNullableString(payload.transferDecision);
+  const returnRequestType = asNullableString(payload.returnRequestType) ?? "technical_review";
+  const returnStatus = asNullableString(payload.returnStatus) ?? "reported";
+  const returnReceiptStatus = asNullableString(payload.returnReceiptStatus) ?? "not_received";
+  const returnResolution = asNullableString(payload.returnResolution) ?? "pending";
+  const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+
+  if (!status || !VALID_TECHNICAL_CASE_STATUSES.includes(status as (typeof VALID_TECHNICAL_CASE_STATUSES)[number])) {
+    return { success: false, error: "حالة المتابعة غير صحيحة" };
+  }
+
+  if (!VALID_TECHNICAL_PRIORITIES.includes(technicalPriority as (typeof VALID_TECHNICAL_PRIORITIES)[number])) {
+    return { success: false, error: "أولوية المرتجع غير صحيحة" };
+  }
+
+  if (!VALID_TECHNICAL_ACTION_MODES.includes(technicalActionMode as (typeof VALID_TECHNICAL_ACTION_MODES)[number])) {
+    return { success: false, error: "أسلوب التعامل الفني غير صحيح" };
+  }
+
+  if (transferDecision && !VALID_TRANSFER_DECISIONS.includes(transferDecision as (typeof VALID_TRANSFER_DECISIONS)[number])) {
+    return { success: false, error: "قرار التحويل غير صحيح" };
+  }
+
+  if (!VALID_RETURN_REQUEST_TYPES.includes(returnRequestType as (typeof VALID_RETURN_REQUEST_TYPES)[number])) {
+    return { success: false, error: "نوع طلب المرتجع غير صحيح" };
+  }
+
+  if (!VALID_RETURN_STATUSES.includes(returnStatus as (typeof VALID_RETURN_STATUSES)[number])) {
+    return { success: false, error: "مرحلة المرتجع غير صحيحة" };
+  }
+
+  if (!VALID_RETURN_RECEIPT_STATUSES.includes(returnReceiptStatus as (typeof VALID_RETURN_RECEIPT_STATUSES)[number])) {
+    return { success: false, error: "حالة الاستلام غير صحيحة" };
+  }
+
+  if (!VALID_RETURN_RESOLUTIONS.includes(returnResolution as (typeof VALID_RETURN_RESOLUTIONS)[number])) {
+    return { success: false, error: "قرار المرتجع غير صحيح" };
+  }
+
+  if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) {
+    return { success: false, error: "موعد المتابعة غير صحيح" };
+  }
+
+  return {
+    success: true,
+    data: {
+      status,
+      technicalPriority,
+      technicalActionMode,
+      transferDecision,
+      returnRequestType,
+      returnStatus,
+      returnReceiptStatus,
+      returnResolution,
+      returnPartName: asNullableString(payload.returnPartName),
+      returnPackageName: asNullableString(payload.returnPackageName),
+      returnInspectionNotes: asNullableString(payload.returnInspectionNotes),
+      knowledgeNotes: asNullableString(payload.knowledgeNotes),
+      notes: asNullableString(payload.notes),
+      nextFollowUpAt,
+    },
+  };
+}
+
 function parseAssignLeadInput(body: unknown): ParsedResult<AssignLeadInput> {
   const payload = (body ?? {}) as Record<string, unknown>;
   const rawEmployeeId = payload.employeeId;
@@ -838,6 +949,85 @@ async function maybeCreateTechnicalTransferTask(params: {
   };
 }
 
+async function maybeCreateReturnWorkflowTask(params: {
+  actorId: number;
+  leadId: number;
+  leadName: string;
+  leadArea: string | null;
+  returnResolution: string;
+  previousResolution: string | null | undefined;
+  returnPartName: string | null;
+  returnPackageName: string | null;
+  notes: string | null;
+  returnInspectionNotes: string | null;
+}) {
+  if (!params.returnResolution || params.returnResolution === params.previousResolution || params.returnResolution === "pending" || params.returnResolution === "technical_review") {
+    return null;
+  }
+
+  const resolutionConfig = {
+    exchange: {
+      targetRole: "data_entry" as const,
+      taskType: "data_entry" as const,
+      title: `تجهيز استبدال قطعة للعميل ${params.leadName}`,
+    },
+    refund: {
+      targetRole: "manager" as const,
+      taskType: "collection" as const,
+      title: `اعتماد رد مالي لمرتجع ${params.leadName}`,
+    },
+    reject: {
+      targetRole: "sales" as const,
+      taskType: "follow_up" as const,
+      title: `إبلاغ العميل بقرار رفض المرتجع ${params.leadName}`,
+    },
+    need_more_info: {
+      targetRole: "sales" as const,
+      taskType: "follow_up" as const,
+      title: `استكمال بيانات مرتجع ${params.leadName}`,
+    },
+  } as const;
+
+  const config = resolutionConfig[params.returnResolution as keyof typeof resolutionConfig];
+  if (!config) return null;
+
+  const assignee = await findEmployeeByEmployeeRole(config.targetRole);
+  if (!assignee) {
+    return {
+      created: false as const,
+      message: "تم حفظ قرار المرتجع لكن لا يوجد موظف مناسب لتنفيذ الإجراء التالي.",
+    };
+  }
+
+  const [task] = await db
+    .insert(employeeTasksTable)
+    .values({
+      employeeId: assignee.id,
+      leadId: params.leadId,
+      title: config.title,
+      taskType: config.taskType,
+      area: params.leadArea,
+      dueAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      status: "pending",
+      notes: [
+        params.returnPartName ? `القطعة: ${params.returnPartName}` : null,
+        params.returnPackageName ? `الباكدج: ${params.returnPackageName}` : null,
+        params.returnInspectionNotes ? `نتيجة الفحص: ${params.returnInspectionNotes}` : null,
+        params.notes ? `ملاحظات إضافية: ${params.notes}` : null,
+      ].filter(Boolean).join("\n"),
+      createdByUserId: params.actorId,
+    })
+    .returning({ id: employeeTasksTable.id });
+
+  return {
+    created: true as const,
+    taskId: task.id,
+    employeeId: assignee.id,
+    employeeName: assignee.name,
+    message: `تم إنشاء مهمة تلقائيًا بسبب قرار المرتجع وتحويلها إلى ${assignee.name}.`,
+  };
+}
+
 router.get(
   "/admin/employee/sales/summary",
   requireAuth,
@@ -979,6 +1169,11 @@ router.get(
         ),
       );
 
+    const [returnsCasesRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(eq(leadsTable.assignedEmployeeId, employeeId), eq(leadsTable.technicalCategory, "parts_return")));
+
     const [activeTasksRow] = await db
       .select({ count: count() })
       .from(employeeTasksTable)
@@ -1004,6 +1199,7 @@ router.get(
       workshopCases: workshopCasesRow.count,
       dueToday: dueTodayRow.count,
       resolvedCases: resolvedCasesRow.count,
+      returnsCases: returnsCasesRow.count,
       activeTasks: activeTasksRow.count,
       openCases: openCases.map((item: TechnicalSummaryCaseRow) => ({
         ...item,
@@ -1149,6 +1345,70 @@ router.get(
 
     res.json(
       rows.map((row: TechnicalCaseRow) => ({
+        ...row,
+        nextFollowUpAt: toIso(row.nextFollowUpAt),
+        createdAt: toIso(row.createdAt),
+        createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
+      })),
+    );
+  },
+);
+
+router.get(
+  "/admin/employee/technical/returns",
+  requireAuth,
+  requireRolePermission("technical.cases.view_own", "هذه الصفحة متاحة للخبير الفني فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const rows = await db
+      .select({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        contactPerson: leadsTable.contactPerson,
+        phone: leadsTable.phone,
+        email: leadsTable.email,
+        area: leadsTable.area,
+        source: leadsTable.source,
+        status: leadsTable.status,
+        technicalCategory: leadsTable.technicalCategory,
+        technicalPriority: leadsTable.technicalPriority,
+        technicalActionMode: leadsTable.technicalActionMode,
+        transferDecision: leadsTable.transferDecision,
+        knowledgeNotes: leadsTable.knowledgeNotes,
+        notes: leadsTable.notes,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+        createdAt: leadsTable.createdAt,
+        createdByUserId: leadsTable.createdByUserId,
+        registeredUserId: leadsTable.registeredUserId,
+        convertedOrderId: leadsTable.convertedOrderId,
+        convertedWorkshopId: leadsTable.convertedWorkshopId,
+        returnRequestType: leadsTable.returnRequestType,
+        returnStatus: leadsTable.returnStatus,
+        returnReceiptStatus: leadsTable.returnReceiptStatus,
+        returnResolution: leadsTable.returnResolution,
+        returnPartName: leadsTable.returnPartName,
+        returnPackageName: leadsTable.returnPackageName,
+        returnInspectionNotes: leadsTable.returnInspectionNotes,
+      })
+      .from(leadsTable)
+      .where(
+        and(
+          eq(leadsTable.assignedEmployeeId, employeeId),
+          or(eq(leadsTable.technicalCategory, "parts_return"), eq(leadsTable.source, "return_request")),
+        ),
+      )
+      .orderBy(asc(leadsTable.nextFollowUpAt), desc(leadsTable.createdAt));
+
+    const nameMap = await loadUserNameMap(rows.map((row: ReturnCaseRow) => row.createdByUserId));
+
+    res.json(
+      rows.map((row: ReturnCaseRow) => ({
         ...row,
         nextFollowUpAt: toIso(row.nextFollowUpAt),
         createdAt: toIso(row.createdAt),
@@ -1703,6 +1963,126 @@ router.patch(
       ...updated,
       nextFollowUpAt: toIso(updated?.nextFollowUpAt),
       transferAction,
+    });
+  },
+);
+
+router.patch(
+  "/admin/employee/technical/returns/:id",
+  requireAuth,
+  requireRolePermission("technical.cases.update_own", "هذه العملية متاحة للخبير الفني فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    const caseId = Number(req.params.id);
+
+    if (!employeeId || !Number.isInteger(caseId) || caseId <= 0) {
+      res.status(400).json({ error: "المرتجع المطلوب غير صحيح" });
+      return;
+    }
+
+    const parsed = parseReturnCaseUpdateInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    const [lead] = await db
+      .select({
+        id: leadsTable.id,
+        name: leadsTable.name,
+        area: leadsTable.area,
+        source: leadsTable.source,
+        transferDecision: leadsTable.transferDecision,
+        returnResolution: leadsTable.returnResolution,
+      })
+      .from(leadsTable)
+      .where(
+        and(
+          eq(leadsTable.id, caseId),
+          eq(leadsTable.assignedEmployeeId, employeeId),
+          or(eq(leadsTable.technicalCategory, "parts_return"), eq(leadsTable.source, "return_request")),
+        ),
+      );
+
+    if (!lead) {
+      res.status(404).json({ error: "المرتجع غير موجود ضمن نطاقك الحالي" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(leadsTable)
+      .set({
+        status: parsed.data.status,
+        technicalCategory: "parts_return",
+        technicalPriority: parsed.data.technicalPriority,
+        technicalActionMode: parsed.data.technicalActionMode,
+        transferDecision: parsed.data.transferDecision,
+        returnRequestType: parsed.data.returnRequestType,
+        returnStatus: parsed.data.returnStatus,
+        returnReceiptStatus: parsed.data.returnReceiptStatus,
+        returnResolution: parsed.data.returnResolution,
+        returnPartName: parsed.data.returnPartName,
+        returnPackageName: parsed.data.returnPackageName,
+        returnInspectionNotes: parsed.data.returnInspectionNotes,
+        knowledgeNotes: parsed.data.knowledgeNotes,
+        notes: parsed.data.notes,
+        nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
+        lastContactAt: new Date(),
+      })
+      .where(eq(leadsTable.id, caseId))
+      .returning({
+        id: leadsTable.id,
+        status: leadsTable.status,
+        technicalPriority: leadsTable.technicalPriority,
+        technicalActionMode: leadsTable.technicalActionMode,
+        transferDecision: leadsTable.transferDecision,
+        returnRequestType: leadsTable.returnRequestType,
+        returnStatus: leadsTable.returnStatus,
+        returnReceiptStatus: leadsTable.returnReceiptStatus,
+        returnResolution: leadsTable.returnResolution,
+        returnPartName: leadsTable.returnPartName,
+        returnPackageName: leadsTable.returnPackageName,
+        returnInspectionNotes: leadsTable.returnInspectionNotes,
+        knowledgeNotes: leadsTable.knowledgeNotes,
+        notes: leadsTable.notes,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+      });
+
+    const transferAction = await maybeCreateTechnicalTransferTask({
+      actorId: employeeId,
+      leadId: lead.id,
+      leadName: lead.name,
+      leadType: "customer",
+      leadArea: lead.area ?? null,
+      leadSource: lead.source,
+      decision: parsed.data.transferDecision,
+      technicalCategory: "parts_return",
+      technicalPriority: parsed.data.technicalPriority,
+      technicalActionMode: parsed.data.technicalActionMode,
+      knowledgeNotes: parsed.data.knowledgeNotes,
+      notes: parsed.data.notes,
+      nextFollowUpAt: parsed.data.nextFollowUpAt,
+      previousDecision: lead.transferDecision,
+    });
+
+    const returnAction = await maybeCreateReturnWorkflowTask({
+      actorId: employeeId,
+      leadId: lead.id,
+      leadName: lead.name,
+      leadArea: lead.area ?? null,
+      returnResolution: parsed.data.returnResolution,
+      previousResolution: lead.returnResolution,
+      returnPartName: parsed.data.returnPartName,
+      returnPackageName: parsed.data.returnPackageName,
+      notes: parsed.data.notes,
+      returnInspectionNotes: parsed.data.returnInspectionNotes,
+    });
+
+    res.json({
+      ...updated,
+      nextFollowUpAt: toIso(updated?.nextFollowUpAt),
+      transferAction,
+      returnAction,
     });
   },
 );

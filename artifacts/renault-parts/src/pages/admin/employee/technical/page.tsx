@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, ArrowRightLeft, BadgeCheck, BookOpenText, Building2, CalendarClock, ClipboardList, Loader2, Save, Stethoscope, Users } from "lucide-react";
@@ -500,6 +501,19 @@ export default function EmployeeTechnicalPage() {
           <p className="text-white font-black text-2xl">{cases.filter((item) => item.registeredUserId || item.convertedOrderId || item.convertedWorkshopId).length}</p>
         </div>
       </div>
+
+      <Link href="/admin/employee/returns">
+        <div className="bg-[#151D33] border border-[#F9E795]/15 rounded-2xl p-5 cursor-pointer hover:border-[#F9E795]/35 transition-all">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[#F9E795] text-xs font-bold mb-2">مسار مستقل</p>
+              <h2 className="text-white font-black text-lg mb-2">صفحة المرتجعات وقرارات الاستبدال</h2>
+              <p className="text-white/50 text-sm leading-7">ادخل هنا لو الحالة مرتبطة باسترجاع قطعة أو استبدال أو رد مالي، بدل متابعة المرتجع من داخل الملاحظات العامة فقط.</p>
+            </div>
+            <ArrowRightLeft className="w-6 h-6 text-[#F9E795] flex-shrink-0" />
+          </div>
+        </div>
+      </Link>
 
       <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
         {loading ? (

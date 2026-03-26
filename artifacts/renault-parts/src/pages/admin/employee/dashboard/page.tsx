@@ -25,6 +25,7 @@ type TechnicalSummary = {
   totalCases: number;
   customerCases: number;
   workshopCases: number;
+  returnsCases: number;
   dueToday: number;
   resolvedCases: number;
   activeTasks: number;
@@ -314,13 +315,15 @@ export default function EmployeeDashboardPage() {
       { label: "إجمالي الحالات", value: technicalSummary?.totalCases ?? 0, icon: Stethoscope },
       { label: "حالات عملاء", value: technicalSummary?.customerCases ?? 0, icon: Users },
       { label: "حالات ورش", value: technicalSummary?.workshopCases ?? 0, icon: Building2 },
+      { label: "المرتجعات", value: technicalSummary?.returnsCases ?? 0, icon: Package2 },
       { label: "متابعة اليوم", value: technicalSummary?.dueToday ?? 0, icon: PhoneCall },
-      { label: "حالات محسومة", value: technicalSummary?.resolvedCases ?? 0, icon: Package2 },
+      { label: "حالات محسومة", value: technicalSummary?.resolvedCases ?? 0, icon: Target },
       { label: "مهام مفتوحة", value: technicalSummary?.activeTasks ?? 0, icon: ClipboardList },
     ];
 
     const quickActions = [
       hasPermission("technical.cases.view_own") ? { href: "/admin/employee/technical", label: "الحالات الفنية", icon: Stethoscope } : null,
+      hasPermission("technical.cases.view_own") ? { href: "/admin/employee/returns", label: "المرتجعات", icon: Package2 } : null,
       hasPermission("employee.tasks.view_own") ? { href: "/admin/employee/tasks", label: "مهامي", icon: ClipboardList } : null,
       hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "تقاريري اليومية", icon: FileText } : null,
     ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Stethoscope }>;
@@ -368,6 +371,7 @@ export default function EmployeeDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 { href: "/admin/employee/technical", label: "الحالات الفنية", description: "الحالات المسندة للخبير الفني مع الملاحظات وقرار المتابعة التالي.", icon: Stethoscope },
+                { href: "/admin/employee/returns", label: "المرتجعات", description: "طلبات المرتجع من لحظة البلاغ حتى الاستلام والفحص والاستبدال أو الرد المالي.", icon: Package2 },
                 { href: "/admin/employee/tasks", label: "المهام الفنية", description: "المهام التشغيلية والفنية اليومية مع تحديث التنفيذ والنتيجة.", icon: ClipboardList },
                 { href: "/admin/employee/reports", label: "التقرير اليومي", description: "تلخيص ما تم تشخيصه أو تصعيده للمبيعات أو الإدارة أو الورش.", icon: FileText },
               ].map((card) => (
