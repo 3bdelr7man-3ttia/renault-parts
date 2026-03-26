@@ -50,15 +50,16 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
 
 export default function WorkshopDashboard() {
   const { getAuthHeaders } = useAuth();
-  const headers = getAuthHeaders() as Record<string, string>;
+  const headers = getAuthHeaders().headers ?? {};
   const { isMobile } = useBreakpoint();
 
   const { data: stats, loading: statsLoading } = useWorkshopStats(headers);
   const { data: appointments, loading: aptsLoading } = useWorkshopAppointments(headers);
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayApts = appointments.filter(a => a.date === todayStr);
-  const upcomingApts = appointments.filter(a => a.date > todayStr).slice(0, 5);
+  const normalizedAppointments = Array.isArray(appointments) ? appointments : [];
+  const todayApts = normalizedAppointments.filter(a => a.date === todayStr);
+  const upcomingApts = normalizedAppointments.filter(a => a.date > todayStr).slice(0, 5);
 
   const validStats = stats && typeof stats.totalOrders !== 'undefined';
   const statCards = validStats ? [

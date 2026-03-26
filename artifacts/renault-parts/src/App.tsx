@@ -61,6 +61,38 @@ const queryClient = new QueryClient({
   },
 });
 
+class RouteErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("Route rendering error", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: "100vh", background: "#0D1220", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ maxWidth: 420, textAlign: "center", fontFamily: "'Almarai',sans-serif" }}>
+            <div style={{ width: 52, height: 52, margin: "0 auto 16px", borderRadius: 18, background: "rgba(239,68,68,0.12)", border: "1.5px solid rgba(239,68,68,0.24)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FCA5A5", fontSize: 26, fontWeight: 900 }}>
+              !
+            </div>
+            <div style={{ color: "#E8F0F8", fontSize: 24, fontWeight: 900, marginBottom: 8 }}>حدث خطأ في عرض الصفحة</div>
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, lineHeight: 1.9 }}>
+              أعد تحميل الصفحة مرة أخرى. وإذا استمرت المشكلة فسيظهر لنا الخطأ بدل الصفحة الفارغة لتسهيل إصلاحه.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
@@ -98,8 +130,7 @@ function WorkshopGuard({ children }: { children: React.ReactNode }) {
     }
   }, [access.allowed, access.redirectTo, isLoading, setLocation]);
 
-  // Show loading while fetching — covers both first load and role-change refresh
-  if ((isLoading && !user) || (isFetching && !isWorkshopRole(user?.role))) return <LoadingScreen />;
+  if ((isLoading && !user) || (isFetching && !user)) return <LoadingScreen />;
   if (!access.allowed) return access.redirectTo ? <LoadingScreen /> : <AccessDenied />;
   return <>{children}</>;
 }
@@ -112,24 +143,26 @@ function Router() {
   if (isAdmin) {
     return (
       <AdminGuard>
-        <AdminLayout>
-          <Switch>
-            <Route path="/admin" component={AdminDashboard} />
-            <Route path="/admin/dashboard" component={AdminDashboard} />
-            <Route path="/admin/employee/dashboard" component={EmployeeDashboardPage} />
-            <Route path="/admin/orders" component={AdminOrders} />
-            <Route path="/admin/packages" component={AdminPackages} />
-            <Route path="/admin/workshops" component={AdminWorkshops} />
-            <Route path="/admin/parts" component={AdminParts} />
-            <Route path="/admin/reviews" component={AdminReviews} />
-            <Route path="/admin/sales" component={AdminSales} />
-            <Route path="/admin/expenses" component={AdminExpenses} />
-            <Route path="/admin/users" component={AdminUsers} />
-            <Route path="/admin/workshop-applications" component={AdminWorkshopApplications} />
-            <Route path="/admin/appointments" component={AdminAppointments} />
-            <Route component={NotFound} />
-          </Switch>
-        </AdminLayout>
+        <RouteErrorBoundary>
+          <AdminLayout>
+            <Switch>
+              <Route path="/admin" component={AdminDashboard} />
+              <Route path="/admin/dashboard" component={AdminDashboard} />
+              <Route path="/admin/employee/dashboard" component={EmployeeDashboardPage} />
+              <Route path="/admin/orders" component={AdminOrders} />
+              <Route path="/admin/packages" component={AdminPackages} />
+              <Route path="/admin/workshops" component={AdminWorkshops} />
+              <Route path="/admin/parts" component={AdminParts} />
+              <Route path="/admin/reviews" component={AdminReviews} />
+              <Route path="/admin/sales" component={AdminSales} />
+              <Route path="/admin/expenses" component={AdminExpenses} />
+              <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/workshop-applications" component={AdminWorkshopApplications} />
+              <Route path="/admin/appointments" component={AdminAppointments} />
+              <Route component={NotFound} />
+            </Switch>
+          </AdminLayout>
+        </RouteErrorBoundary>
       </AdminGuard>
     );
   }
@@ -137,40 +170,44 @@ function Router() {
   if (isWorkshop) {
     return (
       <WorkshopGuard>
-        <WorkshopLayout>
-          <Switch>
-            <Route path="/workshop" component={WorkshopDashboard} />
-            <Route path="/workshop/appointments" component={WorkshopAppointments} />
-            <Route path="/workshop/schedule" component={WorkshopSchedule} />
-            <Route path="/workshop/orders" component={WorkshopOrders} />
-            <Route path="/workshop/earnings" component={WorkshopEarnings} />
-            <Route path="/workshop/pricing" component={WorkshopPricing} />
-            <Route component={NotFound} />
-          </Switch>
-        </WorkshopLayout>
+        <RouteErrorBoundary>
+          <WorkshopLayout>
+            <Switch>
+              <Route path="/workshop" component={WorkshopDashboard} />
+              <Route path="/workshop/appointments" component={WorkshopAppointments} />
+              <Route path="/workshop/schedule" component={WorkshopSchedule} />
+              <Route path="/workshop/orders" component={WorkshopOrders} />
+              <Route path="/workshop/earnings" component={WorkshopEarnings} />
+              <Route path="/workshop/pricing" component={WorkshopPricing} />
+              <Route component={NotFound} />
+            </Switch>
+          </WorkshopLayout>
+        </RouteErrorBoundary>
       </WorkshopGuard>
     );
   }
 
   return (
-    <AppLayout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/packages" component={Packages} />
-        <Route path="/packages/:slug" component={PackageDetail} />
-        <Route path="/parts" component={Parts} />
-        <Route path="/workshops" component={Workshops} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/checkout/:id" component={Checkout} />
-        <Route path="/my-orders" component={MyOrders} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/orders/:id" component={OrderDetail} />
-        <Route path="/payment/result" component={PaymentResult} />
-        <Route path="/join-workshop" component={JoinWorkshop} />
-        <Route component={NotFound} />
-      </Switch>
-    </AppLayout>
+    <RouteErrorBoundary>
+      <AppLayout>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/packages" component={Packages} />
+          <Route path="/packages/:slug" component={PackageDetail} />
+          <Route path="/parts" component={Parts} />
+          <Route path="/workshops" component={Workshops} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/checkout/:id" component={Checkout} />
+          <Route path="/my-orders" component={MyOrders} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/orders/:id" component={OrderDetail} />
+          <Route path="/payment/result" component={PaymentResult} />
+          <Route path="/join-workshop" component={JoinWorkshop} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppLayout>
+    </RouteErrorBoundary>
   );
 }
 

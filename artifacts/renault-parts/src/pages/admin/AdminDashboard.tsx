@@ -41,10 +41,13 @@ export default function AdminDashboard() {
   const { getAuthHeaders } = useAuth();
   const headers = getAuthHeaders();
 
-  const { data: stats, isLoading: statsLoading } = useGetAdminStats({ request: headers });
-  const { data: orders, isLoading: ordersLoading } = useListAdminOrders({}, { request: headers });
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStats({ request: headers });
+  const { data: orders, isLoading: ordersLoading, isError: ordersError } = useListAdminOrders({}, { request: headers });
 
-  const recentOrders = orders?.slice(0, 8) ?? [];
+  const weeklySales = Array.isArray(stats?.weeklySales) ? stats.weeklySales : [];
+  const topPackages = Array.isArray(stats?.topPackages) ? stats.topPackages : [];
+  const topWorkshops = Array.isArray(stats?.topWorkshops) ? stats.topWorkshops : [];
+  const recentOrders = Array.isArray(orders) ? orders.slice(0, 8) : [];
 
   const statCards = stats
     ? [
@@ -63,6 +66,13 @@ export default function AdminDashboard() {
       ]
     : [];
 
+  const formatOrderDate = (value: unknown) => {
+    if (!value) return '—';
+    const parsed = new Date(String(value));
+    if (Number.isNaN(parsed.getTime())) return '—';
+    return format(parsed, 'dd/MM/yyyy', { locale: ar });
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -75,6 +85,10 @@ export default function AdminDashboard() {
           {[...Array(6)].map((_, i) => (
             <div key={i} className="h-28 rounded-2xl bg-white/5 animate-pulse" />
           ))}
+        </div>
+      ) : statsError ? (
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm font-bold text-red-200">
+          تعذر تحميل إحصاءات لوحة الإدارة الآن. جرّب تحديث الصفحة مرة أخرى.
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -107,10 +121,10 @@ export default function AdminDashboard() {
                 <span className="text-[#F9E795] text-xs font-bold cursor-pointer hover:underline">تفاصيل</span>
               </Link>
             </div>
-            {stats.weeklySales.length === 0 ? (
+            {weeklySales.length === 0 ? (
               <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات بعد</p>
             ) : (
-              <MiniBarChart data={stats.weeklySales} />
+              <MiniBarChart data={weeklySales} />
             )}
           </div>
 
@@ -120,12 +134,12 @@ export default function AdminDashboard() {
               <Package2 className="w-5 h-5 text-[#F9E795]" />
               <h2 className="text-white font-bold">أكثر الباكدجات مبيعاً</h2>
             </div>
-            {stats.topPackages.length === 0 ? (
+            {topPackages.length === 0 ? (
               <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات</p>
             ) : (
               <div className="space-y-3">
-                {stats.topPackages.map((pkg, i) => {
-                  const maxCount = stats.topPackages[0]?.count ?? 1;
+                {topPackages.map((pkg, i) => {
+                  const maxCount = topPackages[0]?.count ?? 1;
                   return (
                     <div key={i} className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -151,12 +165,12 @@ export default function AdminDashboard() {
               <Wrench className="w-5 h-5 text-[#F9E795]" />
               <h2 className="text-white font-bold">الورش الأكثر نشاطاً</h2>
             </div>
-            {stats.topWorkshops.length === 0 ? (
+            {topWorkshops.length === 0 ? (
               <p className="text-white/30 text-center py-8 text-sm font-bold">لا توجد بيانات</p>
             ) : (
               <div className="space-y-3">
-                {stats.topWorkshops.map((ws, i) => {
-                  const maxCount = stats.topWorkshops[0]?.count ?? 1;
+                {topWorkshops.map((ws, i) => {
+                  const maxCount = topWorkshops[0]?.count ?? 1;
                   return (
                     <div key={i} className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -194,6 +208,8 @@ export default function AdminDashboard() {
               <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
             ))}
           </div>
+        ) : ordersError ? (
+          <div className="p-12 text-center text-red-200 font-bold">تعذر تحميل الطلبات الأخيرة الآن</div>
         ) : recentOrders.length === 0 ? (
           <div className="p-12 text-center text-white/40 font-bold">لا توجد طلبات بعد</div>
         ) : (
@@ -227,7 +243,7 @@ export default function AdminDashboard() {
                         <span className={`px-2 py-1 rounded-lg text-xs font-bold ${st.color}`}>{st.label}</span>
                       </td>
                       <td className="px-4 py-4 text-white/40 text-xs">
-                        {format(new Date(order.createdAt), 'dd/MM/yyyy', { locale: ar })}
+                        {formatOrderDate(order.createdAt)}
                       </td>
                     </tr>
                   );

@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Search, ShieldCheck, User, Loader2, Wrench, Link as LinkIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { getRoleLabel, normalizeRole, type EmployeeRole } from '@/lib/permissions';
 
 type Workshop = { id: number; name: string; phone: string };
 
@@ -15,6 +16,7 @@ type UserRow = {
   phone?: string | null;
   email?: string | null;
   role: string;
+  employeeRole?: EmployeeRole | null;
   workshopId?: number | null;
   workshopName?: string | null;
   carModel?: string | null;
@@ -24,11 +26,25 @@ type UserRow = {
   createdAt: string;
 };
 
-const ROLE_LABELS: Record<string, string> = { admin: 'مدير', customer: 'عميل', workshop: 'ورشة' };
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'مدير',
+  customer: 'عميل',
+  employee: 'موظف',
+  workshop_owner: 'صاحب ورشة',
+  workshop: 'صاحب ورشة',
+};
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-[#F9E795]/20 text-[#F9E795] border-[#F9E795]/30',
+  employee: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
   customer: 'bg-white/10 text-white/60 border-white/10',
+  workshop_owner: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
   workshop: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+};
+const EMPLOYEE_ROLE_LABELS: Record<EmployeeRole, string> = {
+  sales: 'مبيعات',
+  data_entry: 'إدخال بيانات',
+  customer_service: 'خدمة العملاء',
+  manager: 'مدير فريق',
 };
 
 export default function AdminUsers() {
@@ -41,6 +57,8 @@ export default function AdminUsers() {
   const [linkModal, setLinkModal] = useState<UserRow | null>(null);
   const [selectedWorkshopId, setSelectedWorkshopId] = useState<string>('');
   const [linkingId, setLinkingId] = useState<number | null>(null);
+  const [draftRoles, setDraftRoles] = useState<Record<number, 'customer' | 'employee' | 'workshop_owner' | 'admin'>>({});
+  const [draftEmployeeRoles, setDraftEmployeeRoles] = useState<Record<number, EmployeeRole | ''>>({});
 
   const authHeader: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const headers = getAuthHeaders();
@@ -51,13 +69,29 @@ export default function AdminUsers() {
       .then(r => r.json())
       .then((ws: Workshop[]) => setWorkshops(ws))
       .catch(() => {});
-  }, []);
+  }, [token]);
+
+  useEffect(() => {
+    const nextRoles: Record<number, 'customer' | 'employee' | 'workshop_owner' | 'admin'> = {};
+    const nextEmployeeRoles: Record<number, EmployeeRole | ''> = {};
+
+    ((users as UserRow[] | undefined) ?? []).forEach((u) => {
+      const normalizedRole = normalizeRole(u.role);
+      nextRoles[u.id] = normalizedRole === 'admin' || normalizedRole === 'employee' || normalizedRole === 'workshop_owner'
+        ? normalizedRole
+        : 'customer';
+      nextEmployeeRoles[u.id] = u.employeeRole ?? '';
+    });
+
+    setDraftRoles(nextRoles);
+    setDraftEmployeeRoles(nextEmployeeRoles);
+  }, [users]);
 
   const { mutate: updateRole } = useUpdateUserRole({
     request: headers,
     mutation: {
-      onSuccess: (updated) => {
-        toast({ title: 'تم تحديث الصلاحية' });
+      onSuccess: () => {
+        toast({ title: 'تم تحديث الصلاحية', description: 'تم حفظ الدور الجديد بنجاح.' });
         queryClient.invalidateQueries();
         setUpdatingId(null);
       },
@@ -68,10 +102,23 @@ export default function AdminUsers() {
     },
   });
 
-  const handleRoleToggle = (userId: number, currentRole: string) => {
-    let newRole: 'customer' | 'admin' = currentRole === 'admin' ? 'customer' : 'admin';
-    setUpdatingId(userId);
-    updateRole({ id: userId, data: { role: newRole } });
+  const handleRoleSave = (targetUser: UserRow) => {
+    const role = draftRoles[targetUser.id];
+    const employeeRole = draftEmployeeRoles[targetUser.id] || null;
+
+    if (role === 'employee' && !employeeRole) {
+      toast({ variant: 'destructive', title: 'نوع الموظف مطلوب', description: 'اختر دور الموظف قبل الحفظ.' });
+      return;
+    }
+
+    setUpdatingId(targetUser.id);
+    updateRole({
+      id: targetUser.id,
+      data: {
+        role,
+        employeeRole: role === 'employee' ? employeeRole : null,
+      },
+    });
   };
 
   const openLinkModal = (u: UserRow) => {
@@ -87,10 +134,10 @@ export default function AdminUsers() {
       const res = await fetch(`/api/admin/users/${linkModal.id}/workshop`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ workshopId, role: workshopId ? 'workshop' : 'customer' }),
+        body: JSON.stringify({ workshopId, role: workshopId ? 'workshop_owner' : 'customer' }),
       });
       if (!res.ok) throw new Error();
-      toast({ title: workshopId ? 'تم ربط الحساب بالورشة' : 'تم إلغاء الربط' });
+      toast({ title: workshopId ? 'تم ربط الحساب بالورشة' : 'تم إلغاء الربط', description: workshopId ? 'تم تحويل الحساب إلى صاحب ورشة.' : 'تمت إعادة الحساب إلى عميل عادي.' });
       queryClient.invalidateQueries();
       setLinkModal(null);
     } catch {
@@ -149,10 +196,16 @@ export default function AdminUsers() {
               </thead>
               <tbody>
                 {filtered.map((u) => {
-                  const isAdmin = u.role === 'admin';
-                  const isWorkshop = u.role === 'workshop';
+                  const normalizedRole = normalizeRole(u.role);
+                  const isAdmin = normalizedRole === 'admin';
+                  const isWorkshop = normalizedRole === 'workshop_owner';
                   const isMe = u.id === currentUser?.id;
                   const isUpdating = updatingId === u.id;
+                  const fallbackRole = normalizedRole === 'admin' || normalizedRole === 'employee' || normalizedRole === 'workshop_owner'
+                    ? normalizedRole
+                    : 'customer';
+                  const draftRole = draftRoles[u.id] ?? fallbackRole;
+                  const draftEmployeeRole = draftEmployeeRoles[u.id] ?? '';
                   return (
                     <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 text-white/50 font-mono text-xs">{u.id}</td>
@@ -193,10 +246,13 @@ export default function AdminUsers() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold w-fit border ${ROLE_COLORS[u.role] ?? ROLE_COLORS.customer}`}>
+                        <span className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold w-fit border ${ROLE_COLORS[normalizedRole] ?? ROLE_COLORS.customer}`}>
                           {isAdmin ? <ShieldCheck className="w-3 h-3" /> : isWorkshop ? <Wrench className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                          {ROLE_LABELS[u.role] ?? u.role}
+                          {ROLE_LABELS[normalizedRole] ?? getRoleLabel(u.role, u.employeeRole)}
                         </span>
+                        {normalizedRole === 'employee' && u.employeeRole && (
+                          <p className="text-violet-300 text-[11px] font-bold mt-2">{EMPLOYEE_ROLE_LABELS[u.employeeRole]}</p>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-white/40 text-xs whitespace-nowrap">
                         {format(new Date(u.createdAt), 'dd/MM/yyyy', { locale: ar })}
@@ -213,22 +269,51 @@ export default function AdminUsers() {
                               <LinkIcon className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          {/* Admin role toggle */}
-                          {!isMe && !isWorkshop ? (
-                            isUpdating ? (
-                              <Loader2 className="w-4 h-4 text-[#F9E795] animate-spin" />
-                            ) : (
-                              <button
-                                onClick={() => handleRoleToggle(u.id, u.role)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                                  isAdmin
-                                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
-                                    : 'bg-[#F9E795]/10 text-[#F9E795] hover:bg-[#F9E795]/20 border-[#F9E795]/20'
-                                }`}
+                          {!isMe ? (
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={draftRole}
+                                onChange={(e) => {
+                                  const nextRole = e.target.value as 'customer' | 'employee' | 'workshop_owner' | 'admin';
+                                  setDraftRoles((current) => ({ ...current, [u.id]: nextRole }));
+                                  if (nextRole !== 'employee') {
+                                    setDraftEmployeeRoles((current) => ({ ...current, [u.id]: '' }));
+                                  }
+                                }}
+                                className="bg-white/10 border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none"
+                                style={{ background: '#0F1625' }}
                               >
-                                {isAdmin ? 'تحويل لعميل' : 'ترقية لمدير'}
-                              </button>
-                            )
+                                <option value="customer">عميل</option>
+                                <option value="employee">موظف</option>
+                                <option value="admin">مدير</option>
+                                <option value="workshop_owner">صاحب ورشة</option>
+                              </select>
+
+                              {draftRole === 'employee' && (
+                                <select
+                                  value={draftEmployeeRole}
+                                  onChange={(e) => setDraftEmployeeRoles((current) => ({ ...current, [u.id]: e.target.value as EmployeeRole | '' }))}
+                                  className="bg-white/10 border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none"
+                                  style={{ background: '#0F1625' }}
+                                >
+                                  <option value="">نوع الموظف</option>
+                                  {Object.entries(EMPLOYEE_ROLE_LABELS).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                  ))}
+                                </select>
+                              )}
+
+                              {isUpdating ? (
+                                <Loader2 className="w-4 h-4 text-[#F9E795] animate-spin" />
+                              ) : (
+                                <button
+                                  onClick={() => handleRoleSave(u)}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-[#F9E795]/10 text-[#F9E795] hover:bg-[#F9E795]/20 border-[#F9E795]/20"
+                                >
+                                  حفظ
+                                </button>
+                              )}
+                            </div>
                           ) : isMe ? (
                             <span className="text-white/20 text-xs">—</span>
                           ) : null}
@@ -263,7 +348,7 @@ export default function AdminUsers() {
             </div>
             <div className="p-6 space-y-4">
               <p className="text-white/60 text-sm">
-                اختر الورشة التي ينتمي إليها هذا المستخدم. سيتم منحه صلاحية "ورشة" تتيح له رؤية طلبات ورشته.
+                اختر الورشة التي ينتمي إليها هذا المستخدم. سيتم منحه صلاحية "صاحب ورشة" تتيح له رؤية طلبات ورشته.
               </p>
               <div>
                 <label className="text-white/50 text-xs font-bold mb-2 block">اختر الورشة</label>

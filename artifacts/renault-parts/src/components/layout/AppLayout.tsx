@@ -54,7 +54,7 @@ const BOTTOM_NAV = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isRole } = useAuth();
   const { toast } = useToast();
   const { isMobile, isTablet, isMobileOrTablet } = useBreakpoint();
   const {
@@ -99,6 +99,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = () => {
+    clearCart();
     logout();
     toast({ title: 'تم تسجيل الخروج', description: 'نراك قريباً!' });
     setLocation('/');
@@ -108,8 +109,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const authLinks: Array<{ href: string; label: string; Icon: React.ElementType }> = [];
   if (user) authLinks.push({ href: '/my-orders', label: 'طلباتي', Icon: ClipboardList });
   if (isWorkshopRole(user?.role)) authLinks.push({ href: '/workshop', label: 'لوحة الورشة', Icon: Wrench });
-  if (user?.role === 'employee') authLinks.push({ href: '/admin/employee/dashboard', label: 'لوحة الموظف', Icon: ShieldCheck });
-  if (user?.role === 'admin') authLinks.push({ href: '/admin', label: 'الإدارة', Icon: ShieldCheck });
+  if (isRole('employee')) authLinks.push({ href: '/admin/employee/dashboard', label: 'لوحة الموظف', Icon: ShieldCheck });
+  if (isRole('admin')) authLinks.push({ href: '/admin', label: 'الإدارة', Icon: ShieldCheck });
 
   const isActive = (href: string) => href === '/' ? location === '/' : location.startsWith(href);
 

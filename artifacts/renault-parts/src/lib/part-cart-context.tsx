@@ -34,6 +34,11 @@ interface PartCartContextValue {
 const PartCartContext = createContext<PartCartContextValue | null>(null);
 const LS_KEY_PREFIX = 'renopack_part_cart';
 const LS_PKG_KEY_PREFIX = 'renopack_cart_package';
+const GUEST_SCOPE = 'guest';
+
+function isUserScope(scope: string): boolean {
+  return scope.startsWith('user:');
+}
 
 function readCartItems(storageKey: string): CartPart[] {
   try {
@@ -55,12 +60,12 @@ function readCartPackage(storageKey: string): CartPackage | null {
 
 export function PartCartProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const storageScope = useMemo(() => (user?.id ? `user:${user.id}` : 'guest'), [user?.id]);
+  const storageScope = useMemo(() => (user?.id ? `user:${user.id}` : GUEST_SCOPE), [user?.id]);
   const itemsStorageKey = `${LS_KEY_PREFIX}:${storageScope}`;
   const packageStorageKey = `${LS_PKG_KEY_PREFIX}:${storageScope}`;
   const activeScopeRef = useRef(storageScope);
-  const [items, setItems] = useState<CartPart[]>(() => readCartItems(`${LS_KEY_PREFIX}:guest`));
-  const [cartPackage, setCartPackageState] = useState<CartPackage | null>(() => readCartPackage(`${LS_PKG_KEY_PREFIX}:guest`));
+  const [items, setItems] = useState<CartPart[]>(() => readCartItems(`${LS_KEY_PREFIX}:${GUEST_SCOPE}`));
+  const [cartPackage, setCartPackageState] = useState<CartPackage | null>(() => readCartPackage(`${LS_PKG_KEY_PREFIX}:${GUEST_SCOPE}`));
   const [pkgJustAdded, setPkgJustAdded] = useState(false);
 
   useEffect(() => {
@@ -70,9 +75,19 @@ export function PartCartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (activeScopeRef.current === storageScope) return;
+    const previousScope = activeScopeRef.current;
     activeScopeRef.current = storageScope;
-    setItems(readCartItems(itemsStorageKey));
-    setCartPackageState(readCartPackage(packageStorageKey));
+
+    if (isUserScope(previousScope) && storageScope === GUEST_SCOPE) {
+      localStorage.removeItem(`${LS_KEY_PREFIX}:${GUEST_SCOPE}`);
+      localStorage.removeItem(`${LS_PKG_KEY_PREFIX}:${GUEST_SCOPE}`);
+      setItems([]);
+      setCartPackageState(null);
+    } else {
+      setItems(readCartItems(itemsStorageKey));
+      setCartPackageState(readCartPackage(packageStorageKey));
+    }
+
     setPkgJustAdded(false);
   }, [itemsStorageKey, packageStorageKey, storageScope]);
 

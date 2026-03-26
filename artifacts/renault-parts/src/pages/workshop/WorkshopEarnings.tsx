@@ -49,7 +49,7 @@ const PAY_MAP: Record<string, string> = {
 
 export default function WorkshopEarnings() {
   const { getAuthHeaders } = useAuth();
-  const headers = getAuthHeaders() as Record<string, string>;
+  const headers = getAuthHeaders().headers ?? {};
   const { isMobile } = useBreakpoint();
   const { data: orders, loading: ordersLoading } = useWorkshopOrders(headers);
   const { data: monthly, loading: earningsLoading } = useWorkshopEarnings(headers);
