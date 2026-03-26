@@ -66,36 +66,37 @@ const salesSections = [
   },
 ];
 
-function useSalesSummary(headers: Record<string, string>, enabled: boolean) {
+function useSalesSummary(token: string | null, enabled: boolean) {
   const [data, setData] = React.useState<SalesSummary | null>(null);
   const [loading, setLoading] = React.useState(enabled);
 
   React.useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !token) {
       setLoading(false);
       return;
     }
 
     const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
     setLoading(true);
-    fetch(`${base}/api/admin/employee/sales/summary`, { headers })
+    fetch(`${base}/api/admin/employee/sales/summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => r.json())
       .then((d) => {
         if (!d?.error) setData(d);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [enabled]);
+  }, [enabled, token]);
 
   return { data, loading };
 }
 
 export default function EmployeeDashboardPage() {
-  const { user, hasPermission, getAuthHeaders } = useAuth();
+  const { token, user, hasPermission } = useAuth();
   const employeeRole = normalizeEmployeeRole(user?.employeeRole);
-  const headers = getAuthHeaders().headers ?? {};
   const isSales = employeeRole === "sales" || employeeRole === "manager";
-  const { data: salesSummary, loading } = useSalesSummary(headers, isSales);
+  const { data: salesSummary, loading } = useSalesSummary(token, isSales);
 
   if (isSales) {
     const quickActions = [

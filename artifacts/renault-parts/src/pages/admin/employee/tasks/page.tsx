@@ -51,9 +51,8 @@ function ownershipMeta(source?: "self_created" | "assigned") {
 }
 
 export default function EmployeeTasksPage() {
-  const { getAuthHeaders, hasPermission } = useAuth();
+  const { token, hasPermission } = useAuth();
   const { toast } = useToast();
-  const headers = getAuthHeaders().headers ?? {};
 
   const [data, setData] = React.useState<SalesTask[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -63,21 +62,36 @@ export default function EmployeeTasksPage() {
 
   const canCreate = hasPermission("sales.tasks.create_own");
   const selfCreatedCount = data.filter((task) => task.ownershipSource === "self_created").length;
+  const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
 
   const loadTasks = React.useCallback(async () => {
+    if (!token) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
-      const response = await fetch(`${base}/api/admin/employee/sales/tasks`, { headers });
-      const result = await response.json();
+      const response = await fetch(`${base}/api/admin/employee/sales/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || "تعذر تحميل المهام الآن.");
+      }
       setData(Array.isArray(result) ? result : []);
-    } catch {
+    } catch (error) {
       setData([]);
-      toast({ variant: "destructive", title: "خطأ", description: "تعذر تحميل المهام الآن." });
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "تعذر تحميل المهام الآن.",
+      });
     } finally {
       setLoading(false);
     }
-  }, [headers, toast]);
+  }, [base, toast, token]);
 
   React.useEffect(() => {
     loadTasks();
@@ -91,12 +105,15 @@ export default function EmployeeTasksPage() {
 
     setSaving(true);
     try {
-      const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
+      if (!token) {
+        throw new Error("انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى.");
+      }
+
       const response = await fetch(`${base}/api/admin/employee/sales/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...headers,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...form,
