@@ -16,6 +16,8 @@ export type Permission =
   | "sales.workshops.create_own"
   | "sales.tasks.view_own"
   | "sales.tasks.create_own"
+  | "sales.team.view"
+  | "sales.team.assign"
   | "parts.create"
   | "parts.edit"
   | "packages.create"

@@ -13,6 +13,8 @@ export type Permission =
   | "sales.workshops.create_own"
   | "sales.tasks.view_own"
   | "sales.tasks.create_own"
+  | "sales.team.view"
+  | "sales.team.assign"
   | "parts.create"
   | "parts.edit"
   | "packages.create"
@@ -70,6 +72,7 @@ const ADMIN_ROUTE_RULES: Array<{ match: RegExp; rule: AdminRouteRule }> = [
   { match: /^\/admin\/employee\/customers\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.customers.view_own" } },
   { match: /^\/admin\/employee\/workshops\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.workshops.view_own" } },
   { match: /^\/admin\/employee\/tasks\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.tasks.view_own" } },
+  { match: /^\/admin\/employee\/team\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.team.view" } },
   { match: /^\/admin\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/orders(\/.*)?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "orders.view" } },
@@ -123,6 +126,8 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
       "sales.workshops.create_own",
       "sales.tasks.view_own",
       "sales.tasks.create_own",
+      "sales.team.view",
+      "sales.team.assign",
       "orders.view",
       "orders.update_status",
       "customers.view",

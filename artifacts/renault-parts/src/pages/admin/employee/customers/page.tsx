@@ -18,6 +18,7 @@ type SalesCustomer = {
   nextFollowUpAt?: string | null;
   notes?: string | null;
   convertedOrderId?: number | null;
+  registeredUserId?: number | null;
   ownershipSource?: "self_created" | "assigned";
 };
 
@@ -181,7 +182,7 @@ export default function EmployeeCustomersPage() {
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <Target className="w-5 h-5 text-[#F9E795] mb-4" />
           <p className="text-white/40 text-xs font-bold mb-2">تحويلات ناجحة</p>
-          <p className="text-white font-black text-2xl">{data.filter((item) => item.convertedOrderId).length}</p>
+          <p className="text-white font-black text-2xl">{data.filter((item) => item.convertedOrderId || item.registeredUserId).length}</p>
         </div>
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
@@ -241,6 +242,9 @@ export default function EmployeeCustomersPage() {
                           {customer.status}
                         </span>
                         {customer.convertedOrderId && <p className="text-emerald-300 text-xs mt-2">تم التحويل إلى طلب #{customer.convertedOrderId}</p>}
+                        {!customer.convertedOrderId && customer.registeredUserId && (
+                          <p className="text-sky-300 text-xs mt-2">تم التسجيل على المنصة كعميل #{customer.registeredUserId}</p>
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <span className={`px-3 py-2 rounded-xl text-xs font-bold border ${ownership.className}`}>

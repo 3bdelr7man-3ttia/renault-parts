@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, or } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { and, desc, eq, or } from "drizzle-orm";
+import { db, leadsTable, usersTable } from "@workspace/db";
 import {
   RegisterUserBody,
   LoginUserBody,
@@ -65,6 +65,30 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     area: area ?? null,
     role: "customer",
   }).returning();
+
+  const leadConditions: ReturnType<typeof eq>[] = [];
+  if (phone) leadConditions.push(eq(leadsTable.phone, phone));
+  if (email) leadConditions.push(eq(leadsTable.email, email));
+
+  if (leadConditions.length > 0) {
+    const [matchingLead] = await db
+      .select({ id: leadsTable.id })
+      .from(leadsTable)
+      .where(and(eq(leadsTable.type, "customer"), or(...leadConditions)))
+      .orderBy(desc(leadsTable.createdAt))
+      .limit(1);
+
+    if (matchingLead) {
+      await db
+        .update(leadsTable)
+        .set({
+          registeredUserId: user.id,
+          status: "registered_on_platform",
+          lastContactAt: new Date(),
+        })
+        .where(eq(leadsTable.id, matchingLead.id));
+    }
+  }
 
   const token = signToken(user.id, user.role, user.employeeRole);
   res.status(201).json(LoginUserResponse.parse({ user: buildUserOut(user), token }));

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Response } from "express";
-import { and, asc, count, desc, eq, gte, isNotNull, lt, or } from "drizzle-orm";
-import { db, employeeTasksTable, leadsTable } from "@workspace/db";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, lt, or } from "drizzle-orm";
+import { db, employeeTasksTable, leadsTable, usersTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { requireRolePermission } from "../lib/permissions";
 
@@ -30,6 +30,7 @@ type SalesCustomerRow = {
   nextFollowUpAt?: Date | string | null;
   notes?: string | null;
   convertedOrderId?: number | null;
+  registeredUserId?: number | null;
   createdAt: Date | string | null;
   createdByUserId?: number | null;
 };
@@ -48,6 +49,7 @@ type SalesWorkshopRow = {
   nextFollowUpAt?: Date | string | null;
   notes?: string | null;
   convertedWorkshopId?: number | null;
+  registeredUserId?: number | null;
   createdAt: Date | string | null;
   createdByUserId?: number | null;
 };
@@ -65,6 +67,41 @@ type SalesTaskRow = {
   leadName?: string | null;
   leadPhone?: string | null;
   leadType?: string | null;
+  createdByUserId?: number | null;
+};
+
+type TeamLeadRow = {
+  id: number;
+  type: string;
+  name: string;
+  contactPerson?: string | null;
+  phone: string;
+  email?: string | null;
+  area?: string | null;
+  address?: string | null;
+  source: string;
+  status: string;
+  notes?: string | null;
+  assignedEmployeeId?: number | null;
+  createdByUserId?: number | null;
+  registeredUserId?: number | null;
+  convertedOrderId?: number | null;
+  convertedWorkshopId?: number | null;
+  lastContactAt?: Date | string | null;
+  nextFollowUpAt?: Date | string | null;
+  createdAt?: Date | string | null;
+};
+
+type TeamTaskRow = {
+  id: number;
+  employeeId: number;
+  leadId?: number | null;
+  title: string;
+  taskType: string;
+  area?: string | null;
+  dueAt: Date | string | null;
+  status: string;
+  notes?: string | null;
   createdByUserId?: number | null;
 };
 
@@ -94,6 +131,20 @@ type CreateSalesWorkshopInput = {
 };
 
 type CreateSalesTaskInput = {
+  title: string;
+  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  area: string | null;
+  dueAt: string;
+  notes: string | null;
+  leadId: number | null;
+};
+
+type AssignLeadInput = {
+  employeeId: number | null;
+};
+
+type CreateManagedTaskInput = {
+  employeeId: number;
   title: string;
   taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
   area: string | null;
@@ -211,6 +262,85 @@ function parseSalesTaskInput(body: unknown): ParsedResult<CreateSalesTaskInput> 
   };
 }
 
+function parseAssignLeadInput(body: unknown): ParsedResult<AssignLeadInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const rawEmployeeId = payload.employeeId;
+  const employeeId = rawEmployeeId === null || rawEmployeeId === undefined || rawEmployeeId === "" ? null : Number(rawEmployeeId);
+
+  if (employeeId !== null && (!Number.isInteger(employeeId) || employeeId <= 0)) {
+    return { success: false, error: "الموظف المختار غير صحيح" };
+  }
+
+  return { success: true, data: { employeeId } };
+}
+
+function parseManagedTaskInput(body: unknown): ParsedResult<CreateManagedTaskInput> {
+  const parsedTask = parseSalesTaskInput(body);
+  if (!parsedTask.success) return parsedTask;
+
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const employeeId = Number(payload.employeeId);
+
+  if (!Number.isInteger(employeeId) || employeeId <= 0) {
+    return { success: false, error: "الموظف المختار غير صحيح" };
+  }
+
+  return {
+    success: true,
+    data: {
+      employeeId,
+      ...parsedTask.data,
+    },
+  };
+}
+
+async function loadUserNameMap(userIds: Array<number | null | undefined>) {
+  const normalizedIds = Array.from(new Set(userIds.filter((value): value is number => typeof value === "number" && value > 0)));
+
+  if (normalizedIds.length === 0) {
+    return new Map<number, { name: string; role: string; employeeRole: string | null }>();
+  }
+
+  const users = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      role: usersTable.role,
+      employeeRole: usersTable.employeeRole,
+    })
+    .from(usersTable)
+    .where(inArray(usersTable.id, normalizedIds));
+
+  return new Map(
+    users.map((user) => [
+      user.id,
+      {
+        name: user.name,
+        role: user.role,
+        employeeRole: user.employeeRole,
+      },
+    ]),
+  );
+}
+
+async function ensureSalesEmployee(employeeId: number) {
+  const [employee] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      role: usersTable.role,
+      employeeRole: usersTable.employeeRole,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, employeeId));
+
+  if (!employee || employee.role !== "employee" || employee.employeeRole !== "sales") {
+    return null;
+  }
+
+  return employee;
+}
+
 router.get(
   "/admin/employee/sales/summary",
   requireAuth,
@@ -252,7 +382,13 @@ router.get(
     const [convertedCustomersRow] = await db
       .select({ count: count() })
       .from(leadsTable)
-      .where(and(eq(leadsTable.assignedEmployeeId, employeeId), eq(leadsTable.type, "customer"), isNotNull(leadsTable.convertedOrderId)));
+      .where(
+        and(
+          eq(leadsTable.assignedEmployeeId, employeeId),
+          eq(leadsTable.type, "customer"),
+          or(isNotNull(leadsTable.convertedOrderId), isNotNull(leadsTable.registeredUserId)),
+        ),
+      );
 
     const [assignedWorkshopsRow] = await db
       .select({ count: count() })
@@ -320,6 +456,7 @@ router.get(
         nextFollowUpAt: leadsTable.nextFollowUpAt,
         notes: leadsTable.notes,
         convertedOrderId: leadsTable.convertedOrderId,
+        registeredUserId: leadsTable.registeredUserId,
         createdAt: leadsTable.createdAt,
         createdByUserId: leadsTable.createdByUserId,
       })
@@ -365,6 +502,7 @@ router.get(
         nextFollowUpAt: leadsTable.nextFollowUpAt,
         notes: leadsTable.notes,
         convertedWorkshopId: leadsTable.convertedWorkshopId,
+        registeredUserId: leadsTable.registeredUserId,
         createdAt: leadsTable.createdAt,
         createdByUserId: leadsTable.createdByUserId,
       })
@@ -423,6 +561,228 @@ router.get(
         ownershipSource: row.createdByUserId === employeeId ? "self_created" : "assigned",
       })),
     );
+  },
+);
+
+router.get(
+  "/admin/employee/team/employees",
+  requireAuth,
+  requireRolePermission("sales.team.view", "هذه الصفحة متاحة لمدير الفريق والإدارة فقط"),
+  async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const rows = await db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        phone: usersTable.phone,
+        email: usersTable.email,
+        role: usersTable.role,
+        employeeRole: usersTable.employeeRole,
+        area: usersTable.area,
+        createdAt: usersTable.createdAt,
+      })
+      .from(usersTable)
+      .where(and(eq(usersTable.role, "employee"), eq(usersTable.employeeRole, "sales")))
+      .orderBy(asc(usersTable.name));
+
+    res.json(rows);
+  },
+);
+
+router.get(
+  "/admin/employee/team/leads",
+  requireAuth,
+  requireRolePermission("sales.team.view", "هذه الصفحة متاحة لمدير الفريق والإدارة فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const type = typeof req.query.type === "string" ? req.query.type : null;
+    const baseQuery = db
+      .select({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        contactPerson: leadsTable.contactPerson,
+        phone: leadsTable.phone,
+        email: leadsTable.email,
+        area: leadsTable.area,
+        address: leadsTable.address,
+        source: leadsTable.source,
+        status: leadsTable.status,
+        notes: leadsTable.notes,
+        assignedEmployeeId: leadsTable.assignedEmployeeId,
+        createdByUserId: leadsTable.createdByUserId,
+        registeredUserId: leadsTable.registeredUserId,
+        convertedOrderId: leadsTable.convertedOrderId,
+        convertedWorkshopId: leadsTable.convertedWorkshopId,
+        lastContactAt: leadsTable.lastContactAt,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+        createdAt: leadsTable.createdAt,
+      })
+      .from(leadsTable);
+
+    const rows = type === "customer" || type === "workshop"
+      ? await baseQuery.where(eq(leadsTable.type, type)).orderBy(desc(leadsTable.createdAt))
+      : await baseQuery.orderBy(desc(leadsTable.createdAt));
+
+    const nameMap = await loadUserNameMap(
+      rows.flatMap((row) => [row.assignedEmployeeId, row.createdByUserId, row.registeredUserId]),
+    );
+
+    res.json(
+      rows.map((row: TeamLeadRow) => ({
+        ...row,
+        lastContactAt: toIso(row.lastContactAt),
+        nextFollowUpAt: toIso(row.nextFollowUpAt),
+        createdAt: toIso(row.createdAt),
+        assignedEmployeeName: row.assignedEmployeeId ? nameMap.get(row.assignedEmployeeId)?.name ?? null : null,
+        createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
+        registeredUserName: row.registeredUserId ? nameMap.get(row.registeredUserId)?.name ?? null : null,
+      })),
+    );
+  },
+);
+
+router.post(
+  "/admin/employee/team/leads/:id/assign",
+  requireAuth,
+  requireRolePermission("sales.team.assign", "هذه العملية متاحة لمدير الفريق والإدارة فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const leadId = Number(req.params.id);
+    if (!Number.isInteger(leadId) || leadId <= 0) {
+      res.status(400).json({ error: "الفرصة المطلوبة غير صحيحة" });
+      return;
+    }
+
+    const parsed = parseAssignLeadInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    if (parsed.data.employeeId !== null) {
+      const assignee = await ensureSalesEmployee(parsed.data.employeeId);
+      if (!assignee) {
+        res.status(400).json({ error: "لا يمكن الإسناد إلا لموظف مبيعات صالح" });
+        return;
+      }
+    }
+
+    const [updated] = await db
+      .update(leadsTable)
+      .set({
+        assignedEmployeeId: parsed.data.employeeId,
+        updatedAt: new Date(),
+      })
+      .where(eq(leadsTable.id, leadId))
+      .returning({
+        id: leadsTable.id,
+        assignedEmployeeId: leadsTable.assignedEmployeeId,
+      });
+
+    if (!updated) {
+      res.status(404).json({ error: "الفرصة المطلوبة غير موجودة" });
+      return;
+    }
+
+    const nameMap = await loadUserNameMap([updated.assignedEmployeeId]);
+
+    res.json({
+      ...updated,
+      assignedEmployeeName: updated.assignedEmployeeId ? nameMap.get(updated.assignedEmployeeId)?.name ?? null : null,
+    });
+  },
+);
+
+router.get(
+  "/admin/employee/team/tasks",
+  requireAuth,
+  requireRolePermission("sales.team.view", "هذه الصفحة متاحة لمدير الفريق والإدارة فقط"),
+  async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const rows = await db
+      .select({
+        id: employeeTasksTable.id,
+        employeeId: employeeTasksTable.employeeId,
+        leadId: employeeTasksTable.leadId,
+        title: employeeTasksTable.title,
+        taskType: employeeTasksTable.taskType,
+        area: employeeTasksTable.area,
+        dueAt: employeeTasksTable.dueAt,
+        status: employeeTasksTable.status,
+        notes: employeeTasksTable.notes,
+        createdByUserId: employeeTasksTable.createdByUserId,
+      })
+      .from(employeeTasksTable)
+      .orderBy(desc(employeeTasksTable.createdAt))
+      .limit(20);
+
+    const nameMap = await loadUserNameMap(rows.flatMap((row) => [row.employeeId, row.createdByUserId]));
+    const leadIds = Array.from(new Set(rows.map((row) => row.leadId).filter((value): value is number => typeof value === "number" && value > 0)));
+    const leadRows = leadIds.length
+      ? await db.select({ id: leadsTable.id, name: leadsTable.name }).from(leadsTable).where(inArray(leadsTable.id, leadIds))
+      : [];
+    const leadMap = new Map(leadRows.map((lead) => [lead.id, lead.name]));
+
+    res.json(
+      rows.map((row: TeamTaskRow) => ({
+        ...row,
+        dueAt: toIso(row.dueAt),
+        employeeName: nameMap.get(row.employeeId)?.name ?? null,
+        createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
+        leadName: row.leadId ? leadMap.get(row.leadId) ?? null : null,
+      })),
+    );
+  },
+);
+
+router.post(
+  "/admin/employee/team/tasks",
+  requireAuth,
+  requireRolePermission("sales.team.assign", "هذه العملية متاحة لمدير الفريق والإدارة فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const managerId = getScopedEmployeeId(req);
+    if (!managerId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const parsed = parseManagedTaskInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    const assignee = await ensureSalesEmployee(parsed.data.employeeId);
+    if (!assignee) {
+      res.status(400).json({ error: "لا يمكن إسناد المهمة إلا لموظف مبيعات صالح" });
+      return;
+    }
+
+    if (parsed.data.leadId) {
+      const [lead] = await db.select({ id: leadsTable.id }).from(leadsTable).where(eq(leadsTable.id, parsed.data.leadId));
+      if (!lead) {
+        res.status(400).json({ error: "الفرصة المرتبطة غير موجودة" });
+        return;
+      }
+    }
+
+    const [created] = await db
+      .insert(employeeTasksTable)
+      .values({
+        employeeId: parsed.data.employeeId,
+        leadId: parsed.data.leadId ?? null,
+        title: parsed.data.title,
+        taskType: parsed.data.taskType,
+        area: parsed.data.area ?? null,
+        dueAt: new Date(parsed.data.dueAt),
+        status: "pending",
+        notes: parsed.data.notes ?? null,
+        createdByUserId: managerId,
+      })
+      .returning({
+        id: employeeTasksTable.id,
+        employeeId: employeeTasksTable.employeeId,
+        title: employeeTasksTable.title,
+      });
+
+    res.status(201).json(created);
   },
 );
 

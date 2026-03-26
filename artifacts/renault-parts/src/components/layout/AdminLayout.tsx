@@ -47,6 +47,7 @@ const navItems: NavItem[] = [
   { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales', 'manager'] },
   { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales', 'manager'] },
   { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, employeeOnly: true, permission: 'sales.tasks.view_own', employeeRoles: ['sales', 'manager'] },
+  { href: '/admin/employee/team',          label: 'إدارة الفريق',     icon: Users, permission: 'sales.team.view' as const },
   { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, permission: 'orders.view' as const },
   { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, permission: 'appointments.view' as const },
   { href: '/admin/packages',               label: 'الباكدجات',        icon: Package2, permission: 'packages.edit' as const },

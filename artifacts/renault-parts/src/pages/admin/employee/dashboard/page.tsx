@@ -64,6 +64,12 @@ const salesSections = [
     description: "مكالمات اليوم، الزيارات، والمتابعات المفتوحة التي تحتاج تنفيذًا فعليًا.",
     icon: PhoneCall,
   },
+  {
+    href: "/admin/employee/team",
+    label: "إدارة الفريق",
+    description: "توزيع العملاء والورش والمهام على موظفي المبيعات ومتابعة تسجيلهم داخل المنصة.",
+    icon: Users,
+  },
 ];
 
 function useSalesSummary(token: string | null, enabled: boolean) {
@@ -103,6 +109,7 @@ export default function EmployeeDashboardPage() {
       hasPermission("sales.customers.create_own") ? { href: "/admin/employee/customers", label: "إضافة عميل", icon: Users } : null,
       hasPermission("sales.workshops.create_own") ? { href: "/admin/employee/workshops", label: "إضافة ورشة", icon: Building2 } : null,
       hasPermission("sales.tasks.create_own") ? { href: "/admin/employee/tasks", label: "إضافة مهمة", icon: ClipboardList } : null,
+      hasPermission("sales.team.view") ? { href: "/admin/employee/team", label: "إدارة الفريق", icon: Users } : null,
     ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Users }>;
 
     const statCards = [
@@ -155,7 +162,9 @@ export default function EmployeeDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {salesSections.map((card) => (
+              {salesSections
+                .filter((card) => card.href !== "/admin/employee/team" || hasPermission("sales.team.view"))
+                .map((card) => (
                 <Link key={card.href} href={card.href}>
                   <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
                     <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">

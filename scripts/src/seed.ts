@@ -76,13 +76,14 @@ type SeedLead = {
   carYear?: number | null;
   source: string;
   status: string;
-  assignedEmployeeId: number;
+  assignedEmployeeId?: number | null;
   createdByUserId: number;
   lastContactAt?: Date | null;
   nextFollowUpAt?: Date | null;
   notes?: string | null;
   convertedOrderId?: number | null;
   convertedWorkshopId?: number | null;
+  registeredUserId?: number | null;
 };
 
 type SeedEmployeeTask = {
@@ -516,6 +517,7 @@ async function seed() {
     employeeRole: "data_entry",
     area: "لوران",
   });
+  const dataEntryUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "dataentry@renaultparts.eg") });
 
   await upsertUser({
     name: "خدمة العملاء",
@@ -536,10 +538,11 @@ async function seed() {
     employeeRole: "manager",
     area: "سموحة",
   });
+  const managerUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "manager@renaultparts.eg") });
   console.log("✅ Demo users ready");
 
-  if (!salesUser) {
-    throw new Error("Sales employee was not created");
+  if (!salesUser || !dataEntryUser || !managerUser) {
+    throw new Error("Sales workspace demo employees were not created");
   }
 
   const pkg20kId = packageIds.get("pkg-20k");
@@ -671,6 +674,23 @@ async function seed() {
 
   await upsertLead({
     type: "customer",
+    name: "سيف عماد",
+    phone: "01020000009",
+    email: "seif.emad@example.com",
+    area: "العصافرة",
+    address: "شارع 45، العصافرة",
+    carModel: "Renault Sandero",
+    carYear: 2021,
+    source: "data_entry",
+    status: "new",
+    assignedEmployeeId: null,
+    createdByUserId: dataEntryUser.id,
+    nextFollowUpAt: tomorrowMorning,
+    notes: "Lead جديدة من إدخال البيانات وتحتاج توزيع على أحد مندوبي المبيعات.",
+  });
+
+  await upsertLead({
+    type: "customer",
     name: "كريم السعيد",
     phone: "01020000003",
     email: "karim.elsaeed@example.com",
@@ -723,6 +743,22 @@ async function seed() {
     notes: "تمت المتابعة ورفعها كحالة انضمام، وهي الآن تحت متابعة الإدارة.",
   });
 
+  await upsertLead({
+    type: "workshop",
+    name: "مركز الشروق",
+    contactPerson: "م. إيهاب",
+    phone: "01030000009",
+    email: "shorouk.center@example.com",
+    area: "محرم بك",
+    address: "شارع الرصافة، محرم بك",
+    source: "data_entry",
+    status: "new",
+    assignedEmployeeId: null,
+    createdByUserId: dataEntryUser.id,
+    nextFollowUpAt: tomorrowAfternoon,
+    notes: "ورشة جديدة تحتاج إسناد أولي لفريق المبيعات ومكالمة تعريف.",
+  });
+
   await upsertEmployeeTask({
     employeeId: salesUser.id,
     leadId: assignedCustomerLeadId,
@@ -756,6 +792,17 @@ async function seed() {
     status: "pending",
     notes: "ترتيب العملاء المطلوب التواصل معهم قبل نهاية اليوم.",
     createdByUserId: adminUserId,
+  });
+
+  await upsertEmployeeTask({
+    employeeId: salesUser.id,
+    title: "متابعة العملاء الجدد غير الموزعين",
+    taskType: "follow_up",
+    area: "العصافرة",
+    dueAt: tomorrowAfternoon,
+    status: "pending",
+    notes: "مهمة مسندة من مدير الفريق لمراجعة الفرص الجديدة داخل الـ pipeline.",
+    createdByUserId: managerUser.id,
   });
 
   console.log("✅ Orders, appointment, review, expense, workshop application, and sales workspace data ready");

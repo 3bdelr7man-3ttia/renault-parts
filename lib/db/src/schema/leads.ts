@@ -22,6 +22,7 @@ export const leadsTable = pgTable(
     status: text("status").notNull().default("new"),
     assignedEmployeeId: integer("assigned_employee_id").references(() => usersTable.id),
     createdByUserId: integer("created_by_user_id").references(() => usersTable.id),
+    registeredUserId: integer("registered_user_id").references(() => usersTable.id),
     lastContactAt: timestamp("last_contact_at", { withTimezone: true }),
     nextFollowUpAt: timestamp("next_follow_up_at", { withTimezone: true }),
     notes: text("notes"),
@@ -33,6 +34,7 @@ export const leadsTable = pgTable(
   (table) => ({
     leadsTypeIdx: index("leads_type_idx").on(table.type),
     leadsAssignedEmployeeIdx: index("leads_assigned_employee_idx").on(table.assignedEmployeeId),
+    leadsRegisteredUserIdx: index("leads_registered_user_idx").on(table.registeredUserId),
     leadsStatusIdx: index("leads_status_idx").on(table.status),
     leadsNextFollowUpIdx: index("leads_next_follow_up_idx").on(table.nextFollowUpAt),
   }),
