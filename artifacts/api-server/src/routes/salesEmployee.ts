@@ -861,6 +861,59 @@ async function findEmployeeByEmployeeRole(employeeRole: "sales" | "manager" | "d
   return employee ?? null;
 }
 
+function getTechnicalCategoryFromTaskType(taskType: CreateManagedTaskInput["taskType"]): string {
+  if (taskType === "parts_return_review") return "parts_return";
+  if (taskType === "workshop_support") return "workshop_relation";
+  if (taskType === "expert_opinion" || taskType === "technical_review") return "diagnostics";
+  return "other";
+}
+
+async function syncLeadIntoTechnicalWorkflow(params: {
+  leadId: number;
+  employeeId: number;
+  taskType: CreateManagedTaskInput["taskType"];
+  dueAt: string;
+  notes: string | null;
+}) {
+  const [lead] = await db
+    .select({
+      id: leadsTable.id,
+      technicalCategory: leadsTable.technicalCategory,
+      technicalPriority: leadsTable.technicalPriority,
+      technicalActionMode: leadsTable.technicalActionMode,
+      transferDecision: leadsTable.transferDecision,
+      nextFollowUpAt: leadsTable.nextFollowUpAt,
+      notes: leadsTable.notes,
+    })
+    .from(leadsTable)
+    .where(eq(leadsTable.id, params.leadId));
+
+  if (!lead) return null;
+
+  const mergedNotes = [lead.notes, params.notes].filter(Boolean).join("\n\n");
+
+  const [updated] = await db
+    .update(leadsTable)
+    .set({
+      assignedEmployeeId: params.employeeId,
+      technicalCategory: lead.technicalCategory ?? getTechnicalCategoryFromTaskType(params.taskType),
+      technicalPriority: lead.technicalPriority ?? "medium",
+      technicalActionMode: lead.technicalActionMode ?? "write_opinion_for_sales",
+      transferDecision: lead.transferDecision ?? "keep_with_technical",
+      nextFollowUpAt: lead.nextFollowUpAt ?? new Date(params.dueAt),
+      notes: mergedNotes || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(leadsTable.id, params.leadId))
+    .returning({
+      id: leadsTable.id,
+      technicalCategory: leadsTable.technicalCategory,
+      technicalPriority: leadsTable.technicalPriority,
+    });
+
+  return updated ?? null;
+}
+
 async function maybeCreateTechnicalTransferTask(params: {
   actorId: number;
   leadId: number;
@@ -1558,20 +1611,44 @@ router.post(
       return;
     }
 
+    const updatePayload: Record<string, unknown> = {
+      assignedEmployeeId: parsed.data.employeeId,
+      updatedAt: new Date(),
+    };
+
     if (parsed.data.employeeId !== null) {
       const assignee = await ensureAssignableEmployee(req.user, parsed.data.employeeId);
       if (!assignee) {
         res.status(400).json({ error: "لا يمكن الإسناد إلا لموظف صالح ضمن نطاقك الإداري" });
         return;
       }
+
+      if (assignee.employeeRole === "technical_expert") {
+        const [lead] = await db
+          .select({
+            id: leadsTable.id,
+            technicalCategory: leadsTable.technicalCategory,
+            technicalPriority: leadsTable.technicalPriority,
+            technicalActionMode: leadsTable.technicalActionMode,
+            transferDecision: leadsTable.transferDecision,
+            nextFollowUpAt: leadsTable.nextFollowUpAt,
+          })
+          .from(leadsTable)
+          .where(eq(leadsTable.id, leadId));
+
+        if (lead) {
+          updatePayload.technicalCategory = lead.technicalCategory ?? "diagnostics";
+          updatePayload.technicalPriority = lead.technicalPriority ?? "medium";
+          updatePayload.technicalActionMode = lead.technicalActionMode ?? "write_opinion_for_sales";
+          updatePayload.transferDecision = lead.transferDecision ?? "keep_with_technical";
+          updatePayload.nextFollowUpAt = lead.nextFollowUpAt ?? new Date(Date.now() + 4 * 60 * 60 * 1000);
+        }
+      }
     }
 
     const [updated] = await db
       .update(leadsTable)
-      .set({
-        assignedEmployeeId: parsed.data.employeeId,
-        updatedAt: new Date(),
-      })
+      .set(updatePayload)
       .where(eq(leadsTable.id, leadId))
       .returning({
         id: leadsTable.id,
@@ -1656,12 +1733,29 @@ router.post(
       return;
     }
 
+    const isTechnicalAssignee = assignee.employeeRole === "technical_expert";
+    if (isTechnicalAssignee && !parsed.data.leadId) {
+      res.status(400).json({ error: "مهمة الخبير الفني يجب أن ترتبط بعميل أو ورشة حتى تظهر كحالة فنية داخل مساحته." });
+      return;
+    }
+
     if (parsed.data.leadId) {
       const [lead] = await db.select({ id: leadsTable.id }).from(leadsTable).where(eq(leadsTable.id, parsed.data.leadId));
       if (!lead) {
         res.status(400).json({ error: "الفرصة المرتبطة غير موجودة" });
         return;
       }
+    }
+
+    let technicalCaseSync: { id: number; technicalCategory: string | null; technicalPriority: string | null } | null = null;
+    if (isTechnicalAssignee && parsed.data.leadId) {
+      technicalCaseSync = await syncLeadIntoTechnicalWorkflow({
+        leadId: parsed.data.leadId,
+        employeeId: parsed.data.employeeId,
+        taskType: parsed.data.taskType,
+        dueAt: parsed.data.dueAt,
+        notes: parsed.data.notes ?? null,
+      });
     }
 
     const [created] = await db
@@ -1683,7 +1777,17 @@ router.post(
         title: employeeTasksTable.title,
       });
 
-    res.status(201).json(created);
+    res.status(201).json({
+      ...created,
+      technicalCaseSync: technicalCaseSync
+        ? {
+            leadId: technicalCaseSync.id,
+            technicalCategory: technicalCaseSync.technicalCategory,
+            technicalPriority: technicalCaseSync.technicalPriority,
+            message: "تم إسناد الحالة للخبير الفني وظهرت أيضًا داخل مساحة الحالات الفنية.",
+          }
+        : null,
+    });
   },
 );
 

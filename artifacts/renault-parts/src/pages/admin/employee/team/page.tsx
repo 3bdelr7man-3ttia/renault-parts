@@ -314,7 +314,10 @@ export default function EmployeeTeamPage() {
         throw new Error(result?.error || "فشل إنشاء المهمة");
       }
 
-      toast({ title: "تمت إضافة المهمة", description: "المهمة أصبحت مسندة ضمن جدول الموظف المحدد." });
+      toast({
+        title: "تمت إضافة المهمة",
+        description: result?.technicalCaseSync?.message || "المهمة أصبحت مسندة ضمن جدول الموظف المحدد.",
+      });
       setShowTaskModal(false);
       setTaskForm(emptyTaskForm);
       await loadPage();
@@ -711,6 +714,11 @@ export default function EmployeeTeamPage() {
                   </option>
                 ))}
               </select>
+              {selectedEmployee?.employeeRole === "technical_expert" ? (
+                <p className="md:col-span-2 text-[11px] text-[#F9E795] leading-6 -mt-1">
+                  لو أسندت المهمة لخبير فني مع اختيار عميل أو ورشة مرتبطة، ستظهر له مباشرة داخل مساحة الحالات الفنية، وليس كمهمة عامة فقط.
+                </p>
+              ) : null}
 
               <select
                 value={taskForm.leadId}
