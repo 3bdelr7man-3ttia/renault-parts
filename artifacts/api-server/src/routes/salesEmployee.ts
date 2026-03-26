@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, gte, isNotNull, lt, or } from "drizzle-orm";
 import { db, employeeTasksTable, leadsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { requireRolePermission } from "../lib/permissions";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 const router: IRouter = Router();
 
