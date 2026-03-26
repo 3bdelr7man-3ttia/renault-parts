@@ -21,6 +21,8 @@ import {
   Store,
   CalendarCheck,
   PhoneCall,
+  Database,
+  FileText,
 } from 'lucide-react';
 import bakoLogo from '@/assets/bako-logo.png';
 
@@ -44,9 +46,11 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, exact: true, adminOnly: true },
   { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, employeeOnly: true },
+  { href: '/admin/employee/data-entry',    label: 'إدخال البيانات',   icon: Database, employeeOnly: true, permission: 'data_entry.leads.view', employeeRoles: ['data_entry', 'manager'] },
   { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales', 'manager'] },
   { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales', 'manager'] },
-  { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, employeeOnly: true, permission: 'sales.tasks.view_own', employeeRoles: ['sales', 'manager'] },
+  { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, employeeOnly: true, permission: 'employee.tasks.view_own' },
+  { href: '/admin/employee/reports',       label: 'تقاريري اليومية',  icon: FileText, employeeOnly: true, permission: 'employee.reports.view_own' },
   { href: '/admin/employee/team',          label: 'إدارة الفريق',     icon: Users, permission: 'sales.team.view' as const },
   { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, permission: 'orders.view' as const },
   { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, permission: 'appointments.view' as const },

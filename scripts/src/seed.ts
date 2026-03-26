@@ -1,6 +1,7 @@
 import {
   appointmentsTable,
   db,
+  employeeDailyReportsTable,
   employeeTasksTable,
   expensesTable,
   leadsTable,
@@ -97,6 +98,15 @@ type SeedEmployeeTask = {
   result?: string | null;
   notes?: string | null;
   createdByUserId: number;
+};
+
+type SeedEmployeeDailyReport = {
+  employeeId: number;
+  reportDate: string;
+  summary: string;
+  achievements?: string | null;
+  blockers?: string | null;
+  nextSteps?: string | null;
 };
 
 const seedPackages: SeedPackage[] = [
@@ -428,6 +438,24 @@ async function upsertEmployeeTask(task: SeedEmployeeTask) {
   return inserted.id;
 }
 
+async function upsertEmployeeDailyReport(report: SeedEmployeeDailyReport) {
+  const existing = await db.query.employeeDailyReportsTable.findFirst({
+    where: and(eq(employeeDailyReportsTable.employeeId, report.employeeId), eq(employeeDailyReportsTable.reportDate, report.reportDate)),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(employeeDailyReportsTable)
+      .set(report)
+      .where(eq(employeeDailyReportsTable.id, existing.id))
+      .returning({ id: employeeDailyReportsTable.id });
+    return updated.id;
+  }
+
+  const [inserted] = await db.insert(employeeDailyReportsTable).values(report).returning({ id: employeeDailyReportsTable.id });
+  return inserted.id;
+}
+
 async function seed() {
   console.log("🌱 Seeding RenoPack staging data...");
 
@@ -528,6 +556,7 @@ async function seed() {
     employeeRole: "customer_service",
     area: "ميامي",
   });
+  const supportUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "support@renaultparts.eg") });
 
   await upsertUser({
     name: "مدير فريق",
@@ -541,7 +570,7 @@ async function seed() {
   const managerUser = await db.query.usersTable.findFirst({ where: eq(usersTable.email, "manager@renaultparts.eg") });
   console.log("✅ Demo users ready");
 
-  if (!salesUser || !dataEntryUser || !managerUser) {
+  if (!salesUser || !dataEntryUser || !supportUser || !managerUser) {
     throw new Error("Sales workspace demo employees were not created");
   }
 
@@ -691,6 +720,24 @@ async function seed() {
 
   await upsertLead({
     type: "customer",
+    name: "نورا أشرف",
+    phone: "01020000010",
+    email: "nora.ashraf@example.com",
+    area: "لوران",
+    address: "شارع شعراوي، لوران",
+    carModel: "Renault Fluence",
+    carYear: 2017,
+    source: "data_entry",
+    status: "attempted_contact",
+    assignedEmployeeId: supportUser.id,
+    createdByUserId: dataEntryUser.id,
+    lastContactAt: now,
+    nextFollowUpAt: tomorrowMorning,
+    notes: "تحتاج متابعة من خدمة العملاء لتأكيد المشكلة قبل تحويلها للمبيعات.",
+  });
+
+  await upsertLead({
+    type: "customer",
     name: "كريم السعيد",
     phone: "01020000003",
     email: "karim.elsaeed@example.com",
@@ -759,6 +806,23 @@ async function seed() {
     notes: "ورشة جديدة تحتاج إسناد أولي لفريق المبيعات ومكالمة تعريف.",
   });
 
+  await upsertLead({
+    type: "workshop",
+    name: "ورشة المدينة",
+    contactPerson: "أ. كريم",
+    phone: "01030000010",
+    email: "madina.workshop@example.com",
+    area: "كامب شيزار",
+    address: "شارع بورسعيد، كامب شيزار",
+    source: "data_entry",
+    status: "follow_up_later",
+    assignedEmployeeId: supportUser.id,
+    createdByUserId: dataEntryUser.id,
+    lastContactAt: now,
+    nextFollowUpAt: tomorrowAfternoon,
+    notes: "الورشة بحاجة لشرح شروط الشراكة أولًا من خدمة العملاء قبل الإحالة لفريق المبيعات.",
+  });
+
   await upsertEmployeeTask({
     employeeId: salesUser.id,
     leadId: assignedCustomerLeadId,
@@ -805,7 +869,76 @@ async function seed() {
     createdByUserId: managerUser.id,
   });
 
-  console.log("✅ Orders, appointment, review, expense, workshop application, and sales workspace data ready");
+  await upsertEmployeeTask({
+    employeeId: dataEntryUser.id,
+    title: "إدخال بيانات العملاء الواردة من حملة سموحة",
+    taskType: "data_entry",
+    area: "سموحة",
+    dueAt: tomorrowMorning,
+    status: "pending",
+    notes: "إدخال البيانات مع تحديد الأولوية وتعيين الحالات العاجلة لخدمة العملاء.",
+    createdByUserId: managerUser.id,
+  });
+
+  await upsertEmployeeTask({
+    employeeId: supportUser.id,
+    title: "متابعة الشكاوى المفتوحة من leads إدخال البيانات",
+    taskType: "issue_resolution",
+    area: "لوران",
+    dueAt: tomorrowAfternoon,
+    status: "pending",
+    notes: "التأكد من استكمال بيانات الحالات التي تحتاج دعمًا قبل تحويلها إلى المبيعات.",
+    createdByUserId: managerUser.id,
+  });
+
+  await upsertEmployeeTask({
+    employeeId: managerUser.id,
+    title: "توزيع leads اليوم على الفريق",
+    taskType: "follow_up",
+    area: "الإسكندرية",
+    dueAt: tomorrowMorning,
+    status: "in_progress",
+    notes: "مراجعة العملاء والورش غير المسندة وإعادة توزيعها على المبيعات وخدمة العملاء.",
+    createdByUserId: adminUserId,
+  });
+
+  await upsertEmployeeDailyReport({
+    employeeId: salesUser.id,
+    reportDate: "2026-03-25",
+    summary: "تمت متابعة عملاء المبيعات المفتوحين وتم تحويل عميل واحد إلى طلب فعلي.",
+    achievements: "مكالمة ناجحة مع أحمد رمضان وتحويل كريم السعيد إلى طلب مؤكد.",
+    blockers: "تأخر رد بعض العملاء في فترة الظهيرة.",
+    nextSteps: "استكمال متابعة الورش الجديدة وجدولة زيارتين ميدانيتين.",
+  });
+
+  await upsertEmployeeDailyReport({
+    employeeId: dataEntryUser.id,
+    reportDate: "2026-03-25",
+    summary: "تم إدخال دفعة جديدة من العملاء والورش مع تصنيفها وتوجيه جزء منها للفريق.",
+    achievements: "إضافة سجلات جديدة من منطقة لوران وكامب شيزار وربطها بمسار المتابعة.",
+    blockers: "بعض الأرقام تحتاج مراجعة بسبب نقص البيانات.",
+    nextSteps: "استكمال تدقيق الدفعة القادمة وتوزيع الحالات الساخنة على المبيعات وخدمة العملاء.",
+  });
+
+  await upsertEmployeeDailyReport({
+    employeeId: supportUser.id,
+    reportDate: "2026-03-25",
+    summary: "تمت متابعة الحالات التي تحتاج خدمة عملاء وتم تحديث وضعها داخل النظام.",
+    achievements: "التواصل مع حالتين مفتوحتين وتأكيد بيانات التواصل ومواعيد المتابعة.",
+    blockers: "عدد من الحالات يحتاج معلومات فنية إضافية من الورش.",
+    nextSteps: "إغلاق الحالات المكتملة ورفع غير المكتمل لمدير الفريق.",
+  });
+
+  await upsertEmployeeDailyReport({
+    employeeId: managerUser.id,
+    reportDate: "2026-03-25",
+    summary: "تم توزيع فرص اليوم ومراجعة أداء الفريق وتحديد أولويات اليوم التالي.",
+    achievements: "إسناد مهام جديدة للمبيعات وإدخال البيانات وخدمة العملاء.",
+    blockers: "وجود فرص غير مكتملة البيانات تحتاج متابعة إضافية.",
+    nextSteps: "إعادة توزيع الـ pipeline المفتوح ومراجعة التقارير اليومية صباحًا.",
+  });
+
+  console.log("✅ Orders, appointment, review, expense, workshop application, employee tasks, and daily reports ready");
   console.log("🔐 Admin: admin@renaultparts.eg / admin123");
   console.log("👤 Customer: customer@renaultparts.eg / customer123");
   console.log("🛠️ Workshop: workshop@renaultparts.eg / workshop123");

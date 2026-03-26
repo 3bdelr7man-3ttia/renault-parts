@@ -12,3 +12,4 @@ export * from "./workshopPricing";
 export * from "./workshopAvailability";
 export * from "./leads";
 export * from "./employeeTasks";
+export * from "./employeeDailyReports";

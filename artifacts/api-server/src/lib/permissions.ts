@@ -9,13 +9,19 @@ export type Permission =
   | "customers.view"
   | "customers.contact"
   | "reports.sales"
+  | "employee.tasks.view_own"
+  | "employee.tasks.create_own"
+  | "employee.tasks.update_own"
+  | "employee.reports.view_own"
+  | "employee.reports.create_own"
+  | "data_entry.dashboard.view"
+  | "data_entry.leads.view"
+  | "data_entry.leads.create"
   | "sales.dashboard.view"
   | "sales.customers.view_own"
   | "sales.customers.create_own"
   | "sales.workshops.view_own"
   | "sales.workshops.create_own"
-  | "sales.tasks.view_own"
-  | "sales.tasks.create_own"
   | "sales.team.view"
   | "sales.team.assign"
   | "parts.create"
@@ -32,17 +38,46 @@ export type Permission =
 
 export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">> = {
   sales: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
     "sales.dashboard.view",
     "sales.customers.view_own",
     "sales.customers.create_own",
     "sales.workshops.view_own",
     "sales.workshops.create_own",
-    "sales.tasks.view_own",
-    "sales.tasks.create_own",
     "customers.contact",
   ],
-  data_entry: ["parts.create", "parts.edit", "packages.create", "packages.edit", "cars.create", "cars.edit"],
-  customer_service: ["orders.view", "appointments.view", "reviews.view", "customers.view", "customers.contact"],
+  data_entry: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "data_entry.dashboard.view",
+    "data_entry.leads.view",
+    "data_entry.leads.create",
+    "parts.create",
+    "parts.edit",
+    "packages.create",
+    "packages.edit",
+    "cars.create",
+    "cars.edit",
+  ],
+  customer_service: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "orders.view",
+    "appointments.view",
+    "reviews.view",
+    "customers.view",
+    "customers.contact",
+  ],
   manager: ["*"],
 };
 

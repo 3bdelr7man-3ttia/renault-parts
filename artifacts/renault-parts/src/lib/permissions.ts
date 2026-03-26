@@ -6,13 +6,19 @@ export type Permission =
   | "customers.view"
   | "customers.contact"
   | "reports.sales"
+  | "employee.tasks.view_own"
+  | "employee.tasks.create_own"
+  | "employee.tasks.update_own"
+  | "employee.reports.view_own"
+  | "employee.reports.create_own"
+  | "data_entry.dashboard.view"
+  | "data_entry.leads.view"
+  | "data_entry.leads.create"
   | "sales.dashboard.view"
   | "sales.customers.view_own"
   | "sales.customers.create_own"
   | "sales.workshops.view_own"
   | "sales.workshops.create_own"
-  | "sales.tasks.view_own"
-  | "sales.tasks.create_own"
   | "sales.team.view"
   | "sales.team.assign"
   | "parts.create"
@@ -29,17 +35,46 @@ export type Permission =
 
 export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">> = {
   sales: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
     "sales.dashboard.view",
     "sales.customers.view_own",
     "sales.customers.create_own",
     "sales.workshops.view_own",
     "sales.workshops.create_own",
-    "sales.tasks.view_own",
-    "sales.tasks.create_own",
     "customers.contact",
   ],
-  data_entry: ["parts.create", "parts.edit", "packages.create", "packages.edit", "cars.create", "cars.edit"],
-  customer_service: ["orders.view", "appointments.view", "reviews.view", "customers.view", "customers.contact"],
+  data_entry: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "data_entry.dashboard.view",
+    "data_entry.leads.view",
+    "data_entry.leads.create",
+    "parts.create",
+    "parts.edit",
+    "packages.create",
+    "packages.edit",
+    "cars.create",
+    "cars.edit",
+  ],
+  customer_service: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "orders.view",
+    "appointments.view",
+    "reviews.view",
+    "customers.view",
+    "customers.contact",
+  ],
   manager: ["*"],
 };
 
@@ -69,9 +104,11 @@ const MANAGER_ONLY_PERMISSIONS: Permission[] = ["reports.financial", "employees.
 
 const ADMIN_ROUTE_RULES: Array<{ match: RegExp; rule: AdminRouteRule }> = [
   { match: /^\/admin\/employee\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: true } },
+  { match: /^\/admin\/employee\/data-entry\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "data_entry.leads.view" } },
   { match: /^\/admin\/employee\/customers\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.customers.view_own" } },
   { match: /^\/admin\/employee\/workshops\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.workshops.view_own" } },
-  { match: /^\/admin\/employee\/tasks\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.tasks.view_own" } },
+  { match: /^\/admin\/employee\/tasks\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "employee.tasks.view_own" } },
+  { match: /^\/admin\/employee\/reports\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "employee.reports.view_own" } },
   { match: /^\/admin\/employee\/team\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.team.view" } },
   { match: /^\/admin\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
   { match: /^\/admin\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: false, redirectEmployeeTo: "/admin/employee/dashboard" } },
@@ -120,12 +157,18 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
   if (normalized === "manager") {
     return [
       "sales.dashboard.view",
+      "employee.tasks.view_own",
+      "employee.tasks.create_own",
+      "employee.tasks.update_own",
+      "employee.reports.view_own",
+      "employee.reports.create_own",
+      "data_entry.dashboard.view",
+      "data_entry.leads.view",
+      "data_entry.leads.create",
       "sales.customers.view_own",
       "sales.customers.create_own",
       "sales.workshops.view_own",
       "sales.workshops.create_own",
-      "sales.tasks.view_own",
-      "sales.tasks.create_own",
       "sales.team.view",
       "sales.team.assign",
       "orders.view",

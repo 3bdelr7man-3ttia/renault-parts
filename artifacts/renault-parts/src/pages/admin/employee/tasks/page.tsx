@@ -88,7 +88,7 @@ export default function EmployeeTasksPage() {
   const [taskDrafts, setTaskDrafts] = React.useState<Record<number, { status: string; result: string }>>({});
   const [form, setForm] = React.useState<TaskFormState>(emptyTaskForm);
 
-  const canCreate = hasPermission("sales.tasks.create_own");
+  const canCreate = hasPermission("employee.tasks.create_own");
   const selfCreatedCount = data.filter((task) => task.ownershipSource === "self_created").length;
   const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
 
@@ -226,7 +226,7 @@ export default function EmployeeTasksPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-[#F9E795] text-sm font-bold mb-2">مهامي</p>
-            <h1 className="text-3xl font-black text-white mb-3">مهام موظف المبيعات اليومية</h1>
+            <h1 className="text-3xl font-black text-white mb-3">مهامي اليومية</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
               هذه الصفحة تعرض المهام اليومية لهذا الموظف فقط، مع إمكانية تحديث حالتها ونتيجتها سواء كانت تواصلًا، إدخال بيانات، حل مشكلة، أو متابعة ميدانية.
             </p>

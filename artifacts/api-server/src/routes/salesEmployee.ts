@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Response } from "express";
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, lt, or } from "drizzle-orm";
-import { db, employeeTasksTable, leadsTable, usersTable } from "@workspace/db";
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { db, employeeDailyReportsTable, employeeTasksTable, leadsTable, usersTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { requireRolePermission } from "../lib/permissions";
 
@@ -105,6 +105,16 @@ type TeamTaskRow = {
   createdByUserId?: number | null;
 };
 
+type DailyReportRow = {
+  id: number;
+  reportDate: string | Date;
+  summary: string;
+  achievements?: string | null;
+  blockers?: string | null;
+  nextSteps?: string | null;
+  createdAt?: string | Date;
+};
+
 type ParsedResult<T> = { success: true; data: T } | { success: false; error: string };
 
 type CreateSalesCustomerInput = {
@@ -166,6 +176,29 @@ type CreateManagedTaskInput = {
 type UpdateSalesTaskInput = {
   status: "pending" | "in_progress" | "completed" | "cancelled" | "postponed";
   result: string | null;
+};
+
+type CreateDailyReportInput = {
+  reportDate: string;
+  summary: string;
+  achievements: string | null;
+  blockers: string | null;
+  nextSteps: string | null;
+};
+
+type CreateDataEntryLeadInput = {
+  type: "customer" | "workshop";
+  name: string;
+  contactPerson: string | null;
+  phone: string;
+  email: string | null;
+  area: string;
+  address: string | null;
+  carModel: string | null;
+  carYear: number | null;
+  nextFollowUpAt: string | null;
+  notes: string | null;
+  assignedEmployeeId: number | null;
 };
 
 const VALID_TASK_TYPES = [
@@ -309,6 +342,91 @@ function parseUpdateSalesTaskInput(body: unknown): ParsedResult<UpdateSalesTaskI
   };
 }
 
+function parseDailyReportInput(body: unknown): ParsedResult<CreateDailyReportInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const reportDate = asNullableString(payload.reportDate);
+  const summary = asNullableString(payload.summary);
+
+  if (!reportDate || Number.isNaN(Date.parse(reportDate))) {
+    return { success: false, error: "تاريخ التقرير غير صحيح" };
+  }
+
+  if (!summary || summary.length < 5) {
+    return { success: false, error: "ملخص التقرير مطلوب" };
+  }
+
+  return {
+    success: true,
+    data: {
+      reportDate,
+      summary,
+      achievements: asNullableString(payload.achievements),
+      blockers: asNullableString(payload.blockers),
+      nextSteps: asNullableString(payload.nextSteps),
+    },
+  };
+}
+
+function parseDataEntryLeadInput(body: unknown): ParsedResult<CreateDataEntryLeadInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const type = asNullableString(payload.type) as "customer" | "workshop" | null;
+  const assignedEmployeeIdRaw = payload.assignedEmployeeId;
+  const assignedEmployeeId =
+    assignedEmployeeIdRaw === null || assignedEmployeeIdRaw === undefined || assignedEmployeeIdRaw === ""
+      ? null
+      : Number(assignedEmployeeIdRaw);
+
+  if (assignedEmployeeId !== null && (!Number.isInteger(assignedEmployeeId) || assignedEmployeeId <= 0)) {
+    return { success: false, error: "الموظف المسند غير صحيح" };
+  }
+
+  if (type === "customer") {
+    const parsed = parseSalesCustomerInput(body);
+    if (!parsed.success) return parsed;
+    return {
+      success: true,
+      data: {
+        type,
+        name: parsed.data.name,
+        contactPerson: null,
+        phone: parsed.data.phone,
+        email: parsed.data.email,
+        area: parsed.data.area,
+        address: parsed.data.address,
+        carModel: parsed.data.carModel,
+        carYear: parsed.data.carYear,
+        nextFollowUpAt: parsed.data.nextFollowUpAt,
+        notes: parsed.data.notes,
+        assignedEmployeeId,
+      },
+    };
+  }
+
+  if (type === "workshop") {
+    const parsed = parseSalesWorkshopInput(body);
+    if (!parsed.success) return parsed;
+    return {
+      success: true,
+      data: {
+        type,
+        name: parsed.data.name,
+        contactPerson: parsed.data.contactPerson,
+        phone: parsed.data.phone,
+        email: parsed.data.email,
+        area: parsed.data.area,
+        address: parsed.data.address,
+        carModel: null,
+        carYear: null,
+        nextFollowUpAt: parsed.data.nextFollowUpAt,
+        notes: parsed.data.notes,
+        assignedEmployeeId,
+      },
+    };
+  }
+
+  return { success: false, error: "نوع السجل غير صحيح" };
+}
+
 function parseAssignLeadInput(body: unknown): ParsedResult<AssignLeadInput> {
   const payload = (body ?? {}) as Record<string, unknown>;
   const rawEmployeeId = payload.employeeId;
@@ -341,7 +459,13 @@ function parseManagedTaskInput(body: unknown): ParsedResult<CreateManagedTaskInp
   };
 }
 
-async function loadUserNameMap(userIds: Array<number | null | undefined>) {
+type UserNameMapValue = {
+  name: string;
+  role: string;
+  employeeRole: string | null;
+};
+
+async function loadUserNameMap(userIds: Array<number | null | undefined>): Promise<Map<number, UserNameMapValue>> {
   const normalizedIds = Array.from(new Set(userIds.filter((value): value is number => typeof value === "number" && value > 0)));
 
   if (normalizedIds.length === 0) {
@@ -358,8 +482,8 @@ async function loadUserNameMap(userIds: Array<number | null | undefined>) {
     .from(usersTable)
     .where(inArray(usersTable.id, normalizedIds));
 
-  return new Map(
-    users.map((user) => [
+  return new Map<number, UserNameMapValue>(
+    users.map((user: { id: number; name: string; role: string; employeeRole: string | null }) => [
       user.id,
       {
         name: user.name,
@@ -409,6 +533,36 @@ async function ensureAssignableEmployee(actor: AuthenticatedRequest["user"], emp
 
   if (actor?.role === "employee" && actor.employeeRole === "manager") {
     return employee.employeeRole === "manager" ? null : employee;
+  }
+
+  return null;
+}
+
+async function ensureDataEntryAssignee(actor: AuthenticatedRequest["user"], employeeId: number) {
+  const [employee] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      role: usersTable.role,
+      employeeRole: usersTable.employeeRole,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, employeeId));
+
+  if (!employee || employee.role !== "employee" || !employee.employeeRole) {
+    return null;
+  }
+
+  if (actor?.role === "admin" && ["manager", "sales", "customer_service"].includes(employee.employeeRole)) {
+    return employee;
+  }
+
+  if (actor?.role === "employee" && actor.employeeRole === "manager" && ["sales", "customer_service"].includes(employee.employeeRole)) {
+    return employee;
+  }
+
+  if (actor?.role === "employee" && actor.employeeRole === "data_entry" && ["sales", "customer_service"].includes(employee.employeeRole)) {
+    return employee;
   }
 
   return null;
@@ -598,7 +752,7 @@ router.get(
 router.get(
   "/admin/employee/sales/tasks",
   requireAuth,
-  requireRolePermission("sales.tasks.view_own", "هذه الصفحة متاحة لفريق المبيعات فقط"),
+  requireRolePermission("employee.tasks.view_own", "هذه الصفحة متاحة للموظفين فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const employeeId = getScopedEmployeeId(req);
     if (!employeeId) {
@@ -701,7 +855,7 @@ router.get(
       : await baseQuery.orderBy(desc(leadsTable.createdAt));
 
     const nameMap = await loadUserNameMap(
-      rows.flatMap((row) => [row.assignedEmployeeId, row.createdByUserId, row.registeredUserId]),
+      rows.flatMap((row: TeamLeadRow) => [row.assignedEmployeeId, row.createdByUserId, row.registeredUserId]),
     );
 
     res.json(
@@ -791,12 +945,12 @@ router.get(
       .orderBy(desc(employeeTasksTable.createdAt))
       .limit(20);
 
-    const nameMap = await loadUserNameMap(rows.flatMap((row) => [row.employeeId, row.createdByUserId]));
-    const leadIds = Array.from(new Set(rows.map((row) => row.leadId).filter((value): value is number => typeof value === "number" && value > 0)));
+    const nameMap = await loadUserNameMap(rows.flatMap((row: TeamTaskRow) => [row.employeeId, row.createdByUserId]));
+    const leadIds = Array.from(new Set(rows.map((row: TeamTaskRow) => row.leadId).filter((value: number | null | undefined): value is number => typeof value === "number" && value > 0)));
     const leadRows = leadIds.length
       ? await db.select({ id: leadsTable.id, name: leadsTable.name }).from(leadsTable).where(inArray(leadsTable.id, leadIds))
       : [];
-    const leadMap = new Map(leadRows.map((lead) => [lead.id, lead.name]));
+    const leadMap = new Map<number, string>(leadRows.map((lead: { id: number; name: string }) => [lead.id, lead.name]));
 
     res.json(
       rows.map((row: TeamTaskRow) => ({
@@ -958,7 +1112,7 @@ router.post(
 router.post(
   "/admin/employee/sales/tasks",
   requireAuth,
-  requireRolePermission("sales.tasks.create_own", "هذه العملية متاحة لفريق المبيعات فقط"),
+  requireRolePermission("employee.tasks.create_own", "هذه العملية متاحة للموظفين فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const employeeId = getScopedEmployeeId(req);
     if (!employeeId) {
@@ -1006,7 +1160,7 @@ router.post(
 router.patch(
   "/admin/employee/sales/tasks/:id",
   requireAuth,
-  requireRolePermission("sales.tasks.view_own", "هذه العملية متاحة لفريق المبيعات فقط"),
+  requireRolePermission("employee.tasks.update_own", "هذه العملية متاحة للموظفين فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const employeeId = getScopedEmployeeId(req);
     const taskId = Number(req.params.id);
@@ -1052,6 +1206,276 @@ router.patch(
       });
 
     res.json(updated);
+  },
+);
+
+router.get(
+  "/admin/employee/daily-reports/me",
+  requireAuth,
+  requireRolePermission("employee.reports.view_own", "هذه الصفحة متاحة للموظفين فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const rows = await db
+      .select({
+        id: employeeDailyReportsTable.id,
+        reportDate: employeeDailyReportsTable.reportDate,
+        summary: employeeDailyReportsTable.summary,
+        achievements: employeeDailyReportsTable.achievements,
+        blockers: employeeDailyReportsTable.blockers,
+        nextSteps: employeeDailyReportsTable.nextSteps,
+        createdAt: employeeDailyReportsTable.createdAt,
+      })
+      .from(employeeDailyReportsTable)
+      .where(eq(employeeDailyReportsTable.employeeId, employeeId))
+      .orderBy(desc(employeeDailyReportsTable.reportDate))
+      .limit(14);
+
+    res.json(
+      rows.map((row: DailyReportRow) => ({
+        ...row,
+        createdAt: toIso(row.createdAt),
+      })),
+    );
+  },
+);
+
+router.post(
+  "/admin/employee/daily-reports/me",
+  requireAuth,
+  requireRolePermission("employee.reports.create_own", "هذه العملية متاحة للموظفين فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const parsed = parseDailyReportInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    const normalizedReportDate = new Date(parsed.data.reportDate).toISOString().slice(0, 10);
+    const [existing] = await db
+      .select({ id: employeeDailyReportsTable.id })
+      .from(employeeDailyReportsTable)
+      .where(and(eq(employeeDailyReportsTable.employeeId, employeeId), eq(employeeDailyReportsTable.reportDate, normalizedReportDate)));
+
+    const values = {
+      summary: parsed.data.summary,
+      achievements: parsed.data.achievements ?? null,
+      blockers: parsed.data.blockers ?? null,
+      nextSteps: parsed.data.nextSteps ?? null,
+      updatedAt: new Date(),
+    };
+
+    if (existing) {
+      const [updated] = await db
+        .update(employeeDailyReportsTable)
+        .set(values)
+        .where(eq(employeeDailyReportsTable.id, existing.id))
+        .returning({
+          id: employeeDailyReportsTable.id,
+          reportDate: employeeDailyReportsTable.reportDate,
+          summary: employeeDailyReportsTable.summary,
+        });
+      res.json(updated);
+      return;
+    }
+
+    const [created] = await db
+      .insert(employeeDailyReportsTable)
+      .values({
+        employeeId,
+        reportDate: normalizedReportDate,
+        summary: parsed.data.summary,
+        achievements: parsed.data.achievements ?? null,
+        blockers: parsed.data.blockers ?? null,
+        nextSteps: parsed.data.nextSteps ?? null,
+      })
+      .returning({
+        id: employeeDailyReportsTable.id,
+        reportDate: employeeDailyReportsTable.reportDate,
+        summary: employeeDailyReportsTable.summary,
+      });
+
+    res.status(201).json(created);
+  },
+);
+
+router.get(
+  "/admin/employee/data-entry/assignees",
+  requireAuth,
+  requireRolePermission("data_entry.leads.view", "هذه الصفحة متاحة لفريق إدخال البيانات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const allowedRoles = req.user?.role === "admin" ? ["manager", "sales", "customer_service"] : ["sales", "customer_service"];
+
+    const rows = await db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        employeeRole: usersTable.employeeRole,
+        phone: usersTable.phone,
+        email: usersTable.email,
+      })
+      .from(usersTable)
+      .where(and(eq(usersTable.role, "employee"), inArray(usersTable.employeeRole, allowedRoles)))
+      .orderBy(asc(usersTable.name));
+
+    res.json(rows);
+  },
+);
+
+router.get(
+  "/admin/employee/data-entry/summary",
+  requireAuth,
+  requireRolePermission("data_entry.leads.view", "هذه الصفحة متاحة لفريق إدخال البيانات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    const scopeCondition =
+      req.user?.role === "admin" || (req.user?.role === "employee" && req.user.employeeRole === "manager")
+        ? eq(leadsTable.source, "data_entry")
+        : and(eq(leadsTable.source, "data_entry"), eq(leadsTable.createdByUserId, employeeId!));
+
+    const [totalRow] = await db.select({ count: count() }).from(leadsTable).where(scopeCondition);
+    const [unassignedRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(scopeCondition, isNull(leadsTable.assignedEmployeeId)));
+    const [registeredRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(scopeCondition, isNotNull(leadsTable.registeredUserId)));
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const [todayRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(scopeCondition, gte(leadsTable.createdAt, todayStart)));
+
+    res.json({
+      total: totalRow.count,
+      unassigned: unassignedRow.count,
+      registered: registeredRow.count,
+      addedToday: todayRow.count,
+    });
+  },
+);
+
+router.get(
+  "/admin/employee/data-entry/leads",
+  requireAuth,
+  requireRolePermission("data_entry.leads.view", "هذه الصفحة متاحة لفريق إدخال البيانات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    const type = typeof req.query.type === "string" ? req.query.type : null;
+    const whereConditions = [eq(leadsTable.source, "data_entry")];
+
+    if (!(req.user?.role === "admin" || (req.user?.role === "employee" && req.user.employeeRole === "manager"))) {
+      whereConditions.push(eq(leadsTable.createdByUserId, employeeId!));
+    }
+
+    if (type === "customer" || type === "workshop") {
+      whereConditions.push(eq(leadsTable.type, type));
+    }
+
+    const rows = await db
+      .select({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        contactPerson: leadsTable.contactPerson,
+        phone: leadsTable.phone,
+        email: leadsTable.email,
+        area: leadsTable.area,
+        address: leadsTable.address,
+        source: leadsTable.source,
+        status: leadsTable.status,
+        notes: leadsTable.notes,
+        assignedEmployeeId: leadsTable.assignedEmployeeId,
+        createdByUserId: leadsTable.createdByUserId,
+        registeredUserId: leadsTable.registeredUserId,
+        lastContactAt: leadsTable.lastContactAt,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+        createdAt: leadsTable.createdAt,
+      })
+      .from(leadsTable)
+      .where(and(...whereConditions))
+      .orderBy(desc(leadsTable.createdAt));
+
+    const nameMap = await loadUserNameMap(rows.flatMap((row: TeamLeadRow) => [row.assignedEmployeeId, row.createdByUserId, row.registeredUserId]));
+    res.json(
+      rows.map((row: TeamLeadRow) => ({
+        ...row,
+        lastContactAt: toIso(row.lastContactAt),
+        nextFollowUpAt: toIso(row.nextFollowUpAt),
+        createdAt: toIso(row.createdAt),
+        assignedEmployeeName: row.assignedEmployeeId ? nameMap.get(row.assignedEmployeeId)?.name ?? null : null,
+        createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
+        registeredUserName: row.registeredUserId ? nameMap.get(row.registeredUserId)?.name ?? null : null,
+      })),
+    );
+  },
+);
+
+router.post(
+  "/admin/employee/data-entry/leads",
+  requireAuth,
+  requireRolePermission("data_entry.leads.create", "هذه العملية متاحة لفريق إدخال البيانات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const parsed = parseDataEntryLeadInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    if (parsed.data.assignedEmployeeId !== null) {
+      const assignee = await ensureDataEntryAssignee(req.user, parsed.data.assignedEmployeeId);
+      if (!assignee) {
+        res.status(400).json({ error: "لا يمكن إسناد السجل إلى هذا الموظف" });
+        return;
+      }
+    }
+
+    const [created] = await db
+      .insert(leadsTable)
+      .values({
+        type: parsed.data.type,
+        name: parsed.data.name,
+        contactPerson: parsed.data.contactPerson ?? null,
+        phone: parsed.data.phone,
+        email: parsed.data.email ?? null,
+        area: parsed.data.area,
+        address: parsed.data.address ?? null,
+        carModel: parsed.data.carModel ?? null,
+        carYear: parsed.data.carYear ?? null,
+        source: "data_entry",
+        status: "new",
+        assignedEmployeeId: parsed.data.assignedEmployeeId ?? null,
+        createdByUserId: employeeId,
+        nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
+        notes: parsed.data.notes ?? null,
+      })
+      .returning({
+        id: leadsTable.id,
+        name: leadsTable.name,
+        type: leadsTable.type,
+        assignedEmployeeId: leadsTable.assignedEmployeeId,
+      });
+
+    res.status(201).json(created);
   },
 );
 

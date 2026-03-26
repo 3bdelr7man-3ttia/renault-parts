@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { getRoleLabel, normalizeEmployeeRole } from "@/lib/permissions";
-import { ArrowLeft, Building2, ClipboardList, Loader2, Package2, PhoneCall, Target, Users, Wrench } from "lucide-react";
+import { ArrowLeft, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Target, Users, Wrench } from "lucide-react";
 
 type SalesSummary = {
   totalCustomers: number;
@@ -22,6 +22,27 @@ type SalesSummary = {
 };
 
 const genericCards = [
+  {
+    href: "/admin/employee/data-entry",
+    label: "إدخال البيانات",
+    description: "إضافة العملاء والورش الأولية وتحويلها لمسار المتابعة المناسب.",
+    permission: "data_entry.leads.view" as const,
+    icon: Database,
+  },
+  {
+    href: "/admin/employee/reports",
+    label: "التقرير اليومي",
+    description: "تسجيل ما تم إنجازه اليوم والمعوقات والخطوات التالية.",
+    permission: "employee.reports.view_own" as const,
+    icon: FileText,
+  },
+  {
+    href: "/admin/employee/tasks",
+    label: "مهامي",
+    description: "متابعة المهام اليومية وتحديث حالتها ونتيجة التنفيذ.",
+    permission: "employee.tasks.view_own" as const,
+    icon: ClipboardList,
+  },
   {
     href: "/admin/orders",
     label: "إدارة الطلبات",
@@ -129,7 +150,8 @@ export default function EmployeeDashboardPage() {
     const quickActions = [
       hasPermission("sales.customers.create_own") ? { href: "/admin/employee/customers", label: "إضافة عميل", icon: Users } : null,
       hasPermission("sales.workshops.create_own") ? { href: "/admin/employee/workshops", label: "إضافة ورشة", icon: Building2 } : null,
-      hasPermission("sales.tasks.create_own") ? { href: "/admin/employee/tasks", label: "إضافة مهمة", icon: ClipboardList } : null,
+      hasPermission("employee.tasks.create_own") ? { href: "/admin/employee/tasks", label: "إضافة مهمة", icon: ClipboardList } : null,
+      hasPermission("employee.reports.create_own") ? { href: "/admin/employee/reports", label: "رفع تقرير يومي", icon: FileText } : null,
       hasPermission("sales.team.view") ? { href: "/admin/employee/team", label: "إدارة الفريق", icon: Users } : null,
     ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Users }>;
 
