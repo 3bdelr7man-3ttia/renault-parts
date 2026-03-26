@@ -79,6 +79,34 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-black text-white mb-1">لوحة التحكم</h1>
         <p className="text-white/50 text-sm">مرحباً بك في لوحة إدارة رينو باك</p>
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Link href="/admin/employee/team">
+          <div className="bg-[#1E2761]/60 rounded-2xl border border-[#F9E795]/15 p-5 cursor-pointer hover:border-[#F9E795]/35 hover:bg-[#1E2761]/80 transition-all">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[#F9E795] text-xs font-black mb-2">إدارة الفريق والتوزيع</p>
+                <h2 className="text-white text-xl font-black mb-2">الأدمن يكلف مدير الفريق من هنا</h2>
+                <p className="text-white/55 text-sm leading-7">
+                  وزع العملاء والورش والمهام التشغيلية، وتابع انتقالها من الإدارة إلى مدير الفريق ثم إلى أعضاء التنفيذ.
+                </p>
+              </div>
+              <Users className="w-7 h-7 text-[#F9E795] flex-shrink-0" />
+            </div>
+            <div className="mt-4 inline-flex items-center gap-2 text-[#F9E795] text-sm font-black">
+              افتح إدارة الفريق <ArrowLeft className="w-4 h-4" />
+            </div>
+          </div>
+        </Link>
+
+        <div className="bg-[#151D33] rounded-2xl border border-white/10 p-5">
+          <p className="text-white/40 text-xs font-black mb-2">دورة التشغيل الحالية</p>
+          <h2 className="text-white text-lg font-black mb-3">Admin → Team Manager → Employees</h2>
+          <p className="text-white/55 text-sm leading-7">
+            الأدمن يحدد الأولويات العامة ويكلف مدير الفريق، ثم يقوم مدير الفريق بتوزيع العملاء والورش والمهام اليومية
+            على المبيعات وإدخال البيانات وخدمة العملاء.
+          </p>
+        </div>
+      </div>
       {/* KPI Cards */}
       {statsLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

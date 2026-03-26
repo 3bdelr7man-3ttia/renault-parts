@@ -341,6 +341,32 @@ async function ensureSalesEmployee(employeeId: number) {
   return employee;
 }
 
+async function ensureAssignableEmployee(actor: AuthenticatedRequest["user"], employeeId: number) {
+  const [employee] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      role: usersTable.role,
+      employeeRole: usersTable.employeeRole,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, employeeId));
+
+  if (!employee || employee.role !== "employee" || !employee.employeeRole) {
+    return null;
+  }
+
+  if (actor?.role === "admin") {
+    return employee;
+  }
+
+  if (actor?.role === "employee" && actor.employeeRole === "manager") {
+    return employee.employeeRole === "manager" ? null : employee;
+  }
+
+  return null;
+}
+
 router.get(
   "/admin/employee/sales/summary",
   requireAuth,
@@ -568,7 +594,12 @@ router.get(
   "/admin/employee/team/employees",
   requireAuth,
   requireRolePermission("sales.team.view", "هذه الصفحة متاحة لمدير الفريق والإدارة فقط"),
-  async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const allowedEmployeeRoles =
+      req.user?.role === "admin"
+        ? ["manager", "sales", "data_entry", "customer_service"]
+        : ["sales", "data_entry", "customer_service"];
+
     const rows = await db
       .select({
         id: usersTable.id,
@@ -581,7 +612,7 @@ router.get(
         createdAt: usersTable.createdAt,
       })
       .from(usersTable)
-      .where(and(eq(usersTable.role, "employee"), eq(usersTable.employeeRole, "sales")))
+      .where(and(eq(usersTable.role, "employee"), inArray(usersTable.employeeRole, allowedEmployeeRoles)))
       .orderBy(asc(usersTable.name));
 
     res.json(rows);
@@ -749,9 +780,9 @@ router.post(
       return;
     }
 
-    const assignee = await ensureSalesEmployee(parsed.data.employeeId);
+    const assignee = await ensureAssignableEmployee(req.user, parsed.data.employeeId);
     if (!assignee) {
-      res.status(400).json({ error: "لا يمكن إسناد المهمة إلا لموظف مبيعات صالح" });
+      res.status(400).json({ error: "لا يمكن إسناد المهمة إلا لموظف صالح ضمن نطاقك الإداري" });
       return;
     }
 

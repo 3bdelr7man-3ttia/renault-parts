@@ -3,11 +3,14 @@ import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { BadgeCheck, Building2, ClipboardList, Loader2, Plus, Users, X } from "lucide-react";
 
-type SalesRep = {
+type TeamEmployee = {
   id: number;
   name: string;
   phone?: string | null;
   email?: string | null;
+  role?: string | null;
+  employeeRole?: "sales" | "data_entry" | "customer_service" | "manager" | null;
+  area?: string | null;
 };
 
 type TeamLead = {
@@ -72,6 +75,13 @@ const taskTypeLabels: Record<TaskFormState["taskType"], string> = {
   meeting: "اجتماع",
 };
 
+const employeeRoleLabels: Record<NonNullable<TeamEmployee["employeeRole"]>, string> = {
+  sales: "موظف مبيعات",
+  data_entry: "إدخال بيانات",
+  customer_service: "خدمة العملاء",
+  manager: "مدير فريق",
+};
+
 export default function EmployeeTeamPage() {
   const { token } = useAuth();
   const { toast } = useToast();
@@ -82,7 +92,7 @@ export default function EmployeeTeamPage() {
   const [savingTask, setSavingTask] = React.useState(false);
   const [showTaskModal, setShowTaskModal] = React.useState(false);
 
-  const [employees, setEmployees] = React.useState<SalesRep[]>([]);
+  const [employees, setEmployees] = React.useState<TeamEmployee[]>([]);
   const [customerLeads, setCustomerLeads] = React.useState<TeamLead[]>([]);
   const [workshopLeads, setWorkshopLeads] = React.useState<TeamLead[]>([]);
   const [tasks, setTasks] = React.useState<TeamTask[]>([]);
@@ -229,6 +239,10 @@ export default function EmployeeTeamPage() {
   };
 
   const allLeads = [...customerLeads, ...workshopLeads];
+  const salesEmployees = React.useMemo(
+    () => employees.filter((employee) => employee.employeeRole === "sales"),
+    [employees],
+  );
   const unassignedCustomers = customerLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const unassignedWorkshops = workshopLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const registeredCustomers = customerLeads.filter((lead) => lead.registeredUserId).length;
@@ -241,8 +255,8 @@ export default function EmployeeTeamPage() {
             <p className="text-[#F9E795] text-sm font-bold mb-2">إدارة الفريق</p>
             <h1 className="text-3xl font-black text-white mb-3">لوحة الإسناد للمدير والإدارة</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
-              هذه الصفحة تربط pipeline بالكامل: العملاء والورش غير الموزعة، فرص المبيعات التي تم تسجيلها على المنصة،
-              والمهام التي يوزعها المدير أو الأدمن على موظفي المبيعات.
+              هذه الصفحة تربط الدورة التشغيلية بالكامل: الأدمن يوجّه مدير الفريق، ومدير الفريق يوزع العملاء والورش
+              على موظفي المبيعات، ويكلف بقية أعضاء الفريق بالمهام التشغيلية المناسبة.
             </p>
           </div>
           <button
@@ -258,7 +272,7 @@ export default function EmployeeTeamPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <Users className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">موظفو المبيعات</p>
+          <p className="text-white/40 text-xs font-bold mb-2">أعضاء الفريق المتاحون</p>
           <p className="text-white font-black text-2xl">{employees.length}</p>
         </div>
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
@@ -285,13 +299,20 @@ export default function EmployeeTeamPage() {
       ) : (
         <>
           <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-            <h2 className="text-white font-black text-xl mb-4">فريق المبيعات</h2>
+            <h2 className="text-white font-black text-xl mb-2">الفريق المتاح للإسناد</h2>
+            <p className="text-white/45 text-sm mb-4">
+              الأدمن يرى المدير وبقية الأقسام، ومدير الفريق يرى الموظفين الذين يوزع عليهم التنفيذ اليومي.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {employees.map((employee) => (
                 <div key={employee.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
                   <p className="text-white font-black">{employee.name}</p>
+                  <p className="text-[#F9E795] text-xs font-bold mt-2">
+                    {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
+                  </p>
                   <p className="text-white/45 text-xs mt-2" dir="ltr">{employee.phone ?? "بدون هاتف"}</p>
                   {employee.email && <p className="text-white/35 text-xs mt-1">{employee.email}</p>}
+                  {employee.area && <p className="text-white/30 text-xs mt-1">المنطقة: {employee.area}</p>}
                 </div>
               ))}
             </div>
@@ -330,7 +351,7 @@ export default function EmployeeTeamPage() {
                       </div>
 
                       <div className="flex flex-col gap-2 xl:min-w-[280px]">
-                        <label className="text-white/45 text-xs font-bold">الموظف المسؤول</label>
+                        <label className="text-white/45 text-xs font-bold">موظف المبيعات المسؤول</label>
                         <div className="flex items-center gap-2">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
@@ -338,7 +359,7 @@ export default function EmployeeTeamPage() {
                             className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
                           >
                             <option value="" className="bg-[#111826]">غير مسند</option>
-                            {employees.map((employee) => (
+                            {salesEmployees.map((employee) => (
                               <option key={employee.id} value={employee.id} className="bg-[#111826]">
                                 {employee.name}
                               </option>
@@ -353,7 +374,7 @@ export default function EmployeeTeamPage() {
                           </button>
                         </div>
                         <p className="text-white/35 text-xs">
-                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"}
+                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · الإسناد على الـ leads يذهب لموظفي المبيعات فقط
                         </p>
                       </div>
                     </div>
@@ -400,7 +421,7 @@ export default function EmployeeTeamPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-white text-2xl font-black">إسناد مهمة جديدة</h2>
-                <p className="text-white/45 text-sm mt-1">اختر موظف المبيعات والفرصة المرتبطة ثم احفظ المهمة.</p>
+                <p className="text-white/45 text-sm mt-1">اختر عضو الفريق والفرصة المرتبطة ثم احفظ المهمة.</p>
               </div>
               <button onClick={() => setShowTaskModal(false)} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 flex items-center justify-center">
                 <X className="w-4 h-4" />
@@ -413,10 +434,10 @@ export default function EmployeeTeamPage() {
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, employeeId: event.target.value }))}
                 className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
               >
-                <option value="" className="bg-[#111826]">اختر موظف المبيعات</option>
+                <option value="" className="bg-[#111826]">اختر عضو الفريق</option>
                 {employees.map((employee) => (
                   <option key={employee.id} value={employee.id} className="bg-[#111826]">
-                    {employee.name}
+                    {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                   </option>
                 ))}
               </select>
@@ -492,7 +513,7 @@ export default function EmployeeTeamPage() {
 
       <div className="text-white/35 text-xs leading-7">
         المسار الجديد يضمن أن العميل عندما يسجل فعليًا في المنصة لا يظهر كنسخة منفصلة، بل يظل داخل الـ pipeline نفسها مع علامة واضحة أنه أصبح مستخدمًا مسجلًا.
-        المدير أو الأدمن يظل قادرًا على إعادة الإسناد أو إضافة مهام متابعة حسب الحاجة.
+        كذلك يظل الأدمن قادرًا على تكليف مدير الفريق، بينما يوزع مدير الفريق العملاء والورش والمهام اليومية على بقية أعضاء الفريق حسب الدور.
       </div>
     </div>
   );
