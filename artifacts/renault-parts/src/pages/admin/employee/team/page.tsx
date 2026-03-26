@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { BadgeCheck, Building2, ClipboardList, Loader2, Plus, Users, X } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Building2, ClipboardList, Loader2, Plus, Users, X } from "lucide-react";
 
 type TeamEmployee = {
   id: number;
@@ -104,6 +104,23 @@ const employeeRoleLabels: Record<NonNullable<TeamEmployee["employeeRole"]>, stri
   customer_service: "خدمة العملاء",
   manager: "مدير فريق",
 };
+
+const leadStatusLabels: Record<string, string> = {
+  new: "جديد",
+  attempted_contact: "محاولة تواصل",
+  contacted: "تم التواصل",
+  interested: "مهتم",
+  not_interested: "غير مهتم",
+  follow_up_later: "متابعة لاحقًا",
+  converted_to_order: "تحول إلى طلب",
+  converted_to_application: "تحول إلى طلب انضمام",
+  negotiation: "تفاوض",
+  registered_on_platform: "سجل على المنصة",
+};
+
+function isOpenTask(status: string) {
+  return status === "pending" || status === "in_progress" || status === "postponed";
+}
 
 export default function EmployeeTeamPage() {
   const { token } = useAuth();
@@ -265,6 +282,31 @@ export default function EmployeeTeamPage() {
   const unassignedCustomers = customerLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const unassignedWorkshops = workshopLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const registeredCustomers = customerLeads.filter((lead) => lead.registeredUserId).length;
+  const openTasks = tasks.filter((task) => isOpenTask(task.status));
+  const completedTasks = tasks.filter((task) => task.status === "completed").length;
+  const criticalLeads = allLeads.filter((lead) => !lead.assignedEmployeeId || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() <= Date.now() + 24 * 60 * 60 * 1000));
+  const urgentTasks = openTasks
+    .slice()
+    .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
+    .slice(0, 5);
+  const focusLeads = criticalLeads
+    .slice()
+    .sort((a, b) => {
+      const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : 0;
+      const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : 0;
+      if (!a.assignedEmployeeId && b.assignedEmployeeId) return -1;
+      if (a.assignedEmployeeId && !b.assignedEmployeeId) return 1;
+      return aTime - bTime;
+    })
+    .slice(0, 6);
+  const employeeLoad = employees
+    .map((employee) => {
+      const assignedLeads = allLeads.filter((lead) => lead.assignedEmployeeId === employee.id).length;
+      const employeeOpenTasks = openTasks.filter((task) => task.employeeId === employee.id).length;
+      const employeeCompletedTasks = tasks.filter((task) => task.employeeId === employee.id && task.status === "completed").length;
+      return { ...employee, assignedLeads, employeeOpenTasks, employeeCompletedTasks };
+    })
+    .sort((a, b) => (b.assignedLeads + b.employeeOpenTasks) - (a.assignedLeads + a.employeeOpenTasks));
 
   return (
     <div className="space-y-8">
@@ -274,8 +316,7 @@ export default function EmployeeTeamPage() {
             <p className="text-[#F9E795] text-sm font-bold mb-2">إدارة الفريق</p>
             <h1 className="text-3xl font-black text-white mb-3">لوحة الإسناد للمدير والإدارة</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
-              هذه الصفحة تربط الدورة التشغيلية بالكامل: الأدمن يوجّه مدير الفريق، ومدير الفريق يوزع العملاء والورش
-              على أعضاء الفريق المناسبين حسب الحالة، ويكلفهم بالمهام التشغيلية المناسبة.
+              هذه الصفحة مصممة لتكون مركز متابعة وقرار: ما الذي يحتاج توزيعًا الآن، من لديه حمل زائد، وما هي المهام المفتوحة التي يجب تنفيذها فورًا قبل النزول لتفاصيل الـ pipeline.
             </p>
           </div>
           <button
@@ -306,8 +347,8 @@ export default function EmployeeTeamPage() {
         </div>
         <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
           <ClipboardList className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">تم تسجيلهم على المنصة</p>
-          <p className="text-white font-black text-2xl">{registeredCustomers}</p>
+          <p className="text-white/40 text-xs font-bold mb-2">مهام مفتوحة الآن</p>
+          <p className="text-white font-black text-2xl">{openTasks.length}</p>
         </div>
       </div>
 
@@ -317,6 +358,173 @@ export default function EmployeeTeamPage() {
         </div>
       ) : (
         <>
+          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
+            <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertTriangle className="w-5 h-5 text-[#F9E795]" />
+                <div>
+                  <h2 className="text-white font-black text-xl">مركز القرار السريع</h2>
+                  <p className="text-white/45 text-sm">هذه العناصر هي التي تحتاج متابعة أو توزيعًا أو قرارًا سريعًا الآن.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                  <p className="text-white/45 text-xs font-bold mb-2">عناصر تحتاج إسنادًا</p>
+                  <p className="text-white font-black text-2xl">{unassignedCustomers + unassignedWorkshops}</p>
+                  <p className="text-white/35 text-xs mt-2">عملاء أو ورش ما زالوا بدون مسؤول مباشر.</p>
+                </div>
+                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                  <p className="text-white/45 text-xs font-bold mb-2">متابعات ومهام قريبة</p>
+                  <p className="text-white font-black text-2xl">{focusLeads.length + urgentTasks.length}</p>
+                  <p className="text-white/35 text-xs mt-2">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {focusLeads.length === 0 && urgentTasks.length === 0 ? (
+                  <p className="text-white/45 text-sm text-center py-8">لا توجد عناصر حرجة الآن. توزيع الفريق مستقر.</p>
+                ) : (
+                  <>
+                    {focusLeads.map((lead) => (
+                      <div key={`focus-${lead.type}-${lead.id}`} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-white font-black">{lead.name}</p>
+                            <p className="text-white/45 text-sm mt-1">
+                              {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                            </p>
+                            <p className="text-white/35 text-xs mt-2">
+                              {lead.assignedEmployeeName ? `المسؤول الحالي: ${lead.assignedEmployeeName}` : "غير مسند حتى الآن"}
+                              {lead.nextFollowUpAt ? ` · متابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : ""}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-2 rounded-xl text-xs font-bold border ${lead.assignedEmployeeId ? "bg-sky-500/10 text-sky-300 border-sky-500/20" : "bg-amber-500/10 text-amber-300 border-amber-500/20"}`}>
+                            {lead.assignedEmployeeId ? "تحتاج متابعة" : "تحتاج إسناد"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {urgentTasks.map((task) => (
+                      <div key={`task-${task.id}`} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <p className="text-white font-black">{task.title}</p>
+                            <p className="text-white/45 text-sm mt-1">
+                              {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
+                            </p>
+                            <p className="text-white/35 text-xs mt-2">
+                              الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
+                              {task.leadName ? ` · مرتبطة بـ ${task.leadName}` : ""}
+                            </p>
+                          </div>
+                          <div className="px-3 py-2 rounded-xl text-xs font-bold border bg-[#F9E795]/10 text-[#F9E795] border-[#F9E795]/20">
+                            {taskStatusLabels[task.status] ?? task.status}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-5 h-5 text-[#F9E795]" />
+                <div>
+                  <h2 className="text-white font-black text-xl">حمل الفريق الحالي</h2>
+                  <p className="text-white/45 text-sm">من لديه فرص أكثر، ومن لديه مهام مفتوحة، ومن أنهى ما عليه.</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {employeeLoad.map((employee) => (
+                  <div key={employee.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-white font-black">{employee.name}</p>
+                        <p className="text-[#F9E795] text-xs font-bold mt-1">
+                          {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
+                        </p>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white font-black text-lg">{employee.assignedLeads + employee.employeeOpenTasks}</p>
+                        <p className="text-white/35 text-[11px]">عنصر نشط</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+                      <div className="bg-white/5 rounded-xl py-2">
+                        <p className="text-white font-black">{employee.assignedLeads}</p>
+                        <p className="text-white/35 text-[11px]">فرص</p>
+                      </div>
+                      <div className="bg-white/5 rounded-xl py-2">
+                        <p className="text-white font-black">{employee.employeeOpenTasks}</p>
+                        <p className="text-white/35 text-[11px]">مفتوحة</p>
+                      </div>
+                      <div className="bg-white/5 rounded-xl py-2">
+                        <p className="text-white font-black">{employee.employeeCompletedTasks}</p>
+                        <p className="text-white/35 text-[11px]">منتهية</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-white font-black text-xl mb-1">آخر المهام المسندة</h2>
+                <p className="text-white/45 text-sm">المهام المفتوحة تأتي أولًا حتى يعرف المدير ما الذي يحتاج متابعة فورية.</p>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="px-3 py-2 rounded-xl bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 font-bold">
+                  مفتوحة: {openTasks.length}
+                </span>
+                <span className="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
+                  تمت: {completedTasks}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {tasks
+                .slice()
+                .sort((a, b) => {
+                  const aOpen = isOpenTask(a.status) ? 0 : 1;
+                  const bOpen = isOpenTask(b.status) ? 0 : 1;
+                  if (aOpen !== bOpen) return aOpen - bOpen;
+                  return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
+                })
+                .map((task) => (
+                  <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-white font-black">{task.title}</p>
+                        <p className="text-white/45 text-sm mt-1">
+                          {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
+                          {task.employeeName ? ` · ${task.employeeName}` : ""}
+                          {task.leadName ? ` · ${task.leadName}` : ""}
+                          {task.area ? ` · ${task.area}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-start md:items-end gap-2">
+                        <span className={`px-3 py-2 rounded-xl text-xs font-bold border ${isOpenTask(task.status) ? "bg-[#F9E795]/10 text-[#F9E795] border-[#F9E795]/20" : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"}`}>
+                          {taskStatusLabels[task.status] ?? task.status}
+                        </span>
+                        <div className="text-white/40 text-xs">
+                          {new Date(task.dueAt).toLocaleString("ar-EG")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {tasks.length === 0 && <p className="text-white/45 text-sm text-center py-8">لا توجد مهام مسندة بعد.</p>}
+            </div>
+          </div>
+
           <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
             <h2 className="text-white font-black text-xl mb-2">الفريق المتاح للإسناد</h2>
             <p className="text-white/45 text-sm mb-4">
@@ -339,16 +547,33 @@ export default function EmployeeTeamPage() {
 
           {[{ label: "عملاء الـ pipeline", leads: customerLeads }, { label: "ورش الـ pipeline", leads: workshopLeads }].map((section) => (
             <div key={section.label} className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-              <h2 className="text-white font-black text-xl mb-4">{section.label}</h2>
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-white font-black text-xl">{section.label}</h2>
+                  <p className="text-white/45 text-sm mt-1">هذا القسم للتفاصيل والتنفيذ بعد مراجعة مركز القرار والمهام المفتوحة.</p>
+                </div>
+                <span className="px-3 py-2 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
+                  {section.leads.length} عنصر
+                </span>
+              </div>
               <div className="space-y-4">
-                {section.leads.map((lead) => (
+                {section.leads
+                  .slice()
+                  .sort((a, b) => {
+                    if (!a.assignedEmployeeId && b.assignedEmployeeId) return -1;
+                    if (a.assignedEmployeeId && !b.assignedEmployeeId) return 1;
+                    const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+                    const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+                    return aTime - bTime;
+                  })
+                  .map((lead) => (
                   <div key={lead.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-white font-black text-lg">{lead.name}</p>
                           <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
-                            {lead.status}
+                            {leadStatusLabels[lead.status] ?? lead.status}
                           </span>
                           {lead.registeredUserId && (
                             <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
@@ -406,36 +631,6 @@ export default function EmployeeTeamPage() {
               </div>
             </div>
           ))}
-
-          <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-            <h2 className="text-white font-black text-xl mb-4">آخر المهام المسندة</h2>
-            <div className="space-y-3">
-              {tasks.map((task) => (
-                <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-white font-black">{task.title}</p>
-                      <p className="text-white/45 text-sm mt-1">
-                        {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
-                        {task.employeeName ? ` · ${task.employeeName}` : ""}
-                        {task.leadName ? ` · ${task.leadName}` : ""}
-                        {task.area ? ` · ${task.area}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-start md:items-end gap-2">
-                      <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
-                        {taskStatusLabels[task.status] ?? task.status}
-                      </span>
-                      <div className="text-white/40 text-xs">
-                        {new Date(task.dueAt).toLocaleString("ar-EG")}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {tasks.length === 0 && <p className="text-white/45 text-sm text-center py-8">لا توجد مهام مسندة بعد.</p>}
-            </div>
-          </div>
         </>
       )}
 

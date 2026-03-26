@@ -36,6 +36,7 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ElementType;
+  group: 'overview' | 'employee' | 'team' | 'operations' | 'catalog' | 'finance' | 'system';
   exact?: boolean;
   adminOnly?: boolean;
   employeeOnly?: boolean;
@@ -44,25 +45,35 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, exact: true, adminOnly: true },
-  { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, employeeOnly: true },
-  { href: '/admin/employee/data-entry',    label: 'إدخال البيانات',   icon: Database, employeeOnly: true, permission: 'data_entry.leads.view', employeeRoles: ['data_entry', 'manager'] },
-  { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales', 'manager'] },
-  { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales', 'manager'] },
-  { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, employeeOnly: true, permission: 'employee.tasks.view_own' },
-  { href: '/admin/employee/reports',       label: 'تقاريري اليومية',  icon: FileText, employeeOnly: true, permission: 'employee.reports.view_own' },
-  { href: '/admin/employee/team',          label: 'إدارة الفريق',     icon: Users, permission: 'sales.team.view' as const },
-  { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, permission: 'orders.view' as const },
-  { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, permission: 'appointments.view' as const },
-  { href: '/admin/packages',               label: 'الباكدجات',        icon: Package2, permission: 'packages.edit' as const },
-  { href: '/admin/workshops',              label: 'الورش',            icon: Wrench, permission: 'workshops.manage' as const },
-  { href: '/admin/workshop-applications',  label: 'طلبات الانضمام',   icon: FileCheck, permission: 'workshops.manage' as const },
-  { href: '/admin/parts',                  label: 'القطع',            icon: Settings2, permission: 'parts.edit' as const },
-  { href: '/admin/reviews',                label: 'التقييمات',        icon: Star, permission: 'reviews.view' as const },
-  { href: '/admin/sales',                  label: 'المبيعات',         icon: BarChart2, permission: 'reports.sales' as const },
-  { href: '/admin/expenses',               label: 'المصروفات',        icon: TrendingDown, permission: 'reports.financial' as const },
-  { href: '/admin/users',                  label: 'المستخدمون',       icon: Users, permission: 'employees.manage' as const },
+  { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, group: 'overview', exact: true, adminOnly: true },
+  { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, group: 'overview', employeeOnly: true },
+  { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, group: 'employee', employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales', 'manager'] },
+  { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, group: 'employee', employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales', 'manager'] },
+  { href: '/admin/employee/data-entry',    label: 'إدخال البيانات',   icon: Database, group: 'employee', employeeOnly: true, permission: 'data_entry.leads.view', employeeRoles: ['data_entry', 'manager'] },
+  { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, group: 'employee', employeeOnly: true, permission: 'employee.tasks.view_own' },
+  { href: '/admin/employee/reports',       label: 'تقاريري اليومية',  icon: FileText, group: 'employee', employeeOnly: true, permission: 'employee.reports.view_own' },
+  { href: '/admin/employee/team',          label: 'إدارة الفريق',     icon: Users, group: 'team', permission: 'sales.team.view' as const },
+  { href: '/admin/orders',                 label: 'الطلبات',          icon: ClipboardList, group: 'operations', permission: 'orders.view' as const },
+  { href: '/admin/appointments',           label: 'المواعيد',         icon: CalendarCheck, group: 'operations', permission: 'appointments.view' as const },
+  { href: '/admin/packages',               label: 'الباكدجات',        icon: Package2, group: 'catalog', permission: 'packages.edit' as const },
+  { href: '/admin/workshops',              label: 'الورش',            icon: Wrench, group: 'catalog', permission: 'workshops.manage' as const },
+  { href: '/admin/workshop-applications',  label: 'طلبات الانضمام',   icon: FileCheck, group: 'catalog', permission: 'workshops.manage' as const },
+  { href: '/admin/parts',                  label: 'القطع',            icon: Settings2, group: 'catalog', permission: 'parts.edit' as const },
+  { href: '/admin/reviews',                label: 'التقييمات',        icon: Star, group: 'operations', permission: 'reviews.view' as const },
+  { href: '/admin/sales',                  label: 'المبيعات',         icon: BarChart2, group: 'finance', permission: 'reports.sales' as const },
+  { href: '/admin/expenses',               label: 'المصروفات',        icon: TrendingDown, group: 'finance', permission: 'reports.financial' as const },
+  { href: '/admin/users',                  label: 'المستخدمون',       icon: Users, group: 'system', permission: 'employees.manage' as const },
 ];
+
+const groupLabels: Record<NavItem['group'], string> = {
+  overview: 'نظرة عامة',
+  employee: 'مساحة العمل',
+  team: 'إدارة الفريق',
+  operations: 'التشغيل والمتابعة',
+  catalog: 'المحتوى والشركاء',
+  finance: 'الماليات',
+  system: 'إدارة النظام',
+};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -85,6 +96,21 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       return hasPermission(item.permission);
     });
   }, [employeeRole, hasPermission, isRole]);
+
+  const groupedNavItems = useMemo(() => {
+    return visibleNavItems.reduce<Record<NavItem['group'], NavItem[]>>((acc, item) => {
+      acc[item.group].push(item);
+      return acc;
+    }, {
+      overview: [],
+      employee: [],
+      team: [],
+      operations: [],
+      catalog: [],
+      finance: [],
+      system: [],
+    });
+  }, [visibleNavItems]);
 
   const mobileNavItems = visibleNavItems.slice(0, 5);
 
@@ -139,28 +165,38 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {visibleNavItems.map((item) => {
-            const active = isActive(item.href, item.exact);
+        <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(Object.entries(groupedNavItems) as Array<[NavItem['group'], NavItem[]]>).map(([groupKey, items]) => {
+            if (!items.length) return null;
             return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  onClick={() => setSidebarOpen(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12,
-                    cursor: 'pointer', transition: 'all .18s',
-                    background: active ? G : 'transparent',
-                    color: active ? NV : 'rgba(255,255,255,0.6)',
-                    fontWeight: 800, fontSize: 13,
-                  }}
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.08)'; (e.currentTarget as HTMLElement).style.color = active ? NV : '#fff'; }}
-                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = active ? NV : 'rgba(255,255,255,0.6)'; }}
-                >
-                  <item.icon size={16} style={{ flexShrink: 0, color: active ? NV : 'inherit' }} />
-                  <span>{item.label}</span>
-                  {active && <div style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: NV, opacity: 0.6 }} />}
-                </div>
-              </Link>
+              <div key={groupKey} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ margin: '0 10px 4px', color: 'rgba(255,255,255,0.28)', fontSize: 10, fontWeight: 900, letterSpacing: '.04em' }}>
+                  {groupLabels[groupKey]}
+                </p>
+                {items.map((item) => {
+                  const active = isActive(item.href, item.exact);
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        onClick={() => setSidebarOpen(false)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12,
+                          cursor: 'pointer', transition: 'all .18s',
+                          background: active ? G : 'transparent',
+                          color: active ? NV : 'rgba(255,255,255,0.6)',
+                          fontWeight: 800, fontSize: 13,
+                        }}
+                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.08)'; (e.currentTarget as HTMLElement).style.color = active ? NV : '#fff'; }}
+                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = active ? NV : 'rgba(255,255,255,0.6)'; }}
+                      >
+                        <item.icon size={16} style={{ flexShrink: 0, color: active ? NV : 'inherit' }} />
+                        <span>{item.label}</span>
+                        {active && <div style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: NV, opacity: 0.6 }} />}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
