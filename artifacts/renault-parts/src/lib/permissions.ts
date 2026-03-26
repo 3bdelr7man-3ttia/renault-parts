@@ -9,6 +9,8 @@ export type Permission =
   | "technical.dashboard.view"
   | "technical.cases.view_own"
   | "technical.cases.update_own"
+  | "returns.view"
+  | "returns.update"
   | "employee.tasks.view_own"
   | "employee.tasks.create_own"
   | "employee.tasks.update_own"
@@ -51,6 +53,8 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "customers.contact",
   ],
   data_entry: [
+    "returns.view",
+    "returns.update",
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",
@@ -70,6 +74,8 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "technical.dashboard.view",
     "technical.cases.view_own",
     "technical.cases.update_own",
+    "returns.view",
+    "returns.update",
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",
@@ -118,7 +124,7 @@ const MANAGER_ONLY_PERMISSIONS: Permission[] = ["reports.financial", "employees.
 const ADMIN_ROUTE_RULES: Array<{ match: RegExp; rule: AdminRouteRule }> = [
   { match: /^\/admin\/employee\/dashboard\/?$/, rule: { allowAdmin: true, allowEmployee: true } },
   { match: /^\/admin\/employee\/technical\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "technical.cases.view_own" } },
-  { match: /^\/admin\/employee\/returns\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "technical.cases.view_own" } },
+  { match: /^\/admin\/employee\/returns\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "returns.view" } },
   { match: /^\/admin\/employee\/data-entry\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "data_entry.leads.view" } },
   { match: /^\/admin\/employee\/customers\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.customers.view_own" } },
   { match: /^\/admin\/employee\/workshops\/?$/, rule: { allowAdmin: true, allowEmployee: true, permission: "sales.workshops.view_own" } },
@@ -176,6 +182,8 @@ export function getEmployeePermissions(employeeRole?: string | null): Permission
       "technical.dashboard.view",
       "technical.cases.view_own",
       "technical.cases.update_own",
+      "returns.view",
+      "returns.update",
       "employee.tasks.view_own",
       "employee.tasks.create_own",
       "employee.tasks.update_own",

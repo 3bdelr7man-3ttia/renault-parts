@@ -1081,6 +1081,27 @@ async function maybeCreateReturnWorkflowTask(params: {
   };
 }
 
+function buildReturnsScopeCondition(user: AuthenticatedRequest["user"], employeeId: number) {
+  const baseReturnsCondition = or(eq(leadsTable.technicalCategory, "parts_return"), eq(leadsTable.source, "return_request"));
+
+  if (user?.role === "admin" || user?.employeeRole === "manager") {
+    return baseReturnsCondition;
+  }
+
+  if (user?.employeeRole === "data_entry") {
+    return and(
+      baseReturnsCondition,
+      or(
+        eq(leadsTable.assignedEmployeeId, employeeId),
+        eq(leadsTable.transferDecision, "parts"),
+        eq(leadsTable.returnResolution, "exchange"),
+      ),
+    );
+  }
+
+  return and(baseReturnsCondition, eq(leadsTable.assignedEmployeeId, employeeId));
+}
+
 router.get(
   "/admin/employee/sales/summary",
   requireAuth,
@@ -1410,7 +1431,7 @@ router.get(
 router.get(
   "/admin/employee/technical/returns",
   requireAuth,
-  requireRolePermission("technical.cases.view_own", "هذه الصفحة متاحة للخبير الفني فقط"),
+  requireRolePermission("returns.view", "هذه الصفحة متاحة للمرتجعات فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const employeeId = getScopedEmployeeId(req);
     if (!employeeId) {
@@ -1450,12 +1471,7 @@ router.get(
         returnInspectionNotes: leadsTable.returnInspectionNotes,
       })
       .from(leadsTable)
-      .where(
-        and(
-          eq(leadsTable.assignedEmployeeId, employeeId),
-          or(eq(leadsTable.technicalCategory, "parts_return"), eq(leadsTable.source, "return_request")),
-        ),
-      )
+      .where(buildReturnsScopeCondition(req.user, employeeId))
       .orderBy(asc(leadsTable.nextFollowUpAt), desc(leadsTable.createdAt));
 
     const nameMap = await loadUserNameMap(rows.map((row: ReturnCaseRow) => row.createdByUserId));
@@ -2074,7 +2090,7 @@ router.patch(
 router.patch(
   "/admin/employee/technical/returns/:id",
   requireAuth,
-  requireRolePermission("technical.cases.update_own", "هذه العملية متاحة للخبير الفني فقط"),
+  requireRolePermission("returns.update", "هذه العملية متاحة للمرتجعات فقط"),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const employeeId = getScopedEmployeeId(req);
     const caseId = Number(req.params.id);
@@ -2100,13 +2116,7 @@ router.patch(
         returnResolution: leadsTable.returnResolution,
       })
       .from(leadsTable)
-      .where(
-        and(
-          eq(leadsTable.id, caseId),
-          eq(leadsTable.assignedEmployeeId, employeeId),
-          or(eq(leadsTable.technicalCategory, "parts_return"), eq(leadsTable.source, "return_request")),
-        ),
-      );
+      .where(and(eq(leadsTable.id, caseId), buildReturnsScopeCondition(req.user, employeeId)));
 
     if (!lead) {
       res.status(404).json({ error: "المرتجع غير موجود ضمن نطاقك الحالي" });

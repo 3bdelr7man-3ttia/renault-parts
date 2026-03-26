@@ -12,6 +12,8 @@ export type Permission =
   | "technical.dashboard.view"
   | "technical.cases.view_own"
   | "technical.cases.update_own"
+  | "returns.view"
+  | "returns.update"
   | "employee.tasks.view_own"
   | "employee.tasks.create_own"
   | "employee.tasks.update_own"
@@ -54,6 +56,8 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "customers.contact",
   ],
   data_entry: [
+    "returns.view",
+    "returns.update",
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",
@@ -73,6 +77,8 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "technical.dashboard.view",
     "technical.cases.view_own",
     "technical.cases.update_own",
+    "returns.view",
+    "returns.update",
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",

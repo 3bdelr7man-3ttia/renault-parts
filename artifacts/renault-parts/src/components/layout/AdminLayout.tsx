@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
   { href: '/admin/employee/customers',     label: 'عملائي',           icon: Users, group: 'employee', employeeOnly: true, permission: 'sales.customers.view_own', employeeRoles: ['sales', 'manager'] },
   { href: '/admin/employee/workshops',     label: 'ورش المتابعة',     icon: Wrench, group: 'employee', employeeOnly: true, permission: 'sales.workshops.view_own', employeeRoles: ['sales', 'manager'] },
   { href: '/admin/employee/technical',     label: 'الحالات الفنية',   icon: Stethoscope, group: 'employee', employeeOnly: true, permission: 'technical.cases.view_own', employeeRoles: ['technical_expert', 'manager'] },
-  { href: '/admin/employee/returns',       label: 'المرتجعات',        icon: ArrowRightLeft, group: 'employee', employeeOnly: true, permission: 'technical.cases.view_own', employeeRoles: ['technical_expert', 'manager'] },
+  { href: '/admin/employee/returns',       label: 'المرتجعات',        icon: ArrowRightLeft, group: 'employee', permission: 'returns.view', employeeRoles: ['technical_expert', 'data_entry', 'manager'] },
   { href: '/admin/employee/data-entry',    label: 'إدخال البيانات',   icon: Database, group: 'employee', employeeOnly: true, permission: 'data_entry.leads.view', employeeRoles: ['data_entry', 'manager'] },
   { href: '/admin/employee/tasks',         label: 'مهامي',            icon: PhoneCall, group: 'employee', employeeOnly: true, permission: 'employee.tasks.view_own' },
   { href: '/admin/employee/reports',       label: 'تقاريري اليومية',  icon: FileText, group: 'employee', employeeOnly: true, permission: 'employee.reports.view_own' },
@@ -91,10 +91,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const visibleNavItems = useMemo(() => {
     return navItems.filter((item) => {
+      if (isRole('admin')) return true;
       if (item.adminOnly) return isRole('admin');
       if (item.employeeOnly && !isRole('employee')) return false;
       if (item.employeeRoles && (!employeeRole || !item.employeeRoles.includes(employeeRole))) return false;
-      if (isRole('admin')) return true;
       if (!isRole('employee')) return false;
       if (!item.permission) return true;
       return hasPermission(item.permission);
