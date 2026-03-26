@@ -70,6 +70,33 @@ type SalesTaskRow = {
   createdByUserId?: number | null;
 };
 
+type TechnicalCaseRow = {
+  id: number;
+  type: "customer" | "workshop";
+  name: string;
+  contactPerson?: string | null;
+  phone: string;
+  email?: string | null;
+  area?: string | null;
+  source: string;
+  status: string;
+  notes?: string | null;
+  nextFollowUpAt?: Date | string | null;
+  createdAt?: Date | string | null;
+  registeredUserId?: number | null;
+  convertedOrderId?: number | null;
+  convertedWorkshopId?: number | null;
+};
+
+type TechnicalSummaryCaseRow = {
+  id: number;
+  type: "customer" | "workshop";
+  name: string;
+  status: string;
+  area?: string | null;
+  nextFollowUpAt?: Date | string | null;
+};
+
 type TeamLeadRow = {
   id: number;
   type: string;
@@ -201,6 +228,12 @@ type CreateDataEntryLeadInput = {
   assignedEmployeeId: number | null;
 };
 
+type UpdateTechnicalCaseInput = {
+  status: string;
+  notes: string | null;
+  nextFollowUpAt: string | null;
+};
+
 const VALID_TASK_TYPES = [
   "call",
   "visit",
@@ -215,6 +248,17 @@ const VALID_TASK_TYPES = [
 ] as const;
 
 const VALID_TASK_STATUSES = ["pending", "in_progress", "completed", "cancelled", "postponed"] as const;
+const VALID_TECHNICAL_CASE_STATUSES = [
+  "new",
+  "attempted_contact",
+  "contacted",
+  "interested",
+  "follow_up_later",
+  "negotiation",
+  "registered_on_platform",
+  "converted_to_order",
+  "converted_to_application",
+] as const;
 
 function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
   return req.user?.id ?? null;
@@ -425,6 +469,29 @@ function parseDataEntryLeadInput(body: unknown): ParsedResult<CreateDataEntryLea
   }
 
   return { success: false, error: "نوع السجل غير صحيح" };
+}
+
+function parseTechnicalCaseUpdateInput(body: unknown): ParsedResult<UpdateTechnicalCaseInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const status = asNullableString(payload.status);
+  const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+
+  if (!status || !VALID_TECHNICAL_CASE_STATUSES.includes(status as (typeof VALID_TECHNICAL_CASE_STATUSES)[number])) {
+    return { success: false, error: "حالة الحالة الفنية غير صحيحة" };
+  }
+
+  if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) {
+    return { success: false, error: "موعد المتابعة غير صحيح" };
+  }
+
+  return {
+    success: true,
+    data: {
+      status,
+      notes: asNullableString(payload.notes),
+      nextFollowUpAt,
+    },
+  };
 }
 
 function parseAssignLeadInput(body: unknown): ParsedResult<AssignLeadInput> {
@@ -657,6 +724,93 @@ router.get(
 );
 
 router.get(
+  "/admin/employee/technical/summary",
+  requireAuth,
+  requireRolePermission("technical.dashboard.view", "هذه الصفحة متاحة للخبير الفني فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const [totalCasesRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(eq(leadsTable.assignedEmployeeId, employeeId));
+
+    const [customerCasesRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(eq(leadsTable.assignedEmployeeId, employeeId), eq(leadsTable.type, "customer")));
+
+    const [workshopCasesRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(and(eq(leadsTable.assignedEmployeeId, employeeId), eq(leadsTable.type, "workshop")));
+
+    const [dueTodayRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(
+        and(
+          eq(leadsTable.assignedEmployeeId, employeeId),
+          isNotNull(leadsTable.nextFollowUpAt),
+          gte(leadsTable.nextFollowUpAt, todayStart),
+          lt(leadsTable.nextFollowUpAt, tomorrowStart),
+        ),
+      );
+
+    const [resolvedCasesRow] = await db
+      .select({ count: count() })
+      .from(leadsTable)
+      .where(
+        and(
+          eq(leadsTable.assignedEmployeeId, employeeId),
+          or(isNotNull(leadsTable.registeredUserId), isNotNull(leadsTable.convertedOrderId), isNotNull(leadsTable.convertedWorkshopId)),
+        ),
+      );
+
+    const [activeTasksRow] = await db
+      .select({ count: count() })
+      .from(employeeTasksTable)
+      .where(and(eq(employeeTasksTable.employeeId, employeeId), or(eq(employeeTasksTable.status, "pending"), eq(employeeTasksTable.status, "in_progress"))));
+
+    const openCases = await db
+      .select({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        status: leadsTable.status,
+        area: leadsTable.area,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+      })
+      .from(leadsTable)
+      .where(eq(leadsTable.assignedEmployeeId, employeeId))
+      .orderBy(asc(leadsTable.nextFollowUpAt), desc(leadsTable.createdAt))
+      .limit(5);
+
+    res.json({
+      totalCases: totalCasesRow.count,
+      customerCases: customerCasesRow.count,
+      workshopCases: workshopCasesRow.count,
+      dueToday: dueTodayRow.count,
+      resolvedCases: resolvedCasesRow.count,
+      activeTasks: activeTasksRow.count,
+      openCases: openCases.map((item: TechnicalSummaryCaseRow) => ({
+        ...item,
+        nextFollowUpAt: toIso(item.nextFollowUpAt),
+      })),
+    });
+  },
+);
+
+router.get(
   "/admin/employee/sales/customers",
   requireAuth,
   requireRolePermission("sales.customers.view_own", "هذه الصفحة متاحة لفريق المبيعات فقط"),
@@ -744,6 +898,49 @@ router.get(
         nextFollowUpAt: toIso(row.nextFollowUpAt),
         createdAt: toIso(row.createdAt),
         ownershipSource: row.createdByUserId === employeeId ? "self_created" : "assigned",
+      })),
+    );
+  },
+);
+
+router.get(
+  "/admin/employee/technical/cases",
+  requireAuth,
+  requireRolePermission("technical.cases.view_own", "هذه الصفحة متاحة للخبير الفني فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const rows = await db
+      .select({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        contactPerson: leadsTable.contactPerson,
+        phone: leadsTable.phone,
+        email: leadsTable.email,
+        area: leadsTable.area,
+        source: leadsTable.source,
+        status: leadsTable.status,
+        notes: leadsTable.notes,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+        createdAt: leadsTable.createdAt,
+        registeredUserId: leadsTable.registeredUserId,
+        convertedOrderId: leadsTable.convertedOrderId,
+        convertedWorkshopId: leadsTable.convertedWorkshopId,
+      })
+      .from(leadsTable)
+      .where(eq(leadsTable.assignedEmployeeId, employeeId))
+      .orderBy(asc(leadsTable.nextFollowUpAt), desc(leadsTable.createdAt));
+
+    res.json(
+      rows.map((row: TechnicalCaseRow) => ({
+        ...row,
+        nextFollowUpAt: toIso(row.nextFollowUpAt),
+        createdAt: toIso(row.createdAt),
       })),
     );
   },
@@ -1206,6 +1403,60 @@ router.patch(
       });
 
     res.json(updated);
+  },
+);
+
+router.patch(
+  "/admin/employee/technical/cases/:id",
+  requireAuth,
+  requireRolePermission("technical.cases.update_own", "هذه العملية متاحة للخبير الفني فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    const caseId = Number(req.params.id);
+
+    if (!employeeId || !Number.isInteger(caseId) || caseId <= 0) {
+      res.status(400).json({ error: "الحالة المطلوبة غير صحيحة" });
+      return;
+    }
+
+    const parsed = parseTechnicalCaseUpdateInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    const [lead] = await db
+      .select({ id: leadsTable.id })
+      .from(leadsTable)
+      .where(and(eq(leadsTable.id, caseId), eq(leadsTable.assignedEmployeeId, employeeId)));
+
+    if (!lead) {
+      res.status(404).json({ error: "الحالة غير موجودة ضمن نطاقك الحالي" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(leadsTable)
+      .set({
+        status: parsed.data.status,
+        notes: parsed.data.notes,
+        nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
+        lastContactAt: new Date(),
+      })
+      .where(eq(leadsTable.id, caseId))
+      .returning({
+        id: leadsTable.id,
+        type: leadsTable.type,
+        name: leadsTable.name,
+        status: leadsTable.status,
+        notes: leadsTable.notes,
+        nextFollowUpAt: leadsTable.nextFollowUpAt,
+      });
+
+    res.json({
+      ...updated,
+      nextFollowUpAt: toIso(updated?.nextFollowUpAt),
+    });
   },
 );
 

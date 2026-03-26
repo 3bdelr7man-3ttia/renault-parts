@@ -9,6 +9,9 @@ export type Permission =
   | "customers.view"
   | "customers.contact"
   | "reports.sales"
+  | "technical.dashboard.view"
+  | "technical.cases.view_own"
+  | "technical.cases.update_own"
   | "employee.tasks.view_own"
   | "employee.tasks.create_own"
   | "employee.tasks.update_own"
@@ -67,6 +70,9 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "cars.edit",
   ],
   technical_expert: [
+    "technical.dashboard.view",
+    "technical.cases.view_own",
+    "technical.cases.update_own",
     "employee.tasks.view_own",
     "employee.tasks.create_own",
     "employee.tasks.update_own",

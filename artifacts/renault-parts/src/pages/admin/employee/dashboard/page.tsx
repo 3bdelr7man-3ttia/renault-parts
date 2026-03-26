@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { getRoleLabel, normalizeEmployeeRole } from "@/lib/permissions";
-import { ArrowLeft, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Target, Users, Wrench } from "lucide-react";
+import { ArrowLeft, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Stethoscope, Target, Users, Wrench } from "lucide-react";
 
 type SalesSummary = {
   totalCustomers: number;
@@ -18,6 +18,23 @@ type SalesSummary = {
     dueAt: string;
     status: string;
     area?: string | null;
+  }>;
+};
+
+type TechnicalSummary = {
+  totalCases: number;
+  customerCases: number;
+  workshopCases: number;
+  dueToday: number;
+  resolvedCases: number;
+  activeTasks: number;
+  openCases: Array<{
+    id: number;
+    type: "customer" | "workshop";
+    name: string;
+    status: string;
+    area?: string | null;
+    nextFollowUpAt?: string | null;
   }>;
 };
 
@@ -114,6 +131,18 @@ const taskStatusLabels: Record<string, string> = {
   cancelled: "ملغية",
 };
 
+const technicalStatusLabels: Record<string, string> = {
+  new: "جديد",
+  attempted_contact: "محاولة تواصل",
+  contacted: "تم التواصل",
+  interested: "مهتم",
+  follow_up_later: "متابعة لاحقًا",
+  negotiation: "تفاوض",
+  registered_on_platform: "سجل على المنصة",
+  converted_to_order: "تحول إلى طلب",
+  converted_to_application: "تحول إلى طلب انضمام",
+};
+
 function useSalesSummary(token: string | null, enabled: boolean) {
   const [data, setData] = React.useState<SalesSummary | null>(null);
   const [loading, setLoading] = React.useState(enabled);
@@ -140,11 +169,39 @@ function useSalesSummary(token: string | null, enabled: boolean) {
   return { data, loading };
 }
 
+function useTechnicalSummary(token: string | null, enabled: boolean) {
+  const [data, setData] = React.useState<TechnicalSummary | null>(null);
+  const [loading, setLoading] = React.useState(enabled);
+
+  React.useEffect(() => {
+    if (!enabled || !token) {
+      setLoading(false);
+      return;
+    }
+
+    const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
+    setLoading(true);
+    fetch(`${base}/api/admin/employee/technical/summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d?.error) setData(d);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [enabled, token]);
+
+  return { data, loading };
+}
+
 export default function EmployeeDashboardPage() {
   const { token, user, hasPermission } = useAuth();
   const employeeRole = normalizeEmployeeRole(user?.employeeRole);
   const isSales = employeeRole === "sales" || employeeRole === "manager";
+  const isTechnical = employeeRole === "technical_expert";
   const { data: salesSummary, loading } = useSalesSummary(token, isSales);
+  const { data: technicalSummary, loading: technicalLoading } = useTechnicalSummary(token, isTechnical);
 
   if (isSales) {
     const quickActions = [
@@ -244,6 +301,114 @@ export default function EmployeeDashboardPage() {
                 </div>
               ) : (
                 <p className="text-white/45 text-sm">لا توجد مهام مفتوحة لهذا الحساب الآن.</p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (isTechnical) {
+    const statCards = [
+      { label: "إجمالي الحالات", value: technicalSummary?.totalCases ?? 0, icon: Stethoscope },
+      { label: "حالات عملاء", value: technicalSummary?.customerCases ?? 0, icon: Users },
+      { label: "حالات ورش", value: technicalSummary?.workshopCases ?? 0, icon: Building2 },
+      { label: "متابعة اليوم", value: technicalSummary?.dueToday ?? 0, icon: PhoneCall },
+      { label: "حالات محسومة", value: technicalSummary?.resolvedCases ?? 0, icon: Package2 },
+      { label: "مهام مفتوحة", value: technicalSummary?.activeTasks ?? 0, icon: ClipboardList },
+    ];
+
+    const quickActions = [
+      hasPermission("technical.cases.view_own") ? { href: "/admin/employee/technical", label: "الحالات الفنية", icon: Stethoscope } : null,
+      hasPermission("employee.tasks.view_own") ? { href: "/admin/employee/tasks", label: "مهامي", icon: ClipboardList } : null,
+      hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "تقاريري اليومية", icon: FileText } : null,
+      hasPermission("appointments.view") ? { href: "/admin/appointments", label: "المواعيد", icon: Wrench } : null,
+      hasPermission("reviews.view") ? { href: "/admin/reviews", label: "التقييمات", icon: Building2 } : null,
+    ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Stethoscope }>;
+
+    return (
+      <div className="space-y-8">
+        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة الخبير الفني</p>
+          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
+          <p className="text-white/60 text-sm leading-7 max-w-3xl">
+            هذه النسخة تعرض الحالات الفنية المسندة لك، وما يحتاج متابعة اليوم، مع وصول سريع للمهام والمواعيد والتقييمات ذات الصلة.
+          </p>
+          {quickActions.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-3">
+              {quickActions.map((action) => (
+                <Link key={action.href} href={action.href}>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm cursor-pointer hover:opacity-90 transition-all">
+                    <action.icon className="w-4 h-4" />
+                    {action.label}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {technicalLoading ? (
+          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+            <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {statCards.map((card) => (
+                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+                  <div className="w-11 h-11 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                    <card.icon className="w-5 h-5" />
+                  </div>
+                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
+                  <p className="text-white font-black text-2xl">{card.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { href: "/admin/employee/technical", label: "الحالات الفنية", description: "الحالات المسندة للخبير الفني مع الملاحظات وقرار المتابعة التالي.", icon: Stethoscope },
+                { href: "/admin/employee/tasks", label: "المهام الفنية", description: "المهام التشغيلية والفنية اليومية مع تحديث التنفيذ والنتيجة.", icon: ClipboardList },
+                { href: "/admin/employee/reports", label: "التقرير اليومي", description: "تلخيص ما تم تشخيصه أو تصعيده للمبيعات أو الإدارة أو الورش.", icon: FileText },
+              ].map((card) => (
+                <Link key={card.href} href={card.href}>
+                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                      <card.icon className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
+                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
+                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
+                      الدخول للقسم
+                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
+              <h2 className="text-white font-black text-xl mb-4">أقرب الحالات المفتوحة</h2>
+              {technicalSummary?.openCases?.length ? (
+                <div className="space-y-3">
+                  {technicalSummary.openCases.map((item) => (
+                    <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <p className="text-white font-black">{item.name}</p>
+                        <p className="text-white/45 text-sm mt-1">
+                          {item.type === "workshop" ? "ورشة" : "عميل"} {item.area ? `· ${item.area}` : ""} {item.nextFollowUpAt ? `· ${new Date(item.nextFollowUpAt).toLocaleString("ar-EG")}` : ""}
+                        </p>
+                      </div>
+                      <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
+                        {technicalStatusLabels[item.status] ?? item.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/45 text-sm">لا توجد حالات فنية مفتوحة لهذا الحساب الآن.</p>
               )}
             </div>
           </>
