@@ -98,6 +98,12 @@ export default function EmployeeDashboardPage() {
   const { data: salesSummary, loading } = useSalesSummary(headers, isSales);
 
   if (isSales) {
+    const quickActions = [
+      hasPermission("sales.customers.create_own") ? { href: "/admin/employee/customers", label: "إضافة عميل", icon: Users } : null,
+      hasPermission("sales.workshops.create_own") ? { href: "/admin/employee/workshops", label: "إضافة ورشة", icon: Building2 } : null,
+      hasPermission("sales.tasks.create_own") ? { href: "/admin/employee/tasks", label: "إضافة مهمة", icon: ClipboardList } : null,
+    ].filter(Boolean) as Array<{ href: string; label: string; icon: typeof Users }>;
+
     const statCards = [
       { label: "العملاء المسندون", value: salesSummary?.totalCustomers ?? 0, icon: Users },
       { label: "عملاء جدد اليوم", value: salesSummary?.newCustomersToday ?? 0, icon: Target },
@@ -115,6 +121,18 @@ export default function EmployeeDashboardPage() {
           <p className="text-white/60 text-sm leading-7 max-w-3xl">
             هذه النسخة تعرض الآن بيانات تشغيل حقيقية لموظف المبيعات: العملاء المسندين، الورش المسندة، ومهام اليوم المفتوحة.
           </p>
+          {quickActions.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-3">
+              {quickActions.map((action) => (
+                <Link key={action.href} href={action.href}>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm cursor-pointer hover:opacity-90 transition-all">
+                    <action.icon className="w-4 h-4" />
+                    {action.label}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
