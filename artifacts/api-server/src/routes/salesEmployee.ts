@@ -132,7 +132,17 @@ type CreateSalesWorkshopInput = {
 
 type CreateSalesTaskInput = {
   title: string;
-  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  taskType:
+    | "call"
+    | "visit"
+    | "follow_up"
+    | "whatsapp"
+    | "meeting"
+    | "data_entry"
+    | "issue_resolution"
+    | "quotation"
+    | "collection"
+    | "field_follow_up";
   area: string | null;
   dueAt: string;
   notes: string | null;
@@ -146,12 +156,32 @@ type AssignLeadInput = {
 type CreateManagedTaskInput = {
   employeeId: number;
   title: string;
-  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  taskType: CreateSalesTaskInput["taskType"];
   area: string | null;
   dueAt: string;
   notes: string | null;
   leadId: number | null;
 };
+
+type UpdateSalesTaskInput = {
+  status: "pending" | "in_progress" | "completed" | "cancelled" | "postponed";
+  result: string | null;
+};
+
+const VALID_TASK_TYPES = [
+  "call",
+  "visit",
+  "follow_up",
+  "whatsapp",
+  "meeting",
+  "data_entry",
+  "issue_resolution",
+  "quotation",
+  "collection",
+  "field_follow_up",
+] as const;
+
+const VALID_TASK_STATUSES = ["pending", "in_progress", "completed", "cancelled", "postponed"] as const;
 
 function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
   return req.user?.id ?? null;
@@ -240,13 +270,12 @@ function parseSalesTaskInput(body: unknown): ParsedResult<CreateSalesTaskInput> 
   const title = asNullableString(payload.title);
   const dueAt = asNullableString(payload.dueAt);
   const taskType = asNullableString(payload.taskType) as CreateSalesTaskInput["taskType"] | null;
-  const validTaskTypes = ["call", "visit", "follow_up", "whatsapp", "meeting"];
   const leadIdRaw = payload.leadId;
   const leadId = leadIdRaw === null || leadIdRaw === undefined || leadIdRaw === "" ? null : Number(leadIdRaw);
 
   if (!title || title.length < 3) return { success: false, error: "عنوان المهمة مطلوب" };
   if (!dueAt || !isIsoDateTime(dueAt)) return { success: false, error: "موعد المهمة غير صحيح" };
-  if (!taskType || !validTaskTypes.includes(taskType)) return { success: false, error: "نوع المهمة غير صحيح" };
+  if (!taskType || !VALID_TASK_TYPES.includes(taskType)) return { success: false, error: "نوع المهمة غير صحيح" };
   if (leadId !== null && (!Number.isInteger(leadId) || leadId <= 0)) return { success: false, error: "الفرصة المرتبطة غير صحيحة" };
 
   return {
@@ -258,6 +287,24 @@ function parseSalesTaskInput(body: unknown): ParsedResult<CreateSalesTaskInput> 
       dueAt,
       notes: asNullableString(payload.notes),
       leadId,
+    },
+  };
+}
+
+function parseUpdateSalesTaskInput(body: unknown): ParsedResult<UpdateSalesTaskInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const status = asNullableString(payload.status) as UpdateSalesTaskInput["status"] | null;
+  const result = asNullableString(payload.result);
+
+  if (!status || !VALID_TASK_STATUSES.includes(status)) {
+    return { success: false, error: "حالة المهمة غير صحيحة" };
+  }
+
+  return {
+    success: true,
+    data: {
+      status,
+      result,
     },
   };
 }
@@ -689,9 +736,9 @@ router.post(
     }
 
     if (parsed.data.employeeId !== null) {
-      const assignee = await ensureSalesEmployee(parsed.data.employeeId);
+      const assignee = await ensureAssignableEmployee(req.user, parsed.data.employeeId);
       if (!assignee) {
-        res.status(400).json({ error: "لا يمكن الإسناد إلا لموظف مبيعات صالح" });
+        res.status(400).json({ error: "لا يمكن الإسناد إلا لموظف صالح ضمن نطاقك الإداري" });
         return;
       }
     }
@@ -953,6 +1000,58 @@ router.post(
       dueAt: toIso(created.dueAt),
       ownershipSource: "self_created",
     });
+  },
+);
+
+router.patch(
+  "/admin/employee/sales/tasks/:id",
+  requireAuth,
+  requireRolePermission("sales.tasks.view_own", "هذه العملية متاحة لفريق المبيعات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const employeeId = getScopedEmployeeId(req);
+    const taskId = Number(req.params.id);
+
+    if (!employeeId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    if (!Number.isInteger(taskId) || taskId <= 0) {
+      res.status(400).json({ error: "المهمة المطلوبة غير صحيحة" });
+      return;
+    }
+
+    const parsed = parseUpdateSalesTaskInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    const [task] = await db
+      .select({ id: employeeTasksTable.id, employeeId: employeeTasksTable.employeeId })
+      .from(employeeTasksTable)
+      .where(eq(employeeTasksTable.id, taskId));
+
+    if (!task || task.employeeId !== employeeId) {
+      res.status(404).json({ error: "المهمة المطلوبة غير موجودة" });
+      return;
+    }
+
+    const [updated] = await db
+      .update(employeeTasksTable)
+      .set({
+        status: parsed.data.status,
+        result: parsed.data.result ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(employeeTasksTable.id, taskId))
+      .returning({
+        id: employeeTasksTable.id,
+        status: employeeTasksTable.status,
+        result: employeeTasksTable.result,
+      });
+
+    res.json(updated);
   },
 );
 

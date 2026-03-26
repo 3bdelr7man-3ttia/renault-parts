@@ -72,6 +72,27 @@ const salesSections = [
   },
 ];
 
+const taskTypeLabels: Record<string, string> = {
+  call: "مكالمة",
+  visit: "زيارة",
+  follow_up: "متابعة",
+  whatsapp: "واتساب",
+  meeting: "اجتماع",
+  data_entry: "إدخال بيانات",
+  issue_resolution: "حل مشكلة",
+  quotation: "عرض سعر",
+  collection: "تحصيل/إغلاق",
+  field_follow_up: "متابعة ميدانية",
+};
+
+const taskStatusLabels: Record<string, string> = {
+  pending: "معلقة",
+  in_progress: "قيد التنفيذ",
+  completed: "تمت",
+  postponed: "مؤجلة",
+  cancelled: "ملغية",
+};
+
 function useSalesSummary(token: string | null, enabled: boolean) {
   const [data, setData] = React.useState<SalesSummary | null>(null);
   const [loading, setLoading] = React.useState(enabled);
@@ -190,11 +211,11 @@ export default function EmployeeDashboardPage() {
                       <div>
                         <p className="text-white font-black">{task.title}</p>
                         <p className="text-white/45 text-sm mt-1">
-                          {task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
+                          {taskTypeLabels[task.taskType] ?? task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
                         </p>
                       </div>
                       <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
-                        {task.status}
+                        {taskStatusLabels[task.status] ?? task.status}
                       </span>
                     </div>
                   ))}

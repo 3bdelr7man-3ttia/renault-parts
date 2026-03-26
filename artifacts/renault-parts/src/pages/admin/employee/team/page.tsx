@@ -51,7 +51,17 @@ type TaskFormState = {
   employeeId: string;
   leadId: string;
   title: string;
-  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  taskType:
+    | "call"
+    | "visit"
+    | "follow_up"
+    | "whatsapp"
+    | "meeting"
+    | "data_entry"
+    | "issue_resolution"
+    | "quotation"
+    | "collection"
+    | "field_follow_up";
   area: string;
   dueAt: string;
   notes: string;
@@ -73,6 +83,19 @@ const taskTypeLabels: Record<TaskFormState["taskType"], string> = {
   follow_up: "متابعة",
   whatsapp: "واتساب",
   meeting: "اجتماع",
+  data_entry: "إدخال بيانات",
+  issue_resolution: "حل مشكلة",
+  quotation: "عرض سعر",
+  collection: "تحصيل/إغلاق",
+  field_follow_up: "متابعة ميدانية",
+};
+
+const taskStatusLabels: Record<string, string> = {
+  pending: "معلقة",
+  in_progress: "قيد التنفيذ",
+  completed: "تمت",
+  postponed: "مؤجلة",
+  cancelled: "ملغية",
 };
 
 const employeeRoleLabels: Record<NonNullable<TeamEmployee["employeeRole"]>, string> = {
@@ -239,10 +262,6 @@ export default function EmployeeTeamPage() {
   };
 
   const allLeads = [...customerLeads, ...workshopLeads];
-  const salesEmployees = React.useMemo(
-    () => employees.filter((employee) => employee.employeeRole === "sales"),
-    [employees],
-  );
   const unassignedCustomers = customerLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const unassignedWorkshops = workshopLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const registeredCustomers = customerLeads.filter((lead) => lead.registeredUserId).length;
@@ -256,7 +275,7 @@ export default function EmployeeTeamPage() {
             <h1 className="text-3xl font-black text-white mb-3">لوحة الإسناد للمدير والإدارة</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
               هذه الصفحة تربط الدورة التشغيلية بالكامل: الأدمن يوجّه مدير الفريق، ومدير الفريق يوزع العملاء والورش
-              على موظفي المبيعات، ويكلف بقية أعضاء الفريق بالمهام التشغيلية المناسبة.
+              على أعضاء الفريق المناسبين حسب الحالة، ويكلفهم بالمهام التشغيلية المناسبة.
             </p>
           </div>
           <button
@@ -351,7 +370,7 @@ export default function EmployeeTeamPage() {
                       </div>
 
                       <div className="flex flex-col gap-2 xl:min-w-[280px]">
-                        <label className="text-white/45 text-xs font-bold">موظف المبيعات المسؤول</label>
+                        <label className="text-white/45 text-xs font-bold">الموظف المسؤول</label>
                         <div className="flex items-center gap-2">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
@@ -359,9 +378,9 @@ export default function EmployeeTeamPage() {
                             className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
                           >
                             <option value="" className="bg-[#111826]">غير مسند</option>
-                            {salesEmployees.map((employee) => (
+                            {employees.map((employee) => (
                               <option key={employee.id} value={employee.id} className="bg-[#111826]">
-                                {employee.name}
+                                {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                               </option>
                             ))}
                           </select>
@@ -374,7 +393,7 @@ export default function EmployeeTeamPage() {
                           </button>
                         </div>
                         <p className="text-white/35 text-xs">
-                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · الإسناد على الـ leads يذهب لموظفي المبيعات فقط
+                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · يمكن توجيه الحالة إلى المبيعات أو خدمة العملاء أو الإدخال حسب الحاجة
                         </p>
                       </div>
                     </div>
@@ -403,8 +422,13 @@ export default function EmployeeTeamPage() {
                         {task.area ? ` · ${task.area}` : ""}
                       </p>
                     </div>
-                    <div className="text-white/40 text-xs">
-                      {new Date(task.dueAt).toLocaleString("ar-EG")}
+                    <div className="flex flex-col items-start md:items-end gap-2">
+                      <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                        {taskStatusLabels[task.status] ?? task.status}
+                      </span>
+                      <div className="text-white/40 text-xs">
+                        {new Date(task.dueAt).toLocaleString("ar-EG")}
+                      </div>
                     </div>
                   </div>
                 </div>

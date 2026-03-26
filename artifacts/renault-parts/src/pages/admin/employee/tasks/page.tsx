@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarClock, CheckSquare2, Loader2, PhoneCall, Plus, X } from "lucide-react";
+import { CalendarClock, CheckSquare2, Loader2, PhoneCall, Plus, Save, X } from "lucide-react";
 
 type SalesTask = {
   id: number;
@@ -21,7 +21,17 @@ type SalesTask = {
 
 type TaskFormState = {
   title: string;
-  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  taskType:
+    | "call"
+    | "visit"
+    | "follow_up"
+    | "whatsapp"
+    | "meeting"
+    | "data_entry"
+    | "issue_resolution"
+    | "quotation"
+    | "collection"
+    | "field_follow_up";
   area: string;
   dueAt: string;
   notes: string;
@@ -41,7 +51,23 @@ const taskTypes = [
   { value: "follow_up", label: "متابعة" },
   { value: "whatsapp", label: "واتساب" },
   { value: "meeting", label: "اجتماع" },
+  { value: "data_entry", label: "إدخال بيانات" },
+  { value: "issue_resolution", label: "حل مشكلة" },
+  { value: "quotation", label: "عرض سعر" },
+  { value: "collection", label: "تحصيل/إغلاق" },
+  { value: "field_follow_up", label: "متابعة ميدانية" },
 ] as const;
+
+const taskStatusOptions = [
+  { value: "pending", label: "معلقة" },
+  { value: "in_progress", label: "قيد التنفيذ" },
+  { value: "completed", label: "تمت" },
+  { value: "postponed", label: "مؤجلة" },
+  { value: "cancelled", label: "ملغية" },
+] as const;
+
+const taskTypeLabels = Object.fromEntries(taskTypes.map((type) => [type.value, type.label])) as Record<string, string>;
+const taskStatusLabels = Object.fromEntries(taskStatusOptions.map((status) => [status.value, status.label])) as Record<string, string>;
 
 function ownershipMeta(source?: "self_created" | "assigned") {
   if (source === "self_created") {
@@ -58,6 +84,8 @@ export default function EmployeeTasksPage() {
   const [loading, setLoading] = React.useState(true);
   const [showAdd, setShowAdd] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [savingTaskId, setSavingTaskId] = React.useState<number | null>(null);
+  const [taskDrafts, setTaskDrafts] = React.useState<Record<number, { status: string; result: string }>>({});
   const [form, setForm] = React.useState<TaskFormState>(emptyTaskForm);
 
   const canCreate = hasPermission("sales.tasks.create_own");
@@ -80,7 +108,17 @@ export default function EmployeeTasksPage() {
       if (!response.ok) {
         throw new Error(result?.error || "تعذر تحميل المهام الآن.");
       }
-      setData(Array.isArray(result) ? result : []);
+      const rows = Array.isArray(result) ? result : [];
+      setData(rows);
+      setTaskDrafts(
+        rows.reduce<Record<number, { status: string; result: string }>>((acc, task) => {
+          acc[task.id] = {
+            status: task.status ?? "pending",
+            result: task.result ?? "",
+          };
+          return acc;
+        }, {}),
+      );
     } catch (error) {
       setData([]);
       toast({
@@ -141,6 +179,47 @@ export default function EmployeeTasksPage() {
     }
   };
 
+  const handleUpdateTask = async (taskId: number) => {
+    if (!token) return;
+
+    const draft = taskDrafts[taskId];
+    if (!draft) return;
+
+    setSavingTaskId(taskId);
+    try {
+      const response = await fetch(`${base}/api/admin/employee/sales/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: draft.status,
+          result: draft.result || null,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || "فشل تحديث حالة المهمة");
+      }
+
+      toast({
+        title: "تم تحديث المهمة",
+        description: draft.status === "completed" ? "تم وضع المهمة كمكتملة." : "تم حفظ حالة المهمة الجديدة.",
+      });
+      await loadTasks();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "فشل تحديث حالة المهمة",
+      });
+    } finally {
+      setSavingTaskId(null);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
@@ -149,7 +228,7 @@ export default function EmployeeTasksPage() {
             <p className="text-[#F9E795] text-sm font-bold mb-2">مهامي</p>
             <h1 className="text-3xl font-black text-white mb-3">مهام موظف المبيعات اليومية</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
-              هذه الصفحة تعرض قائمة المهام المفتوحة والمجدولة لهذا الموظف فقط، سواء كانت مكالمات، زيارات، أو متابعات مرتبطة بعميل أو ورشة.
+              هذه الصفحة تعرض المهام اليومية لهذا الموظف فقط، مع إمكانية تحديث حالتها ونتيجتها سواء كانت تواصلًا، إدخال بيانات، حل مشكلة، أو متابعة ميدانية.
             </p>
           </div>
           {canCreate && (
@@ -204,7 +283,7 @@ export default function EmployeeTasksPage() {
                     <div>
                       <h2 className="text-white font-black text-lg">{task.title}</h2>
                       <p className="text-white/45 text-sm mt-1">
-                        {task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
+                        {taskTypeLabels[task.taskType] ?? task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -212,7 +291,7 @@ export default function EmployeeTasksPage() {
                         {ownership.label}
                       </span>
                       <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
-                        {task.status}
+                        {taskStatusLabels[task.status] ?? task.status}
                       </span>
                     </div>
                   </div>
@@ -226,6 +305,54 @@ export default function EmployeeTasksPage() {
                   )}
 
                   {task.notes && <p className="mt-3 text-sm text-white/55 leading-7">{task.notes}</p>}
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <select
+                      value={taskDrafts[task.id]?.status ?? task.status}
+                      onChange={(event) =>
+                        setTaskDrafts((current) => ({
+                          ...current,
+                          [task.id]: {
+                            status: event.target.value,
+                            result: current[task.id]?.result ?? task.result ?? "",
+                          },
+                        }))
+                      }
+                      className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                    >
+                      {taskStatusOptions.map((status) => (
+                        <option key={status.value} value={status.value} className="bg-[#111826]">
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      value={taskDrafts[task.id]?.result ?? task.result ?? ""}
+                      onChange={(event) =>
+                        setTaskDrafts((current) => ({
+                          ...current,
+                          [task.id]: {
+                            status: current[task.id]?.status ?? task.status,
+                            result: event.target.value,
+                          },
+                        }))
+                      }
+                      className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none"
+                      placeholder="نتيجة التنفيذ أو ملاحظة الإغلاق"
+                    />
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      onClick={() => handleUpdateTask(task.id)}
+                      disabled={savingTaskId === task.id}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      {savingTaskId === task.id ? "جارٍ الحفظ..." : "حفظ الحالة"}
+                    </button>
+                  </div>
                 </div>
               );
             })}
