@@ -3,7 +3,6 @@ import { and, asc, count, desc, eq, gte, isNotNull, lt, or } from "drizzle-orm";
 import { db, employeeTasksTable, leadsTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { requireRolePermission } from "../lib/permissions";
-import { z } from "zod";
 
 const router: IRouter = Router();
 
@@ -69,37 +68,39 @@ type SalesTaskRow = {
   createdByUserId?: number | null;
 };
 
-const createSalesCustomerSchema = z.object({
-  name: z.string().trim().min(2, "اسم العميل مطلوب"),
-  phone: z.string().trim().min(7, "رقم الهاتف مطلوب"),
-  email: z.string().trim().email("البريد الإلكتروني غير صحيح").optional().or(z.literal("")).nullable(),
-  area: z.string().trim().min(2, "المنطقة مطلوبة"),
-  address: z.string().trim().optional().or(z.literal("")).nullable(),
-  carModel: z.string().trim().optional().or(z.literal("")).nullable(),
-  carYear: z.coerce.number().int().min(1990).max(2100).optional().nullable(),
-  nextFollowUpAt: z.string().datetime().optional().or(z.literal("")).nullable(),
-  notes: z.string().trim().optional().or(z.literal("")).nullable(),
-});
+type ParsedResult<T> = { success: true; data: T } | { success: false; error: string };
 
-const createSalesWorkshopSchema = z.object({
-  name: z.string().trim().min(2, "اسم الورشة مطلوب"),
-  contactPerson: z.string().trim().optional().or(z.literal("")).nullable(),
-  phone: z.string().trim().min(7, "رقم الهاتف مطلوب"),
-  email: z.string().trim().email("البريد الإلكتروني غير صحيح").optional().or(z.literal("")).nullable(),
-  area: z.string().trim().min(2, "المنطقة مطلوبة"),
-  address: z.string().trim().optional().or(z.literal("")).nullable(),
-  nextFollowUpAt: z.string().datetime().optional().or(z.literal("")).nullable(),
-  notes: z.string().trim().optional().or(z.literal("")).nullable(),
-});
+type CreateSalesCustomerInput = {
+  name: string;
+  phone: string;
+  email: string | null;
+  area: string;
+  address: string | null;
+  carModel: string | null;
+  carYear: number | null;
+  nextFollowUpAt: string | null;
+  notes: string | null;
+};
 
-const createSalesTaskSchema = z.object({
-  title: z.string().trim().min(3, "عنوان المهمة مطلوب"),
-  taskType: z.enum(["call", "visit", "follow_up", "whatsapp", "meeting"]),
-  area: z.string().trim().optional().or(z.literal("")).nullable(),
-  dueAt: z.string().datetime(),
-  notes: z.string().trim().optional().or(z.literal("")).nullable(),
-  leadId: z.coerce.number().int().positive().optional().nullable(),
-});
+type CreateSalesWorkshopInput = {
+  name: string;
+  contactPerson: string | null;
+  phone: string;
+  email: string | null;
+  area: string;
+  address: string | null;
+  nextFollowUpAt: string | null;
+  notes: string | null;
+};
+
+type CreateSalesTaskInput = {
+  title: string;
+  taskType: "call" | "visit" | "follow_up" | "whatsapp" | "meeting";
+  area: string | null;
+  dueAt: string;
+  notes: string | null;
+  leadId: number | null;
+};
 
 function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
   return req.user?.id ?? null;
@@ -107,6 +108,107 @@ function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
 
 function toIso(value?: Date | string | null) {
   return value instanceof Date ? value.toISOString() : value ?? null;
+}
+
+function asNullableString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function isIsoDateTime(value: string | null): boolean {
+  return !!value && !Number.isNaN(Date.parse(value));
+}
+
+function parseSalesCustomerInput(body: unknown): ParsedResult<CreateSalesCustomerInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const name = asNullableString(payload.name);
+  const phone = asNullableString(payload.phone);
+  const area = asNullableString(payload.area);
+  const email = asNullableString(payload.email);
+  const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+  const carYearRaw = payload.carYear;
+  const carYear = carYearRaw === null || carYearRaw === undefined || carYearRaw === "" ? null : Number(carYearRaw);
+
+  if (!name || name.length < 2) return { success: false, error: "اسم العميل مطلوب" };
+  if (!phone || phone.length < 7) return { success: false, error: "رقم الهاتف مطلوب" };
+  if (!area || area.length < 2) return { success: false, error: "المنطقة مطلوبة" };
+  if (email && !email.includes("@")) return { success: false, error: "البريد الإلكتروني غير صحيح" };
+  if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) return { success: false, error: "موعد المتابعة غير صحيح" };
+  if (carYear !== null && (!Number.isInteger(carYear) || carYear < 1990 || carYear > 2100)) {
+    return { success: false, error: "سنة السيارة غير صحيحة" };
+  }
+
+  return {
+    success: true,
+    data: {
+      name,
+      phone,
+      email,
+      area,
+      address: asNullableString(payload.address),
+      carModel: asNullableString(payload.carModel),
+      carYear,
+      nextFollowUpAt,
+      notes: asNullableString(payload.notes),
+    },
+  };
+}
+
+function parseSalesWorkshopInput(body: unknown): ParsedResult<CreateSalesWorkshopInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const name = asNullableString(payload.name);
+  const phone = asNullableString(payload.phone);
+  const area = asNullableString(payload.area);
+  const email = asNullableString(payload.email);
+  const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+
+  if (!name || name.length < 2) return { success: false, error: "اسم الورشة مطلوب" };
+  if (!phone || phone.length < 7) return { success: false, error: "رقم الهاتف مطلوب" };
+  if (!area || area.length < 2) return { success: false, error: "المنطقة مطلوبة" };
+  if (email && !email.includes("@")) return { success: false, error: "البريد الإلكتروني غير صحيح" };
+  if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) return { success: false, error: "موعد المتابعة غير صحيح" };
+
+  return {
+    success: true,
+    data: {
+      name,
+      contactPerson: asNullableString(payload.contactPerson),
+      phone,
+      email,
+      area,
+      address: asNullableString(payload.address),
+      nextFollowUpAt,
+      notes: asNullableString(payload.notes),
+    },
+  };
+}
+
+function parseSalesTaskInput(body: unknown): ParsedResult<CreateSalesTaskInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const title = asNullableString(payload.title);
+  const dueAt = asNullableString(payload.dueAt);
+  const taskType = asNullableString(payload.taskType) as CreateSalesTaskInput["taskType"] | null;
+  const validTaskTypes = ["call", "visit", "follow_up", "whatsapp", "meeting"];
+  const leadIdRaw = payload.leadId;
+  const leadId = leadIdRaw === null || leadIdRaw === undefined || leadIdRaw === "" ? null : Number(leadIdRaw);
+
+  if (!title || title.length < 3) return { success: false, error: "عنوان المهمة مطلوب" };
+  if (!dueAt || !isIsoDateTime(dueAt)) return { success: false, error: "موعد المهمة غير صحيح" };
+  if (!taskType || !validTaskTypes.includes(taskType)) return { success: false, error: "نوع المهمة غير صحيح" };
+  if (leadId !== null && (!Number.isInteger(leadId) || leadId <= 0)) return { success: false, error: "الفرصة المرتبطة غير صحيحة" };
+
+  return {
+    success: true,
+    data: {
+      title,
+      taskType,
+      area: asNullableString(payload.area),
+      dueAt,
+      notes: asNullableString(payload.notes),
+      leadId,
+    },
+  };
 }
 
 router.get(
@@ -335,9 +437,9 @@ router.post(
       return;
     }
 
-    const parsed = createSalesCustomerSchema.safeParse(req.body);
+    const parsed = parseSalesCustomerInput(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" });
+      res.status(400).json({ error: parsed.error });
       return;
     }
 
@@ -381,9 +483,9 @@ router.post(
       return;
     }
 
-    const parsed = createSalesWorkshopSchema.safeParse(req.body);
+    const parsed = parseSalesWorkshopInput(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" });
+      res.status(400).json({ error: parsed.error });
       return;
     }
 
@@ -426,9 +528,9 @@ router.post(
       return;
     }
 
-    const parsed = createSalesTaskSchema.safeParse(req.body);
+    const parsed = parseSalesTaskInput(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" });
+      res.status(400).json({ error: parsed.error });
       return;
     }
 
