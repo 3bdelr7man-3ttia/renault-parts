@@ -20,6 +20,7 @@ type TechnicalCase = {
   notes?: string | null;
   nextFollowUpAt?: string | null;
   createdAt?: string | null;
+  createdByUserName?: string | null;
   registeredUserId?: number | null;
   convertedOrderId?: number | null;
   convertedWorkshopId?: number | null;
@@ -94,6 +95,16 @@ const statusLabels = Object.fromEntries(statusOptions.map((status) => [status.va
 const technicalCategoryLabels = Object.fromEntries(technicalCategoryOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 const priorityLabels = Object.fromEntries(priorityOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 const transferDecisionLabels = Object.fromEntries(transferDecisionOptions.map((item) => [item.value, item.label])) as Record<string, string>;
+const sourceLabels: Record<string, string> = {
+  sales_self: "جاءت من المبيعات",
+  sales_visit: "جاءت من زيارة ميدانية",
+  data_entry: "جاءت من إدخال البيانات",
+  landing_page: "دخلت من المنصة مباشرة",
+  manual: "أضيفت يدويًا",
+  customer_comment: "جاءت من تعليق عميل",
+  return_request: "جاءت من طلب مرتجع",
+  workshop_referral: "جاءت من إحالة ورشة",
+};
 
 const taskTypeLabels: Record<string, string> = {
   issue_resolution: "حل مشكلة",
@@ -241,7 +252,10 @@ export default function EmployeeTechnicalPage() {
         throw new Error(result?.error || "فشل تحديث الحالة الفنية");
       }
 
-      toast({ title: "تم الحفظ", description: "تم تحديث الحالة الفنية وقرارها التشغيلي بنجاح." });
+      toast({
+        title: "تم الحفظ",
+        description: result?.transferAction?.message || "تم تحديث الحالة الفنية وقرارها التشغيلي بنجاح.",
+      });
       await loadCases();
     } catch (error) {
       toast({
@@ -275,11 +289,13 @@ export default function EmployeeTechnicalPage() {
               </span>
               {item.registeredUserId ? <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">مسجل على المنصة</span> : null}
             </div>
-            <p className="text-white/45 text-sm mt-2">
-              {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
-            </p>
-            {item.contactPerson ? <p className="text-white/35 text-xs mt-1">المسؤول: {item.contactPerson}</p> : null}
-          </div>
+              <p className="text-white/45 text-sm mt-2">
+                {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
+              </p>
+              {item.contactPerson ? <p className="text-white/35 text-xs mt-1">المسؤول: {item.contactPerson}</p> : null}
+              <p className="text-white/35 text-xs mt-1">مصدر الطلب الفني: {sourceLabels[item.source] ?? item.source}</p>
+              {item.createdByUserName ? <p className="text-white/35 text-xs mt-1">أُنشئت بواسطة: {item.createdByUserName}</p> : null}
+            </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70">
               {technicalCategoryLabels[draft.technicalCategory] ?? "بدون تصنيف"}

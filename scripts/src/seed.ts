@@ -686,7 +686,7 @@ async function seed() {
     address: "شارع 45، سيدي بشر",
     carModel: "Renault Logan",
     carYear: 2018,
-    source: "data_entry",
+    source: "customer_comment",
     status: "follow_up_later",
     assignedEmployeeId: salesUser.id,
     createdByUserId: adminUserId,
@@ -748,7 +748,7 @@ async function seed() {
     createdByUserId: dataEntryUser.id,
     lastContactAt: now,
     nextFollowUpAt: tomorrowMorning,
-    notes: "تحتاج متابعة فنية أولية لتأكيد المشكلة قبل تحويلها للمبيعات.",
+    notes: "جاءت من العميل مباشرة بعد تعليق داخل المنصة وتحتاج متابعة فنية أولية لتأكيد المشكلة قبل تحويلها للمبيعات.",
   });
 
   await upsertLead({
@@ -795,7 +795,7 @@ async function seed() {
     email: "safwa.garage@example.com",
     area: "العصافرة",
     address: "شارع 30، العصافرة",
-    source: "data_entry",
+    source: "workshop_referral",
     status: "converted_to_application",
     assignedEmployeeId: salesUser.id,
     createdByUserId: adminUserId,
@@ -839,7 +839,7 @@ async function seed() {
     createdByUserId: dataEntryUser.id,
     lastContactAt: now,
     nextFollowUpAt: tomorrowAfternoon,
-    notes: "الورشة بحاجة لشرح فني وتشغيلي أولًا قبل الإحالة لفريق المبيعات.",
+    notes: "إحالة من شبكة الورش والعلاقات وتحتاج مراجعة فنية وتشغيلية أولًا قبل الإحالة لفريق المبيعات أو الإدارة.",
   });
 
   await upsertEmployeeTask({

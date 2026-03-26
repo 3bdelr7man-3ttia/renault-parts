@@ -87,6 +87,7 @@ type TechnicalCaseRow = {
   notes?: string | null;
   nextFollowUpAt?: Date | string | null;
   createdAt?: Date | string | null;
+  createdByUserId?: number | null;
   registeredUserId?: number | null;
   convertedOrderId?: number | null;
   convertedWorkshopId?: number | null;
@@ -283,6 +284,44 @@ const VALID_TECHNICAL_CATEGORIES = [
 ] as const;
 const VALID_TECHNICAL_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 const VALID_TRANSFER_DECISIONS = ["sales", "workshop", "management", "parts", "keep_with_technical"] as const;
+
+const SOURCE_LABELS: Record<string, string> = {
+  sales_self: "جاءت من المبيعات",
+  sales_visit: "جاءت من زيارة ميدانية",
+  data_entry: "جاءت من إدخال البيانات",
+  landing_page: "دخلت من المنصة مباشرة",
+  manual: "أضيفت يدويًا",
+  customer_comment: "جاءت من تعليق عميل",
+  return_request: "جاءت من طلب مرتجع",
+  workshop_referral: "جاءت من إحالة ورشة",
+};
+
+const TRANSFER_TARGET_CONFIG = {
+  sales: {
+    targetRole: "sales" as const,
+    taskType: "follow_up" as const,
+    titlePrefix: "استكمال متابعة مبيعات",
+  },
+  workshop: {
+    targetRole: "sales" as const,
+    taskType: "field_follow_up" as const,
+    titlePrefix: "تنسيق إحالة إلى ورشة",
+  },
+  management: {
+    targetRole: "manager" as const,
+    taskType: "follow_up" as const,
+    titlePrefix: "مراجعة إدارية من الخبير الفني",
+  },
+  parts: {
+    targetRole: "data_entry" as const,
+    taskType: "data_entry" as const,
+    titlePrefix: "مراجعة قطع ومرتجعات",
+  },
+} satisfies Record<Exclude<(typeof VALID_TRANSFER_DECISIONS)[number], "keep_with_technical">, {
+  targetRole: "sales" | "manager" | "data_entry";
+  taskType: CreateSalesTaskInput["taskType"];
+  titlePrefix: string;
+}>;
 
 function getScopedEmployeeId(req: AuthenticatedRequest): number | null {
   return req.user?.id ?? null;
@@ -678,6 +717,100 @@ async function ensureDataEntryAssignee(actor: AuthenticatedRequest["user"], empl
   return null;
 }
 
+async function findEmployeeByEmployeeRole(employeeRole: "sales" | "manager" | "data_entry") {
+  const [employee] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      role: usersTable.role,
+      employeeRole: usersTable.employeeRole,
+    })
+    .from(usersTable)
+    .where(and(eq(usersTable.role, "employee"), eq(usersTable.employeeRole, employeeRole)))
+    .orderBy(asc(usersTable.id))
+    .limit(1);
+
+  return employee ?? null;
+}
+
+async function maybeCreateTechnicalTransferTask(params: {
+  actorId: number;
+  leadId: number;
+  leadName: string;
+  leadType: string;
+  leadArea: string | null;
+  leadSource: string;
+  decision: UpdateTechnicalCaseInput["transferDecision"];
+  technicalCategory: string | null;
+  technicalPriority: string;
+  knowledgeNotes: string | null;
+  notes: string | null;
+  nextFollowUpAt: string | null;
+  previousDecision: string | null | undefined;
+}) {
+  const decision = params.decision;
+  if (!decision || decision === "keep_with_technical" || decision === params.previousDecision) {
+    return null;
+  }
+
+  const targetConfig = TRANSFER_TARGET_CONFIG[decision];
+  if (!targetConfig) {
+    return null;
+  }
+
+  const assignee = await findEmployeeByEmployeeRole(targetConfig.targetRole);
+  if (!assignee) {
+    return {
+      created: false as const,
+      targetRole: targetConfig.targetRole,
+      message: "تم حفظ قرار التحويل لكن لم يتم العثور على موظف مناسب لهذه الجهة.",
+    };
+  }
+
+  const dueAt = params.nextFollowUpAt ? new Date(params.nextFollowUpAt) : new Date(Date.now() + 2 * 60 * 60 * 1000);
+  const sourceLabel = SOURCE_LABELS[params.leadSource] ?? params.leadSource;
+  const leadTypeLabel = params.leadType === "workshop" ? "ورشة" : "عميل";
+  const categoryLabel = params.technicalCategory ?? "غير محدد";
+  const priorityLabel = params.technicalPriority ?? "medium";
+
+  const [createdTask] = await db
+    .insert(employeeTasksTable)
+    .values({
+      employeeId: assignee.id,
+      leadId: params.leadId,
+      title: `${targetConfig.titlePrefix}: ${params.leadName}`,
+      taskType: targetConfig.taskType,
+      area: params.leadArea ?? null,
+      dueAt,
+      status: "pending",
+      notes: [
+        `مصدر الحالة: ${sourceLabel}`,
+        `نوع السجل: ${leadTypeLabel}`,
+        `التصنيف الفني: ${categoryLabel}`,
+        `الأولوية: ${priorityLabel}`,
+        params.notes ? `ملاحظات الخبير الفني: ${params.notes}` : null,
+        params.knowledgeNotes ? `سجل المعرفة الفنية: ${params.knowledgeNotes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      createdByUserId: params.actorId,
+    })
+    .returning({
+      id: employeeTasksTable.id,
+      employeeId: employeeTasksTable.employeeId,
+      title: employeeTasksTable.title,
+    });
+
+  return {
+    created: true as const,
+    taskId: createdTask.id,
+    employeeId: assignee.id,
+    employeeName: assignee.name,
+    targetRole: targetConfig.targetRole,
+    message: `تم إنشاء مهمة تلقائيًا وتحويلها إلى ${assignee.name}.`,
+  };
+}
+
 router.get(
   "/admin/employee/sales/summary",
   requireAuth,
@@ -975,6 +1108,7 @@ router.get(
         notes: leadsTable.notes,
         nextFollowUpAt: leadsTable.nextFollowUpAt,
         createdAt: leadsTable.createdAt,
+        createdByUserId: leadsTable.createdByUserId,
         registeredUserId: leadsTable.registeredUserId,
         convertedOrderId: leadsTable.convertedOrderId,
         convertedWorkshopId: leadsTable.convertedWorkshopId,
@@ -983,11 +1117,14 @@ router.get(
       .where(eq(leadsTable.assignedEmployeeId, employeeId))
       .orderBy(asc(leadsTable.nextFollowUpAt), desc(leadsTable.createdAt));
 
+    const nameMap = await loadUserNameMap(rows.map((row: TechnicalCaseRow) => row.createdByUserId));
+
     res.json(
       rows.map((row: TechnicalCaseRow) => ({
         ...row,
         nextFollowUpAt: toIso(row.nextFollowUpAt),
         createdAt: toIso(row.createdAt),
+        createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
       })),
     );
   },
@@ -1473,7 +1610,14 @@ router.patch(
     }
 
     const [lead] = await db
-      .select({ id: leadsTable.id })
+      .select({
+        id: leadsTable.id,
+        name: leadsTable.name,
+        type: leadsTable.type,
+        area: leadsTable.area,
+        source: leadsTable.source,
+        transferDecision: leadsTable.transferDecision,
+      })
       .from(leadsTable)
       .where(and(eq(leadsTable.id, caseId), eq(leadsTable.assignedEmployeeId, employeeId)));
 
@@ -1508,9 +1652,26 @@ router.patch(
         nextFollowUpAt: leadsTable.nextFollowUpAt,
       });
 
+    const transferAction = await maybeCreateTechnicalTransferTask({
+      actorId: employeeId,
+      leadId: lead.id,
+      leadName: lead.name,
+      leadType: lead.type,
+      leadArea: lead.area ?? null,
+      leadSource: lead.source,
+      decision: parsed.data.transferDecision,
+      technicalCategory: parsed.data.technicalCategory,
+      technicalPriority: parsed.data.technicalPriority,
+      knowledgeNotes: parsed.data.knowledgeNotes,
+      notes: parsed.data.notes,
+      nextFollowUpAt: parsed.data.nextFollowUpAt,
+      previousDecision: lead.transferDecision,
+    });
+
     res.json({
       ...updated,
       nextFollowUpAt: toIso(updated?.nextFollowUpAt),
+      transferAction,
     });
   },
 );
