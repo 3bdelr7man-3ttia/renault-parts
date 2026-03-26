@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRightLeft, ClipboardCheck, Loader2, Package2, RefreshCcw, Save, ShieldAlert, WalletCards, Wrench } from "lucide-react";
+import { ArrowRightLeft, ClipboardCheck, Loader2, Package2, Plus, RefreshCcw, Save, ShieldAlert, WalletCards, Wrench } from "lucide-react";
 
 type ReturnCase = {
   id: number;
@@ -46,6 +46,23 @@ type DraftState = {
   nextFollowUpAt: string;
 };
 
+type CreateReturnState = {
+  type: "customer" | "workshop";
+  name: string;
+  phone: string;
+  email: string;
+  area: string;
+  source: string;
+  technicalPriority: string;
+  technicalActionMode: string;
+  returnRequestType: string;
+  returnPartName: string;
+  returnPackageName: string;
+  convertedOrderId: string;
+  notes: string;
+  nextFollowUpAt: string;
+};
+
 const sourceLabels: Record<string, string> = {
   sales_self: "جاءت من المبيعات",
   sales_visit: "جاءت من زيارة ميدانية",
@@ -56,6 +73,15 @@ const sourceLabels: Record<string, string> = {
   return_request: "جاءت من طلب مرتجع",
   workshop_referral: "جاءت من إحالة ورشة",
 };
+
+const returnCreateSourceOptions = [
+  { value: "return_request", label: "بلاغ مرتجع مباشر" },
+  { value: "customer_comment", label: "شكوى أو تعليق عميل" },
+  { value: "sales_self", label: "جاءت من المبيعات" },
+  { value: "data_entry", label: "جاءت من إدخال البيانات" },
+  { value: "workshop_referral", label: "إحالة من ورشة" },
+  { value: "manual", label: "إدخال يدوي" },
+] as const;
 
 const priorityOptions = [
   { value: "low", label: "منخفضة" },
@@ -141,15 +167,35 @@ const emptyDraft = (): DraftState => ({
   nextFollowUpAt: "",
 });
 
+const emptyCreateReturn = (): CreateReturnState => ({
+  type: "customer",
+  name: "",
+  phone: "",
+  email: "",
+  area: "",
+  source: "return_request",
+  technicalPriority: "medium",
+  technicalActionMode: "write_opinion_for_sales",
+  returnRequestType: "technical_review",
+  returnPartName: "",
+  returnPackageName: "",
+  convertedOrderId: "",
+  notes: "",
+  nextFollowUpAt: "",
+});
+
 export default function EmployeeReturnsPage() {
-  const { token } = useAuth();
+  const { token, hasPermission } = useAuth();
   const { toast } = useToast();
   const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
 
   const [loading, setLoading] = React.useState(true);
   const [savingId, setSavingId] = React.useState<number | null>(null);
+  const [creating, setCreating] = React.useState(false);
+  const [createOpen, setCreateOpen] = React.useState(false);
   const [cases, setCases] = React.useState<ReturnCase[]>([]);
   const [drafts, setDrafts] = React.useState<Record<number, DraftState>>({});
+  const [createForm, setCreateForm] = React.useState<CreateReturnState>(emptyCreateReturn());
 
   const loadCases = React.useCallback(async () => {
     if (!token) {
@@ -217,6 +263,62 @@ export default function EmployeeReturnsPage() {
     }));
   };
 
+  const updateCreateForm = (patch: Partial<CreateReturnState>) => {
+    setCreateForm((current) => ({ ...current, ...patch }));
+  };
+
+  const handleCreateReturn = async () => {
+    if (!token) return;
+
+    setCreating(true);
+    try {
+      const response = await fetch(`${base}/api/admin/employee/technical/returns`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: createForm.type,
+          name: createForm.name,
+          phone: createForm.phone,
+          email: createForm.email || null,
+          area: createForm.area || null,
+          source: createForm.source,
+          technicalPriority: createForm.technicalPriority,
+          technicalActionMode: createForm.technicalActionMode,
+          returnRequestType: createForm.returnRequestType,
+          returnPartName: createForm.returnPartName || null,
+          returnPackageName: createForm.returnPackageName || null,
+          convertedOrderId: createForm.convertedOrderId || null,
+          notes: createForm.notes || null,
+          nextFollowUpAt: createForm.nextFollowUpAt ? new Date(createForm.nextFollowUpAt).toISOString() : null,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || "تعذر إنشاء المرتجع الآن.");
+      }
+
+      toast({
+        title: "تم إنشاء المرتجع",
+        description: result?.message || "تم تسجيل المرتجع وفتحه داخل المسار الفني.",
+      });
+      setCreateForm(emptyCreateReturn());
+      setCreateOpen(false);
+      await loadCases();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "تعذر إنشاء المرتجع الآن.",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleSave = async (caseId: number) => {
     if (!token) return;
     const draft = drafts[caseId];
@@ -278,12 +380,121 @@ export default function EmployeeReturnsPage() {
   return (
     <div className="space-y-8">
       <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-        <p className="text-[#F9E795] text-sm font-bold mb-2">المرتجعات</p>
-        <h1 className="text-3xl font-black text-white mb-3">مسار إدارة المرتجع</h1>
-        <p className="text-white/60 text-sm leading-7 max-w-4xl">
-          هنا يتحول المرتجع من مجرد شكوى إلى Workflow واضح: بلاغ، استلام، فحص، قرار استبدال أو رد مالي أو رفض، ثم تحويل الإجراء التالي تلقائيًا للمسؤول المناسب.
-        </p>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <p className="text-[#F9E795] text-sm font-bold mb-2">المرتجعات</p>
+            <h1 className="text-3xl font-black text-white mb-3">مسار إدارة المرتجع</h1>
+            <p className="text-white/60 text-sm leading-7 max-w-4xl">
+              الأفضل أن يكون المرتجع له صفحة مركزية هنا، ثم نربطه بالطلب والقطعة والباكدج. وبعد ذلك يمكن إضافة اختصارات من الطلبات أو المبيعات تفتح نفس النموذج بشكل مسبق التعبئة.
+            </p>
+          </div>
+          {hasPermission("returns.create") ? (
+            <button
+              onClick={() => setCreateOpen((current) => !current)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all self-start"
+            >
+              <Plus className="w-4 h-4" />
+              {createOpen ? "إخفاء نموذج المرتجع" : "إضافة مرتجع"}
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {createOpen ? (
+        <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <Plus className="w-5 h-5 text-[#F9E795]" />
+            <div>
+              <h2 className="text-white font-black text-xl">تسجيل مرتجع جديد</h2>
+              <p className="text-white/45 text-sm mt-1">من هنا نفتح المرتجع أول مرة ونربطه بالطلب أو القطعة إن أمكن، ثم يدخل بعدها في المسار الفني والمتابعة.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">نوع الجهة</label>
+              <select value={createForm.type} onChange={(e) => updateCreateForm({ type: e.target.value as "customer" | "workshop" })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                <option value="customer" className="bg-[#111826]">عميل</option>
+                <option value="workshop" className="bg-[#111826]">ورشة</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">الاسم</label>
+              <input value={createForm.name} onChange={(e) => updateCreateForm({ name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اسم العميل أو الورشة" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">الهاتف</label>
+              <input value={createForm.phone} onChange={(e) => updateCreateForm({ phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="رقم الهاتف" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">الإيميل</label>
+              <input value={createForm.email} onChange={(e) => updateCreateForm({ email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اختياري" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">المنطقة</label>
+              <input value={createForm.area} onChange={(e) => updateCreateForm({ area: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اختياري" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">مصدر المرتجع</label>
+              <select value={createForm.source} onChange={(e) => updateCreateForm({ source: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                {returnCreateSourceOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">رقم الطلب المرتبط</label>
+              <input value={createForm.convertedOrderId} onChange={(e) => updateCreateForm({ convertedOrderId: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: 1024" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">نوع طلب المرتجع</label>
+              <select value={createForm.returnRequestType} onChange={(e) => updateCreateForm({ returnRequestType: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                {returnRequestTypeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">أولوية الحالة</label>
+              <select value={createForm.technicalPriority} onChange={(e) => updateCreateForm({ technicalPriority: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                {priorityOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">أسلوب التعامل الفني</label>
+              <select value={createForm.technicalActionMode} onChange={(e) => updateCreateForm({ technicalActionMode: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                {technicalActionModeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">اسم القطعة</label>
+              <input value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: فلتر زيت" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">الباكدج المرتبط</label>
+              <input value={createForm.returnPackageName} onChange={(e) => updateCreateForm({ returnPackageName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: باكدج 20 ألف" />
+            </div>
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
+              <input type="datetime-local" value={createForm.nextFollowUpAt} onChange={(e) => updateCreateForm({ nextFollowUpAt: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+            </div>
+            <div className="md:col-span-2 xl:col-span-4">
+              <label className="block text-white/50 text-xs font-bold mb-2">تفاصيل البلاغ</label>
+              <textarea value={createForm.notes} onChange={(e) => updateCreateForm({ notes: e.target.value })} className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="ما المشكلة؟ هل القطعة غير مطابقة؟ هل هناك طلب استبدال أو فحص أو رد مالي؟" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-white/40 text-xs leading-6">
+              المرتجع يُسجل هنا كمصدر واحد للحقيقة، ثم يمكن لاحقًا فتح نفس النموذج من الطلبات أو المبيعات بشكل تلقائي التعبئة.
+            </p>
+            <button
+              onClick={handleCreateReturn}
+              disabled={creating}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {creating ? "جارٍ إنشاء المرتجع..." : "حفظ المرتجع"}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         {[

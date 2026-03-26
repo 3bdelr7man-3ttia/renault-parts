@@ -276,6 +276,23 @@ type UpdateReturnCaseInput = {
   nextFollowUpAt: string | null;
 };
 
+type CreateReturnCaseInput = {
+  type: "customer" | "workshop";
+  name: string;
+  phone: string;
+  email: string | null;
+  area: string | null;
+  source: string;
+  technicalPriority: string;
+  technicalActionMode: string;
+  returnRequestType: string;
+  returnPartName: string | null;
+  returnPackageName: string | null;
+  convertedOrderId: number | null;
+  notes: string | null;
+  nextFollowUpAt: string | null;
+};
+
 const VALID_TASK_TYPES = [
   "call",
   "visit",
@@ -337,6 +354,7 @@ const VALID_RETURN_STATUSES = [
 ] as const;
 const VALID_RETURN_RECEIPT_STATUSES = ["not_received", "scheduled_pickup", "received_at_workshop", "received_at_hub"] as const;
 const VALID_RETURN_RESOLUTIONS = ["pending", "exchange", "refund", "reject", "technical_review", "need_more_info"] as const;
+const VALID_RETURN_CREATE_SOURCES = ["sales_self", "sales_visit", "data_entry", "landing_page", "manual", "customer_comment", "return_request", "workshop_referral"] as const;
 
 const SOURCE_LABELS: Record<string, string> = {
   sales_self: "جاءت من المبيعات",
@@ -704,6 +722,81 @@ function parseReturnCaseUpdateInput(body: unknown): ParsedResult<UpdateReturnCas
   };
 }
 
+function parseCreateReturnCaseInput(body: unknown): ParsedResult<CreateReturnCaseInput> {
+  const payload = (body ?? {}) as Record<string, unknown>;
+  const type = asNullableString(payload.type);
+  const name = asNullableString(payload.name);
+  const phone = asNullableString(payload.phone);
+  const email = asNullableString(payload.email);
+  const area = asNullableString(payload.area);
+  const source = asNullableString(payload.source) ?? "return_request";
+  const technicalPriority = asNullableString(payload.technicalPriority) ?? "medium";
+  const technicalActionMode = asNullableString(payload.technicalActionMode) ?? "write_opinion_for_sales";
+  const returnRequestType = asNullableString(payload.returnRequestType) ?? "technical_review";
+  const returnPartName = asNullableString(payload.returnPartName);
+  const returnPackageName = asNullableString(payload.returnPackageName);
+  const notes = asNullableString(payload.notes);
+  const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
+  const rawOrderId = payload.convertedOrderId;
+  const convertedOrderId = rawOrderId === null || rawOrderId === undefined || rawOrderId === "" ? null : Number(rawOrderId);
+
+  if (type !== "customer" && type !== "workshop") {
+    return { success: false, error: "نوع صاحب المرتجع غير صحيح" };
+  }
+
+  if (!name || name.trim().length < 2) {
+    return { success: false, error: "اسم صاحب المرتجع مطلوب" };
+  }
+
+  if (!phone || phone.trim().length < 6) {
+    return { success: false, error: "رقم الهاتف مطلوب" };
+  }
+
+  if (!VALID_RETURN_CREATE_SOURCES.includes(source as (typeof VALID_RETURN_CREATE_SOURCES)[number])) {
+    return { success: false, error: "مصدر المرتجع غير صحيح" };
+  }
+
+  if (!VALID_TECHNICAL_PRIORITIES.includes(technicalPriority as (typeof VALID_TECHNICAL_PRIORITIES)[number])) {
+    return { success: false, error: "أولوية المرتجع غير صحيحة" };
+  }
+
+  if (!VALID_TECHNICAL_ACTION_MODES.includes(technicalActionMode as (typeof VALID_TECHNICAL_ACTION_MODES)[number])) {
+    return { success: false, error: "أسلوب التعامل الفني غير صحيح" };
+  }
+
+  if (!VALID_RETURN_REQUEST_TYPES.includes(returnRequestType as (typeof VALID_RETURN_REQUEST_TYPES)[number])) {
+    return { success: false, error: "نوع طلب المرتجع غير صحيح" };
+  }
+
+  if (nextFollowUpAt && !isIsoDateTime(nextFollowUpAt)) {
+    return { success: false, error: "موعد المتابعة غير صحيح" };
+  }
+
+  if (convertedOrderId !== null && (!Number.isInteger(convertedOrderId) || convertedOrderId <= 0)) {
+    return { success: false, error: "رقم الطلب المرتبط غير صحيح" };
+  }
+
+  return {
+    success: true,
+    data: {
+      type,
+      name,
+      phone,
+      email,
+      area,
+      source,
+      technicalPriority,
+      technicalActionMode,
+      returnRequestType,
+      returnPartName,
+      returnPackageName,
+      convertedOrderId,
+      notes,
+      nextFollowUpAt,
+    },
+  };
+}
+
 function parseAssignLeadInput(body: unknown): ParsedResult<AssignLeadInput> {
   const payload = (body ?? {}) as Record<string, unknown>;
   const rawEmployeeId = payload.employeeId;
@@ -845,7 +938,7 @@ async function ensureDataEntryAssignee(actor: AuthenticatedRequest["user"], empl
   return null;
 }
 
-async function findEmployeeByEmployeeRole(employeeRole: "sales" | "manager" | "data_entry") {
+async function findEmployeeByEmployeeRole(employeeRole: "sales" | "manager" | "data_entry" | "technical_expert" | "marketing_tech") {
   const [employee] = await db
     .select({
       id: usersTable.id,
@@ -1484,6 +1577,74 @@ router.get(
         createdByUserName: row.createdByUserId ? nameMap.get(row.createdByUserId)?.name ?? null : null,
       })),
     );
+  },
+);
+
+router.post(
+  "/admin/employee/technical/returns",
+  requireAuth,
+  requireRolePermission("returns.create", "هذه العملية متاحة لإنشاء المرتجعات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const actorId = getScopedEmployeeId(req);
+    if (!actorId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const parsed = parseCreateReturnCaseInput(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error });
+      return;
+    }
+
+    let assignedEmployeeId: number | null = actorId;
+    const actorRole = req.user?.role;
+    const actorEmployeeRole = req.user?.employeeRole ?? null;
+
+    if (actorRole === "admin" || (actorRole === "employee" && actorEmployeeRole !== "technical_expert")) {
+      const technicalAssignee = await findEmployeeByEmployeeRole("technical_expert");
+      assignedEmployeeId = technicalAssignee?.id ?? actorId;
+    }
+
+    const [created] = await db
+      .insert(leadsTable)
+      .values({
+        type: parsed.data.type,
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        email: parsed.data.email,
+        area: parsed.data.area,
+        source: parsed.data.source,
+        status: "new",
+        technicalCategory: "parts_return",
+        technicalPriority: parsed.data.technicalPriority,
+        technicalActionMode: parsed.data.technicalActionMode,
+        transferDecision: "keep_with_technical",
+        returnRequestType: parsed.data.returnRequestType,
+        returnStatus: "reported",
+        returnReceiptStatus: "not_received",
+        returnResolution: "pending",
+        returnPartName: parsed.data.returnPartName,
+        returnPackageName: parsed.data.returnPackageName,
+        assignedEmployeeId,
+        createdByUserId: actorId,
+        convertedOrderId: parsed.data.convertedOrderId,
+        nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
+        notes: parsed.data.notes,
+      })
+      .returning({
+        id: leadsTable.id,
+        name: leadsTable.name,
+        assignedEmployeeId: leadsTable.assignedEmployeeId,
+        convertedOrderId: leadsTable.convertedOrderId,
+      });
+
+    res.status(201).json({
+      ...created,
+      message: assignedEmployeeId === actorId
+        ? "تم إنشاء المرتجع بنجاح."
+        : "تم إنشاء المرتجع وتحويله تلقائيًا للمسار الفني.",
+    });
   },
 );
 
