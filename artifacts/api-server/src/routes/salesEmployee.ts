@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Response } from "express";
-import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
-import { db, employeeDailyReportsTable, employeeTasksTable, leadsTable, usersTable } from "@workspace/db";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { db, employeeDailyReportsTable, employeeTasksTable, leadsTable, ordersTable, packagesTable, usersTable } from "@workspace/db";
 import { requireAuth, type AuthenticatedRequest } from "../lib/auth";
 import { requireRolePermission } from "../lib/permissions";
 
@@ -289,6 +289,7 @@ type CreateReturnCaseInput = {
   returnPartName: string | null;
   returnPackageName: string | null;
   convertedOrderId: number | null;
+  registeredUserId: number | null;
   notes: string | null;
   nextFollowUpAt: string | null;
 };
@@ -739,6 +740,8 @@ function parseCreateReturnCaseInput(body: unknown): ParsedResult<CreateReturnCas
   const nextFollowUpAt = asNullableString(payload.nextFollowUpAt);
   const rawOrderId = payload.convertedOrderId;
   const convertedOrderId = rawOrderId === null || rawOrderId === undefined || rawOrderId === "" ? null : Number(rawOrderId);
+  const rawRegisteredUserId = payload.registeredUserId;
+  const registeredUserId = rawRegisteredUserId === null || rawRegisteredUserId === undefined || rawRegisteredUserId === "" ? null : Number(rawRegisteredUserId);
 
   if (type !== "customer" && type !== "workshop") {
     return { success: false, error: "نوع صاحب المرتجع غير صحيح" };
@@ -776,6 +779,10 @@ function parseCreateReturnCaseInput(body: unknown): ParsedResult<CreateReturnCas
     return { success: false, error: "رقم الطلب المرتبط غير صحيح" };
   }
 
+  if (registeredUserId !== null && (!Number.isInteger(registeredUserId) || registeredUserId <= 0)) {
+    return { success: false, error: "العميل المرتبط غير صحيح" };
+  }
+
   return {
     success: true,
     data: {
@@ -791,6 +798,7 @@ function parseCreateReturnCaseInput(body: unknown): ParsedResult<CreateReturnCas
       returnPartName,
       returnPackageName,
       convertedOrderId,
+      registeredUserId,
       notes,
       nextFollowUpAt,
     },
@@ -1522,6 +1530,103 @@ router.get(
 );
 
 router.get(
+  "/admin/employee/technical/returns/lookups",
+  requireAuth,
+  requireRolePermission("returns.create", "هذه العملية متاحة للمرتجعات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+
+    if (query.length < 2) {
+      res.json([]);
+      return;
+    }
+
+    const pattern = `%${query}%`;
+
+    const [orderMatches, leadMatches] = await Promise.all([
+      db
+        .select({
+          orderId: ordersTable.id,
+          userId: usersTable.id,
+          name: usersTable.name,
+          phone: usersTable.phone,
+          email: usersTable.email,
+          area: usersTable.area,
+          packageName: packagesTable.name,
+          createdAt: ordersTable.createdAt,
+        })
+        .from(ordersTable)
+        .innerJoin(usersTable, eq(ordersTable.userId, usersTable.id))
+        .leftJoin(packagesTable, eq(ordersTable.packageId, packagesTable.id))
+        .where(
+          or(
+            ilike(usersTable.name, pattern),
+            ilike(usersTable.phone, pattern),
+            ilike(usersTable.email, pattern),
+          ),
+        )
+        .orderBy(desc(ordersTable.createdAt))
+        .limit(8),
+      db
+        .select({
+          leadId: leadsTable.id,
+          type: leadsTable.type,
+          name: leadsTable.name,
+          phone: leadsTable.phone,
+          email: leadsTable.email,
+          area: leadsTable.area,
+          registeredUserId: leadsTable.registeredUserId,
+          convertedOrderId: leadsTable.convertedOrderId,
+          returnPackageName: leadsTable.returnPackageName,
+          createdAt: leadsTable.createdAt,
+        })
+        .from(leadsTable)
+        .where(
+          or(
+            ilike(leadsTable.name, pattern),
+            ilike(leadsTable.phone, pattern),
+            ilike(leadsTable.email, pattern),
+            ilike(leadsTable.contactPerson, pattern),
+          ),
+        )
+        .orderBy(desc(leadsTable.createdAt))
+        .limit(8),
+    ]);
+
+    const results = [
+      ...orderMatches.map((row) => ({
+        id: `order-${row.orderId}`,
+        sourceType: "existing_order",
+        type: "customer" as const,
+        name: row.name,
+        phone: row.phone ?? "",
+        email: row.email ?? null,
+        area: row.area ?? null,
+        registeredUserId: row.userId,
+        convertedOrderId: row.orderId,
+        returnPackageName: row.packageName ?? null,
+        label: `${row.name} · طلب #${row.orderId}${row.packageName ? ` · ${row.packageName}` : ""}`,
+      })),
+      ...leadMatches.map((row) => ({
+        id: `lead-${row.leadId}`,
+        sourceType: "existing_lead",
+        type: row.type === "workshop" ? "workshop" as const : "customer" as const,
+        name: row.name,
+        phone: row.phone,
+        email: row.email ?? null,
+        area: row.area ?? null,
+        registeredUserId: row.registeredUserId ?? null,
+        convertedOrderId: row.convertedOrderId ?? null,
+        returnPackageName: row.returnPackageName ?? null,
+        label: `${row.name}${row.convertedOrderId ? ` · طلب #${row.convertedOrderId}` : ""}${row.type === "workshop" ? " · ورشة" : ""}`,
+      })),
+    ];
+
+    res.json(results.slice(0, 12));
+  },
+);
+
+router.get(
   "/admin/employee/technical/returns",
   requireAuth,
   requireRolePermission("returns.view", "هذه الصفحة متاحة للمرتجعات فقط"),
@@ -1629,6 +1734,7 @@ router.post(
         assignedEmployeeId,
         createdByUserId: actorId,
         convertedOrderId: parsed.data.convertedOrderId,
+        registeredUserId: parsed.data.registeredUserId,
         nextFollowUpAt: parsed.data.nextFollowUpAt ? new Date(parsed.data.nextFollowUpAt) : null,
         notes: parsed.data.notes,
       })

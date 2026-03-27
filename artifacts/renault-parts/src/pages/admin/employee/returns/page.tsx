@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRightLeft, ClipboardCheck, Loader2, Package2, Plus, RefreshCcw, Save, ShieldAlert, WalletCards, Wrench } from "lucide-react";
+import { ArrowRightLeft, ClipboardCheck, Loader2, Package2, Plus, RefreshCcw, Save, Search, ShieldAlert, WalletCards, Wrench } from "lucide-react";
 
 type ReturnCase = {
   id: number;
@@ -59,8 +59,23 @@ type CreateReturnState = {
   returnPartName: string;
   returnPackageName: string;
   convertedOrderId: string;
+  registeredUserId: string;
   notes: string;
   nextFollowUpAt: string;
+};
+
+type ReturnLookupResult = {
+  id: string;
+  sourceType: "existing_order" | "existing_lead";
+  type: "customer" | "workshop";
+  name: string;
+  phone: string;
+  email?: string | null;
+  area?: string | null;
+  registeredUserId?: number | null;
+  convertedOrderId?: number | null;
+  returnPackageName?: string | null;
+  label: string;
 };
 
 const sourceLabels: Record<string, string> = {
@@ -180,6 +195,7 @@ const emptyCreateReturn = (): CreateReturnState => ({
   returnPartName: "",
   returnPackageName: "",
   convertedOrderId: "",
+  registeredUserId: "",
   notes: "",
   nextFollowUpAt: "",
 });
@@ -196,6 +212,9 @@ export default function EmployeeReturnsPage() {
   const [cases, setCases] = React.useState<ReturnCase[]>([]);
   const [drafts, setDrafts] = React.useState<Record<number, DraftState>>({});
   const [createForm, setCreateForm] = React.useState<CreateReturnState>(emptyCreateReturn());
+  const [lookupQuery, setLookupQuery] = React.useState("");
+  const [lookupLoading, setLookupLoading] = React.useState(false);
+  const [lookupResults, setLookupResults] = React.useState<ReturnLookupResult[]>([]);
 
   const loadCases = React.useCallback(async () => {
     if (!token) {
@@ -253,6 +272,51 @@ export default function EmployeeReturnsPage() {
     loadCases();
   }, [loadCases]);
 
+  React.useEffect(() => {
+    if (!createOpen || !token) {
+      setLookupResults([]);
+      setLookupLoading(false);
+      return;
+    }
+
+    const query = lookupQuery.trim();
+    if (query.length < 2) {
+      setLookupResults([]);
+      setLookupLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLookupLoading(true);
+
+    fetch(`${base}/api/admin/employee/technical/returns/lookups?q=${encodeURIComponent(query)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || "تعذر البحث عن العميل أو الطلب الآن.");
+        }
+        if (!cancelled) {
+          setLookupResults(Array.isArray(result) ? result : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLookupResults([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLookupLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [base, createOpen, lookupQuery, token]);
+
   const updateDraft = (caseId: number, patch: Partial<DraftState>) => {
     setDrafts((current) => ({
       ...current,
@@ -265,6 +329,22 @@ export default function EmployeeReturnsPage() {
 
   const updateCreateForm = (patch: Partial<CreateReturnState>) => {
     setCreateForm((current) => ({ ...current, ...patch }));
+  };
+
+  const selectLookupResult = (result: ReturnLookupResult) => {
+    setLookupQuery(result.label);
+    setLookupResults([]);
+    setCreateForm((current) => ({
+      ...current,
+      type: result.type,
+      name: result.name,
+      phone: result.phone,
+      email: result.email ?? "",
+      area: result.area ?? "",
+      convertedOrderId: result.convertedOrderId ? String(result.convertedOrderId) : current.convertedOrderId,
+      registeredUserId: result.registeredUserId ? String(result.registeredUserId) : "",
+      returnPackageName: result.returnPackageName ?? current.returnPackageName,
+    }));
   };
 
   const handleCreateReturn = async () => {
@@ -291,6 +371,7 @@ export default function EmployeeReturnsPage() {
           returnPartName: createForm.returnPartName || null,
           returnPackageName: createForm.returnPackageName || null,
           convertedOrderId: createForm.convertedOrderId || null,
+          registeredUserId: createForm.registeredUserId || null,
           notes: createForm.notes || null,
           nextFollowUpAt: createForm.nextFollowUpAt ? new Date(createForm.nextFollowUpAt).toISOString() : null,
         }),
@@ -306,6 +387,8 @@ export default function EmployeeReturnsPage() {
         description: result?.message || "تم تسجيل المرتجع وفتحه داخل المسار الفني.",
       });
       setCreateForm(emptyCreateReturn());
+      setLookupQuery("");
+      setLookupResults([]);
       setCreateOpen(false);
       await loadCases();
     } catch (error) {
@@ -408,6 +491,57 @@ export default function EmployeeReturnsPage() {
               <h2 className="text-white font-black text-xl">تسجيل مرتجع جديد</h2>
               <p className="text-white/45 text-sm mt-1">من هنا نفتح المرتجع أول مرة ونربطه بالطلب أو القطعة إن أمكن، ثم يدخل بعدها في المسار الفني والمتابعة.</p>
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-white/50 text-xs font-bold mb-2">ابحث عن عميل أو طلب أو ورشة موجودة</label>
+              <div className="relative">
+                <Search className="w-4 h-4 text-white/35 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  value={lookupQuery}
+                  onChange={(e) => setLookupQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-3 text-white outline-none"
+                  placeholder="اكتب الاسم أو الهاتف أو الإيميل أو رقم الطلب"
+                />
+              </div>
+              <p className="text-white/35 text-xs mt-2">
+                عند اختيار عميل أو طلب موجود سيتم تعبئة البيانات الأساسية تلقائيًا وربط المرتجع به قدر الإمكان.
+              </p>
+            </div>
+
+            {lookupLoading ? (
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-2 text-white/55 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-[#F9E795]" />
+                جارٍ البحث في العملاء والطلبات الحالية...
+              </div>
+            ) : lookupResults.length ? (
+              <div className="bg-[#10182C] border border-white/10 rounded-2xl overflow-hidden">
+                {lookupResults.map((result) => (
+                  <button
+                    key={result.id}
+                    onClick={() => selectLookupResult(result)}
+                    className="w-full text-right px-4 py-3 border-b last:border-b-0 border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-white font-bold text-sm">{result.label}</p>
+                        <p className="text-white/40 text-xs mt-1">
+                          {result.type === "workshop" ? "ورشة" : "عميل"} {result.phone ? `· ${result.phone}` : ""} {result.area ? `· ${result.area}` : ""}
+                        </p>
+                      </div>
+                      <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                        {result.sourceType === "existing_order" ? "طلب سابق" : "بيانات موجودة"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : lookupQuery.trim().length >= 2 ? (
+              <div className="bg-[#10182C] border border-dashed border-white/10 rounded-2xl px-4 py-3 text-white/40 text-sm">
+                لا توجد نتيجة مطابقة الآن. يمكنك إدخال المرتجع يدويًا إذا كانت الحالة جديدة.
+              </div>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

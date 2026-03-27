@@ -85,21 +85,59 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isMobile } = useBreakpoint();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const employeeRole = normalizeEmployeeRole(user?.employeeRole);
+  const isAdminUser = isRole('admin');
+  const isEmployeeUser = isRole('employee');
+  const isManager = employeeRole === 'manager';
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
 
   const visibleNavItems = useMemo(() => {
     return navItems.filter((item) => {
-      if (isRole('admin')) return true;
-      if (item.adminOnly) return isRole('admin');
-      if (item.employeeOnly && !isRole('employee')) return false;
+      if (item.adminOnly) return isAdminUser;
+
+      if (isAdminUser) {
+        if (item.employeeOnly) return false;
+        return item.permission ? hasPermission(item.permission) : true;
+      }
+
+      if (item.employeeOnly && !isEmployeeUser) return false;
       if (item.employeeRoles && (!employeeRole || !item.employeeRoles.includes(employeeRole))) return false;
-      if (!isRole('employee')) return false;
+      if (!isEmployeeUser) return false;
       if (!item.permission) return true;
       return hasPermission(item.permission);
     });
-  }, [employeeRole, hasPermission, isRole]);
+  }, [employeeRole, hasPermission, isAdminUser, isEmployeeUser]);
+
+  const currentGroupLabels = useMemo<Record<NavItem['group'], string>>(() => {
+    if (isAdminUser) {
+      return {
+        overview: 'مركز القرار',
+        employee: 'مساحات الفريق',
+        team: 'إدارة الفريق',
+        operations: 'التشغيل والمتابعة',
+        catalog: 'المحتوى والشركاء',
+        finance: 'المؤشرات والماليات',
+        system: 'إدارة النظام',
+      };
+    }
+
+    if (isManager) {
+      return {
+        overview: 'نظرة المدير',
+        employee: 'متابعة التنفيذ',
+        team: 'إدارة الفريق',
+        operations: 'التشغيل والمتابعة',
+        catalog: 'المحتوى والشركاء',
+        finance: 'المؤشرات',
+        system: 'إدارة النظام',
+      };
+    }
+
+    return groupLabels;
+  }, [isAdminUser, isManager]);
+
+  const brandSubtitle = isAdminUser ? 'لوحة الإدارة' : isManager ? 'لوحة مدير الفريق' : 'مساحة العمل';
 
   const groupedNavItems = useMemo(() => {
     return visibleNavItems.reduce<Record<NavItem['group'], NavItem[]>>((acc, item) => {
@@ -143,7 +181,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <span style={{ color: G }}> باك</span>
             </p>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: G, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-              <ShieldCheck size={11} /> لوحة الإدارة
+              <ShieldCheck size={11} /> {brandSubtitle}
             </p>
           </div>
           <button
@@ -175,7 +213,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             return (
               <div key={groupKey} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <p style={{ margin: '0 10px 4px', color: 'rgba(255,255,255,0.28)', fontSize: 10, fontWeight: 900, letterSpacing: '.04em' }}>
-                  {groupLabels[groupKey]}
+                  {currentGroupLabels[groupKey]}
                 </p>
                 {items.map((item) => {
                   const active = isActive(item.href, item.exact);

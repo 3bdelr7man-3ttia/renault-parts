@@ -199,10 +199,52 @@ function useTechnicalSummary(token: string | null, enabled: boolean) {
 export default function EmployeeDashboardPage() {
   const { token, user, hasPermission } = useAuth();
   const employeeRole = normalizeEmployeeRole(user?.employeeRole);
-  const isSales = employeeRole === "sales" || employeeRole === "manager";
+  const isManager = employeeRole === "manager";
+  const isSales = employeeRole === "sales";
   const isTechnical = employeeRole === "technical_expert";
   const { data: salesSummary, loading } = useSalesSummary(token, isSales);
   const { data: technicalSummary, loading: technicalLoading } = useTechnicalSummary(token, isTechnical);
+
+  if (isManager) {
+    const managerCards = [
+      hasPermission("sales.team.view") ? { href: "/admin/employee/team", label: "إدارة الفريق", description: "توزيع العملاء والورش والمهام ومراقبة ما يحتاج قرارًا سريعًا.", icon: Users } : null,
+      hasPermission("returns.view") ? { href: "/admin/employee/returns", label: "المرتجعات", description: "متابعة البلاغات المفتوحة وما يحتاج فحصًا أو قرار استبدال أو رد مالي.", icon: Package2 } : null,
+      hasPermission("technical.cases.view_own") ? { href: "/admin/employee/technical", label: "الحالات الفنية", description: "مراجعة ما وصل إلى الخبير الفني وما ينتظر رأيًا أو تصعيدًا.", icon: Stethoscope } : null,
+      hasPermission("data_entry.leads.view") ? { href: "/admin/employee/data-entry", label: "إدخال البيانات", description: "مراجعة ما أُضيف من عملاء وورش وتجهيزه للإسناد أو المتابعة.", icon: Database } : null,
+      hasPermission("orders.view") ? { href: "/admin/orders", label: "الطلبات", description: "متابعة التنفيذ الحالي وما يرتبط به من شكاوى أو مرتجعات أو تأخير.", icon: ClipboardList } : null,
+      hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "التقارير اليومية", description: "مراجعة ما أنجزه الفريق وما تعطل وما يحتاج قرارًا إداريًا.", icon: FileText } : null,
+    ].filter(Boolean) as Array<{ href: string; label: string; description: string; icon: typeof Users }>;
+
+    return (
+      <div className="space-y-8">
+        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة مدير الفريق</p>
+          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
+          <p className="text-white/60 text-sm leading-7 max-w-4xl">
+            هنا تتابع ما تم إسناده من الإدارة، وتعيد توزيعه على الفريق، وتراقب ما يحتاج قرارًا سريعًا بين المبيعات والداتا والخبير الفني والمرتجعات.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {managerCards.map((card) => (
+            <Link key={card.href} href={card.href}>
+              <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
+                <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                  <card.icon className="w-5 h-5" />
+                </div>
+                <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
+                <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
+                <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
+                  الدخول للقسم
+                  <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (isSales) {
     const quickActions = [

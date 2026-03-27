@@ -139,8 +139,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-black text-white mb-1">لوحة التحكم</h1>
-        <p className="text-white/50 text-sm">مرحباً بك في لوحة إدارة رينو باك</p>
+        <h1 className="text-3xl font-black text-white mb-1">مركز إدارة رينو باك</h1>
+        <p className="text-white/50 text-sm">من هنا ترى الصورة الكاملة، المؤشرات الحرجة، وما يحتاج قرارًا إداريًا أو إعادة توزيع.</p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Link href="/admin/employee/team">
@@ -148,9 +148,9 @@ export default function AdminDashboard() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[#F9E795] text-xs font-black mb-2">إدارة الفريق والتوزيع</p>
-                <h2 className="text-white text-xl font-black mb-2">الأدمن يكلف مدير الفريق من هنا</h2>
+                <h2 className="text-white text-xl font-black mb-2">الإدارة العليا توجه التنفيذ من هنا</h2>
                 <p className="text-white/55 text-sm leading-7">
-                  وزع العملاء والورش والمهام التشغيلية، وتابع انتقالها من الإدارة إلى مدير الفريق ثم إلى أعضاء التنفيذ.
+                  راقب أين تتعطل المتابعة، ثم وجّه مدير الفريق واطلع على ما تم إسناده وما يحتاج تدخلك في المبيعات أو المرتجعات أو الحالات الفنية.
                 </p>
               </div>
               <Users className="w-7 h-7 text-[#F9E795] flex-shrink-0" />
@@ -163,10 +163,9 @@ export default function AdminDashboard() {
 
         <div className="bg-[#151D33] rounded-2xl border border-white/10 p-5">
           <p className="text-white/40 text-xs font-black mb-2">دورة التشغيل الحالية</p>
-          <h2 className="text-white text-lg font-black mb-3">Admin → Team Manager → Employees</h2>
+          <h2 className="text-white text-lg font-black mb-3">Admin → Team Manager → Specialists</h2>
           <p className="text-white/55 text-sm leading-7">
-            الأدمن يحدد الأولويات العامة ويكلف مدير الفريق، ثم يقوم مدير الفريق بتوزيع العملاء والورش والمهام اليومية
-            على المبيعات والمتابعة، والداتا والقطع، والخبرات التشغيلية المتخصصة.
+            الأدمن هنا ليس موظفًا منفذًا، بل صاحب قرار يرى المؤشرات، يحدد الأولويات، ويكلّف مدير الفريق الذي يحرك المبيعات والداتا والخبرة الفنية والتسويق.
           </p>
         </div>
       </div>
