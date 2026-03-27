@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { getRoleLabel, normalizeEmployeeRole } from "@/lib/permissions";
-import { ArrowLeft, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Stethoscope, Target, Users, Wrench } from "lucide-react";
+import { ArrowLeft, BarChart2, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Star, Stethoscope, Target, Users, Wrench } from "lucide-react";
 
 type SalesSummary = {
   totalCustomers: number;
@@ -37,6 +37,13 @@ type TechnicalSummary = {
     area?: string | null;
     nextFollowUpAt?: string | null;
   }>;
+};
+
+type DataEntrySummary = {
+  total: number;
+  unassigned: number;
+  registered: number;
+  addedToday: number;
 };
 
 const genericCards = [
@@ -196,14 +203,43 @@ function useTechnicalSummary(token: string | null, enabled: boolean) {
   return { data, loading };
 }
 
+function useDataEntrySummary(token: string | null, enabled: boolean) {
+  const [data, setData] = React.useState<DataEntrySummary | null>(null);
+  const [loading, setLoading] = React.useState(enabled);
+
+  React.useEffect(() => {
+    if (!enabled || !token) {
+      setLoading(false);
+      return;
+    }
+
+    const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
+    setLoading(true);
+    fetch(`${base}/api/admin/employee/data-entry/summary`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d?.error) setData(d);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [enabled, token]);
+
+  return { data, loading };
+}
+
 export default function EmployeeDashboardPage() {
   const { token, user, hasPermission } = useAuth();
   const employeeRole = normalizeEmployeeRole(user?.employeeRole);
   const isManager = employeeRole === "manager";
   const isSales = employeeRole === "sales";
   const isTechnical = employeeRole === "technical_expert";
+  const isDataEntry = employeeRole === "data_entry";
+  const isMarketingTech = employeeRole === "marketing_tech";
   const { data: salesSummary, loading } = useSalesSummary(token, isSales);
   const { data: technicalSummary, loading: technicalLoading } = useTechnicalSummary(token, isTechnical);
+  const { data: dataEntrySummary, loading: dataEntryLoading } = useDataEntrySummary(token, isDataEntry);
 
   if (isManager) {
     const managerCards = [
@@ -457,6 +493,113 @@ export default function EmployeeDashboardPage() {
             </div>
           </>
         )}
+      </div>
+    );
+  }
+
+  if (isDataEntry) {
+    const statCards = [
+      { label: "إجمالي السجلات", value: dataEntrySummary?.total ?? 0, icon: Database },
+      { label: "أضيفت اليوم", value: dataEntrySummary?.addedToday ?? 0, icon: Users },
+      { label: "غير مسندة", value: dataEntrySummary?.unassigned ?? 0, icon: Target },
+      { label: "تم تسجيلها", value: dataEntrySummary?.registered ?? 0, icon: Package2 },
+    ];
+
+    const cards = [
+      hasPermission("data_entry.leads.view") ? { href: "/admin/employee/data-entry", label: "إدخال البيانات", description: "تجهيز العملاء والورش ومراجعة ما يحتاج إسنادًا أو تدقيقًا.", icon: Database } : null,
+      hasPermission("returns.view") ? { href: "/admin/employee/returns", label: "المرتجعات", description: "استلام قرارات الخبير الفني الخاصة بالقطع والمرتجعات والتحرك عليها مباشرة.", icon: Package2 } : null,
+      hasPermission("parts.edit") ? { href: "/admin/parts", label: "القطع", description: "مراجعة القطع والأسعار وما يحتاج تحديثًا أو بديلًا معتمدًا.", icon: Wrench } : null,
+      hasPermission("packages.edit") ? { href: "/admin/packages", label: "الباكدجات", description: "تحديث محتوى الباكدجات وربط الملاحظات التنفيذية بها عند الحاجة.", icon: Package2 } : null,
+      hasPermission("employee.tasks.view_own") ? { href: "/admin/employee/tasks", label: "مهامي", description: "المهام اليومية والقرارات الفنية الواصلة لمسؤول الداتا والقطع.", icon: ClipboardList } : null,
+      hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "تقاريري اليومية", description: "تلخيص ما تم إدخاله أو مراجعته أو تنفيذه اليوم.", icon: FileText } : null,
+    ].filter(Boolean) as Array<{ href: string; label: string; description: string; icon: typeof Database }>;
+
+    return (
+      <div className="space-y-8">
+        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة الداتا والقطع</p>
+          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
+          <p className="text-white/60 text-sm leading-7 max-w-3xl">
+            هذه المساحة تركز على تجهيز السجلات، مراجعة القطع، واستقبال القرارات الفنية التي تحتاج تنفيذًا من جهة الداتا والقطع.
+          </p>
+        </div>
+
+        {dataEntryLoading ? (
+          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+            <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {statCards.map((card) => (
+                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+                  <div className="w-11 h-11 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                    <card.icon className="w-5 h-5" />
+                  </div>
+                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
+                  <p className="text-white font-black text-2xl">{card.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {cards.map((card) => (
+                <Link key={card.href} href={card.href}>
+                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                      <card.icon className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
+                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
+                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
+                      الدخول للقسم
+                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (isMarketingTech) {
+    const cards = [
+      hasPermission("reports.sales") ? { href: "/admin/sales", label: "أداء المبيعات", description: "متابعة المؤشرات العامة للمبيعات والتحويلات والاتجاهات.", icon: BarChart2 } : null,
+      hasPermission("reviews.view") ? { href: "/admin/reviews", label: "السمعة والتقييمات", description: "قراءة تقييمات العملاء ومتابعة الملاحظات التي تؤثر على الصورة العامة.", icon: Star } : null,
+      hasPermission("employee.tasks.view_own") ? { href: "/admin/employee/tasks", label: "مهامي", description: "مهام المتابعة الخاصة بالتسويق أو التقنية أو التحسينات التشغيلية.", icon: ClipboardList } : null,
+      hasPermission("employee.reports.view_own") ? { href: "/admin/employee/reports", label: "تقاريري اليومية", description: "تسجيل ما تم تنفيذه من حملات أو تحسينات أو متابعات يومية.", icon: FileText } : null,
+    ].filter(Boolean) as Array<{ href: string; label: string; description: string; icon: typeof BarChart2 }>;
+
+    return (
+      <div className="space-y-8">
+        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة التسويق والتقنية</p>
+          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
+          <p className="text-white/60 text-sm leading-7 max-w-3xl">
+            هذه المساحة مخصصة لمتابعة الأداء العام، السمعة، الملاحظات، والمهام المرتبطة بالتسويق والتقنية وتحسين التجربة.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          {cards.map((card) => (
+            <Link key={card.href} href={card.href}>
+              <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
+                <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
+                  <card.icon className="w-5 h-5" />
+                </div>
+                <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
+                <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
+                <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
+                  الدخول للقسم
+                  <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     );
   }

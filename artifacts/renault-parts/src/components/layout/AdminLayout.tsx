@@ -134,10 +134,71 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       };
     }
 
-    return groupLabels;
-  }, [isAdminUser, isManager]);
+    if (employeeRole === 'sales') {
+      return {
+        overview: 'لوحة المبيعات',
+        employee: 'عملائي والمتابعة',
+        team: 'تنسيق الفريق',
+        operations: 'تنفيذ اليوم',
+        catalog: 'الورش والشركاء',
+        finance: 'الأداء',
+        system: 'أدوات النظام',
+      };
+    }
 
-  const brandSubtitle = isAdminUser ? 'لوحة الإدارة' : isManager ? 'لوحة مدير الفريق' : 'مساحة العمل';
+    if (employeeRole === 'technical_expert') {
+      return {
+        overview: 'القيادة الفنية',
+        employee: 'الحالات الفنية',
+        team: 'تنسيق الفريق',
+        operations: 'المرتجعات والتنفيذ',
+        catalog: 'الورش والعلاقات',
+        finance: 'المؤشرات',
+        system: 'أدوات النظام',
+      };
+    }
+
+    if (employeeRole === 'data_entry') {
+      return {
+        overview: 'لوحة الداتا',
+        employee: 'السجلات والإدخال',
+        team: 'تنسيق الفريق',
+        operations: 'المهام والتنفيذ',
+        catalog: 'القطع والباكدجات',
+        finance: 'المؤشرات',
+        system: 'أدوات النظام',
+      };
+    }
+
+    if (employeeRole === 'marketing_tech') {
+      return {
+        overview: 'لوحة التسويق والتقنية',
+        employee: 'التشغيل اليومي',
+        team: 'تنسيق الفريق',
+        operations: 'السمعة والمتابعة',
+        catalog: 'المحتوى والشركاء',
+        finance: 'الأداء والتحليل',
+        system: 'أدوات النظام',
+      };
+    }
+
+    return groupLabels;
+  }, [employeeRole, isAdminUser, isManager]);
+
+  const brandSubtitle =
+    isAdminUser
+      ? 'لوحة الإدارة'
+      : isManager
+        ? 'لوحة مدير الفريق'
+        : employeeRole === 'sales'
+          ? 'لوحة المبيعات'
+          : employeeRole === 'technical_expert'
+            ? 'لوحة الخبير الفني'
+            : employeeRole === 'data_entry'
+              ? 'لوحة الداتا والقطع'
+              : employeeRole === 'marketing_tech'
+                ? 'لوحة التسويق والتقنية'
+                : 'مساحة العمل';
 
   const groupedNavItems = useMemo(() => {
     return visibleNavItems.reduce<Record<NavItem['group'], NavItem[]>>((acc, item) => {
