@@ -77,6 +77,26 @@ const taskStatusOptions = [
 const taskTypeLabels = Object.fromEntries(taskTypes.map((type) => [type.value, type.label])) as Record<string, string>;
 const taskStatusLabels = Object.fromEntries(taskStatusOptions.map((status) => [status.value, status.label])) as Record<string, string>;
 
+type StructuredTechnicalNote = {
+  title: string;
+  items: string[];
+};
+
+function parseStructuredTechnicalNote(notes?: string | null): StructuredTechnicalNote | null {
+  if (!notes) return null;
+  const lines = notes
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length || lines[0] !== "ملخص الرد الفني") return null;
+
+  return {
+    title: lines[0],
+    items: lines.slice(1),
+  };
+}
+
 function getTaskTypesForEmployeeRole(employeeRole?: string | null) {
   if (employeeRole === "technical_expert") {
     return taskTypes.filter((type) =>
@@ -105,6 +125,27 @@ function ownershipMeta(source?: "self_created" | "assigned") {
   return { label: "مسندة من الإدارة", className: "bg-sky-500/10 text-sky-300 border-sky-500/20" };
 }
 
+function getRoleHeadline(employeeRole?: string | null) {
+  if (employeeRole === "data_entry") return "المهام والتنفيذ لمسؤول القطع والداتا";
+  if (employeeRole === "sales") return "المهام والمتابعة للمبيعات";
+  if (employeeRole === "technical_expert") return "المهام والتنبيهات التنفيذية للخبير الفني";
+  if (employeeRole === "marketing_tech") return "المهام التشغيلية للتسويق والتقنية";
+  return "مهامي اليومية";
+}
+
+function getRoleDescription(employeeRole?: string | null) {
+  if (employeeRole === "data_entry") {
+    return "هنا تظهر لك مهام القطع والداتا، ومنها التحويلات القادمة من الخبير الفني لمراجعة قطعة أو بديل أو مرتجع.";
+  }
+  if (employeeRole === "sales") {
+    return "هنا تظهر لك مهام المتابعة والمبيعات، ومنها الردود الفنية المنظمة القادمة من الخبير الفني لتكمل بها التواصل مع العميل أو الورشة.";
+  }
+  if (employeeRole === "technical_expert") {
+    return "هذه الصفحة تعرض التنبيهات التنفيذية التابعة للحالات الفنية، إلى جانب إمكانية تحديث نتائج التنفيذ.";
+  }
+  return "هذه الصفحة تعرض المهام اليومية لهذا الموظف فقط، مع إمكانية تحديث حالتها ونتيجتها سواء كانت تواصلًا، إدخال بيانات، حل مشكلة، أو متابعة ميدانية.";
+}
+
 export default function EmployeeTasksPage() {
   const { token, hasPermission, user } = useAuth();
   const { toast } = useToast();
@@ -121,6 +162,7 @@ export default function EmployeeTasksPage() {
   const availableTaskTypes = React.useMemo(() => getTaskTypesForEmployeeRole(user?.employeeRole), [user?.employeeRole]);
   const selfCreatedCount = data.filter((task) => task.ownershipSource === "self_created").length;
   const base = (import.meta as any).env.BASE_URL?.replace(/\/$/, "") ?? "";
+  const structuredTasksCount = data.filter((task) => parseStructuredTechnicalNote(task.notes)).length;
 
   React.useEffect(() => {
     if (!availableTaskTypes.some((type) => type.value === form.taskType)) {
@@ -265,9 +307,9 @@ export default function EmployeeTasksPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-[#F9E795] text-sm font-bold mb-2">مهامي</p>
-            <h1 className="text-3xl font-black text-white mb-3">مهامي اليومية</h1>
+            <h1 className="text-3xl font-black text-white mb-3">{getRoleHeadline(user?.employeeRole)}</h1>
             <p className="text-white/60 text-sm leading-7 max-w-3xl">
-              هذه الصفحة تعرض المهام اليومية لهذا الموظف فقط، مع إمكانية تحديث حالتها ونتيجتها سواء كانت تواصلًا، إدخال بيانات، حل مشكلة، أو متابعة ميدانية.
+              {getRoleDescription(user?.employeeRole)}
             </p>
           </div>
           {canCreate && (
@@ -303,6 +345,11 @@ export default function EmployeeTasksPage() {
           <p className="text-white/40 text-xs font-bold mb-2">أنشأتها بنفسك</p>
           <p className="text-white font-black text-2xl">{selfCreatedCount}</p>
         </div>
+        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+          <CheckSquare2 className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">قرارات فنية مستلمة</p>
+          <p className="text-white font-black text-2xl">{structuredTasksCount}</p>
+        </div>
       </div>
 
       <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
@@ -316,6 +363,7 @@ export default function EmployeeTasksPage() {
           <div className="space-y-4">
             {data.map((task) => {
               const ownership = ownershipMeta(task.ownershipSource);
+              const structuredNote = parseStructuredTechnicalNote(task.notes);
               return (
                 <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -343,7 +391,25 @@ export default function EmployeeTasksPage() {
                     </div>
                   )}
 
-                  {task.notes && <p className="mt-3 text-sm text-white/55 leading-7">{task.notes}</p>}
+                  {structuredNote ? (
+                    <div className="mt-4 rounded-2xl border border-[#F9E795]/20 bg-[#F9E795]/5 p-4 space-y-3">
+                      <div>
+                        <p className="text-[#F9E795] text-xs font-black">قرار فني مستلم</p>
+                        <p className="text-white/55 text-xs mt-1">
+                          هذا الرد جاءك من الخبير الفني بصياغة تنفيذية حتى تتحرك مباشرة بدون الرجوع للحالة الأصلية.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        {structuredNote.items.map((line) => (
+                          <div key={line} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 leading-6">
+                            {line.replace(/^- /, "")}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : task.notes ? (
+                    <p className="mt-3 text-sm text-white/55 leading-7">{task.notes}</p>
+                  ) : null}
 
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                     <select
