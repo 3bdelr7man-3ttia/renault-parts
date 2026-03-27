@@ -52,7 +52,7 @@ export default function Login() {
   const onSubmit = (data: LoginForm) => loginMutation({ data });
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', position: 'relative', overflow: 'hidden', direction: 'rtl' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', position: 'relative', overflow: 'hidden', direction: 'rtl', background: '#F8FAFC' }}>
       {/* Background glows */}
       <div style={{ position: 'absolute', top: '-15%', right: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(200,151,74,0.07),transparent 65%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-15%', left: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(74,171,202,0.05),transparent 65%)', pointerEvents: 'none' }} />
@@ -68,11 +68,11 @@ export default function Login() {
 
         {/* Card */}
         <div style={{
-          background: '#161E30',
-          border: '1.5px solid rgba(200,151,74,0.14)',
+          background: '#FFFFFF',
+          border: '1.5px solid rgba(15,23,42,0.08)',
           borderRadius: 28,
           padding: '36px 36px 32px',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          boxShadow: '0 24px 64px rgba(15,23,42,0.12)',
           position: 'relative',
           overflow: 'hidden',
         }}>
@@ -80,16 +80,16 @@ export default function Login() {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,#C8974A,transparent)' }} />
 
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <h2 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>تسجيل الدخول</h2>
-            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 14, fontWeight: 500 }}>أهلاً بك في رينو باك — الإسكندرية</p>
+            <h2 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>تسجيل الدخول</h2>
+            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#64748B', fontSize: 14, fontWeight: 500 }}>أهلاً بك في رينو باك — الإسكندرية</p>
           </div>
 
           <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 700, fontSize: 14, color: '#C8C8D0' }}>رقم الهاتف أو البريد الإلكتروني</label>
+              <label style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 700, fontSize: 14, color: '#334155' }}>رقم الهاتف أو البريد الإلكتروني</label>
               <Input
                 {...form.register('identifier')}
-                className="h-12 rounded-xl bg-secondary/50 border-border/40 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 transition-all"
+                className="h-12 rounded-xl border-slate-200 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:ring-slate-200 transition-all"
                 placeholder="01xxxxxxxxx أو example@mail.com"
                 dir="ltr"
                 style={{ textAlign: 'right', fontSize: 14 }}
@@ -100,11 +100,11 @@ export default function Login() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 700, fontSize: 14, color: '#C8C8D0' }}>كلمة المرور</label>
+              <label style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 700, fontSize: 14, color: '#334155' }}>كلمة المرور</label>
               <Input
                 {...form.register('password')}
                 type="password"
-                className="h-12 rounded-xl bg-secondary/50 border-border/40 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 transition-all"
+                className="h-12 rounded-xl border-slate-200 bg-white text-slate-950 placeholder:text-slate-400 focus:border-slate-400 focus:ring-slate-200 transition-all"
                 placeholder="أدخل كلمة المرور"
                 dir="ltr"
                 style={{ textAlign: 'right', fontSize: 14 }}
@@ -132,8 +132,8 @@ export default function Login() {
             </Button>
           </form>
 
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#7A95AA', fontWeight: 500 }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(148,163,184,0.2)', textAlign: 'center' }}>
+            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#64748B', fontWeight: 500 }}>
               ليس لديك حساب؟{' '}
             </span>
             <Link href="/register" style={{ fontFamily: "'Almarai',sans-serif", color: '#C8974A', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>

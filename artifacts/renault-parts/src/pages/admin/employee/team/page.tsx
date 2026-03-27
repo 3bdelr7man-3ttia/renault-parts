@@ -414,18 +414,18 @@ export default function EmployeeTeamPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-[#F9E795] text-sm font-bold mb-2">إدارة الفريق</p>
-            <h1 className="text-3xl font-black text-white mb-3">لوحة الإسناد للمدير والإدارة</h1>
-            <p className="text-white/60 text-sm leading-7 max-w-3xl">
+            <p className="mb-2 text-sm font-black text-[#C8974A]">إدارة الفريق</p>
+            <h1 className="mb-3 text-3xl font-black text-slate-950">لوحة الإسناد للمدير والإدارة</h1>
+            <p className="max-w-3xl text-sm leading-7 text-slate-500">
               هذه الصفحة مصممة لتكون مركز متابعة وقرار: ما الذي يحتاج توزيعًا الآن، من لديه حمل زائد، وما هي المهام المفتوحة التي يجب تنفيذها فورًا قبل النزول لتفاصيل الـ pipeline.
             </p>
           </div>
           <button
             onClick={() => setShowTaskModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition-all hover:bg-slate-800"
           >
             <Plus className="w-4 h-4" />
             إسناد مهمة
@@ -434,74 +434,74 @@ export default function EmployeeTeamPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Users className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">أعضاء الفريق المتاحون</p>
-          <p className="text-white font-black text-2xl">{employees.length}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <Users className="mb-4 h-5 w-5 text-slate-700" />
+          <p className="mb-2 text-xs font-bold text-slate-500">أعضاء الفريق المتاحون</p>
+          <p className="text-2xl font-black text-slate-950">{employees.length}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">عملاء غير موزعين</p>
-          <p className="text-white font-black text-2xl">{unassignedCustomers}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <BadgeCheck className="mb-4 h-5 w-5 text-amber-600" />
+          <p className="mb-2 text-xs font-bold text-slate-500">عملاء غير موزعين</p>
+          <p className="text-2xl font-black text-slate-950">{unassignedCustomers}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Building2 className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">ورش غير موزعة</p>
-          <p className="text-white font-black text-2xl">{unassignedWorkshops}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <Building2 className="mb-4 h-5 w-5 text-violet-600" />
+          <p className="mb-2 text-xs font-bold text-slate-500">ورش غير موزعة</p>
+          <p className="text-2xl font-black text-slate-950">{unassignedWorkshops}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <ClipboardList className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">مهام مفتوحة الآن</p>
-          <p className="text-white font-black text-2xl">{openTasks.length}</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <ClipboardList className="mb-4 h-5 w-5 text-sky-600" />
+          <p className="mb-2 text-xs font-bold text-slate-500">مهام مفتوحة الآن</p>
+          <p className="text-2xl font-black text-slate-950">{openTasks.length}</p>
         </div>
       </div>
 
       {loading ? (
-        <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
-          <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+        <div className="flex justify-center rounded-[28px] border border-slate-200 bg-white p-10 shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-            <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="w-5 h-5 text-[#F9E795]" />
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
                 <div>
-                  <h2 className="text-white font-black text-xl">مركز القرار السريع</h2>
-                  <p className="text-white/45 text-sm">من هنا يفترض أن يقدر المدير أن يعيّن مباشرة أو يلتقط ما يحتاج متابعة فورية، بدون النزول الطويل في الصفحة.</p>
+                  <h2 className="text-xl font-black text-slate-950">مركز القرار السريع</h2>
+                  <p className="text-sm text-slate-500">من هنا يفترض أن يقدر المدير أن يعيّن مباشرة أو يلتقط ما يحتاج متابعة فورية، بدون النزول الطويل في الصفحة.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                  <p className="text-white/45 text-xs font-bold mb-2">عناصر تحتاج إسنادًا</p>
-                  <p className="text-white font-black text-2xl">{unassignedCustomers + unassignedWorkshops}</p>
-                  <p className="text-white/35 text-xs mt-2">عملاء أو ورش ما زالوا بدون مسؤول مباشر.</p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-2 text-xs font-bold text-slate-500">عناصر تحتاج إسنادًا</p>
+                  <p className="text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
+                  <p className="mt-2 text-xs text-slate-500">عملاء أو ورش ما زالوا بدون مسؤول مباشر.</p>
                 </div>
-                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                  <p className="text-white/45 text-xs font-bold mb-2">متابعات ومهام قريبة</p>
-                  <p className="text-white font-black text-2xl">{quickFollowUpLeads.length + urgentTasks.length}</p>
-                  <p className="text-white/35 text-xs mt-2">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-2 text-xs font-bold text-slate-500">متابعات ومهام قريبة</p>
+                  <p className="text-2xl font-black text-slate-950">{quickFollowUpLeads.length + urgentTasks.length}</p>
+                  <p className="mt-2 text-xs text-slate-500">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4 space-y-3">
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-white font-black">إسناد مباشر الآن</p>
-                      <p className="text-white/35 text-xs mt-1">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
+                      <p className="font-black text-slate-950">إسناد مباشر الآن</p>
+                      <p className="mt-1 text-xs text-slate-500">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
                     </div>
-                    <span className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
                       {quickAssignLeads.length} الآن
                     </span>
                   </div>
                   {quickAssignLeads.length ? quickAssignLeads.map((lead) => (
-                    <div key={`assign-${lead.type}-${lead.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div key={`assign-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <div className="flex flex-col gap-2">
                         <div>
-                          <p className="text-white font-black">{lead.name}</p>
-                          <p className="text-white/45 text-sm mt-1">
+                          <p className="font-black text-slate-950">{lead.name}</p>
+                          <p className="mt-1 text-sm text-slate-500">
                             {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                           </p>
                         </div>
@@ -509,11 +509,11 @@ export default function EmployeeTeamPage() {
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="flex-1 bg-[#111826] border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                            className="h-12 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
                           >
-                            <option value="" className="bg-[#111826]">اختر المسؤول الآن</option>
+                            <option value="">اختر المسؤول الآن</option>
                             {employees.map((employee) => (
-                              <option key={employee.id} value={employee.id} className="bg-[#111826]">
+                              <option key={employee.id} value={employee.id}>
                                 {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                               </option>
                             ))}
@@ -521,7 +521,7 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                            className="px-4 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm disabled:opacity-50"
+                            className="min-w-[96px] rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "إسناد"}
                           </button>
@@ -529,42 +529,42 @@ export default function EmployeeTeamPage() {
                       </div>
                     </div>
                   )) : (
-                    <p className="text-white/45 text-sm py-6 text-center">لا توجد عناصر غير مسندة الآن.</p>
+                    <p className="py-6 text-center text-sm text-slate-500">لا توجد عناصر غير مسندة الآن.</p>
                   )}
                 </div>
 
-                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4 space-y-3">
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-white font-black">متابعة تحتاج قرارًا الآن</p>
-                      <p className="text-white/35 text-xs mt-1">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
+                      <p className="font-black text-slate-950">متابعة تحتاج قرارًا الآن</p>
+                      <p className="mt-1 text-xs text-slate-500">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
                     </div>
-                    <span className="px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                    <span className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-700">
                       {quickFollowUpLeads.length + urgentTasks.length}
                     </span>
                   </div>
                   {quickFollowUpLeads.length === 0 && urgentTasks.length === 0 ? (
-                    <p className="text-white/45 text-sm py-6 text-center">لا توجد عناصر متابعة حرجة الآن.</p>
+                    <p className="py-6 text-center text-sm text-slate-500">لا توجد عناصر متابعة حرجة الآن.</p>
                   ) : (
                     <>
                       {quickFollowUpLeads.map((lead) => (
-                        <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-white font-black">{lead.name}</p>
-                          <p className="text-white/45 text-sm mt-1">
+                        <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                          <p className="font-black text-slate-950">{lead.name}</p>
+                          <p className="mt-1 text-sm text-slate-500">
                             {lead.assignedEmployeeName ?? "غير محدد"} · {lead.type === "customer" ? "عميل" : "ورشة"}
                           </p>
-                          <p className="text-white/35 text-xs mt-2">
+                          <p className="mt-2 text-xs text-slate-500">
                             {lead.nextFollowUpAt ? `المتابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : "تحتاج تحديد متابعة"} · {lead.area ?? "بدون منطقة"}
                           </p>
                         </div>
                       ))}
                       {urgentTasks.map((task) => (
-                        <div key={`task-${task.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                          <p className="text-white font-black">{task.title}</p>
-                          <p className="text-white/45 text-sm mt-1">
+                        <div key={`task-${task.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                          <p className="font-black text-slate-950">{task.title}</p>
+                          <p className="mt-1 text-sm text-slate-500">
                             {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
                           </p>
-                          <p className="text-white/35 text-xs mt-2">
+                          <p className="mt-2 text-xs text-slate-500">
                             الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
                             {task.leadName ? ` · مرتبطة بـ ${task.leadName}` : ""}
                           </p>
@@ -576,42 +576,42 @@ export default function EmployeeTeamPage() {
               </div>
             </div>
 
-            <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <Users className="w-5 h-5 text-[#F9E795]" />
+                <Users className="h-5 w-5 text-slate-700" />
                 <div>
-                  <h2 className="text-white font-black text-xl">حمل الفريق الحالي</h2>
-                  <p className="text-white/45 text-sm">من لديه فرص أكثر، ومن لديه مهام مفتوحة، ومن أنهى ما عليه.</p>
+                  <h2 className="text-xl font-black text-slate-950">حمل الفريق الحالي</h2>
+                  <p className="text-sm text-slate-500">من لديه فرص أكثر، ومن لديه مهام مفتوحة، ومن أنهى ما عليه.</p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 {employeeLoad.map((employee) => (
-                  <div key={employee.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                  <div key={employee.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-white font-black">{employee.name}</p>
-                        <p className="text-[#F9E795] text-xs font-bold mt-1">
+                        <p className="font-black text-slate-950">{employee.name}</p>
+                        <p className="mt-1 text-xs font-bold text-[#C8974A]">
                           {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
                         </p>
                       </div>
                       <div className="text-left">
-                        <p className="text-white font-black text-lg">{employee.assignedLeads + employee.employeeOpenTasks}</p>
-                        <p className="text-white/35 text-[11px]">عنصر نشط</p>
+                        <p className="text-lg font-black text-slate-950">{employee.assignedLeads + employee.employeeOpenTasks}</p>
+                        <p className="text-[11px] text-slate-500">عنصر نشط</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                      <div className="bg-white/5 rounded-xl py-2">
-                        <p className="text-white font-black">{employee.assignedLeads}</p>
-                        <p className="text-white/35 text-[11px]">فرص</p>
+                      <div className="rounded-xl border border-slate-200 bg-white py-2">
+                        <p className="font-black text-slate-950">{employee.assignedLeads}</p>
+                        <p className="text-[11px] text-slate-500">فرص</p>
                       </div>
-                      <div className="bg-white/5 rounded-xl py-2">
-                        <p className="text-white font-black">{employee.employeeOpenTasks}</p>
-                        <p className="text-white/35 text-[11px]">مفتوحة</p>
+                      <div className="rounded-xl border border-slate-200 bg-white py-2">
+                        <p className="font-black text-slate-950">{employee.employeeOpenTasks}</p>
+                        <p className="text-[11px] text-slate-500">مفتوحة</p>
                       </div>
-                      <div className="bg-white/5 rounded-xl py-2">
-                        <p className="text-white font-black">{employee.employeeCompletedTasks}</p>
-                        <p className="text-white/35 text-[11px]">منتهية</p>
+                      <div className="rounded-xl border border-slate-200 bg-white py-2">
+                        <p className="font-black text-slate-950">{employee.employeeCompletedTasks}</p>
+                        <p className="text-[11px] text-slate-500">منتهية</p>
                       </div>
                     </div>
                   </div>
@@ -620,34 +620,34 @@ export default function EmployeeTeamPage() {
             </div>
           </div>
 
-          <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-            <h2 className="text-white font-black text-xl mb-2">الفريق المتاح للإسناد</h2>
-            <p className="text-white/45 text-sm mb-4">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-2 text-xl font-black text-slate-950">الفريق المتاح للإسناد</h2>
+            <p className="mb-4 text-sm text-slate-500">
               الأدمن يرى المدير وبقية الأقسام، ومدير الفريق يرى الموظفين الذين يوزع عليهم التنفيذ اليومي.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {employees.map((employee) => (
-                <div key={employee.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
-                  <p className="text-white font-black">{employee.name}</p>
-                  <p className="text-[#F9E795] text-xs font-bold mt-2">
+                <div key={employee.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="font-black text-slate-950">{employee.name}</p>
+                  <p className="mt-2 text-xs font-bold text-[#C8974A]">
                     {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
                   </p>
-                  <p className="text-white/45 text-xs mt-2" dir="ltr">{employee.phone ?? "بدون هاتف"}</p>
-                  {employee.email && <p className="text-white/35 text-xs mt-1">{employee.email}</p>}
-                  {employee.area && <p className="text-white/30 text-xs mt-1">المنطقة: {employee.area}</p>}
+                  <p className="mt-2 text-xs text-slate-500" dir="ltr">{employee.phone ?? "بدون هاتف"}</p>
+                  {employee.email && <p className="mt-1 text-xs text-slate-500">{employee.email}</p>}
+                  {employee.area && <p className="mt-1 text-xs text-slate-400">المنطقة: {employee.area}</p>}
                 </div>
               ))}
             </div>
           </div>
 
           {[{ label: "عملاء الـ pipeline", leads: customerLeads }, { label: "ورش الـ pipeline", leads: workshopLeads }].map((section) => (
-            <div key={section.label} className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+            <div key={section.label} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="text-white font-black text-xl">{section.label}</h2>
-                  <p className="text-white/45 text-sm mt-1">هذا القسم للتفاصيل والتنفيذ بعد مراجعة مركز القرار والمهام المفتوحة.</p>
+                  <h2 className="text-xl font-black text-slate-950">{section.label}</h2>
+                  <p className="mt-1 text-sm text-slate-500">هذا القسم للتفاصيل والتنفيذ بعد مراجعة مركز القرار والمهام المفتوحة.</p>
                 </div>
-                <span className="px-3 py-2 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
+                <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
                   {section.leads.length} عنصر
                 </span>
               </div>
@@ -662,44 +662,44 @@ export default function EmployeeTeamPage() {
                     return aTime - bTime;
                   })
                   .map((lead) => (
-                  <div key={lead.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
+                  <div key={lead.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-white font-black text-lg">{lead.name}</p>
-                          <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                          <p className="text-lg font-black text-slate-950">{lead.name}</p>
+                          <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700">
                             {leadStatusLabels[lead.status] ?? lead.status}
                           </span>
                           {lead.registeredUserId && (
-                            <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                            <span className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
                               تم التسجيل على المنصة {lead.registeredUserName ? `· ${lead.registeredUserName}` : ""}
                             </span>
                           )}
                         </div>
-                        <p className="text-white/55 text-sm" dir="ltr">
+                        <p className="text-sm text-slate-500" dir="ltr">
                           {lead.phone} {lead.email ? `· ${lead.email}` : ""}
                         </p>
-                        <p className="text-white/45 text-sm">
+                        <p className="text-sm text-slate-500">
                           {lead.area ?? "بدون منطقة"} · المصدر: {lead.source} · أُضيف بواسطة: {lead.createdByUserName ?? "غير محدد"}
                         </p>
                         {lead.nextFollowUpAt && (
-                          <p className="text-white/35 text-xs">
+                          <p className="text-xs text-slate-500">
                             متابعة قادمة: {new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}
                           </p>
                         )}
                       </div>
 
                       <div className="flex flex-col gap-2 xl:min-w-[280px]">
-                        <label className="text-white/45 text-xs font-bold">الموظف المسؤول</label>
+                        <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
                         <div className="flex items-center gap-2">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                            className="h-12 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
                           >
-                            <option value="" className="bg-[#111826]">غير مسند</option>
+                            <option value="">غير مسند</option>
                             {employees.map((employee) => (
-                              <option key={employee.id} value={employee.id} className="bg-[#111826]">
+                              <option key={employee.id} value={employee.id}>
                                 {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                               </option>
                             ))}
@@ -707,12 +707,12 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id}
-                            className="px-4 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm disabled:opacity-50"
+                            className="min-w-[88px] rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "حفظ"}
                           </button>
                         </div>
-                        <p className="text-white/35 text-xs">
+                        <p className="text-xs text-slate-500">
                           الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · يمكن توجيه الحالة إلى المبيعات والمتابعة أو الخبير الفني أو إدخال البيانات حسب الحاجة
                         </p>
                       </div>
@@ -721,7 +721,7 @@ export default function EmployeeTeamPage() {
                 ))}
 
                 {section.leads.length === 0 && (
-                  <p className="text-white/45 text-sm text-center py-8">لا توجد عناصر في هذا القسم الآن.</p>
+                  <p className="py-8 text-center text-sm text-slate-500">لا توجد عناصر في هذا القسم الآن.</p>
                 )}
               </div>
             </div>
@@ -730,18 +730,18 @@ export default function EmployeeTeamPage() {
       )}
 
       {showTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setShowTaskModal(false)}>
-          <div className="w-full max-w-2xl bg-[#111826] border border-white/10 rounded-3xl p-6 md:p-8" onClick={(event) => event.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm p-4" onClick={() => setShowTaskModal(false)}>
+          <div className="w-full max-w-2xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl md:p-8" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-white text-2xl font-black">{isTechnicalAssignee ? "تحويل إلى حالة فنية" : "إسناد مهمة جديدة"}</h2>
-                <p className="text-white/45 text-sm mt-1">
+                <h2 className="text-2xl font-black text-slate-950">{isTechnicalAssignee ? "تحويل إلى حالة فنية" : "إسناد مهمة جديدة"}</h2>
+                <p className="mt-1 text-sm text-slate-500">
                   {isTechnicalAssignee
                     ? "اختر الحالة المرتبطة وحدد ما الذي تريد من الخبير الفني أن يحسمه أو يرد عليه."
                     : "اختر عضو الفريق والفرصة المرتبطة ثم احفظ المهمة."}
                 </p>
               </div>
-              <button onClick={() => setShowTaskModal(false)} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 flex items-center justify-center">
+              <button onClick={() => setShowTaskModal(false)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition-all hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -750,45 +750,45 @@ export default function EmployeeTeamPage() {
               <select
                 value={taskForm.employeeId}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, employeeId: event.target.value }))}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
               >
-                <option value="" className="bg-[#111826]">اختر عضو الفريق</option>
+                <option value="">اختر عضو الفريق</option>
                 {employees.map((employee) => (
-                  <option key={employee.id} value={employee.id} className="bg-[#111826]">
+                  <option key={employee.id} value={employee.id}>
                     {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                   </option>
                 ))}
               </select>
               {isTechnicalAssignee ? (
-                <div className="md:col-span-2 rounded-2xl border border-[#F9E795]/20 bg-[#F9E795]/5 px-4 py-4">
-                  <p className="text-[#F9E795] text-xs font-black mb-2">هذه ليست مهمة عامة</p>
-                  <p className="text-white/75 text-sm leading-7">
+                <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                  <p className="mb-2 text-xs font-black text-amber-700">هذه ليست مهمة عامة</p>
+                  <p className="text-sm leading-7 text-slate-700">
                     بمجرد الحفظ ستتحول هذه الإحالة إلى حالة داخل مساحة الخبير الفني، وسيظهر له العميل أو الورشة المطلوب الرد عليها مباشرة.
                   </p>
-                  <p className="text-white/45 text-xs leading-6 mt-2">
+                  <p className="mt-2 text-xs leading-6 text-slate-500">
                     {getTechnicalAssignmentHint(taskForm.taskType)}
                   </p>
                 </div>
               ) : null}
 
               <div className="md:col-span-2">
-                <label className="block text-white/50 text-xs font-bold mb-2">
+                <label className="mb-2 block text-xs font-bold text-slate-500">
                   {isTechnicalAssignee ? "الحالة المرتبطة المطلوبة للخبير" : "الفرصة المرتبطة"}
                 </label>
                 <select
                   value={taskForm.leadId}
                   onChange={(event) => setTaskForm((prev) => ({ ...prev, leadId: event.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
                 >
-                  {!isTechnicalAssignee ? <option value="" className="bg-[#111826]">بدون فرصة مرتبطة</option> : null}
+                  {!isTechnicalAssignee ? <option value="">بدون فرصة مرتبطة</option> : null}
                   {allLeads.map((lead) => (
-                    <option key={`${lead.type}-${lead.id}`} value={lead.id} className="bg-[#111826]">
+                    <option key={`${lead.type}-${lead.id}`} value={lead.id}>
                       {lead.name} · {lead.type === "customer" ? "عميل" : "ورشة"}
                     </option>
                   ))}
                 </select>
                 {isTechnicalAssignee && selectedLead ? (
-                  <p className="text-white/45 text-xs mt-2 leading-6">
+                  <p className="mt-2 text-xs leading-6 text-slate-500">
                     ستظهر للخبير كحالة تخص {selectedLead.type === "workshop" ? "ورشة" : "عميل"} باسم {selectedLead.name}
                     {selectedLead.area ? ` في ${selectedLead.area}` : ""}.
                   </p>
@@ -796,7 +796,7 @@ export default function EmployeeTeamPage() {
               </div>
 
               <input
-                className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none"
+                className="md:col-span-2 h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
                 placeholder={isTechnicalAssignee ? "عنوان الإحالة الفنية" : "عنوان المهمة"}
                 value={taskForm.title}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, title: event.target.value }))}
@@ -805,26 +805,26 @@ export default function EmployeeTeamPage() {
               <select
                 value={taskForm.taskType}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, taskType: event.target.value as TaskFormState["taskType"] }))}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
               >
                 {taskTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value} className="bg-[#111826]">
+                  <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
 
               <input
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none"
+                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
                 placeholder="المنطقة"
                 value={taskForm.area}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, area: event.target.value }))}
               />
 
               <div className="md:col-span-2">
-                <label className="block text-white/50 text-xs font-bold mb-2">موعد التنفيذ</label>
+                <label className="mb-2 block text-xs font-bold text-slate-500">موعد التنفيذ</label>
                 <input
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
                   type="datetime-local"
                   value={taskForm.dueAt}
                   onChange={(event) => setTaskForm((prev) => ({ ...prev, dueAt: event.target.value }))}
@@ -832,7 +832,7 @@ export default function EmployeeTeamPage() {
               </div>
 
               <textarea
-                className="md:col-span-2 min-h-[120px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+                className="md:col-span-2 min-h-[120px] resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
                 placeholder={isTechnicalAssignee ? "اشرح ما المطلوب من الخبير: تشخيص، رأي فني، حسم مرتجع، أو تنسيق مع ورشة..." : "ملاحظات المهمة"}
                 value={taskForm.notes}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, notes: event.target.value }))}
@@ -840,10 +840,10 @@ export default function EmployeeTeamPage() {
             </div>
 
             <div className="mt-6 flex flex-col-reverse md:flex-row gap-3">
-              <button onClick={() => setShowTaskModal(false)} className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 font-bold hover:bg-white/10 transition-all">
+              <button onClick={() => setShowTaskModal(false)} className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 py-3 font-bold text-slate-600 transition-all hover:bg-slate-100">
                 إلغاء
               </button>
-              <button onClick={handleCreateTask} disabled={savingTask} className="flex-1 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black hover:opacity-90 transition-all disabled:opacity-50">
+              <button onClick={handleCreateTask} disabled={savingTask} className="flex-1 rounded-2xl bg-slate-950 py-3 font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50">
                 {savingTask ? "جارٍ الحفظ..." : isTechnicalAssignee ? "تحويل إلى حالة فنية" : "حفظ المهمة"}
               </button>
             </div>
@@ -851,7 +851,7 @@ export default function EmployeeTeamPage() {
         </div>
       )}
 
-      <div className="text-white/35 text-xs leading-7">
+      <div className="text-xs leading-7 text-slate-500">
         المسار الجديد يضمن أن العميل عندما يسجل فعليًا في المنصة لا يظهر كنسخة منفصلة، بل يظل داخل الـ pipeline نفسها مع علامة واضحة أنه أصبح مستخدمًا مسجلًا.
         كذلك يظل الأدمن قادرًا على تكليف مدير الفريق، بينما يوزع مدير الفريق العملاء والورش والمهام اليومية على بقية أعضاء الفريق حسب الدور.
       </div>

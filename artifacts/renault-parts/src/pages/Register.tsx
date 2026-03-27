@@ -76,7 +76,7 @@ export default function Register() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', position: 'relative', overflow: 'hidden', direction: 'rtl' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', position: 'relative', overflow: 'hidden', direction: 'rtl', background: '#F8FAFC' }}>
       <div style={{ position: 'absolute', top: '-15%', left: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(200,151,74,0.07),transparent 65%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-15%', right: '-8%', width: 500, height: 500, background: 'radial-gradient(circle,rgba(74,171,202,0.05),transparent 65%)', pointerEvents: 'none' }} />
 
@@ -89,45 +89,45 @@ export default function Register() {
           </a>
         </div>
 
-        <div style={{ background: '#161E30', border: '1.5px solid rgba(200,151,74,0.14)', borderRadius: 28, padding: '36px 36px 32px', boxShadow: '0 24px 64px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: '#FFFFFF', border: '1.5px solid rgba(15,23,42,0.08)', borderRadius: 28, padding: '36px 36px 32px', boxShadow: '0 24px 64px rgba(15,23,42,0.12)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,#C8974A,transparent)' }} />
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <h2 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>حساب جديد</h2>
-            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 14, fontWeight: 500 }}>سجل بياناتك واستمتع بأفضل عروض الصيانة في الإسكندرية</p>
+            <h2 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 26, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>حساب جديد</h2>
+            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#64748B', fontSize: 14, fontWeight: 500 }}>سجل بياناتك واستمتع بأفضل عروض الصيانة في الإسكندرية</p>
           </div>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <Label className="font-bold text-foreground">الاسم بالكامل</Label>
-              <Input {...form.register('name')} className="h-12 rounded-xl bg-secondary/50" placeholder="الاسم ثلاثي" />
+              <Label className="font-bold text-slate-700">الاسم بالكامل</Label>
+              <Input {...form.register('name')} className="h-12 rounded-xl border-slate-200 bg-white text-slate-950 placeholder:text-slate-400" placeholder="الاسم ثلاثي" />
               {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">رقم الهاتف <span className="font-normal text-muted-foreground">(أو البريد الإلكتروني)</span></Label>
-                <Input {...form.register('phone')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="010..." dir="ltr" />
+                <Label className="font-bold text-slate-700">رقم الهاتف <span className="font-normal text-slate-500">(أو البريد الإلكتروني)</span></Label>
+                <Input {...form.register('phone')} className="h-12 rounded-xl border-slate-200 bg-white text-right text-slate-950 placeholder:text-slate-400" placeholder="010..." dir="ltr" />
                 {form.formState.errors.phone && <p className="text-sm text-destructive">{form.formState.errors.phone.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">البريد الإلكتروني <span className="font-normal text-muted-foreground">(أو الهاتف)</span></Label>
-                <Input {...form.register('email')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="example@mail.com" dir="ltr" />
+                <Label className="font-bold text-slate-700">البريد الإلكتروني <span className="font-normal text-slate-500">(أو الهاتف)</span></Label>
+                <Input {...form.register('email')} className="h-12 rounded-xl border-slate-200 bg-white text-right text-slate-950 placeholder:text-slate-400" placeholder="example@mail.com" dir="ltr" />
                 {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">كلمة المرور</Label>
-                <Input type="password" {...form.register('password')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="******" dir="ltr" />
+                <Label className="font-bold text-slate-700">كلمة المرور</Label>
+                <Input type="password" {...form.register('password')} className="h-12 rounded-xl border-slate-200 bg-white text-right text-slate-950 placeholder:text-slate-400" placeholder="******" dir="ltr" />
                 {form.formState.errors.password && <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">منطقتك في الإسكندرية <span className="font-normal text-muted-foreground">(اختياري)</span></Label>
+                <Label className="font-bold text-slate-700">منطقتك في الإسكندرية <span className="font-normal text-slate-500">(اختياري)</span></Label>
                 <Select onValueChange={(v) => form.setValue('area', v)}>
-                  <SelectTrigger className="h-12 rounded-xl bg-secondary/50">
+                  <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-white text-slate-950">
                     <SelectValue placeholder="اختر منطقتك" />
                   </SelectTrigger>
                   <SelectContent>
@@ -139,15 +139,15 @@ export default function Register() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-border/50">
+            <div className="grid grid-cols-1 gap-5 border-t border-slate-200 pt-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">موديل السيارة <span className="font-normal text-muted-foreground">(اختياري)</span></Label>
-                <Input {...form.register('carModel')} className="h-12 rounded-xl bg-secondary/50" placeholder="مثال: لوجان، ميجان..." />
+                <Label className="font-bold text-slate-700">موديل السيارة <span className="font-normal text-slate-500">(اختياري)</span></Label>
+                <Input {...form.register('carModel')} className="h-12 rounded-xl border-slate-200 bg-white text-slate-950 placeholder:text-slate-400" placeholder="مثال: لوجان، ميجان..." />
               </div>
 
               <div className="space-y-2">
-                <Label className="font-bold text-foreground">سنة الصنع <span className="font-normal text-muted-foreground">(اختياري)</span></Label>
-                <Input type="number" {...form.register('carYear')} className="h-12 rounded-xl bg-secondary/50 text-right" placeholder="2018" dir="ltr" />
+                <Label className="font-bold text-slate-700">سنة الصنع <span className="font-normal text-slate-500">(اختياري)</span></Label>
+                <Input type="number" {...form.register('carYear')} className="h-12 rounded-xl border-slate-200 bg-white text-right text-slate-950 placeholder:text-slate-400" placeholder="2018" dir="ltr" />
               </div>
             </div>
 
@@ -168,8 +168,8 @@ export default function Register() {
             </Button>
           </form>
 
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
-            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#7A95AA', fontWeight: 500 }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(148,163,184,0.2)', textAlign: 'center' }}>
+            <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 14, color: '#64748B', fontWeight: 500 }}>
               لديك حساب بالفعل؟{' '}
             </span>
             <Link href="/login" style={{ fontFamily: "'Almarai',sans-serif", color: '#C8974A', fontWeight: 800, fontSize: 14, textDecoration: 'none' }}>
