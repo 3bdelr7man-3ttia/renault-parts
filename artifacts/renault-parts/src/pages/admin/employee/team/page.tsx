@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 import { AlertTriangle, BadgeCheck, Building2, ClipboardList, Loader2, Plus, Users, X } from "lucide-react";
 
 type TeamEmployee = {
@@ -389,6 +390,7 @@ export default function EmployeeTeamPage() {
     .filter((lead) => !lead.assignedEmployeeId)
     .slice()
     .sort((a, b) => {
+      if (a.type !== b.type) return a.type === "customer" ? -1 : 1;
       const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : 0;
       const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : 0;
       return aTime - bTime;
@@ -413,19 +415,19 @@ export default function EmployeeTeamPage() {
     .sort((a, b) => (b.assignedLeads + b.employeeOpenTasks) - (a.assignedLeads + a.employeeOpenTasks));
 
   return (
-    <div className="space-y-8">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className={adminUi.page}>
+      <div className={`${adminUi.hero} md:p-8`}>
+        <div className={adminUi.toolbar}>
           <div>
             <p className="mb-2 text-sm font-black text-[#C8974A]">إدارة الفريق</p>
-            <h1 className="mb-3 text-3xl font-black text-slate-950">لوحة الإسناد للمدير والإدارة</h1>
-            <p className="max-w-3xl text-sm leading-7 text-slate-500">
+            <h1 className={adminUi.title}>لوحة الإسناد للمدير والإدارة</h1>
+            <p className={`${adminUi.subtitle} max-w-3xl`}>
               هذه الصفحة مصممة لتكون مركز متابعة وقرار: ما الذي يحتاج توزيعًا الآن، من لديه حمل زائد، وما هي المهام المفتوحة التي يجب تنفيذها فورًا قبل النزول لتفاصيل الـ pipeline.
             </p>
           </div>
           <button
             onClick={() => setShowTaskModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white transition-all hover:bg-slate-800"
+            className={adminUi.primaryButton}
           >
             <Plus className="w-4 h-4" />
             إسناد مهمة
@@ -457,13 +459,13 @@ export default function EmployeeTeamPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center rounded-[28px] border border-slate-200 bg-white p-10 shadow-sm">
+        <div className={`${adminUi.card} flex justify-center p-10`}>
           <Loader2 className="h-8 w-8 animate-spin text-slate-700" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className={adminUi.card}>
               <div className="flex items-center gap-3 mb-4">
                 <AlertTriangle className="h-5 w-5 text-amber-600" />
                 <div>
@@ -472,13 +474,13 @@ export default function EmployeeTeamPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className={adminUi.subtleCard}>
                   <p className="mb-2 text-xs font-bold text-slate-500">عناصر تحتاج إسنادًا</p>
                   <p className="text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
                   <p className="mt-2 text-xs text-slate-500">عملاء أو ورش ما زالوا بدون مسؤول مباشر.</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className={adminUi.subtleCard}>
                   <p className="mb-2 text-xs font-bold text-slate-500">متابعات ومهام قريبة</p>
                   <p className="text-2xl font-black text-slate-950">{quickFollowUpLeads.length + urgentTasks.length}</p>
                   <p className="mt-2 text-xs text-slate-500">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
@@ -486,13 +488,13 @@ export default function EmployeeTeamPage() {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className={`${adminUi.subtleCard} space-y-3`}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-black text-slate-950">إسناد مباشر الآن</p>
                       <p className="mt-1 text-xs text-slate-500">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
                     </div>
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
+                    <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
                       {quickAssignLeads.length} الآن
                     </span>
                   </div>
@@ -505,11 +507,11 @@ export default function EmployeeTeamPage() {
                             {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                           </p>
                         </div>
-                        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_88px]">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#C8974A] focus:ring-4 focus:ring-[#C8974A]/10"
+                            className={adminUi.selectSm}
                           >
                             <option value="">اختر المسؤول الآن</option>
                             {employees.map((employee) => (
@@ -521,7 +523,7 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                            className="h-11 min-w-[88px] rounded-xl bg-slate-950 px-4 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                            className="h-10 rounded-xl bg-[#C8974A] px-3 text-sm font-black text-slate-950 transition-all hover:bg-[#b9873f] disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "إسناد"}
                           </button>
@@ -533,13 +535,13 @@ export default function EmployeeTeamPage() {
                   )}
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className={`${adminUi.subtleCard} space-y-3`}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-black text-slate-950">متابعة تحتاج قرارًا الآن</p>
                       <p className="mt-1 text-xs text-slate-500">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
                     </div>
-                    <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700">
+                    <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
                       {quickFollowUpLeads.length + urgentTasks.length}
                     </span>
                   </div>
@@ -576,7 +578,7 @@ export default function EmployeeTeamPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className={adminUi.card}>
               <div className="flex items-center gap-3 mb-4">
                 <Users className="h-5 w-5 text-slate-700" />
                 <div>
@@ -620,7 +622,7 @@ export default function EmployeeTeamPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className={adminUi.card}>
             <h2 className="mb-2 text-xl font-black text-slate-950">الفريق المتاح للإسناد</h2>
             <p className="mb-4 text-sm text-slate-500">
               الأدمن يرى المدير وبقية الأقسام، ومدير الفريق يرى الموظفين الذين يوزع عليهم التنفيذ اليومي.
@@ -641,13 +643,13 @@ export default function EmployeeTeamPage() {
           </div>
 
           {[{ label: "عملاء الـ pipeline", leads: customerLeads }, { label: "ورش الـ pipeline", leads: workshopLeads }].map((section) => (
-            <div key={section.label} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div key={section.label} className={adminUi.card}>
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div>
                   <h2 className="text-xl font-black text-slate-950">{section.label}</h2>
                   <p className="mt-1 text-sm text-slate-500">هذا القسم للتفاصيل والتنفيذ بعد مراجعة مركز القرار والمهام المفتوحة.</p>
                 </div>
-                <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700">
+                <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>
                   {section.leads.length} عنصر
                 </span>
               </div>
@@ -667,11 +669,11 @@ export default function EmployeeTeamPage() {
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-lg font-black text-slate-950">{lead.name}</p>
-                          <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700">
+                          <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
                             {leadStatusLabels[lead.status] ?? lead.status}
                           </span>
                           {lead.registeredUserId && (
-                            <span className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                            <span className={`${adminUi.badgeBase} ${adminSemantic.success}`}>
                               تم التسجيل على المنصة {lead.registeredUserName ? `· ${lead.registeredUserName}` : ""}
                             </span>
                           )}
@@ -691,11 +693,11 @@ export default function EmployeeTeamPage() {
 
                       <div className="flex flex-col gap-2 xl:min-w-[280px]">
                         <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_88px]">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#C8974A] focus:ring-4 focus:ring-[#C8974A]/10"
+                            className={adminUi.selectSm}
                           >
                             <option value="">غير مسند</option>
                             {employees.map((employee) => (
@@ -707,7 +709,7 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id}
-                            className="h-11 min-w-[88px] rounded-xl bg-slate-950 px-4 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                            className="h-10 rounded-xl bg-[#C8974A] px-3 text-sm font-black text-slate-950 transition-all hover:bg-[#b9873f] disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "حفظ"}
                           </button>
@@ -730,9 +732,9 @@ export default function EmployeeTeamPage() {
       )}
 
       {showTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm p-4" onClick={() => setShowTaskModal(false)}>
-          <div className="w-full max-w-2xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl md:p-8" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
+        <div className={adminUi.modalOverlay} onClick={() => setShowTaskModal(false)}>
+          <div className={`${adminUi.modalPanel} max-w-2xl`} onClick={(event) => event.stopPropagation()}>
+            <div className={adminUi.modalHeader}>
               <div>
                 <h2 className="text-2xl font-black text-slate-950">{isTechnicalAssignee ? "تحويل إلى حالة فنية" : "إسناد مهمة جديدة"}</h2>
                 <p className="mt-1 text-sm text-slate-500">
@@ -746,11 +748,11 @@ export default function EmployeeTeamPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2">
               <select
                 value={taskForm.employeeId}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, employeeId: event.target.value }))}
-                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                className={adminUi.select}
               >
                 <option value="">اختر عضو الفريق</option>
                 {employees.map((employee) => (
@@ -778,7 +780,7 @@ export default function EmployeeTeamPage() {
                 <select
                   value={taskForm.leadId}
                   onChange={(event) => setTaskForm((prev) => ({ ...prev, leadId: event.target.value }))}
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                  className={adminUi.select}
                 >
                   {!isTechnicalAssignee ? <option value="">بدون فرصة مرتبطة</option> : null}
                   {allLeads.map((lead) => (
@@ -796,7 +798,7 @@ export default function EmployeeTeamPage() {
               </div>
 
               <input
-                className="md:col-span-2 h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
+                className={`md:col-span-2 ${adminUi.input}`}
                 placeholder={isTechnicalAssignee ? "عنوان الإحالة الفنية" : "عنوان المهمة"}
                 value={taskForm.title}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, title: event.target.value }))}
@@ -805,7 +807,7 @@ export default function EmployeeTeamPage() {
               <select
                 value={taskForm.taskType}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, taskType: event.target.value as TaskFormState["taskType"] }))}
-                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                className={adminUi.select}
               >
                 {taskTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -815,7 +817,7 @@ export default function EmployeeTeamPage() {
               </select>
 
               <input
-                className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
+                className={adminUi.input}
                 placeholder="المنطقة"
                 value={taskForm.area}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, area: event.target.value }))}
@@ -824,7 +826,7 @@ export default function EmployeeTeamPage() {
               <div className="md:col-span-2">
                 <label className="mb-2 block text-xs font-bold text-slate-500">موعد التنفيذ</label>
                 <input
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                  className={adminUi.input}
                   type="datetime-local"
                   value={taskForm.dueAt}
                   onChange={(event) => setTaskForm((prev) => ({ ...prev, dueAt: event.target.value }))}
@@ -832,18 +834,18 @@ export default function EmployeeTeamPage() {
               </div>
 
               <textarea
-                className="md:col-span-2 min-h-[120px] resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition-all focus:border-slate-400"
+                className={`md:col-span-2 ${adminUi.textarea} min-h-[120px] resize-none`}
                 placeholder={isTechnicalAssignee ? "اشرح ما المطلوب من الخبير: تشخيص، رأي فني، حسم مرتجع، أو تنسيق مع ورشة..." : "ملاحظات المهمة"}
                 value={taskForm.notes}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, notes: event.target.value }))}
               />
             </div>
 
-            <div className="mt-6 flex flex-col-reverse md:flex-row gap-3">
-              <button onClick={() => setShowTaskModal(false)} className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 py-3 font-bold text-slate-600 transition-all hover:bg-slate-100">
+            <div className={adminUi.modalFooter}>
+              <button onClick={() => setShowTaskModal(false)} className={`${adminUi.secondaryButton} flex-1 justify-center`}>
                 إلغاء
               </button>
-              <button onClick={handleCreateTask} disabled={savingTask} className="flex-1 rounded-2xl bg-slate-950 py-3 font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50">
+              <button onClick={handleCreateTask} disabled={savingTask} className={`${adminUi.primaryButton} flex-1 justify-center`}>
                 {savingTask ? "جارٍ الحفظ..." : isTechnicalAssignee ? "تحويل إلى حالة فنية" : "حفظ المهمة"}
               </button>
             </div>

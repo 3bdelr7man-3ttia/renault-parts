@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { adminSemantic, adminUi } from '@/components/admin/admin-ui';
 import { Calendar, Filter, X, Loader2, PhoneCall, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 const G  = '#C8974A';
-const NV = '#1A2356';
-const BG = '#0D1220';
-const S  = '#111826';
-const S2 = '#161E30';
 
 type ApptStatus = 'confirmed' | 'change_requested' | 'cancelled' | 'completed';
 
@@ -46,15 +43,15 @@ type Appt = {
 };
 
 function statusBadge(s: string) {
-  const m: Record<string, { label: string; bg: string; text: string }> = {
-    confirmed:        { label: 'مؤكد',          bg: 'rgba(29,78,216,0.2)',  text: '#93c5fd' },
-    change_requested: { label: 'طلب تغيير',     bg: 'rgba(180,83,9,0.2)',   text: '#fcd34d' },
-    completed:        { label: 'مكتمل',          bg: 'rgba(21,128,61,0.2)',  text: '#86efac' },
-    cancelled:        { label: 'ملغي',           bg: 'rgba(185,28,28,0.2)',  text: '#fca5a5' },
+  const m: Record<string, { label: string; tone: string }> = {
+    confirmed:        { label: 'مؤكد', tone: adminSemantic.info },
+    change_requested: { label: 'طلب تغيير', tone: adminSemantic.warning },
+    completed:        { label: 'مكتمل', tone: adminSemantic.success },
+    cancelled:        { label: 'ملغي', tone: adminSemantic.danger },
   };
-  const d = m[s] ?? { label: s, bg: 'rgba(255,255,255,0.08)', text: 'rgba(255,255,255,0.6)' };
+  const d = m[s] ?? { label: s, tone: adminSemantic.neutral };
   return (
-    <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, background: d.bg, color: d.text, whiteSpace: 'nowrap' }}>
+    <span className={`${adminUi.badgeBase} ${d.tone} whitespace-nowrap`}>
       {d.label}
     </span>
   );
@@ -131,74 +128,104 @@ export default function AdminAppointments() {
   const clearFilters = () => { setFilterStatus(''); setFilterWorkshop(''); setDateFrom(''); setDateTo(''); };
 
   const hasFilters = filterStatus || filterWorkshop || dateFrom || dateTo;
+  const confirmedCount = appointments.filter((item) => item.status === 'confirmed').length;
+  const changeRequestedCount = appointments.filter((item) => item.status === 'change_requested').length;
+  const completedCount = appointments.filter((item) => item.status === 'completed').length;
+  const cancelledCount = appointments.filter((item) => item.status === 'cancelled').length;
 
   return (
-    <div style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0 }}>المواعيد</h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 4 }}>
-          {loading ? '…' : `${appointments.length} موعد`}
-        </p>
+    <div className={adminUi.page} style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
+          <div>
+            <p className="mb-2 text-sm font-black text-[#C8974A]">التشغيل والمتابعة</p>
+            <h1 className={adminUi.title}>إدارة المواعيد</h1>
+            <p className={adminUi.subtitle}>
+              {loading ? 'جارٍ التحميل...' : `${appointments.length} موعد`} مع رؤية سريعة للتأكيدات وطلبات التغيير والمكتملات.
+            </p>
+          </div>
+          {hasFilters ? (
+            <button onClick={clearFilters} className={adminUi.destructiveButton}>
+              <X className="h-4 w-4" /> مسح الفلاتر
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ background: S2, borderRadius: 18, border: '1px solid rgba(200,151,74,0.1)', padding: 20, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Filter size={14} color={G} />
-          <span style={{ color: G, fontWeight: 800, fontSize: 13 }}>تصفية</span>
-        </div>
-
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value as ApptStatus | '')}
-          style={{ background: '#0D1220', border: '1.5px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontFamily: "'Almarai',sans-serif" }}
-        >
-          {ALL_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-
-        <select
-          value={filterWorkshop}
-          onChange={e => setFilterWorkshop(e.target.value)}
-          style={{ background: '#0D1220', border: '1.5px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 10, padding: '8px 12px', fontSize: 13, fontFamily: "'Almarai',sans-serif" }}
-        >
-          <option value="">كل الورش</option>
-          {WORKSHOPS_OPTIONS.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-        </select>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700 }}>من:</label>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-            style={{ background: '#0D1220', border: '1.5px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 10, padding: '7px 10px', fontSize: 12, fontFamily: "'Almarai',sans-serif" }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700 }}>إلى:</label>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-            style={{ background: '#0D1220', border: '1.5px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 10, padding: '7px 10px', fontSize: 12, fontFamily: "'Almarai',sans-serif" }} />
-        </div>
-
-        {hasFilters && (
-          <button onClick={clearFilters} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: "'Almarai',sans-serif" }}>
-            <X size={12} /> مسح الفلاتر
-          </button>
-        )}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {[
+          { label: 'إجمالي المواعيد', value: appointments.length, icon: Calendar, tone: adminSemantic.brand },
+          { label: 'مؤكدة', value: confirmedCount, icon: CheckCircle2, tone: adminSemantic.info },
+          { label: 'طلبات تغيير', value: changeRequestedCount, icon: AlertCircle, tone: adminSemantic.warning },
+          { label: 'مكتملة', value: completedCount, icon: CheckCircle2, tone: adminSemantic.success },
+          { label: 'ملغاة', value: cancelledCount, icon: XCircle, tone: adminSemantic.danger },
+        ].map((card) => (
+          <div key={card.label} className={adminUi.statCard}>
+            <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border ${card.tone}`}>
+              <card.icon className="h-5 w-5" />
+            </div>
+            <p className="mb-1 text-xs font-black text-slate-500">{card.label}</p>
+            <p className="text-2xl font-black text-slate-950">{card.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Table */}
-      <div style={{ background: S2, borderRadius: 18, border: '1px solid rgba(200,151,74,0.08)', overflow: 'hidden' }}>
+      <div className={`${adminUi.card} space-y-4`}>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-[#C8974A]" />
+          <span className="text-sm font-black text-slate-900">تصفية وجدولة المتابعة</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value as ApptStatus | '')}
+            className={adminUi.select}
+          >
+            {ALL_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+
+          <select
+            value={filterWorkshop}
+            onChange={e => setFilterWorkshop(e.target.value)}
+            className={adminUi.select}
+          >
+            <option value="">كل الورش</option>
+            {WORKSHOPS_OPTIONS.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+
+          <div>
+            <label className="mb-2 block text-xs font-black text-slate-500">من</label>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={adminUi.input} />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-black text-slate-500">إلى</label>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={adminUi.input} />
+          </div>
+          <div className="flex items-end">
+            <button onClick={load} className={`${adminUi.secondaryButton} w-full justify-center`}>
+              تحديث القائمة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className={adminUi.tableShell}>
         {loading ? (
-          <div style={{ padding: 60, display: 'flex', justifyContent: 'center' }}>
-            <Loader2 style={{ color: G, width: 36, height: 36 }} className="animate-spin" />
+          <div className="flex justify-center p-16">
+            <Loader2 className="h-8 w-8 animate-spin text-[#C8974A]" />
           </div>
         ) : appointments.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>لا توجد مواعيد</div>
+          <div className={adminUi.emptyState}>
+            <Calendar className="mx-auto mb-4 h-9 w-9 text-slate-300" />
+            <p className="text-sm font-bold text-slate-600">لا توجد مواعيد</p>
+          </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <tr className={`${adminUi.tableHead} border-b border-slate-200`}>
                   {['#', 'العميل', 'السيارة', 'الورشة', 'الموعد', 'الحالة', 'إجراءات'].map(h => (
-                    <th key={h} style={{ padding: '14px 16px', textAlign: 'right', color: 'rgba(255,255,255,0.35)', fontWeight: 800, whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} className="whitespace-nowrap px-4 py-4 text-right">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -211,69 +238,61 @@ export default function AdminAppointments() {
                     ? format(new Date(appt.date), 'EEEE d MMMM yyyy', { locale: ar })
                     : appt.date;
                   return (
-                    <tr key={appt.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background .15s' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.025)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                    >
-                      {/* ID */}
-                      <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.35)', fontSize: 11, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                    <tr key={appt.id} className={adminUi.tableRow}>
+                      <td className="whitespace-nowrap px-4 py-4 font-mono text-xs text-slate-400">
                         <div>#{appt.id}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>طلب #{appt.orderId}</div>
+                        <div className="text-[10px] text-slate-300">طلب #{appt.orderId}</div>
                       </td>
-                      {/* Customer */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ color: '#fff', fontWeight: 800 }}>{appt.customerName ?? '—'}</div>
+                      <td className="px-4 py-4">
+                        <div className="font-black text-slate-950">{appt.customerName ?? '—'}</div>
                         {appt.customerPhone && (
                           <a href={`https://wa.me/2${appt.customerPhone.replace(/^0/, '')}`} target="_blank" rel="noreferrer"
-                            style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#4ade80', fontSize: 11, fontWeight: 700, textDecoration: 'none', marginTop: 2 }}>
+                            className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 no-underline">
                             <PhoneCall size={11} /> {appt.customerPhone}
                           </a>
                         )}
                       </td>
-                      {/* Car */}
-                      <td style={{ padding: '14px 16px', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>
+                      <td className="px-4 py-4 text-sm text-slate-600">
                         <div>{appt.carModel ?? '—'}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{appt.carYear}</div>
+                        <div className="text-xs text-slate-400">{appt.carYear}</div>
                       </td>
-                      {/* Workshop */}
-                      <td style={{ padding: '14px 16px', color: G, fontWeight: 800, whiteSpace: 'nowrap' }}>
+                      <td className="whitespace-nowrap px-4 py-4 font-black text-amber-700">
                         {appt.workshopName}
                       </td>
-                      {/* Date + Time */}
-                      <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#fff', fontWeight: 700, fontSize: 12 }}>
+                      <td className="whitespace-nowrap px-4 py-4">
+                        <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
                           <Calendar size={12} color={G} /> {apptDateLabel}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 3 }}>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                           <Clock size={11} /> {slotLabel(appt.timeSlot)}
                         </div>
                         {appt.changeNote && (
-                          <div style={{ marginTop: 4, color: '#fcd34d', fontSize: 10, fontWeight: 700 }}>ملاحظة: {appt.changeNote}</div>
+                          <div className="mt-2 text-[11px] font-bold text-amber-700">ملاحظة: {appt.changeNote}</div>
                         )}
                       </td>
-                      {/* Status */}
-                      <td style={{ padding: '14px 16px' }}>
+                      <td className="px-4 py-4">
                         {statusBadge(appt.status)}
                       </td>
-                      {/* Actions */}
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                          {/* WA to customer */}
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap items-center gap-2">
                           {customerWaPhone && (
                             <a
                               href={`https://wa.me/${customerWaPhone}?text=${encodeURIComponent(`مرحباً ${appt.customerName ?? ''}،\nتأكيد موعدك في ${appt.workshopName}\n📅 ${apptDateLabel}\n🕐 الساعة ${slotLabel(appt.timeSlot)}\nرقم الطلب: #${appt.orderId}`)}`}
                               target="_blank" rel="noreferrer"
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.25)', color: '#4ade80', borderRadius: 8, fontSize: 11, fontWeight: 800, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                              className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 no-underline"
                             >
                               💬 واتساب العميل
                             </a>
                           )}
-                          {/* Status buttons */}
                           {isUpdating ? (
-                            <Loader2 size={16} style={{ color: G }} className="animate-spin" />
+                            <Loader2 size={16} className="animate-spin text-[#C8974A]" />
                           ) : nexts.map(n => (
                             <button key={n.value} onClick={() => updateStatus(appt.id, n.value)}
-                              style={{ padding: '6px 10px', background: n.value === 'cancelled' ? 'rgba(239,68,68,0.1)' : `rgba(200,151,74,0.1)`, border: `1px solid ${n.value === 'cancelled' ? 'rgba(239,68,68,0.3)' : 'rgba(200,151,74,0.3)'}`, color: n.value === 'cancelled' ? '#f87171' : G, borderRadius: 8, fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", whiteSpace: 'nowrap' }}>
+                              className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-black ${
+                                n.value === 'cancelled'
+                                  ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                  : 'border-amber-200 bg-amber-50 text-amber-700'
+                              }`}>
                               {n.label}
                             </button>
                           ))}
