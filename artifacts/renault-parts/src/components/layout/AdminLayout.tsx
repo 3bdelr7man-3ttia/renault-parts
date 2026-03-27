@@ -46,6 +46,15 @@ type NavItem = {
   employeeRoles?: Array<'sales' | 'data_entry' | 'technical_expert' | 'marketing_tech' | 'manager'>;
 };
 
+const mobilePriorityByRole: Record<string, string[]> = {
+  admin: ['/admin', '/admin/employee/team', '/admin/orders', '/admin/employee/returns', '/admin/users'],
+  manager: ['/admin/employee/dashboard', '/admin/employee/team', '/admin/orders', '/admin/employee/returns', '/admin/employee/reports'],
+  sales: ['/admin/employee/dashboard', '/admin/employee/customers', '/admin/employee/workshops', '/admin/employee/tasks', '/admin/employee/reports'],
+  technical_expert: ['/admin/employee/technical', '/admin/employee/returns', '/admin/employee/tasks', '/admin/employee/reports', '/admin/employee/dashboard'],
+  data_entry: ['/admin/employee/data-entry', '/admin/employee/returns', '/admin/parts', '/admin/employee/tasks', '/admin/employee/reports'],
+  marketing_tech: ['/admin/employee/dashboard', '/admin/sales', '/admin/reviews', '/admin/employee/tasks', '/admin/employee/reports'],
+};
+
 const navItems: NavItem[] = [
   { href: '/admin',                        label: 'الرئيسية',         icon: LayoutDashboard, group: 'overview', exact: true, adminOnly: true },
   { href: '/admin/employee/dashboard',     label: 'لوحة الموظف',      icon: LayoutDashboard, group: 'overview', employeeOnly: true },
@@ -200,6 +209,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 ? 'لوحة التسويق والتقنية'
                 : 'مساحة العمل';
 
+  const employeeDashboardLabel =
+    isManager
+      ? 'لوحة المدير'
+      : employeeRole === 'sales'
+        ? 'لوحة المبيعات'
+        : employeeRole === 'technical_expert'
+          ? 'لوحة الخبير الفني'
+          : employeeRole === 'data_entry'
+            ? 'لوحة الداتا والقطع'
+            : employeeRole === 'marketing_tech'
+              ? 'لوحة التسويق والتقنية'
+              : 'لوحة الموظف';
+
   const groupedNavItems = useMemo(() => {
     return visibleNavItems.reduce<Record<NavItem['group'], NavItem[]>>((acc, item) => {
       acc[item.group].push(item);
@@ -215,7 +237,23 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     });
   }, [visibleNavItems]);
 
-  const mobileNavItems = visibleNavItems.slice(0, 5);
+  const mobileNavItems = useMemo(() => {
+    const roleKey = isAdminUser ? 'admin' : employeeRole ?? 'employee';
+    const preferred = mobilePriorityByRole[roleKey] ?? [];
+    const rank = (href: string) => {
+      const index = preferred.indexOf(href);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    };
+
+    return visibleNavItems
+      .slice()
+      .sort((a, b) => {
+        const rankDifference = rank(a.href) - rank(b.href);
+        if (rankDifference !== 0) return rankDifference;
+        return navItems.findIndex((item) => item.href === a.href) - navItems.findIndex((item) => item.href === b.href);
+      })
+      .slice(0, 5);
+  }, [employeeRole, isAdminUser, visibleNavItems]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
@@ -293,7 +331,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = active ? NV : 'rgba(255,255,255,0.6)'; }}
                       >
                         <item.icon size={16} style={{ flexShrink: 0, color: active ? NV : 'inherit' }} />
-                        <span>{item.label}</span>
+                        <span>{item.href === '/admin/employee/dashboard' && item.employeeOnly ? employeeDashboardLabel : item.label}</span>
                         {active && <div style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: NV, opacity: 0.6 }} />}
                       </div>
                     </Link>

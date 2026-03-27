@@ -100,7 +100,35 @@ export const EMPLOYEE_PERMISSIONS: Record<EmployeeRole, Array<Permission | "*">>
     "reports.sales",
     "reviews.view",
   ],
-  manager: ["*"],
+  manager: [
+    "employee.tasks.view_own",
+    "employee.tasks.create_own",
+    "employee.tasks.update_own",
+    "employee.reports.view_own",
+    "employee.reports.create_own",
+    "sales.dashboard.view",
+    "sales.customers.view_own",
+    "sales.customers.create_own",
+    "sales.workshops.view_own",
+    "sales.workshops.create_own",
+    "sales.team.view",
+    "sales.team.assign",
+    "customers.view",
+    "customers.contact",
+    "technical.dashboard.view",
+    "technical.cases.view_own",
+    "technical.cases.update_own",
+    "returns.create",
+    "returns.view",
+    "returns.update",
+    "data_entry.dashboard.view",
+    "data_entry.leads.view",
+    "data_entry.leads.create",
+    "orders.view",
+    "orders.update_status",
+    "appointments.view",
+    "reports.sales",
+  ],
 };
 
 export function normalizeRole(role?: string | null): AppRole | "unknown" {
@@ -136,8 +164,6 @@ export function hasPermission(user: AuthenticatedRequest["user"] | undefined, pe
 
   const employeeRole = normalizeEmployeeRole(user.employeeRole);
   if (!employeeRole) return false;
-  if (employeeRole === "manager") return true;
-
   return EMPLOYEE_PERMISSIONS[employeeRole].includes(permission);
 }
 
