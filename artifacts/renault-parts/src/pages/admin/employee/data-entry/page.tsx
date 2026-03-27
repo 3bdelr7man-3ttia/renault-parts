@@ -20,6 +20,7 @@ type DataEntryLead = {
   area?: string | null;
   source: string;
   status: string;
+  notes?: string | null;
   assignedEmployeeName?: string | null;
   createdByUserName?: string | null;
   registeredUserName?: string | null;
@@ -69,6 +70,26 @@ const employeeRoleLabels: Record<NonNullable<Assignee["employeeRole"]>, string> 
   manager: "مدير فريق",
 };
 
+type StructuredTechnicalNote = {
+  title: string;
+  items: string[];
+};
+
+function parseStructuredTechnicalNote(notes?: string | null): StructuredTechnicalNote | null {
+  if (!notes) return null;
+  const lines = notes
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length || lines[0] !== "ملخص الرد الفني") return null;
+
+  return {
+    title: lines[0],
+    items: lines.slice(1),
+  };
+}
+
 export default function EmployeeDataEntryPage() {
   const { token } = useAuth();
   const { toast } = useToast();
@@ -82,6 +103,7 @@ export default function EmployeeDataEntryPage() {
   const [workshopLeads, setWorkshopLeads] = React.useState<DataEntryLead[]>([]);
   const [assignees, setAssignees] = React.useState<Assignee[]>([]);
   const [form, setForm] = React.useState<LeadFormState>(emptyForm);
+  const technicalDecisionCount = [...customerLeads, ...workshopLeads].filter((lead) => parseStructuredTechnicalNote(lead.notes)).length;
 
   const loadPage = React.useCallback(async () => {
     if (!token) {
@@ -225,6 +247,11 @@ export default function EmployeeDataEntryPage() {
           <p className="text-white/40 text-xs font-bold mb-2">تم تسجيلها على المنصة</p>
           <p className="text-white font-black text-2xl">{summary?.registered ?? 0}</p>
         </div>
+        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
+          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
+          <p className="text-white/40 text-xs font-bold mb-2">قرارات فنية وصلت للقطع</p>
+          <p className="text-white font-black text-2xl">{technicalDecisionCount}</p>
+        </div>
       </div>
 
       {loading ? (
@@ -238,6 +265,10 @@ export default function EmployeeDataEntryPage() {
             <div className="space-y-4">
               {section.rows.map((lead) => (
                 <div key={lead.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
+                  {(() => {
+                    const structuredNote = parseStructuredTechnicalNote(lead.notes);
+                    return (
+                      <>
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="text-white font-black text-lg">{lead.name}</p>
@@ -253,6 +284,28 @@ export default function EmployeeDataEntryPage() {
                       {lead.registeredUserName && <p>العميل المسجل: <span className="text-emerald-300">{lead.registeredUserName}</span></p>}
                     </div>
                   </div>
+                  {structuredNote ? (
+                    <div className="mt-4 rounded-2xl border border-[#F9E795]/20 bg-[#F9E795]/5 p-4 space-y-3">
+                      <div>
+                        <p className="text-[#F9E795] text-xs font-black">قرار فني وصل لمسؤول القطع/الداتا</p>
+                        <p className="text-white/55 text-xs mt-1">
+                          هذا الرد قادم من الخبير الفني، ويحتاج منك تنفيذ القرار أو تجهيز القطعة أو مراجعة المرتجع.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        {structuredNote.items.map((line) => (
+                          <div key={line} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 leading-6">
+                            {line.replace(/^- /, "")}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : lead.notes ? (
+                    <p className="mt-4 text-sm text-white/55 leading-7">{lead.notes}</p>
+                  ) : null}
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
               {section.rows.length === 0 && <p className="text-white/45 text-sm text-center py-8">لا توجد عناصر في هذا القسم الآن.</p>}
