@@ -53,7 +53,7 @@ function MiniBarChart({ data }: { data: { week: string; total: number; count: nu
               title={`${d.week}: ${d.total.toLocaleString()} ج.م (${d.count} طلب)`}
             />
           </div>
-          <span className="text-white/30 text-[9px] leading-none">{d.week.slice(5)}</span>
+          <span className="text-slate-400 text-[9px] leading-none">{d.week.slice(5)}</span>
         </div>
       ))}
     </div>
@@ -114,17 +114,17 @@ export default function AdminDashboard() {
 
   const statCards = stats
     ? [
-        { icon: ShoppingBag, label: 'إجمالي الطلبات', value: stats.totalOrders, sub: `اليوم: ${stats.ordersToday}`, color: 'from-blue-600 to-blue-800' },
-        { icon: Clock,       label: 'قيد المراجعة',  value: stats.pendingOrders, sub: 'تحتاج مراجعة', color: 'from-yellow-600 to-yellow-800' },
-        { icon: CheckCircle2, label: 'مكتملة',       value: stats.completedOrders, sub: `مؤكدة: ${stats.confirmedOrders}`, color: 'from-green-600 to-green-800' },
-        { icon: DollarSign,  label: 'إجمالي الإيراد', value: `${stats.totalRevenue.toLocaleString()} ج.م`, sub: `اليوم: ${stats.revenueToday.toLocaleString()} ج.م`, color: 'from-[#1E2761] to-[#2a3580]', border: 'border-[#F9E795]/30' },
-        { icon: Users,       label: 'المستخدمون',    value: stats.totalUsers, sub: 'عميل مسجل', color: 'from-purple-600 to-purple-800' },
+        { icon: ShoppingBag, label: 'إجمالي الطلبات', value: stats.totalOrders, sub: `اليوم: ${stats.ordersToday}`, iconTone: 'text-sky-700 bg-sky-50 border-sky-200' },
+        { icon: Clock,       label: 'قيد المراجعة',  value: stats.pendingOrders, sub: 'تحتاج مراجعة', iconTone: 'text-amber-700 bg-amber-50 border-amber-200' },
+        { icon: CheckCircle2, label: 'مكتملة',       value: stats.completedOrders, sub: `مؤكدة: ${stats.confirmedOrders}`, iconTone: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+        { icon: DollarSign,  label: 'إجمالي الإيراد', value: `${stats.totalRevenue.toLocaleString()} ج.م`, sub: `اليوم: ${stats.revenueToday.toLocaleString()} ج.م`, iconTone: 'text-violet-700 bg-violet-50 border-violet-200', valueTone: 'text-[#C8974A]' },
+        { icon: Users,       label: 'المستخدمون',    value: stats.totalUsers, sub: 'عميل مسجل', iconTone: 'text-slate-700 bg-slate-50 border-slate-200' },
         {
           icon: Star,
           label: 'متوسط التقييم',
           value: stats.avgRating != null ? `${stats.avgRating} / 5` : 'لا يوجد',
           sub: `${stats.totalReviews} تقييم`,
-          color: 'from-amber-600 to-amber-800',
+          iconTone: 'text-amber-700 bg-amber-50 border-amber-200',
         },
       ]
     : [];
@@ -183,16 +183,15 @@ export default function AdminDashboard() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map((card, i) => (
-            <div
-              key={i}
-              className={`bg-gradient-to-br ${card.color} rounded-3xl p-5 border ${card.border ?? 'border-white/10'} shadow-sm`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <card.icon className="w-6 h-6 text-white/70" />
+            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-start justify-between">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${card.iconTone}`}>
+                  <card.icon className="h-5 w-5" />
+                </div>
               </div>
-              <p className="text-2xl font-black text-white mb-1">{card.value}</p>
-              <p className="text-white/85 font-bold text-xs">{card.label}</p>
-              <p className="text-white/60 text-xs mt-1">{card.sub}</p>
+              <p className={`mb-1 text-2xl font-black ${card.valueTone ?? 'text-slate-950'}`}>{card.value}</p>
+              <p className="text-xs font-bold text-slate-700">{card.label}</p>
+              <p className="mt-1 text-xs text-slate-500">{card.sub}</p>
             </div>
           ))}
         </div>

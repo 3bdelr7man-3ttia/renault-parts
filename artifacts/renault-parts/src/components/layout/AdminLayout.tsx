@@ -262,14 +262,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         : employeeDashboardLabel;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'stretch', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
 
       {/* ── Sidebar ── */}
       <aside style={{
         position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
         width: 286, background: S,
         borderLeft: '1px solid rgba(15,23,42,0.08)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
+        display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100vh',
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .3s ease',
         boxShadow: '0 10px 40px rgba(15,23,42,0.08)',
@@ -390,10 +390,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ── Main ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', minWidth: 0, overflow: 'hidden' }} className="admin-main">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: '100vh' }} className="admin-main">
 
         {/* Top bar */}
-        <header style={{ flexShrink: 0, zIndex: 30, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(15,23,42,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <header style={{ position: 'sticky', top: 0, flexShrink: 0, zIndex: 30, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(15,23,42,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden"
@@ -414,7 +414,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: isMobile ? '14px 12px 80px' : 24, overflowY: 'auto' }}>
+        <main style={{ flex: 1, padding: isMobile ? '14px 12px 80px' : 24 }}>
           {children}
         </main>
       </div>
@@ -441,7 +441,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       <style>{`
         @media (min-width: 1024px) {
-          .lg-sidebar { position: relative !important; transform: translateX(0) !important; }
+          .lg-sidebar { position: sticky !important; top: 0 !important; transform: translateX(0) !important; height: 100vh !important; }
           .admin-main { margin-right: 0 !important; }
           .lg\\:hidden { display: none !important; }
         }
