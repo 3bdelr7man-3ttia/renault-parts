@@ -380,22 +380,29 @@ export default function EmployeeTeamPage() {
   const unassignedWorkshops = workshopLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const registeredCustomers = customerLeads.filter((lead) => lead.registeredUserId).length;
   const openTasks = tasks.filter((task) => isOpenTask(task.status));
-  const completedTasks = tasks.filter((task) => task.status === "completed").length;
   const criticalLeads = allLeads.filter((lead) => !lead.assignedEmployeeId || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() <= Date.now() + 24 * 60 * 60 * 1000));
   const urgentTasks = openTasks
     .slice()
     .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
     .slice(0, 5);
-  const focusLeads = criticalLeads
+  const quickAssignLeads = allLeads
+    .filter((lead) => !lead.assignedEmployeeId)
     .slice()
     .sort((a, b) => {
       const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : 0;
       const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : 0;
-      if (!a.assignedEmployeeId && b.assignedEmployeeId) return -1;
-      if (a.assignedEmployeeId && !b.assignedEmployeeId) return 1;
       return aTime - bTime;
     })
-    .slice(0, 6);
+    .slice(0, 4);
+  const quickFollowUpLeads = criticalLeads
+    .filter((lead) => !!lead.assignedEmployeeId)
+    .slice()
+    .sort((a, b) => {
+      const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+      return aTime - bTime;
+    })
+    .slice(0, 4);
   const employeeLoad = employees
     .map((employee) => {
       const assignedLeads = allLeads.filter((lead) => lead.assignedEmployeeId === employee.id).length;
@@ -461,7 +468,7 @@ export default function EmployeeTeamPage() {
                 <AlertTriangle className="w-5 h-5 text-[#F9E795]" />
                 <div>
                   <h2 className="text-white font-black text-xl">مركز القرار السريع</h2>
-                  <p className="text-white/45 text-sm">هذه العناصر هي التي تحتاج متابعة أو توزيعًا أو قرارًا سريعًا الآن.</p>
+                  <p className="text-white/45 text-sm">من هنا يفترض أن يقدر المدير أن يعيّن مباشرة أو يلتقط ما يحتاج متابعة فورية، بدون النزول الطويل في الصفحة.</p>
                 </div>
               </div>
 
@@ -473,57 +480,99 @@ export default function EmployeeTeamPage() {
                 </div>
                 <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
                   <p className="text-white/45 text-xs font-bold mb-2">متابعات ومهام قريبة</p>
-                  <p className="text-white font-black text-2xl">{focusLeads.length + urgentTasks.length}</p>
+                  <p className="text-white font-black text-2xl">{quickFollowUpLeads.length + urgentTasks.length}</p>
                   <p className="text-white/35 text-xs mt-2">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {focusLeads.length === 0 && urgentTasks.length === 0 ? (
-                  <p className="text-white/45 text-sm text-center py-8">لا توجد عناصر حرجة الآن. توزيع الفريق مستقر.</p>
-                ) : (
-                  <>
-                    {focusLeads.map((lead) => (
-                      <div key={`focus-${lead.type}-${lead.id}`} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-white font-black">{lead.name}</p>
-                            <p className="text-white/45 text-sm mt-1">
-                              {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
-                            </p>
-                            <p className="text-white/35 text-xs mt-2">
-                              {lead.assignedEmployeeName ? `المسؤول الحالي: ${lead.assignedEmployeeName}` : "غير مسند حتى الآن"}
-                              {lead.nextFollowUpAt ? ` · متابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : ""}
-                            </p>
-                          </div>
-                          <div className={`px-3 py-2 rounded-xl text-xs font-bold border ${lead.assignedEmployeeId ? "bg-sky-500/10 text-sky-300 border-sky-500/20" : "bg-amber-500/10 text-amber-300 border-amber-500/20"}`}>
-                            {lead.assignedEmployeeId ? "تحتاج متابعة" : "تحتاج إسناد"}
-                          </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white font-black">إسناد مباشر الآن</p>
+                      <p className="text-white/35 text-xs mt-1">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
+                    </div>
+                    <span className="px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                      {quickAssignLeads.length} الآن
+                    </span>
+                  </div>
+                  {quickAssignLeads.length ? quickAssignLeads.map((lead) => (
+                    <div key={`assign-${lead.type}-${lead.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <p className="text-white font-black">{lead.name}</p>
+                          <p className="text-white/45 text-sm mt-1">
+                            {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={assignmentDrafts[lead.id] ?? ""}
+                            onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
+                            className="flex-1 bg-[#111826] border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                          >
+                            <option value="" className="bg-[#111826]">اختر المسؤول الآن</option>
+                            {employees.map((employee) => (
+                              <option key={employee.id} value={employee.id} className="bg-[#111826]">
+                                {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => saveAssignment(lead)}
+                            disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
+                            className="px-4 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm disabled:opacity-50"
+                          >
+                            {savingLeadId === lead.id ? "جارٍ..." : "إسناد"}
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  )) : (
+                    <p className="text-white/45 text-sm py-6 text-center">لا توجد عناصر غير مسندة الآن.</p>
+                  )}
+                </div>
 
-                    {urgentTasks.map((task) => (
-                      <div key={`task-${task.id}`} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-white font-black">{task.title}</p>
-                            <p className="text-white/45 text-sm mt-1">
-                              {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
-                            </p>
-                            <p className="text-white/35 text-xs mt-2">
-                              الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
-                              {task.leadName ? ` · مرتبطة بـ ${task.leadName}` : ""}
-                            </p>
-                          </div>
-                          <div className="px-3 py-2 rounded-xl text-xs font-bold border bg-[#F9E795]/10 text-[#F9E795] border-[#F9E795]/20">
-                            {taskStatusLabels[task.status] ?? task.status}
-                          </div>
+                <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white font-black">متابعة تحتاج قرارًا الآن</p>
+                      <p className="text-white/35 text-xs mt-1">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
+                    </div>
+                    <span className="px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                      {quickFollowUpLeads.length + urgentTasks.length}
+                    </span>
+                  </div>
+                  {quickFollowUpLeads.length === 0 && urgentTasks.length === 0 ? (
+                    <p className="text-white/45 text-sm py-6 text-center">لا توجد عناصر متابعة حرجة الآن.</p>
+                  ) : (
+                    <>
+                      {quickFollowUpLeads.map((lead) => (
+                        <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-white font-black">{lead.name}</p>
+                          <p className="text-white/45 text-sm mt-1">
+                            {lead.assignedEmployeeName ?? "غير محدد"} · {lead.type === "customer" ? "عميل" : "ورشة"}
+                          </p>
+                          <p className="text-white/35 text-xs mt-2">
+                            {lead.nextFollowUpAt ? `المتابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : "تحتاج تحديد متابعة"} · {lead.area ?? "بدون منطقة"}
+                          </p>
                         </div>
-                      </div>
-                    ))}
-                  </>
-                )}
+                      ))}
+                      {urgentTasks.map((task) => (
+                        <div key={`task-${task.id}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-white font-black">{task.title}</p>
+                          <p className="text-white/45 text-sm mt-1">
+                            {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
+                          </p>
+                          <p className="text-white/35 text-xs mt-2">
+                            الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
+                            {task.leadName ? ` · مرتبطة بـ ${task.leadName}` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -568,57 +617,6 @@ export default function EmployeeTeamPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-
-          <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-white font-black text-xl mb-1">آخر المهام المسندة</h2>
-                <p className="text-white/45 text-sm">المهام المفتوحة تأتي أولًا حتى يعرف المدير ما الذي يحتاج متابعة فورية.</p>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="px-3 py-2 rounded-xl bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 font-bold">
-                  مفتوحة: {openTasks.length}
-                </span>
-                <span className="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
-                  تمت: {completedTasks}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {tasks
-                .slice()
-                .sort((a, b) => {
-                  const aOpen = isOpenTask(a.status) ? 0 : 1;
-                  const bOpen = isOpenTask(b.status) ? 0 : 1;
-                  if (aOpen !== bOpen) return aOpen - bOpen;
-                  return new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime();
-                })
-                .map((task) => (
-                  <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <p className="text-white font-black">{task.title}</p>
-                        <p className="text-white/45 text-sm mt-1">
-                          {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
-                          {task.employeeName ? ` · ${task.employeeName}` : ""}
-                          {task.leadName ? ` · ${task.leadName}` : ""}
-                          {task.area ? ` · ${task.area}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-start md:items-end gap-2">
-                        <span className={`px-3 py-2 rounded-xl text-xs font-bold border ${isOpenTask(task.status) ? "bg-[#F9E795]/10 text-[#F9E795] border-[#F9E795]/20" : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"}`}>
-                          {taskStatusLabels[task.status] ?? task.status}
-                        </span>
-                        <div className="text-white/40 text-xs">
-                          {new Date(task.dueAt).toLocaleString("ar-EG")}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              {tasks.length === 0 && <p className="text-white/45 text-sm text-center py-8">لا توجد مهام مسندة بعد.</p>}
             </div>
           </div>
 
