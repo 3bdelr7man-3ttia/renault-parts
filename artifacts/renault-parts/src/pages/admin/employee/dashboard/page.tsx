@@ -196,6 +196,161 @@ const technicalStatusLabels: Record<string, string> = {
   converted_to_application: "تحول إلى طلب انضمام",
 };
 
+type Tone = "amber" | "sky" | "red" | "violet" | "emerald" | "slate";
+
+const toneClasses: Record<Tone, { chip: string; icon: string }> = {
+  amber: {
+    chip: "bg-amber-500/12 text-amber-300 border-amber-500/25",
+    icon: "bg-amber-500/12 text-amber-300 border-amber-500/25",
+  },
+  sky: {
+    chip: "bg-sky-500/12 text-sky-300 border-sky-500/25",
+    icon: "bg-sky-500/12 text-sky-300 border-sky-500/25",
+  },
+  red: {
+    chip: "bg-red-500/12 text-red-300 border-red-500/25",
+    icon: "bg-red-500/12 text-red-300 border-red-500/25",
+  },
+  violet: {
+    chip: "bg-violet-500/12 text-violet-300 border-violet-500/25",
+    icon: "bg-violet-500/12 text-violet-300 border-violet-500/25",
+  },
+  emerald: {
+    chip: "bg-emerald-500/12 text-emerald-300 border-emerald-500/25",
+    icon: "bg-emerald-500/12 text-emerald-300 border-emerald-500/25",
+  },
+  slate: {
+    chip: "bg-slate-50 text-slate-700 border-slate-200",
+    icon: "bg-slate-50 text-slate-700 border-slate-200",
+  },
+};
+
+function DashboardHero({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-[28px] border border-slate-200 shadow-sm p-6 md:p-8">
+      <p className="text-[#C8974A] text-sm font-black mb-2">{eyebrow}</p>
+      <h1 className="text-3xl font-black text-slate-950 mb-3">{title}</h1>
+      <p className="text-slate-500 text-sm leading-7 max-w-4xl">{description}</p>
+      {children ? <div className="mt-5 flex flex-wrap gap-3">{children}</div> : null}
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  subtitle,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: React.ElementType;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-[28px] shadow-sm p-6">
+      <div className="flex items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 className="text-slate-950 text-xl font-black">{title}</h2>
+          {subtitle ? <p className="text-slate-500 text-sm mt-1 leading-6">{subtitle}</p> : null}
+        </div>
+        {Icon ? (
+          <div className="w-11 h-11 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 flex items-center justify-center shrink-0">
+            <Icon className="w-5 h-5" />
+          </div>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone = "slate",
+  hint,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: React.ElementType;
+  tone?: Tone;
+  hint?: string;
+}) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-5 min-h-[154px] flex flex-col">
+      <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 ${toneClasses[tone].icon}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <p className="text-slate-500 text-xs font-black mb-2">{label}</p>
+      <p className="text-slate-950 font-black text-3xl leading-none">{value}</p>
+      {hint ? <p className="text-slate-400 text-xs mt-auto pt-4">{hint}</p> : null}
+    </div>
+  );
+}
+
+function ActionLink({
+  href,
+  label,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <Link href={href}>
+      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-950 text-white font-black text-sm cursor-pointer hover:bg-slate-800 transition-all shadow-sm">
+        <Icon className="w-4 h-4" />
+        {label}
+      </div>
+    </Link>
+  );
+}
+
+function ActionTile({
+  href,
+  label,
+  description,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <Link href={href}>
+      <div className="group bg-white border border-slate-200 rounded-[28px] p-6 cursor-pointer hover:border-[#C8974A]/30 hover:shadow-md transition-all h-full">
+        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center mb-4">
+          <Icon className="w-5 h-5" />
+        </div>
+        <h2 className="text-slate-950 font-black text-lg mb-2">{label}</h2>
+        <p className="text-slate-500 text-sm leading-6 min-h-[72px]">{description}</p>
+        <div className="mt-4 flex items-center gap-2 text-[#C8974A] text-sm font-black">
+          الدخول للقسم
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function StatusBadge({ label, tone = "slate" }: { label: string; tone?: Tone }) {
+  return <span className={`px-3 py-2 rounded-xl text-xs font-black border w-fit ${toneClasses[tone].chip}`}>{label}</span>;
+}
+
 function useSalesSummary(token: string | null, enabled: boolean) {
   const [data, setData] = React.useState<SalesSummary | null>(null);
   const [loading, setLoading] = React.useState(enabled);
@@ -416,128 +571,94 @@ export default function EmployeeDashboardPage() {
 
     return (
       <div className="space-y-8">
-        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة مدير الفريق</p>
-          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-          <p className="text-white/60 text-sm leading-7 max-w-4xl">
-            هنا تتابع ما تم إسناده من الإدارة، وتعيد توزيعه على الفريق، وتراقب ما يحتاج قرارًا سريعًا بين المبيعات والداتا والخبير الفني والمرتجعات.
-          </p>
-        </div>
+        <DashboardHero
+          eyebrow="لوحة مدير الفريق"
+          title={`مرحبًا ${user?.name}`}
+          description="هذه المساحة ليست للتنفيذ المباشر، بل لاتخاذ القرار: من يحتاج إسنادًا الآن، ما الذي تأخر، وما الذي يجب تصعيده أو إعادة توزيعه فورًا."
+        />
 
         {managerLoading ? (
-          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-10 flex justify-center shadow-sm">
             <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {[
-                { label: "فرص غير مسندة", value: unassignedCustomers + unassignedWorkshops, icon: AlertTriangle, tone: "bg-amber-500/12 text-amber-300 border-amber-500/25" },
-                { label: "متابعات خلال 24 ساعة", value: dueFollowUps, icon: PhoneCall, tone: "bg-sky-500/12 text-sky-300 border-sky-500/25" },
-                { label: "مهام مفتوحة", value: openTasks.length, icon: ClipboardList, tone: "bg-blue-500/12 text-blue-300 border-blue-500/25" },
-                { label: "مهام متأخرة", value: overdueTasks.length, icon: AlertTriangle, tone: "bg-red-500/12 text-red-300 border-red-500/25" },
-                { label: "مرتجعات تحتاج قرارًا", value: pendingReturns, icon: ArrowRightLeft, tone: "bg-violet-500/12 text-violet-300 border-violet-500/25" },
-                { label: "عملاء سجلوا من الـ pipeline", value: registeredCustomers, icon: Users, tone: "bg-emerald-500/12 text-emerald-300 border-emerald-500/25" },
+                { label: "فرص غير مسندة", value: unassignedCustomers + unassignedWorkshops, icon: AlertTriangle, tone: "amber" as Tone, hint: "هذه أول نقطة قرار يجب حسمها." },
+                { label: "متابعات خلال 24 ساعة", value: dueFollowUps, icon: PhoneCall, tone: "sky" as Tone, hint: "تحتاج ضبط المتابعة قبل أن تتأخر." },
+                { label: "مهام مفتوحة", value: openTasks.length, icon: ClipboardList, tone: "slate" as Tone, hint: "حمل التنفيذ الحالي على الفريق." },
+                { label: "مهام متأخرة", value: overdueTasks.length, icon: AlertTriangle, tone: "red" as Tone, hint: "هذه تحتاج تدخلًا من المدير الآن." },
+                { label: "مرتجعات تحتاج قرارًا", value: pendingReturns, icon: ArrowRightLeft, tone: "violet" as Tone, hint: "ينبغي حسمها أو توجيهها سريعًا." },
+                { label: "عملاء سجلوا من الـ pipeline", value: registeredCustomers, icon: Users, tone: "emerald" as Tone, hint: "مؤشر نجاح حقيقي لمسار الفريق." },
               ].map((card) => (
-                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-                  <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 ${card.tone}`}>
-                    <card.icon className="w-5 h-5" />
-                  </div>
-                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
-                  <p className="text-white font-black text-2xl">{card.value}</p>
-                </div>
+                <StatCard key={card.label} label={card.label} value={card.value} icon={card.icon} tone={card.tone} hint={card.hint} />
               ))}
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_.9fr] gap-5">
-              <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div>
-                    <p className="text-[#F9E795] text-xs font-black mb-2">مركز القرار السريع</p>
-                    <h2 className="text-white text-xl font-black">ما الذي يحتاج تدخلًا الآن؟</h2>
-                  </div>
-                  <AlertTriangle className="w-5 h-5 text-[#F9E795]" />
-                </div>
+              <SectionCard
+                title="مركز القرار السريع"
+                subtitle="هذه البطاقات يجب أن تنقلك مباشرة إلى قرار أو تصعيد أو إسناد، لا إلى مجرد استعراض."
+                icon={AlertTriangle}
+              >
                 {urgentDecisionItems.length ? (
                   <div className="space-y-3">
                     {urgentDecisionItems.map((item) => (
                       <Link key={item.key} href={item.href}>
-                        <div className="bg-[#10182C] border border-white/10 rounded-2xl p-4 cursor-pointer hover:border-[#F9E795]/25 transition-all">
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 cursor-pointer hover:border-[#C8974A]/35 hover:shadow-sm transition-all">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-white font-black">{item.title}</p>
-                              <p className="text-white/70 text-sm mt-1">{item.subtitle}</p>
-                              <p className="text-white/40 text-xs mt-2">{item.meta}</p>
+                              <p className="text-slate-950 font-black">{item.title}</p>
+                              <p className="text-slate-600 text-sm mt-1">{item.subtitle}</p>
+                              <p className="text-slate-400 text-xs mt-2">{item.meta}</p>
                             </div>
-                            <span className={`px-3 py-2 rounded-xl text-xs font-black border ${
-                              item.tone === "red"
-                                ? "bg-red-500/12 text-red-300 border-red-500/25"
-                                : item.tone === "violet"
-                                  ? "bg-violet-500/12 text-violet-300 border-violet-500/25"
-                                  : "bg-amber-500/12 text-amber-300 border-amber-500/25"
-                            }`}>
-                              تحرك الآن
-                            </span>
+                            <StatusBadge tone={item.tone === "red" ? "red" : item.tone === "violet" ? "violet" : "amber"} label="تحرك الآن" />
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-white/45 text-sm">لا توجد عناصر حرجة واضحة الآن. يمكنك النزول لحمولة الفريق وتفاصيل التنفيذ.</p>
+                  <p className="text-slate-500 text-sm">لا توجد عناصر حرجة واضحة الآن. يمكنك النزول لحمولة الفريق وتفاصيل التنفيذ.</p>
                 )}
-              </div>
+              </SectionCard>
 
-              <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div>
-                    <p className="text-[#F9E795] text-xs font-black mb-2">حمل الفريق الحالي</p>
-                    <h2 className="text-white text-xl font-black">من يحمل ضغطًا أكبر الآن؟</h2>
-                  </div>
-                  <Users className="w-5 h-5 text-[#F9E795]" />
-                </div>
+              <SectionCard
+                title="حمل الفريق الحالي"
+                subtitle="لمعرفة أين تضع القرار التالي: من يتحمل ضغطًا، ومن يمكن أن يستلم عناصر جديدة."
+                icon={Users}
+              >
                 <div className="space-y-3">
                   {employeeLoad.length ? employeeLoad.map((employee) => (
-                    <div key={employee.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
+                    <div key={employee.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-white font-black">{employee.name}</p>
-                          <p className="text-white/40 text-xs mt-1">
+                          <p className="text-slate-950 font-black">{employee.name}</p>
+                          <p className="text-slate-500 text-xs mt-1">
                             {employee.employeeRole === "sales" ? "مبيعات ومتابعة" : employee.employeeRole === "technical_expert" ? "خبير فني" : employee.employeeRole === "data_entry" ? "داتا وقطع" : employee.employeeRole === "marketing_tech" ? "تسويق وتقنية" : "مدير فريق"}
                           </p>
                         </div>
                         <div className="text-left">
-                          <p className="text-[#F9E795] font-black text-lg">{employee.assignedLeads + employee.openTasks}</p>
-                          <p className="text-white/35 text-xs">عناصر مفتوحة</p>
+                          <p className="text-slate-950 font-black text-lg">{employee.assignedLeads + employee.openTasks}</p>
+                          <p className="text-slate-400 text-xs">عناصر مفتوحة</p>
                         </div>
                       </div>
                       <div className="mt-3 flex items-center gap-3 text-xs">
-                        <span className="px-3 py-2 rounded-xl bg-sky-500/12 text-sky-300 border border-sky-500/20">فرص: {employee.assignedLeads}</span>
-                        <span className="px-3 py-2 rounded-xl bg-amber-500/12 text-amber-300 border border-amber-500/20">مهام: {employee.openTasks}</span>
+                        <StatusBadge tone="sky" label={`فرص: ${employee.assignedLeads}`} />
+                        <StatusBadge tone="amber" label={`مهام: ${employee.openTasks}`} />
                       </div>
                     </div>
                   )) : (
-                    <p className="text-white/45 text-sm">لا توجد بيانات حمل فريق متاحة الآن.</p>
+                    <p className="text-slate-500 text-sm">لا توجد بيانات حمل فريق متاحة الآن.</p>
                   )}
                 </div>
-              </div>
+              </SectionCard>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {managerCards.map((card) => (
-                <Link key={card.href} href={card.href}>
-                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                      <card.icon className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                      الدخول للقسم
-                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
+                <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
               ))}
             </div>
           </>
@@ -566,41 +687,31 @@ export default function EmployeeDashboardPage() {
 
     return (
       <div className="space-y-8">
-        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة المبيعات</p>
-          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-          <p className="text-white/60 text-sm leading-7 max-w-3xl">
-            هذه النسخة تعرض الآن بيانات تشغيل حقيقية لموظف المبيعات: العملاء المسندين، الورش المسندة، ومهام اليوم المفتوحة.
-          </p>
-          {quickActions.length > 0 && (
-            <div className="mt-5 flex flex-wrap gap-3">
-              {quickActions.map((action) => (
-                <Link key={action.href} href={action.href}>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm cursor-pointer hover:opacity-90 transition-all">
-                    <action.icon className="w-4 h-4" />
-                    {action.label}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+        <DashboardHero
+          eyebrow="لوحة المبيعات"
+          title={`مرحبًا ${user?.name}`}
+          description="هنا ترى ما يخصك فقط: عملاؤك، ورشك، متابعات اليوم، وما تحول فعليًا إلى طلب. المطلوب أن تبدأ يومك بقرار واضح ثم تنفيذ مباشر."
+        >
+          {quickActions.map((action) => (
+            <ActionLink key={action.href} href={action.href} label={action.label} icon={action.icon} />
+          ))}
+        </DashboardHero>
 
         {loading ? (
-          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-10 flex justify-center shadow-sm">
             <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {statCards.map((card) => (
-                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                    <card.icon className="w-5 h-5" />
-                  </div>
-                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
-                  <p className="text-white font-black text-2xl">{card.value}</p>
-                </div>
+              {statCards.map((card, index) => (
+                <StatCard
+                  key={card.label}
+                  label={card.label}
+                  value={card.value}
+                  icon={card.icon}
+                  tone={index === 2 ? "amber" : index === 3 ? "emerald" : index === 5 ? "red" : "sky"}
+                />
               ))}
             </div>
 
@@ -608,44 +719,29 @@ export default function EmployeeDashboardPage() {
               {salesSections
                 .filter((card) => card.href !== "/admin/employee/team" || hasPermission("sales.team.view"))
                 .map((card) => (
-                <Link key={card.href} href={card.href}>
-                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                      <card.icon className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                      الدخول للقسم
-                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
+                <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
               ))}
             </div>
 
-            <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
-              <h2 className="text-white font-black text-xl mb-4">أقرب المهام المفتوحة</h2>
+            <SectionCard title="أقرب المهام المفتوحة" subtitle="ابدأ من هنا إذا أردت معرفة ما الذي يجب تنفيذه الآن أو ما الذي تأخر عليك." icon={ClipboardList}>
               {salesSummary?.openTasks?.length ? (
                 <div className="space-y-3">
                   {salesSummary.openTasks.map((task) => (
-                    <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div key={task.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div>
-                        <p className="text-white font-black">{task.title}</p>
-                        <p className="text-white/45 text-sm mt-1">
+                        <p className="text-slate-950 font-black">{task.title}</p>
+                        <p className="text-slate-500 text-sm mt-1">
                           {taskTypeLabels[task.taskType] ?? task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
                         </p>
                       </div>
-                      <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
-                        {taskStatusLabels[task.status] ?? task.status}
-                      </span>
+                      <StatusBadge tone={task.status === "completed" ? "emerald" : task.status === "cancelled" ? "red" : task.status === "in_progress" ? "sky" : "amber"} label={taskStatusLabels[task.status] ?? task.status} />
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-white/45 text-sm">لا توجد مهام مفتوحة لهذا الحساب الآن.</p>
+                <p className="text-slate-500 text-sm">لا توجد مهام مفتوحة لهذا الحساب الآن.</p>
               )}
-            </div>
+            </SectionCard>
           </>
         )}
       </div>
@@ -672,41 +768,31 @@ export default function EmployeeDashboardPage() {
 
     return (
       <div className="space-y-8">
-        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة الخبير الفني</p>
-          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-          <p className="text-white/60 text-sm leading-7 max-w-3xl">
-            هذه النسخة تعرض الحالات الفنية المسندة لك، وما يحتاج متابعة اليوم، مع وصول سريع للمهام والمواعيد والتقييمات ذات الصلة.
-          </p>
-          {quickActions.length > 0 && (
-            <div className="mt-5 flex flex-wrap gap-3">
-              {quickActions.map((action) => (
-                <Link key={action.href} href={action.href}>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm cursor-pointer hover:opacity-90 transition-all">
-                    <action.icon className="w-4 h-4" />
-                    {action.label}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+        <DashboardHero
+          eyebrow="لوحة الخبير الفني"
+          title={`مرحبًا ${user?.name}`}
+          description="هدف هذه الشاشة أن تضعك أمام ما يحتاج تشخيصًا أو قرارًا أو تصعيدًا الآن، ثم تنقلك بسرعة إلى الحالات الفنية والمرتجعات والمهام التنفيذية."
+        >
+          {quickActions.map((action) => (
+            <ActionLink key={action.href} href={action.href} label={action.label} icon={action.icon} />
+          ))}
+        </DashboardHero>
 
         {technicalLoading ? (
-          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-10 flex justify-center shadow-sm">
             <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {statCards.map((card) => (
-                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                    <card.icon className="w-5 h-5" />
-                  </div>
-                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
-                  <p className="text-white font-black text-2xl">{card.value}</p>
-                </div>
+              {statCards.map((card, index) => (
+                <StatCard
+                  key={card.label}
+                  label={card.label}
+                  value={card.value}
+                  icon={card.icon}
+                  tone={index === 3 ? "violet" : index === 4 ? "amber" : index === 5 ? "emerald" : "sky"}
+                />
               ))}
             </div>
 
@@ -717,44 +803,29 @@ export default function EmployeeDashboardPage() {
                 { href: "/admin/employee/tasks", label: "المهام الفنية", description: "المهام التشغيلية والفنية اليومية مع تحديث التنفيذ والنتيجة.", icon: ClipboardList },
                 { href: "/admin/employee/reports", label: "التقرير اليومي", description: "تلخيص ما تم تشخيصه أو تصعيده للمبيعات أو الإدارة أو الورش.", icon: FileText },
               ].map((card) => (
-                <Link key={card.href} href={card.href}>
-                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                      <card.icon className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                      الدخول للقسم
-                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
+                <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
               ))}
             </div>
 
-            <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
-              <h2 className="text-white font-black text-xl mb-4">أقرب الحالات المفتوحة</h2>
+            <SectionCard title="أقرب الحالات المفتوحة" subtitle="ابدأ من الحالات الأقرب في المتابعة أو التي تحتاج حسمًا سريعًا قبل الرد أو التحويل." icon={Stethoscope}>
               {technicalSummary?.openCases?.length ? (
                 <div className="space-y-3">
                   {technicalSummary.openCases.map((item) => (
-                    <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div key={item.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                       <div>
-                        <p className="text-white font-black">{item.name}</p>
-                        <p className="text-white/45 text-sm mt-1">
+                        <p className="text-slate-950 font-black">{item.name}</p>
+                        <p className="text-slate-500 text-sm mt-1">
                           {item.type === "workshop" ? "ورشة" : "عميل"} {item.area ? `· ${item.area}` : ""} {item.nextFollowUpAt ? `· ${new Date(item.nextFollowUpAt).toLocaleString("ar-EG")}` : ""}
                         </p>
                       </div>
-                      <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
-                        {technicalStatusLabels[item.status] ?? item.status}
-                      </span>
+                      <StatusBadge tone={item.status === "registered_on_platform" || item.status === "converted_to_order" ? "emerald" : item.status === "new" ? "amber" : "sky"} label={technicalStatusLabels[item.status] ?? item.status} />
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-white/45 text-sm">لا توجد حالات فنية مفتوحة لهذا الحساب الآن.</p>
+                <p className="text-slate-500 text-sm">لا توجد حالات فنية مفتوحة لهذا الحساب الآن.</p>
               )}
-            </div>
+            </SectionCard>
           </>
         )}
       </div>
@@ -780,47 +851,33 @@ export default function EmployeeDashboardPage() {
 
     return (
       <div className="space-y-8">
-        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة الداتا والقطع</p>
-          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-          <p className="text-white/60 text-sm leading-7 max-w-3xl">
-            هذه المساحة تركز على تجهيز السجلات، مراجعة القطع، واستقبال القرارات الفنية التي تحتاج تنفيذًا من جهة الداتا والقطع.
-          </p>
-        </div>
+        <DashboardHero
+          eyebrow="لوحة الداتا والقطع"
+          title={`مرحبًا ${user?.name}`}
+          description="هذه المساحة للتنفيذ الدقيق: إدخال السجلات، مراجعة القطع والباكدجات، واستقبال القرارات الفنية التي تحتاج حركة من جهة الداتا والقطع."
+        />
 
         {dataEntryLoading ? (
-          <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-10 flex justify-center shadow-sm">
             <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {statCards.map((card) => (
-                <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                    <card.icon className="w-5 h-5" />
-                  </div>
-                  <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
-                  <p className="text-white font-black text-2xl">{card.value}</p>
-                </div>
+              {statCards.map((card, index) => (
+                <StatCard
+                  key={card.label}
+                  label={card.label}
+                  value={card.value}
+                  icon={card.icon}
+                  tone={index === 2 ? "amber" : index === 3 ? "emerald" : "slate"}
+                />
               ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {cards.map((card) => (
-                <Link key={card.href} href={card.href}>
-                  <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                      <card.icon className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-                    <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-                    <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                      الدخول للقسم
-                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
+                <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
               ))}
             </div>
           </>
@@ -839,29 +896,15 @@ export default function EmployeeDashboardPage() {
 
     return (
       <div className="space-y-8">
-        <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-          <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة التسويق والتقنية</p>
-          <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-          <p className="text-white/60 text-sm leading-7 max-w-3xl">
-            هذه المساحة مخصصة لمتابعة الأداء العام، السمعة، الملاحظات، والمهام المرتبطة بالتسويق والتقنية وتحسين التجربة.
-          </p>
-        </div>
+        <DashboardHero
+          eyebrow="لوحة التسويق والتقنية"
+          title={`مرحبًا ${user?.name}`}
+          description="هنا تراقب السمعة والصورة العامة ومؤشرات الأداء والمهام التقنية والتسويقية، بحيث تبدأ من ما يحتاج قرارًا أو تحسينًا اليوم."
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
           {cards.map((card) => (
-            <Link key={card.href} href={card.href}>
-              <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                  <card.icon className="w-5 h-5" />
-                </div>
-                <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-                <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-                <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                  الدخول للقسم
-                  <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                </div>
-              </div>
-            </Link>
+            <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
           ))}
         </div>
       </div>
@@ -872,30 +915,15 @@ export default function EmployeeDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-        <p className="text-[#F9E795] text-sm font-bold mb-2">لوحة الموظف</p>
-        <h1 className="text-3xl font-black text-white mb-3">مرحبًا {user?.name}</h1>
-        <p className="text-white/60 text-sm leading-7 max-w-3xl">
-          هذه الواجهة تعرض فقط الأقسام المصرح لك بها حسب دورك الحالي.
-          <span className="text-white/80 font-bold"> {getRoleLabel(user?.role, user?.employeeRole)}</span>
-        </p>
-      </div>
+      <DashboardHero
+        eyebrow="لوحة الموظف"
+        title={`مرحبًا ${user?.name}`}
+        description={`هذه الواجهة تعرض فقط الأقسام المصرح لك بها حسب دورك الحالي: ${getRoleLabel(user?.role, user?.employeeRole)}.`}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {visibleCards.map((card) => (
-          <Link key={card.href} href={card.href}>
-            <div className="group bg-[#1E2761]/60 border border-white/10 rounded-3xl p-6 cursor-pointer hover:border-[#F9E795]/30 hover:bg-[#1E2761]/80 transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-[#F9E795]/10 text-[#F9E795] flex items-center justify-center mb-4">
-                <card.icon className="w-5 h-5" />
-              </div>
-              <h2 className="text-white font-black text-lg mb-2">{card.label}</h2>
-              <p className="text-white/50 text-sm leading-6 min-h-[72px]">{card.description}</p>
-              <div className="mt-4 flex items-center gap-2 text-[#F9E795] text-sm font-bold">
-                الدخول للقسم
-                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              </div>
-            </div>
-          </Link>
+          <ActionTile key={card.href} href={card.href} label={card.label} description={card.description} icon={card.icon} />
         ))}
       </div>
     </div>

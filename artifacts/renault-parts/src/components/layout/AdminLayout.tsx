@@ -29,10 +29,9 @@ import {
 import bakoLogo from '@/assets/bako-logo.png';
 
 const G  = '#C8974A';
-const NV = '#1A2356';
-const BG = '#0D1220';
-const S  = '#111826';
-const S2 = '#161E30';
+const NV = '#1F2937';
+const BG = '#F7F8FA';
+const S  = '#FFFFFF';
 
 type NavItem = {
   href: string;
@@ -255,28 +254,36 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       .slice(0, 5);
   }, [employeeRole, isAdminUser, visibleNavItems]);
 
+  const topbarTitle =
+    isAdminUser
+      ? 'مركز الإدارة'
+      : isManager
+        ? 'مركز مدير الفريق'
+        : employeeDashboardLabel;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: BG, direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
 
       {/* ── Sidebar ── */}
       <aside style={{
         position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
-        width: 272, background: S,
-        borderLeft: '1px solid rgba(200,151,74,0.1)',
+        width: 286, background: S,
+        borderLeft: '1px solid rgba(15,23,42,0.08)',
         display: 'flex', flexDirection: 'column', flexShrink: 0,
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .3s ease',
+        boxShadow: '0 10px 40px rgba(15,23,42,0.08)',
       }}
         className="lg-sidebar"
       >
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '22px 22px 18px', borderBottom: '1px solid rgba(200,151,74,0.08)' }}>
-          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg,${NV},#2A3570)`, borderRadius: 14, border: `1.5px solid rgba(200,151,74,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 16px rgba(200,151,74,0.15)` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '22px 22px 18px', borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
+          <div style={{ width: 44, height: 44, background: `linear-gradient(135deg,#FFFFFF,#F8FAFC)`, borderRadius: 14, border: `1px solid rgba(15,23,42,0.08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 8px 24px rgba(15,23,42,0.08)` }}>
             <img src={bakoLogo} alt="باكو" style={{ width: 30, height: 30, objectFit: 'contain' }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: 900, fontSize: 17, color: '#E8F0F8', lineHeight: 1.2 }}>
-              <span style={{ color: '#fff' }}>رينو</span>
+            <p style={{ margin: 0, fontWeight: 900, fontSize: 17, color: '#0F172A', lineHeight: 1.2 }}>
+              <span style={{ color: '#0F172A' }}>رينو</span>
               <span style={{ color: G }}> باك</span>
             </p>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: G, display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
@@ -286,32 +293,32 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(15,23,42,0.45)', padding: 4 }}
           >
             <X size={18} />
           </button>
         </div>
 
         {/* User Info */}
-        <div style={{ padding: '14px 22px', borderBottom: '1px solid rgba(200,151,74,0.08)' }}>
+        <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', background: `rgba(200,151,74,0.1)`, border: `2px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', background: `rgba(200,151,74,0.1)`, border: `2px solid rgba(200,151,74,0.18)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <span style={{ color: G, fontWeight: 900, fontSize: 15 }}>{user?.name?.[0]}</span>
             </div>
             <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#E8F0F8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{getRoleLabel(user?.role, user?.employeeRole)}</p>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: 13, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(15,23,42,0.45)' }}>{getRoleLabel(user?.role, user?.employeeRole)}</p>
             </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '14px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {(Object.entries(groupedNavItems) as Array<[NavItem['group'], NavItem[]]>).map(([groupKey, items]) => {
             if (!items.length) return null;
             return (
-              <div key={groupKey} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <p style={{ margin: '0 10px 4px', color: 'rgba(255,255,255,0.28)', fontSize: 10, fontWeight: 900, letterSpacing: '.04em' }}>
+              <div key={groupKey} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ margin: '0 10px 2px', color: 'rgba(15,23,42,0.34)', fontSize: 10, fontWeight: 900, letterSpacing: '.04em' }}>
                   {currentGroupLabels[groupKey]}
                 </p>
                 {items.map((item) => {
@@ -321,18 +328,25 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       <div
                         onClick={() => setSidebarOpen(false)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12,
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 14,
                           cursor: 'pointer', transition: 'all .18s',
-                          background: active ? G : 'transparent',
-                          color: active ? NV : 'rgba(255,255,255,0.6)',
+                          background: active ? 'rgba(200,151,74,0.14)' : 'transparent',
+                          color: active ? '#0F172A' : 'rgba(15,23,42,0.72)',
                           fontWeight: 800, fontSize: 13,
+                          border: active ? '1px solid rgba(200,151,74,0.24)' : '1px solid transparent',
                         }}
-                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.08)'; (e.currentTarget as HTMLElement).style.color = active ? NV : '#fff'; }}
-                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = active ? NV : 'rgba(255,255,255,0.6)'; }}
+                        onMouseEnter={e => {
+                          if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(15,23,42,0.04)';
+                          (e.currentTarget as HTMLElement).style.color = '#0F172A';
+                        }}
+                        onMouseLeave={e => {
+                          if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent';
+                          (e.currentTarget as HTMLElement).style.color = active ? '#0F172A' : 'rgba(15,23,42,0.72)';
+                        }}
                       >
                         <item.icon size={16} style={{ flexShrink: 0, color: active ? NV : 'inherit' }} />
                         <span>{item.href === '/admin/employee/dashboard' && item.employeeOnly ? employeeDashboardLabel : item.label}</span>
-                        {active && <div style={{ marginRight: 'auto', width: 6, height: 6, borderRadius: '50%', background: NV, opacity: 0.6 }} />}
+                        {active && <div style={{ marginRight: 'auto', width: 7, height: 7, borderRadius: '50%', background: G, opacity: 0.9 }} />}
                       </div>
                     </Link>
                   );
@@ -343,12 +357,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Footer */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(200,151,74,0.08)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(15,23,42,0.08)', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Link href="/">
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: 13 }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fff'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'; }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: 'rgba(15,23,42,0.62)', fontWeight: 700, fontSize: 13 }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(15,23,42,0.04)'; (e.currentTarget as HTMLElement).style.color = '#0F172A'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(15,23,42,0.62)'; }}
             >
               <Store size={15} style={{ flexShrink: 0 }} />
               العودة للمتجر
@@ -356,8 +370,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <button
             onClick={() => { logout(); setLocation('/login'); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: '#EF4444', fontWeight: 700, fontSize: 13, background: 'none', border: 'none', fontFamily: "'Almarai',sans-serif", width: '100%', textAlign: 'right' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'; }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, cursor: 'pointer', transition: 'all .18s', color: '#DC2626', fontWeight: 700, fontSize: 13, background: 'none', border: 'none', fontFamily: "'Almarai',sans-serif", width: '100%', textAlign: 'right' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(220,38,38,0.08)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
             <LogOut size={15} style={{ flexShrink: 0 }} />
@@ -369,7 +383,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Overlay mobile */}
       {sidebarOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.6)' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(15,23,42,0.35)' }}
           className="lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -379,17 +393,23 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', minWidth: 0, overflow: 'hidden' }} className="admin-main">
 
         {/* Top bar */}
-        <header style={{ flexShrink: 0, zIndex: 30, background: `${S}CC`, backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <header style={{ flexShrink: 0, zIndex: 30, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(15,23,42,0.08)', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.6)' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(15,23,42,0.65)' }}
           >
             <Menu size={22} />
           </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div>
+              <p style={{ margin: 0, color: '#0F172A', fontSize: 15, fontWeight: 900 }}>{topbarTitle}</p>
+              <p style={{ margin: 0, color: 'rgba(15,23,42,0.45)', fontSize: 11, fontWeight: 700 }}>مسار واضح حسب دورك الحالي</p>
+            </div>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e80', animation: 'pulse 2s infinite' }} />
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontWeight: 600 }}>النظام يعمل بشكل طبيعي</span>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 8px rgba(22,163,74,0.35)', animation: 'pulse 2s infinite' }} />
+            <span style={{ color: 'rgba(15,23,42,0.55)', fontSize: 13, fontWeight: 700 }}>النظام يعمل بشكل طبيعي</span>
           </div>
         </header>
 
@@ -402,17 +422,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav for admin - quick access to main sections */}
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: `${S}F5`, backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(200,151,74,0.1)',
+        background: `rgba(255,255,255,0.95)`, backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(15,23,42,0.08)',
         display: 'flex', height: 60,
       }} className="lg:hidden">
         {mobileNavItems.map(item => {
           const active = isActive(item.href, item.exact);
           return (
             <Link key={item.href} href={item.href} style={{ flex: 1, textDecoration: 'none' }}>
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: active ? G : 'rgba(255,255,255,0.35)', transition: 'color .2s' }}>
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: active ? G : 'rgba(15,23,42,0.4)', transition: 'color .2s' }}>
                 <item.icon size={18} style={{ strokeWidth: active ? 2.5 : 1.8 }} />
-                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: "'Almarai',sans-serif" }}>{item.label}</span>
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: "'Almarai',sans-serif" }}>{item.href === '/admin/employee/dashboard' && item.employeeOnly ? employeeDashboardLabel : item.label}</span>
               </div>
             </Link>
           );
