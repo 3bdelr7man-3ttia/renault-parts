@@ -492,7 +492,7 @@ export default function EmployeeTeamPage() {
                       <p className="font-black text-slate-950">إسناد مباشر الآن</p>
                       <p className="mt-1 text-xs text-slate-500">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
                     </div>
-                    <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
                       {quickAssignLeads.length} الآن
                     </span>
                   </div>
@@ -505,11 +505,11 @@ export default function EmployeeTeamPage() {
                             {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="h-12 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#C8974A] focus:ring-4 focus:ring-[#C8974A]/10"
                           >
                             <option value="">اختر المسؤول الآن</option>
                             {employees.map((employee) => (
@@ -521,7 +521,7 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                            className="min-w-[96px] rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                            className="h-11 min-w-[88px] rounded-xl bg-slate-950 px-4 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "إسناد"}
                           </button>
@@ -539,7 +539,7 @@ export default function EmployeeTeamPage() {
                       <p className="font-black text-slate-950">متابعة تحتاج قرارًا الآن</p>
                       <p className="mt-1 text-xs text-slate-500">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
                     </div>
-                    <span className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-700">
+                    <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700">
                       {quickFollowUpLeads.length + urgentTasks.length}
                     </span>
                   </div>
@@ -691,11 +691,11 @@ export default function EmployeeTeamPage() {
 
                       <div className="flex flex-col gap-2 xl:min-w-[280px]">
                         <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                        <div className="flex items-center gap-2">
+                        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
                           <select
                             value={assignmentDrafts[lead.id] ?? ""}
                             onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className="h-12 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition-all focus:border-slate-400"
+                            className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#C8974A] focus:ring-4 focus:ring-[#C8974A]/10"
                           >
                             <option value="">غير مسند</option>
                             {employees.map((employee) => (
@@ -707,7 +707,7 @@ export default function EmployeeTeamPage() {
                           <button
                             onClick={() => saveAssignment(lead)}
                             disabled={savingLeadId === lead.id}
-                            className="min-w-[88px] rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
+                            className="h-11 min-w-[88px] rounded-xl bg-slate-950 px-4 text-sm font-black text-white transition-all hover:bg-slate-800 disabled:opacity-50"
                           >
                             {savingLeadId === lead.id ? "جارٍ..." : "حفظ"}
                           </button>
