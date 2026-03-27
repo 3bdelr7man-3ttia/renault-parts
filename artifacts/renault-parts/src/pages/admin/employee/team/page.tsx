@@ -396,6 +396,8 @@ export default function EmployeeTeamPage() {
       return aTime - bTime;
     })
     .slice(0, 4);
+  const quickAssignCustomerLeads = quickAssignLeads.filter((lead) => lead.type === "customer");
+  const quickAssignWorkshopLeads = quickAssignLeads.filter((lead) => lead.type === "workshop");
   const quickFollowUpLeads = criticalLeads
     .filter((lead) => !!lead.assignedEmployeeId)
     .slice()
@@ -435,26 +437,34 @@ export default function EmployeeTeamPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <Users className="mb-4 h-5 w-5 text-slate-700" />
-          <p className="mb-2 text-xs font-bold text-slate-500">أعضاء الفريق المتاحون</p>
-          <p className="text-2xl font-black text-slate-950">{employees.length}</p>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className={`${adminUi.subtleCard} flex items-center justify-between gap-3 px-4 py-3`}>
+          <div>
+            <p className="text-xs font-bold text-slate-500">أعضاء الفريق المتاحون</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{employees.length}</p>
+          </div>
+          <Users className="h-5 w-5 text-slate-600" />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <BadgeCheck className="mb-4 h-5 w-5 text-amber-600" />
-          <p className="mb-2 text-xs font-bold text-slate-500">عملاء غير موزعين</p>
-          <p className="text-2xl font-black text-slate-950">{unassignedCustomers}</p>
+        <div className={`${adminUi.subtleCard} flex items-center justify-between gap-3 px-4 py-3`}>
+          <div>
+            <p className="text-xs font-bold text-slate-500">عملاء يحتاجون إسنادًا</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{unassignedCustomers}</p>
+          </div>
+          <BadgeCheck className="h-5 w-5 text-amber-600" />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <Building2 className="mb-4 h-5 w-5 text-violet-600" />
-          <p className="mb-2 text-xs font-bold text-slate-500">ورش غير موزعة</p>
-          <p className="text-2xl font-black text-slate-950">{unassignedWorkshops}</p>
+        <div className={`${adminUi.subtleCard} flex items-center justify-between gap-3 px-4 py-3`}>
+          <div>
+            <p className="text-xs font-bold text-slate-500">ورش تحتاج إسنادًا</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{unassignedWorkshops}</p>
+          </div>
+          <Building2 className="h-5 w-5 text-violet-600" />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <ClipboardList className="mb-4 h-5 w-5 text-sky-600" />
-          <p className="mb-2 text-xs font-bold text-slate-500">مهام مفتوحة الآن</p>
-          <p className="text-2xl font-black text-slate-950">{openTasks.length}</p>
+        <div className={`${adminUi.subtleCard} flex items-center justify-between gap-3 px-4 py-3`}>
+          <div>
+            <p className="text-xs font-bold text-slate-500">مهام مفتوحة الآن</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{openTasks.length}</p>
+          </div>
+          <ClipboardList className="h-5 w-5 text-sky-600" />
         </div>
       </div>
 
@@ -464,197 +474,173 @@ export default function EmployeeTeamPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-6">
-            <div className={adminUi.card}>
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                <div>
-                  <h2 className="text-xl font-black text-slate-950">مركز القرار السريع</h2>
-                  <p className="text-sm text-slate-500">من هنا يفترض أن يقدر المدير أن يعيّن مباشرة أو يلتقط ما يحتاج متابعة فورية، بدون النزول الطويل في الصفحة.</p>
-                </div>
-              </div>
-
-              <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className={adminUi.subtleCard}>
-                  <p className="mb-2 text-xs font-bold text-slate-500">عناصر تحتاج إسنادًا</p>
-                  <p className="text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
-                  <p className="mt-2 text-xs text-slate-500">عملاء أو ورش ما زالوا بدون مسؤول مباشر.</p>
-                </div>
-                <div className={adminUi.subtleCard}>
-                  <p className="mb-2 text-xs font-bold text-slate-500">متابعات ومهام قريبة</p>
-                  <p className="text-2xl font-black text-slate-950">{quickFollowUpLeads.length + urgentTasks.length}</p>
-                  <p className="mt-2 text-xs text-slate-500">عناصر يجب التحرك عليها قبل أن تتأخر.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className={`${adminUi.subtleCard} space-y-3`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-black text-slate-950">إسناد مباشر الآن</p>
-                      <p className="mt-1 text-xs text-slate-500">هذه العناصر غير مسندة، والقرار المتوقع هنا هو تحديد المسؤول فورًا.</p>
-                    </div>
-                    <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
-                      {quickAssignLeads.length} الآن
-                    </span>
-                  </div>
-                  {quickAssignLeads.length ? quickAssignLeads.map((lead) => (
-                    <div key={`assign-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="flex flex-col gap-2">
-                        <div>
-                          <p className="font-black text-slate-950">{lead.name}</p>
-                          <p className="mt-1 text-sm text-slate-500">
-                            {lead.type === "customer" ? "عميل" : "ورشة"} · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
-                          </p>
-                        </div>
-                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_88px]">
-                          <select
-                            value={assignmentDrafts[lead.id] ?? ""}
-                            onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className={adminUi.selectSm}
-                          >
-                            <option value="">اختر المسؤول الآن</option>
-                            {employees.map((employee) => (
-                              <option key={employee.id} value={employee.id}>
-                                {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() => saveAssignment(lead)}
-                            disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                            className="h-10 rounded-xl bg-[#C8974A] px-3 text-sm font-black text-slate-950 transition-all hover:bg-[#b9873f] disabled:opacity-50"
-                          >
-                            {savingLeadId === lead.id ? "جارٍ..." : "إسناد"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )) : (
-                    <p className="py-6 text-center text-sm text-slate-500">لا توجد عناصر غير مسندة الآن.</p>
-                  )}
-                </div>
-
-                <div className={`${adminUi.subtleCard} space-y-3`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-black text-slate-950">متابعة تحتاج قرارًا الآن</p>
-                      <p className="mt-1 text-xs text-slate-500">هذه ليست للتوزيع، بل لالتقاط ما قد يتأخر أو يحتاج تدخل المدير.</p>
-                    </div>
-                    <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
-                      {quickFollowUpLeads.length + urgentTasks.length}
-                    </span>
-                  </div>
-                  {quickFollowUpLeads.length === 0 && urgentTasks.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-slate-500">لا توجد عناصر متابعة حرجة الآن.</p>
-                  ) : (
-                    <>
-                      {quickFollowUpLeads.map((lead) => (
-                        <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                          <p className="font-black text-slate-950">{lead.name}</p>
-                          <p className="mt-1 text-sm text-slate-500">
-                            {lead.assignedEmployeeName ?? "غير محدد"} · {lead.type === "customer" ? "عميل" : "ورشة"}
-                          </p>
-                          <p className="mt-2 text-xs text-slate-500">
-                            {lead.nextFollowUpAt ? `المتابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : "تحتاج تحديد متابعة"} · {lead.area ?? "بدون منطقة"}
-                          </p>
-                        </div>
-                      ))}
-                      {urgentTasks.map((task) => (
-                        <div key={`task-${task.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                          <p className="font-black text-slate-950">{task.title}</p>
-                          <p className="mt-1 text-sm text-slate-500">
-                            {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
-                          </p>
-                          <p className="mt-2 text-xs text-slate-500">
-                            الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
-                            {task.leadName ? ` · مرتبطة بـ ${task.leadName}` : ""}
-                          </p>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
+          <div className={adminUi.card}>
+            <div className="flex items-center gap-3 mb-5">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <div>
+                <h2 className="text-xl font-black text-slate-950">مركز القرار السريع</h2>
+                <p className="text-sm text-slate-500">ابدأ من هنا: اسند العملاء والورش مباشرة، ثم التقط المتابعات التي تحتاج قرارًا قبل أن تتأخر.</p>
               </div>
             </div>
 
-            <div className={adminUi.card}>
-              <div className="flex items-center gap-3 mb-4">
-                <Users className="h-5 w-5 text-slate-700" />
-                <div>
-                  <h2 className="text-xl font-black text-slate-950">حمل الفريق الحالي</h2>
-                  <p className="text-sm text-slate-500">من لديه فرص أكثر، ومن لديه مهام مفتوحة، ومن أنهى ما عليه.</p>
+            <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className={adminUi.subtleCard}>
+                <p className="text-xs font-bold text-slate-500">الإسنادات العاجلة</p>
+                <p className="mt-2 text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
+                <p className="mt-2 text-xs text-slate-500">عملاء وورش بلا مسؤول مباشر حتى الآن.</p>
+              </div>
+              <div className={adminUi.subtleCard}>
+                <p className="text-xs font-bold text-slate-500">قرارات متابعة اليوم</p>
+                <p className="mt-2 text-2xl font-black text-slate-950">{quickFollowUpLeads.length}</p>
+                <p className="mt-2 text-xs text-slate-500">عناصر مسندة لكن تحتاج تدخل المدير الآن.</p>
+              </div>
+              <div className={adminUi.subtleCard}>
+                <p className="text-xs font-bold text-slate-500">مهام قد تتأخر</p>
+                <p className="mt-2 text-2xl font-black text-slate-950">{urgentTasks.length}</p>
+                <p className="mt-2 text-xs text-slate-500">مهام مفتوحة قريبة الاستحقاق أو متأخرة.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+              <div className={`${adminUi.subtleCard} space-y-3`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black text-slate-950">إسناد العملاء الآن</p>
+                    <p className="mt-1 text-xs text-slate-500">العملاء الجدد أو غير الموزعين يظهرون هنا أولًا لتسريع التوجيه.</p>
+                  </div>
+                  <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
+                    {quickAssignCustomerLeads.length}
+                  </span>
                 </div>
+                {quickAssignCustomerLeads.length ? quickAssignCustomerLeads.map((lead) => (
+                  <div key={`customer-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="font-black text-slate-950">{lead.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                    </p>
+                    <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                      <select
+                        value={assignmentDrafts[lead.id] ?? ""}
+                        onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
+                        className={adminUi.selectSm}
+                      >
+                        <option value="">اختر المسؤول الآن</option>
+                        {employees.map((employee) => (
+                          <option key={employee.id} value={employee.id}>
+                            {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => saveAssignment(lead)}
+                        disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
+                        className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                      >
+                        {savingLeadId === lead.id ? "..." : "إسناد"}
+                      </button>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="py-6 text-center text-sm text-slate-500">لا يوجد عملاء غير موزعين الآن.</p>
+                )}
               </div>
 
-              <div className="space-y-3">
-                {employeeLoad.map((employee) => (
-                  <div key={employee.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-black text-slate-950">{employee.name}</p>
-                        <p className="mt-1 text-xs font-bold text-[#C8974A]">
-                          {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
+              <div className={`${adminUi.subtleCard} space-y-3`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black text-slate-950">إسناد الورش الآن</p>
+                    <p className="mt-1 text-xs text-slate-500">ورش جديدة أو فرص شراكة لم تُسند بعد.</p>
+                  </div>
+                  <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
+                    {quickAssignWorkshopLeads.length}
+                  </span>
+                </div>
+                {quickAssignWorkshopLeads.length ? quickAssignWorkshopLeads.map((lead) => (
+                  <div key={`workshop-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <p className="font-black text-slate-950">{lead.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                    </p>
+                    <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                      <select
+                        value={assignmentDrafts[lead.id] ?? ""}
+                        onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
+                        className={adminUi.selectSm}
+                      >
+                        <option value="">اختر المسؤول الآن</option>
+                        {employees.map((employee) => (
+                          <option key={employee.id} value={employee.id}>
+                            {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => saveAssignment(lead)}
+                        disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
+                        className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                      >
+                        {savingLeadId === lead.id ? "..." : "إسناد"}
+                      </button>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="py-6 text-center text-sm text-slate-500">لا توجد ورش غير موزعة الآن.</p>
+                )}
+              </div>
+
+              <div className={`${adminUi.subtleCard} space-y-3`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black text-slate-950">متابعات تحتاج قرارًا الآن</p>
+                    <p className="mt-1 text-xs text-slate-500">لقطات سريعة لما يحتاج تدخل المدير، لا مجرد عرض معلومات.</p>
+                  </div>
+                  <span className={`${adminUi.badgeBase} ${adminSemantic.danger}`}>
+                    {quickFollowUpLeads.length + urgentTasks.length}
+                  </span>
+                </div>
+                {quickFollowUpLeads.length === 0 && urgentTasks.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-500">لا توجد عناصر متابعة حرجة الآن.</p>
+                ) : (
+                  <>
+                    {quickFollowUpLeads.map((lead) => (
+                      <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <p className="font-black text-slate-950">{lead.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {lead.assignedEmployeeName ?? "غير محدد"} · {lead.type === "customer" ? "عميل" : "ورشة"}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {lead.nextFollowUpAt ? `المتابعة: ${new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}` : "تحتاج تحديد متابعة"}
                         </p>
                       </div>
-                      <div className="text-left">
-                        <p className="text-lg font-black text-slate-950">{employee.assignedLeads + employee.employeeOpenTasks}</p>
-                        <p className="text-[11px] text-slate-500">عنصر نشط</p>
+                    ))}
+                    {urgentTasks.map((task) => (
+                      <div key={`task-${task.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <p className="font-black text-slate-950">{task.title}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          الاستحقاق: {new Date(task.dueAt).toLocaleString("ar-EG")}
+                        </p>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                      <div className="rounded-xl border border-slate-200 bg-white py-2">
-                        <p className="font-black text-slate-950">{employee.assignedLeads}</p>
-                        <p className="text-[11px] text-slate-500">فرص</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200 bg-white py-2">
-                        <p className="font-black text-slate-950">{employee.employeeOpenTasks}</p>
-                        <p className="text-[11px] text-slate-500">مفتوحة</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200 bg-white py-2">
-                        <p className="font-black text-slate-950">{employee.employeeCompletedTasks}</p>
-                        <p className="text-[11px] text-slate-500">منتهية</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          <div className={adminUi.card}>
-            <h2 className="mb-2 text-xl font-black text-slate-950">الفريق المتاح للإسناد</h2>
-            <p className="mb-4 text-sm text-slate-500">
-              الأدمن يرى المدير وبقية الأقسام، ومدير الفريق يرى الموظفين الذين يوزع عليهم التنفيذ اليومي.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {employees.map((employee) => (
-                <div key={employee.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="font-black text-slate-950">{employee.name}</p>
-                  <p className="mt-2 text-xs font-bold text-[#C8974A]">
-                    {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
-                  </p>
-                  <p className="mt-2 text-xs text-slate-500" dir="ltr">{employee.phone ?? "بدون هاتف"}</p>
-                  {employee.email && <p className="mt-1 text-xs text-slate-500">{employee.email}</p>}
-                  {employee.area && <p className="mt-1 text-xs text-slate-400">المنطقة: {employee.area}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {[{ label: "عملاء الـ pipeline", leads: customerLeads }, { label: "ورش الـ pipeline", leads: workshopLeads }].map((section) => (
-            <div key={section.label} className={adminUi.card}>
-              <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className={adminUi.card}>
+              <div className="flex items-center gap-3 mb-4">
+                <BadgeCheck className="h-5 w-5 text-amber-600" />
                 <div>
-                  <h2 className="text-xl font-black text-slate-950">{section.label}</h2>
-                  <p className="mt-1 text-sm text-slate-500">هذا القسم للتفاصيل والتنفيذ بعد مراجعة مركز القرار والمهام المفتوحة.</p>
+                  <h2 className="text-xl font-black text-slate-950">عملاء الـ pipeline</h2>
+                  <p className="text-sm text-slate-500">كل العملاء مع تفاصيلهم الكاملة بعد انتهاء قرار الإسناد السريع من الأعلى.</p>
                 </div>
-                <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>
-                  {section.leads.length} عنصر
-                </span>
               </div>
               <div className="space-y-4">
-                {section.leads
+                {customerLeads
                   .slice()
                   .sort((a, b) => {
                     if (!a.assignedEmployeeId && b.assignedEmployeeId) return -1;
@@ -664,70 +650,192 @@ export default function EmployeeTeamPage() {
                     return aTime - bTime;
                   })
                   .map((lead) => (
-                  <div key={lead.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-lg font-black text-slate-950">{lead.name}</p>
-                          <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
-                            {leadStatusLabels[lead.status] ?? lead.status}
-                          </span>
-                          {lead.registeredUserId && (
-                            <span className={`${adminUi.badgeBase} ${adminSemantic.success}`}>
-                              تم التسجيل على المنصة {lead.registeredUserName ? `· ${lead.registeredUserName}` : ""}
+                    <div key={lead.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-lg font-black text-slate-950">{lead.name}</p>
+                            <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
+                              {leadStatusLabels[lead.status] ?? lead.status}
                             </span>
+                            {lead.registeredUserId && (
+                              <span className={`${adminUi.badgeBase} ${adminSemantic.success}`}>
+                                تم التسجيل على المنصة {lead.registeredUserName ? `· ${lead.registeredUserName}` : ""}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-500" dir="ltr">
+                            {lead.phone} {lead.email ? `· ${lead.email}` : ""}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {lead.area ?? "بدون منطقة"} · المصدر: {lead.source} · أُضيف بواسطة: {lead.createdByUserName ?? "غير محدد"}
+                          </p>
+                          {lead.nextFollowUpAt && (
+                            <p className="text-xs text-slate-500">
+                              متابعة قادمة: {new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}
+                            </p>
                           )}
                         </div>
-                        <p className="text-sm text-slate-500" dir="ltr">
-                          {lead.phone} {lead.email ? `· ${lead.email}` : ""}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {lead.area ?? "بدون منطقة"} · المصدر: {lead.source} · أُضيف بواسطة: {lead.createdByUserName ?? "غير محدد"}
-                        </p>
-                        {lead.nextFollowUpAt && (
-                          <p className="text-xs text-slate-500">
-                            متابعة قادمة: {new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}
-                          </p>
-                        )}
-                      </div>
 
-                      <div className="flex flex-col gap-2 xl:min-w-[280px]">
-                        <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_88px]">
-                          <select
-                            value={assignmentDrafts[lead.id] ?? ""}
-                            onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                            className={adminUi.selectSm}
-                          >
-                            <option value="">غير مسند</option>
-                            {employees.map((employee) => (
-                              <option key={employee.id} value={employee.id}>
-                                {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() => saveAssignment(lead)}
-                            disabled={savingLeadId === lead.id}
-                            className="h-10 rounded-xl bg-[#C8974A] px-3 text-sm font-black text-slate-950 transition-all hover:bg-[#b9873f] disabled:opacity-50"
-                          >
-                            {savingLeadId === lead.id ? "جارٍ..." : "حفظ"}
-                          </button>
+                        <div className="flex flex-col gap-2 xl:min-w-[280px]">
+                          <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
+                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                            <select
+                              value={assignmentDrafts[lead.id] ?? ""}
+                              onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
+                              className={adminUi.selectSm}
+                            >
+                              <option value="">غير مسند</option>
+                              {employees.map((employee) => (
+                                <option key={employee.id} value={employee.id}>
+                                  {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => saveAssignment(lead)}
+                              disabled={savingLeadId === lead.id}
+                              className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                            >
+                              {savingLeadId === lead.id ? "..." : "حفظ"}
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500">
-                          الحالي: {lead.assignedEmployeeName ?? "غير مسند"} · يمكن توجيه الحالة إلى المبيعات والمتابعة أو الخبير الفني أو إدخال البيانات حسب الحاجة
-                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
-                {section.leads.length === 0 && (
+                {customerLeads.length === 0 && (
                   <p className="py-8 text-center text-sm text-slate-500">لا توجد عناصر في هذا القسم الآن.</p>
                 )}
               </div>
             </div>
-          ))}
+
+            <div className={adminUi.card}>
+              <div className="flex items-center gap-3 mb-4">
+                <Building2 className="h-5 w-5 text-violet-600" />
+                <div>
+                  <h2 className="text-xl font-black text-slate-950">ورش الـ pipeline</h2>
+                  <p className="text-sm text-slate-500">فرص الورش والشراكات التي تحتاج توزيعًا أو متابعة لاحقة.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {workshopLeads
+                  .slice()
+                  .sort((a, b) => {
+                    if (!a.assignedEmployeeId && b.assignedEmployeeId) return -1;
+                    if (a.assignedEmployeeId && !b.assignedEmployeeId) return 1;
+                    const aTime = a.nextFollowUpAt ? new Date(a.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+                    const bTime = b.nextFollowUpAt ? new Date(b.nextFollowUpAt).getTime() : Number.MAX_SAFE_INTEGER;
+                    return aTime - bTime;
+                  })
+                  .map((lead) => (
+                    <div key={lead.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-lg font-black text-slate-950">{lead.name}</p>
+                            <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
+                              {leadStatusLabels[lead.status] ?? lead.status}
+                            </span>
+                            {lead.registeredUserId && (
+                              <span className={`${adminUi.badgeBase} ${adminSemantic.success}`}>
+                                تم الربط على المنصة {lead.registeredUserName ? `· ${lead.registeredUserName}` : ""}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-500" dir="ltr">
+                            {lead.phone} {lead.email ? `· ${lead.email}` : ""}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            {lead.area ?? "بدون منطقة"} · المصدر: {lead.source} · أُضيفت بواسطة: {lead.createdByUserName ?? "غير محدد"}
+                          </p>
+                          {lead.nextFollowUpAt && (
+                            <p className="text-xs text-slate-500">
+                              متابعة قادمة: {new Date(lead.nextFollowUpAt).toLocaleString("ar-EG")}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-2 xl:min-w-[280px]">
+                          <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
+                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                            <select
+                              value={assignmentDrafts[lead.id] ?? ""}
+                              onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
+                              className={adminUi.selectSm}
+                            >
+                              <option value="">غير مسند</option>
+                              {employees.map((employee) => (
+                                <option key={employee.id} value={employee.id}>
+                                  {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => saveAssignment(lead)}
+                              disabled={savingLeadId === lead.id}
+                              className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                            >
+                              {savingLeadId === lead.id ? "..." : "حفظ"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                {workshopLeads.length === 0 && (
+                  <p className="py-8 text-center text-sm text-slate-500">لا توجد عناصر في هذا القسم الآن.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={adminUi.card}>
+            <div className="mb-4 flex items-center gap-3">
+              <Users className="h-5 w-5 text-slate-700" />
+              <div>
+                <h2 className="text-xl font-black text-slate-950">الفريق والحمل التنفيذي</h2>
+                <p className="text-sm text-slate-500">من هنا ترى من المتاح للإسناد ومن عليه ضغط أكبر، بدل فصل القسمين عن بعض.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {employeeLoad.map((employee) => (
+                <div key={employee.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950">{employee.name}</p>
+                      <p className="mt-1 text-xs font-bold text-[#C8974A]">
+                        {employee.employeeRole ? employeeRoleLabels[employee.employeeRole] : "موظف"}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-500" dir="ltr">{employee.phone ?? "بدون هاتف"}</p>
+                      {employee.email && <p className="mt-1 text-xs text-slate-500">{employee.email}</p>}
+                    </div>
+                    <div className={`rounded-2xl px-3 py-2 text-center ${employee.assignedLeads + employee.employeeOpenTasks >= 5 ? adminSemantic.warning : adminSemantic.neutral} ${adminUi.badgeBase}`}>
+                      {employee.assignedLeads + employee.employeeOpenTasks} نشط
+                    </div>
+                  </div>
+                  {employee.area && <p className="mt-3 text-xs text-slate-400">المنطقة: {employee.area}</p>}
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl border border-slate-200 bg-white py-2">
+                      <p className="font-black text-slate-950">{employee.assignedLeads}</p>
+                      <p className="text-[11px] text-slate-500">فرص</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white py-2">
+                      <p className="font-black text-slate-950">{employee.employeeOpenTasks}</p>
+                      <p className="text-[11px] text-slate-500">مفتوحة</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white py-2">
+                      <p className="font-black text-slate-950">{employee.employeeCompletedTasks}</p>
+                      <p className="text-[11px] text-slate-500">منتهية</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
