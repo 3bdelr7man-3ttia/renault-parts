@@ -3,6 +3,7 @@ import { useListAdminWorkshops, useCreateWorkshop, useUpdateWorkshop, useDeleteW
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { adminUi } from '@/components/admin/admin-ui';
 import { Plus, Edit2, Trash2, Check, X, Loader2, MapPin, Phone, Wrench, ClipboardList, ShieldBan, ShieldCheck } from 'lucide-react';
 
 const G = '#C8974A';
@@ -164,50 +165,50 @@ export default function AdminWorkshops() {
   const FormFields = ({ form, setForm }: { form: WorkshopForm; setForm: React.Dispatch<React.SetStateAction<WorkshopForm>> }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">اسم الورشة *</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">اسم الورشة *</label>
         <input
           value={form.name}
           onChange={e => setForm(s => ({ ...s, name: e.target.value }))}
           placeholder="ورشة الرينو الذهبية"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.input}
         />
       </div>
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">المنطقة *</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">المنطقة *</label>
         <select
           value={form.area}
           onChange={e => setForm(s => ({ ...s, area: e.target.value }))}
-          className="w-full bg-[#1E2761] text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.select}
         >
           <option value="">اختر المنطقة</option>
           {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
       <div className="md:col-span-2">
-        <label className="text-white/50 text-xs font-bold mb-1 block">العنوان الكامل *</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">العنوان الكامل *</label>
         <input
           value={form.address}
           onChange={e => setForm(s => ({ ...s, address: e.target.value }))}
           placeholder="شارع مثال، حي كذا"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.input}
         />
       </div>
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">رقم الهاتف *</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">رقم الهاتف *</label>
         <input
           value={form.phone}
           onChange={e => setForm(s => ({ ...s, phone: e.target.value }))}
           placeholder="01xxxxxxxxx"
           dir="ltr"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.input}
         />
       </div>
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">حالة الشراكة</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">حالة الشراكة</label>
         <select
           value={form.partnershipStatus}
           onChange={e => setForm(s => ({ ...s, partnershipStatus: e.target.value }))}
-          className="w-full bg-[#1E2761] text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.select}
         >
           <option value="active">نشطة</option>
           <option value="inactive">متوقفة</option>
@@ -216,73 +217,75 @@ export default function AdminWorkshops() {
         </select>
       </div>
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">خط العرض (lat)</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">خط العرض (lat)</label>
         <input
           type="number"
           value={form.lat}
           onChange={e => setForm(s => ({ ...s, lat: e.target.value }))}
           placeholder="31.2001"
           dir="ltr"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.input}
         />
       </div>
       <div>
-        <label className="text-white/50 text-xs font-bold mb-1 block">خط الطول (lng)</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">خط الطول (lng)</label>
         <input
           type="number"
           value={form.lng}
           onChange={e => setForm(s => ({ ...s, lng: e.target.value }))}
           placeholder="29.9187"
           dir="ltr"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm"
+          className={adminUi.input}
         />
       </div>
       <div className="md:col-span-2">
-        <label className="text-white/50 text-xs font-bold mb-1 block">رابط صورة الورشة (Image URL)</label>
+        <label className="mb-1 block text-xs font-bold text-slate-500">رابط صورة الورشة (Image URL)</label>
         <input
           value={form.imageUrl}
           onChange={e => setForm(s => ({ ...s, imageUrl: e.target.value }))}
           placeholder="https://example.com/workshop.jpg"
           dir="ltr"
-          className="w-full bg-white/10 text-white px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 text-sm font-mono"
+          className={`${adminUi.input} font-mono`}
         />
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
         <div>
-          <h1 className="text-3xl font-black text-white mb-1">إدارة الورش</h1>
-          <p className="text-white/50 text-sm">{workshops?.length ?? 0} ورشة شريكة</p>
+            <h1 className={adminUi.title}>إدارة الورش</h1>
+            <p className={adminUi.subtitle}>{workshops?.length ?? 0} ورشة شريكة مع حالة الشراكة والتغطية الحالية.</p>
         </div>
         <button
           onClick={() => setShowAdd(v => !v)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#F9E795] text-[#1E2761] rounded-xl font-bold text-sm hover:bg-[#F9E795]/80 transition-all"
+            className={adminUi.primaryButton}
         >
           <Plus className="w-4 h-4" />
           إضافة ورشة
         </button>
+        </div>
       </div>
 
       {/* Add Workshop Form */}
       {showAdd && (
-        <div className="bg-[#1E2761]/80 rounded-2xl border border-[#F9E795]/30 p-6 space-y-4">
-          <h3 className="text-white font-bold text-lg">إضافة ورشة جديدة</h3>
+        <div className={`${adminUi.card} space-y-4`}>
+          <h3 className="text-lg font-bold text-slate-900">إضافة ورشة جديدة</h3>
           <FormFields form={addForm} setForm={setAddForm} />
           <div className="flex gap-3 pt-2">
             <button
               onClick={() => createWs({ data: parseForm(addForm) })}
               disabled={creating || !addForm.name || !addForm.area || !addForm.address || !addForm.phone}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#F9E795] text-[#1E2761] rounded-xl font-bold text-sm hover:bg-[#F9E795]/80 transition-all disabled:opacity-50"
+              className={adminUi.primaryButton}
             >
               {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               حفظ
             </button>
             <button
               onClick={() => { setShowAdd(false); setAddForm(emptyForm); }}
-              className="px-6 py-2.5 bg-white/10 text-white/70 rounded-xl font-bold text-sm hover:bg-white/20 transition-all"
+              className={adminUi.secondaryButton}
             >
               إلغاء
             </button>
@@ -293,10 +296,10 @@ export default function AdminWorkshops() {
       {/* Workshops List */}
       {isLoading ? (
         <div className="grid gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-32 rounded-2xl bg-white/5 animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-32 rounded-[28px] border border-slate-200 bg-slate-100 animate-pulse" />)}
         </div>
       ) : (workshops ?? []).length === 0 ? (
-        <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-12 text-center text-white/40 font-bold">
+        <div className={adminUi.emptyState}>
           لا توجد ورش مضافة بعد
         </div>
       ) : (
@@ -307,7 +310,7 @@ export default function AdminWorkshops() {
             const isConfirmingDelete = confirmDelete === ws.id;
 
             return (
-              <div key={ws.id} className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-6 space-y-4">
+              <div key={ws.id} className={`${adminUi.card} space-y-4`}>
                 {isEditing ? (
                   <>
                     <FormFields form={editForm} setForm={setEditForm} />
@@ -315,14 +318,14 @@ export default function AdminWorkshops() {
                       <button
                         onClick={() => updateWs({ id: ws.id, data: parseForm(editForm) })}
                         disabled={updating}
-                        className="flex items-center gap-2 px-5 py-2 bg-[#F9E795] text-[#1E2761] rounded-xl font-bold text-sm hover:bg-[#F9E795]/80 transition-all disabled:opacity-50"
+                        className={adminUi.primaryButton}
                       >
                         {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         حفظ
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="px-5 py-2 bg-white/10 text-white/70 rounded-xl font-bold text-sm hover:bg-white/20 transition-all"
+                        className={adminUi.secondaryButton}
                       >
                         إلغاء
                       </button>
@@ -331,22 +334,22 @@ export default function AdminWorkshops() {
                 ) : (
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0">
-                      <div className="w-10 h-10 bg-[#F9E795]/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Wrench className="w-5 h-5 text-[#F9E795]" />
+                      <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-50">
+                        <Wrench className="w-5 h-5 text-amber-600" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <h3 className="text-white font-bold">{ws.name}</h3>
+                          <h3 className="font-bold text-slate-900">{ws.name}</h3>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${STATUS_COLORS[ws.partnershipStatus] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
                             {STATUS_LABELS[ws.partnershipStatus] ?? ws.partnershipStatus}
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-3 text-white/50 text-xs">
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-500">
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {ws.area} — {ws.address}</span>
                           <span className="flex items-center gap-1" dir="ltr"><Phone className="w-3 h-3" /> {ws.phone}</span>
                         </div>
                         {ws.lat != null && ws.lng != null && (
-                          <p className="text-white/30 text-xs mt-0.5" dir="ltr">{Number(ws.lat).toFixed(4)}, {Number(ws.lng).toFixed(4)}</p>
+                          <p className="mt-0.5 text-xs text-slate-400" dir="ltr">{Number(ws.lat).toFixed(4)}, {Number(ws.lng).toFixed(4)}</p>
                         )}
                       </div>
                     </div>
@@ -362,7 +365,7 @@ export default function AdminWorkshops() {
                           >
                             {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                           </button>
-                          <button onClick={() => setConfirmDelete(null)} className="p-1.5 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 transition-all">
+                          <button onClick={() => setConfirmDelete(null)} className="rounded-lg border border-slate-200 bg-white p-1.5 text-slate-500 hover:bg-slate-50 transition-all">
                             <X className="w-4 h-4" />
                           </button>
                         </>
@@ -388,7 +391,7 @@ export default function AdminWorkshops() {
                                 : <ShieldBan className="w-4 h-4" />
                             }
                           </button>
-                          <button onClick={() => startEdit(ws)} className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
+                          <button onClick={() => startEdit(ws)} className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-900">
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => setConfirmDelete(ws.id)} className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
@@ -407,17 +410,17 @@ export default function AdminWorkshops() {
 
       {/* Workshop Orders Modal */}
       {ordersModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setOrdersModal(null)}>
+        <div className={adminUi.modalOverlay} onClick={() => setOrdersModal(null)}>
           <div
-            className="bg-[#0F1625] border border-[#C8974A]/20 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[85vh] flex flex-col"
+            className={`${adminUi.modalPanel} flex max-h-[85vh] max-w-2xl flex-col`}
             onClick={e => e.stopPropagation()}
             style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}
           >
             <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C8974A] to-transparent" />
-            <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+            <div className={adminUi.modalHeader}>
               <div>
-                <h2 className="text-xl font-black text-white">طلبات الورشة</h2>
-                <p className="text-white/40 text-sm mt-0.5">{ordersModal.name}</p>
+                <h2 className="text-xl font-black text-slate-950">طلبات الورشة</h2>
+                <p className="mt-0.5 text-sm text-slate-500">{ordersModal.name}</p>
                 {ordersModal.phone && (
                   <div className="flex items-center gap-1.5 mt-1">
                     <Phone className="w-3 h-3" style={{ color: G }} />
@@ -425,20 +428,20 @@ export default function AdminWorkshops() {
                   </div>
                 )}
               </div>
-              <button onClick={() => setOrdersModal(null)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center">
+              <button onClick={() => setOrdersModal(null)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="overflow-y-auto flex-1">
               {loadingOrders ? (
-                <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-[#C8974A]" /></div>
+                <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-amber-600" /></div>
               ) : workshopOrders.length === 0 ? (
-                <div className="py-16 text-center text-white/30 font-bold">لا توجد طلبات لهذه الورشة بعد</div>
+                <div className="py-16 text-center font-bold text-slate-400">لا توجد طلبات لهذه الورشة بعد</div>
               ) : (
                 <>
                   <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-[#0F1625]">
-                      <tr className="text-white/40 text-xs font-bold border-b border-white/10">
+                    <thead className="sticky top-0 bg-slate-50">
+                      <tr className="border-b border-slate-200 text-xs font-bold text-slate-500">
                         <th className="px-4 py-3 text-right">#</th>
                         <th className="px-4 py-3 text-right">العميل</th>
                         <th className="px-4 py-3 text-right">الباكدج</th>
@@ -452,21 +455,21 @@ export default function AdminWorkshops() {
                       {workshopOrders.map(order => {
                         const st = STATUS_MAP[order.status] ?? { label: order.status, color: '#94a3b8' };
                         return (
-                          <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="px-4 py-3 text-white/40 font-mono text-xs">{order.id}</td>
+                          <tr key={order.id} className="border-b border-slate-100 transition-colors hover:bg-slate-50">
+                            <td className="px-4 py-3 font-mono text-xs text-slate-400">{order.id}</td>
                             <td className="px-4 py-3">
-                              <div className="text-white text-xs font-bold">{order.userName}</div>
-                              {order.userPhone && <div className="text-white/40 text-xs" dir="ltr">{order.userPhone}</div>}
+                              <div className="text-xs font-bold text-slate-900">{order.userName}</div>
+                              {order.userPhone && <div className="text-xs text-slate-400" dir="ltr">{order.userPhone}</div>}
                             </td>
-                            <td className="px-4 py-3 text-white/70 text-xs">{order.packageName}</td>
-                            <td className="px-4 py-3 text-white/60 text-xs">{order.carModel} {order.carYear}</td>
+                            <td className="px-4 py-3 text-xs text-slate-700">{order.packageName}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500">{order.carModel} {order.carYear}</td>
                             <td className="px-4 py-3">
                               <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ color: st.color, background: `${st.color}15` }}>
                                 {st.label}
                               </span>
                             </td>
-                            <td className="px-4 py-3 font-black text-sm text-white/70">{order.total.toLocaleString()} ج.م</td>
-                            <td className="px-4 py-3 font-black text-sm" style={{ color: order.workshopFee != null ? G : 'rgba(255,255,255,0.2)' }}>
+                            <td className="px-4 py-3 text-sm font-black text-slate-700">{order.total.toLocaleString()} ج.م</td>
+                            <td className="px-4 py-3 text-sm font-black" style={{ color: order.workshopFee != null ? G : 'rgba(148,163,184,0.8)' }}>
                               {order.workshopFee != null ? `${order.workshopFee.toLocaleString()} ج.م` : '—'}
                             </td>
                           </tr>
@@ -476,10 +479,10 @@ export default function AdminWorkshops() {
                   </table>
                   {/* Summary row */}
                   {workshopOrders.length > 0 && (
-                    <div className="px-6 py-4 border-t border-white/10 flex flex-wrap gap-6 justify-end" style={{ background: 'rgba(200,151,74,0.04)' }}>
+                    <div className="flex flex-wrap justify-end gap-6 border-t border-slate-200 bg-amber-50/40 px-6 py-4">
                       <div className="text-right">
-                        <p className="text-white/40 text-xs font-bold mb-0.5">إجمالي الطلبات</p>
-                        <p className="text-white font-black text-sm">{workshopOrders.reduce((s, o) => s + o.total, 0).toLocaleString()} ج.م</p>
+                        <p className="mb-0.5 text-xs font-bold text-slate-500">إجمالي الطلبات</p>
+                        <p className="text-sm font-black text-slate-900">{workshopOrders.reduce((s, o) => s + o.total, 0).toLocaleString()} ج.م</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-bold mb-0.5" style={{ color: 'rgba(200,151,74,0.6)' }}>إجمالي أرباح الورشة</p>

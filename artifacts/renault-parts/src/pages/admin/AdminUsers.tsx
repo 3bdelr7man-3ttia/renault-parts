@@ -3,6 +3,7 @@ import { useListAdminUsers, useUpdateUserRole } from '@workspace/api-client-reac
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { adminUi } from '@/components/admin/admin-ui';
 import { Search, ShieldCheck, User, Loader2, Wrench, Link as LinkIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -34,11 +35,11 @@ const ROLE_LABELS: Record<string, string> = {
   workshop: 'صاحب ورشة',
 };
 const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-[#F9E795]/20 text-[#F9E795] border-[#F9E795]/30',
-  employee: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
-  customer: 'bg-white/10 text-white/60 border-white/10',
-  workshop_owner: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
-  workshop: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+  admin: 'bg-amber-50 text-amber-700 border-amber-200',
+  employee: 'bg-violet-50 text-violet-700 border-violet-200',
+  customer: 'bg-slate-50 text-slate-600 border-slate-200',
+  workshop_owner: 'bg-sky-50 text-sky-700 border-sky-200',
+  workshop: 'bg-sky-50 text-sky-700 border-sky-200',
 };
 const EMPLOYEE_ROLE_LABELS: Record<EmployeeRole, string> = {
   sales: 'مبيعات ومتابعة',
@@ -155,36 +156,38 @@ export default function AdminUsers() {
   ) ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
         <div>
-          <h1 className="text-3xl font-black text-white mb-1">إدارة المستخدمين</h1>
-          <p className="text-white/50 text-sm">{users?.length ?? 0} مستخدم مسجل</p>
+            <h1 className={adminUi.title}>إدارة المستخدمين</h1>
+            <p className={adminUi.subtitle}>{users?.length ?? 0} مستخدم مسجل مع الصلاحيات والربط التشغيلي الحالي.</p>
         </div>
-        <div className="flex items-center gap-2 bg-[#1E2761]/60 border border-white/10 rounded-xl px-4 py-2 w-full sm:w-72">
-          <Search className="w-4 h-4 text-white/40 flex-shrink-0" />
+        <div className={`${adminUi.searchShell} w-full sm:w-80`}>
+          <Search className="h-4 w-4 flex-shrink-0 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="بحث بالاسم أو الهاتف..."
-            className="bg-transparent text-white text-sm placeholder-white/30 outline-none w-full"
+              className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
           />
+        </div>
         </div>
       </div>
 
-      <div className="bg-[#1E2761]/60 rounded-2xl border border-white/10 overflow-hidden">
+      <div className={adminUi.tableShell}>
         {isLoading ? (
           <div className="p-8 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-white/40 font-bold">لا توجد نتائج</div>
+          <div className="p-12 text-center font-bold text-slate-400">لا توجد نتائج</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-white/40 text-xs font-bold border-b border-white/10 bg-white/5">
+                <tr className={`${adminUi.tableHead} border-b border-slate-200`}>
                   <th className="px-6 py-4 text-right">#</th>
                   <th className="px-4 py-4 text-right">الاسم</th>
                   <th className="px-4 py-4 text-right">التواصل</th>
@@ -208,41 +211,41 @@ export default function AdminUsers() {
                   const draftRole = draftRoles[u.id] ?? fallbackRole;
                   const draftEmployeeRole = draftEmployeeRoles[u.id] ?? '';
                   return (
-                    <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-4 text-white/50 font-mono text-xs">{u.id}</td>
+                    <tr key={u.id} className={adminUi.tableRow}>
+                      <td className="px-6 py-4 font-mono text-xs text-slate-400">{u.id}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"
-                            style={{ background: isWorkshop ? '#0369a130' : undefined }}>
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50"
+                            style={{ background: isWorkshop ? '#e0f2fe' : undefined }}>
                             {isWorkshop
-                              ? <Wrench className="w-4 h-4 text-sky-400" />
-                              : <span className="text-white/70 text-xs font-bold">{u.name[0]}</span>
+                              ? <Wrench className="w-4 h-4 text-sky-600" />
+                              : <span className="text-xs font-bold text-slate-600">{u.name[0]}</span>
                             }
                           </div>
                           <div>
-                            <p className="text-white font-bold whitespace-nowrap">
+                            <p className="whitespace-nowrap font-bold text-slate-900">
                               {u.name}
-                              {isMe && <span className="text-[#F9E795] text-xs mr-1">(أنت)</span>}
+                              {isMe && <span className="mr-1 text-xs text-amber-600">(أنت)</span>}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        {u.phone && <p className="text-white/70 text-xs" dir="ltr">{u.phone}</p>}
-                        {u.email && <p className="text-white/50 text-xs">{u.email}</p>}
+                        {u.phone && <p className="text-xs text-slate-700" dir="ltr">{u.phone}</p>}
+                        {u.email && <p className="text-xs text-slate-500">{u.email}</p>}
                       </td>
                       <td className="px-4 py-4">
                         {u.workshopName ? (
                           <div className="flex items-center gap-1.5">
-                            <Wrench size={11} className="text-sky-400 flex-shrink-0" />
-                            <span className="text-sky-300 text-xs font-bold">{u.workshopName}</span>
+                            <Wrench size={11} className="text-sky-600 flex-shrink-0" />
+                            <span className="text-xs font-bold text-sky-700">{u.workshopName}</span>
                           </div>
                         ) : (
-                          <span className="text-white/20 text-xs">—</span>
+                          <span className="text-xs text-slate-300">—</span>
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-bold ${u.orderCount > 0 ? 'bg-[#F9E795]/20 text-[#F9E795]' : 'bg-white/10 text-white/40'}`}>
+                        <span className={`rounded-xl px-2.5 py-1 text-xs font-bold ${u.orderCount > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'}`}>
                           {u.orderCount} طلب
                         </span>
                       </td>
@@ -252,10 +255,10 @@ export default function AdminUsers() {
                           {ROLE_LABELS[normalizedRole] ?? getRoleLabel(u.role, u.employeeRole)}
                         </span>
                         {normalizedRole === 'employee' && u.employeeRole && (
-                          <p className="text-violet-300 text-[11px] font-bold mt-2">{EMPLOYEE_ROLE_LABELS[u.employeeRole]}</p>
+                          <p className="mt-2 text-[11px] font-bold text-violet-700">{EMPLOYEE_ROLE_LABELS[u.employeeRole]}</p>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-white/40 text-xs whitespace-nowrap">
+                      <td className="px-4 py-4 text-xs whitespace-nowrap text-slate-400">
                         {format(new Date(u.createdAt), 'dd/MM/yyyy', { locale: ar })}
                       </td>
                       <td className="px-4 py-4">
@@ -264,7 +267,7 @@ export default function AdminUsers() {
                           {!isMe && !isAdmin && (
                             <button
                               onClick={() => openLinkModal(u)}
-                              className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-all"
+                              className="rounded-lg bg-sky-50 p-1.5 text-sky-700 transition-all hover:bg-sky-100"
                               title="ربط بورشة"
                             >
                               <LinkIcon className="w-3.5 h-3.5" />
@@ -281,8 +284,7 @@ export default function AdminUsers() {
                                     setDraftEmployeeRoles((current) => ({ ...current, [u.id]: '' }));
                                   }
                                 }}
-                                className="bg-white/10 border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none"
-                                style={{ background: '#0F1625' }}
+                                className={adminUi.selectSm}
                               >
                                 <option value="customer">عميل</option>
                                 <option value="employee">موظف</option>
@@ -294,8 +296,7 @@ export default function AdminUsers() {
                                 <select
                                   value={draftEmployeeRole}
                                   onChange={(e) => setDraftEmployeeRoles((current) => ({ ...current, [u.id]: e.target.value as EmployeeRole | '' }))}
-                                  className="bg-white/10 border border-white/15 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none"
-                                  style={{ background: '#0F1625' }}
+                                  className={adminUi.selectSm}
                                 >
                                   <option value="">نوع الموظف</option>
                                   {Object.entries(EMPLOYEE_ROLE_LABELS).map(([key, label]) => (
@@ -305,18 +306,18 @@ export default function AdminUsers() {
                               )}
 
                               {isUpdating ? (
-                                <Loader2 className="w-4 h-4 text-[#F9E795] animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
                               ) : (
                                 <button
                                   onClick={() => handleRoleSave(u)}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all border bg-[#F9E795]/10 text-[#F9E795] hover:bg-[#F9E795]/20 border-[#F9E795]/20"
+                                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition-all hover:bg-amber-100"
                                 >
                                   حفظ
                                 </button>
                               )}
                             </div>
                           ) : isMe ? (
-                            <span className="text-white/20 text-xs">—</span>
+                            <span className="text-xs text-slate-300">—</span>
                           ) : null}
                         </div>
                       </td>
@@ -331,33 +332,32 @@ export default function AdminUsers() {
 
       {/* Link Workshop Modal */}
       {linkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setLinkModal(null)}>
+        <div className={adminUi.modalOverlay} onClick={() => setLinkModal(null)}>
           <div
-            className="bg-[#0F1625] border border-sky-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+            className={`${adminUi.modalPanel} max-w-md`}
             onClick={e => e.stopPropagation()}
             style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}
           >
             <div className="h-0.5 bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <div className={adminUi.modalHeader}>
               <div>
-                <h2 className="text-xl font-black text-white">ربط بورشة</h2>
-                <p className="text-white/40 text-sm mt-0.5">{linkModal.name} — صلاحية ورشة</p>
+                <h2 className="text-xl font-black text-slate-950">ربط بورشة</h2>
+                <p className="mt-0.5 text-sm text-slate-500">{linkModal.name} — صلاحية ورشة</p>
               </div>
-              <button onClick={() => setLinkModal(null)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center">
+              <button onClick={() => setLinkModal(null)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X size={14} />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-white/60 text-sm">
+              <p className="text-sm text-slate-600">
                 اختر الورشة التي ينتمي إليها هذا المستخدم. سيتم منحه صلاحية "صاحب ورشة" تتيح له رؤية طلبات ورشته.
               </p>
               <div>
-                <label className="text-white/50 text-xs font-bold mb-2 block">اختر الورشة</label>
+                <label className="mb-2 block text-xs font-bold text-slate-500">اختر الورشة</label>
                 <select
                   value={selectedWorkshopId}
                   onChange={e => setSelectedWorkshopId(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white font-bold text-sm outline-none focus:border-sky-500/50"
-                  style={{ background: '#0F1625' }}
+                  className={adminUi.select}
                 >
                   <option value="">بدون ورشة (عميل عادي)</option>
                   {workshops.map(w => (
@@ -367,20 +367,20 @@ export default function AdminUsers() {
               </div>
 
               {linkModal.workshopName && (
-                <div className="flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 rounded-xl px-4 py-2">
-                  <Wrench size={13} className="text-sky-400" />
-                  <span className="text-sky-300 text-xs font-bold">مرتبط حاليًا بـ: {linkModal.workshopName}</span>
+                <div className="flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+                  <Wrench size={13} className="text-sky-600" />
+                  <span className="text-xs font-bold text-sky-700">مرتبط حاليًا بـ: {linkModal.workshopName}</span>
                 </div>
               )}
             </div>
-            <div className="px-6 pb-6 flex gap-3">
-              <button onClick={() => setLinkModal(null)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-sm hover:bg-white/10 transition-all">
+            <div className={adminUi.modalFooter}>
+              <button onClick={() => setLinkModal(null)} className={`${adminUi.secondaryButton} flex-1 justify-center`}>
                 إلغاء
               </button>
               <button
                 onClick={handleLinkWorkshop}
                 disabled={linkingId === linkModal.id}
-                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 py-3 text-sm font-bold text-sky-700 transition-all hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {linkingId === linkModal.id ? <Loader2 size={14} className="animate-spin" /> : <LinkIcon size={14} />}
                 {selectedWorkshopId ? 'ربط بالورشة' : 'إلغاء الربط'}

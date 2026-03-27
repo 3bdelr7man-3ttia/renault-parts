@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { adminUi } from '@/components/admin/admin-ui';
 import { Wrench, Plus, Trash2, Loader2, X, Image as ImageIcon, Tag, Package, Edit2, Check } from 'lucide-react';
 
 const G   = '#C8974A';
-const BG  = '#0D1220';
+const INK = '#0F172A';
 
 type Part = {
   id: number;
@@ -175,25 +176,26 @@ export default function AdminParts() {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20"
+      className={adminUi.input}
     />
   );
 
   return (
-    <div className="space-y-6" style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
-      <div className="flex items-center justify-between">
+    <div className={adminUi.page} style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
         <div>
-          <h1 className="text-3xl font-black text-white mb-1">إدارة القطع</h1>
-          <p className="text-white/50 text-sm">مخزون قطع الغيار — مورد، سعر، كمية متاحة</p>
+            <h1 className={adminUi.title}>إدارة القطع</h1>
+            <p className={adminUi.subtitle}>مخزون قطع الغيار، التسعير، المورد، والحالة الحالية لكل قطعة.</p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
-          style={{ background: `linear-gradient(135deg,${G},#DEB06C)`, color: BG, boxShadow: `0 4px 18px rgba(200,151,74,0.35)` }}
+            className={adminUi.primaryButton}
         >
           <Plus size={15} />
           إضافة قطعة جديدة
         </button>
+        </div>
       </div>
 
       {/* Summary Strip */}
@@ -204,9 +206,9 @@ export default function AdminParts() {
             { label: 'نفذت من المخزن', value: parts.filter(p => p.stockQty === 0).length, color: '#ef4444' },
             { label: 'مخزون منخفض', value: parts.filter(p => p.stockQty > 0 && p.stockQty < 5).length, color: '#f59e0b' },
           ].map((s, i) => (
-            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+            <div key={i} className={`${adminUi.statCard} text-center`}>
               <div className="text-2xl font-black" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-white/50 text-xs font-bold mt-0.5">{s.label}</div>
+              <div className="mt-1 text-xs font-bold text-slate-500">{s.label}</div>
             </div>
           ))}
         </div>
@@ -214,39 +216,39 @@ export default function AdminParts() {
 
       {loading ? (
         <div className="grid gap-3">
-          {[...Array(6)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />)}
+          {[...Array(6)].map((_, i) => <div key={i} className="h-20 rounded-3xl border border-slate-200 bg-slate-100 animate-pulse" />)}
         </div>
       ) : parts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Wrench size={40} className="text-white/10 mb-4" />
-          <p className="text-white/30 font-bold text-lg">لا توجد قطع مضافة بعد</p>
-          <p className="text-white/20 text-sm mt-1">ابدأ بإضافة قطعة من الزر أعلاه</p>
+        <div className={adminUi.emptyState}>
+          <Wrench size={40} className="mx-auto mb-4 text-slate-300" />
+          <p className="text-lg font-bold text-slate-700">لا توجد قطع مضافة بعد</p>
+          <p className="mt-1 text-sm text-slate-500">ابدأ بإضافة قطعة من الزر أعلاه.</p>
         </div>
       ) : (
         <div className="grid gap-3">
           {parts.map(part => (
-            <div key={part.id} className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/[0.07] transition-all">
+            <div key={part.id} className="flex items-center gap-4 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md">
               {/* Image */}
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0 flex items-center justify-center">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                 {part.imageUrl
-                  ? <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
-                  : <ImageIcon size={20} className="text-white/20" />}
+                  ? <img src={part.imageUrl} alt={part.name} className="h-full w-full object-cover" />
+                  : <ImageIcon size={20} className="text-slate-300" />}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-white font-bold text-base truncate">{part.name}</span>
-                  <span className="text-white/40 text-xs font-bold bg-white/5 border border-white/10 rounded-full px-2 py-0.5">
+                  <span className="truncate text-base font-bold text-slate-900">{part.name}</span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-bold text-slate-500">
                     {TYPE_LABELS[part.type] ?? part.type}
                   </span>
                   {part.oemCode && (
-                    <span className="text-white/30 text-xs font-mono">{part.oemCode}</span>
+                    <span className="text-xs font-mono text-slate-400">{part.oemCode}</span>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {part.supplier && (
-                    <span className="flex items-center gap-1 text-xs text-white/60 font-bold">
+                    <span className="flex items-center gap-1 text-xs font-bold text-slate-500">
                       <Package size={10} style={{ color: G }} /> {part.supplier}
                     </span>
                   )}
@@ -258,10 +260,10 @@ export default function AdminParts() {
               <div className="text-right flex-shrink-0 hidden md:block">
                 <div className="space-y-0.5">
                   {part.priceOriginal != null && (
-                    <div className="text-xs"><span className="text-white/40">أصلي </span><span className="font-black" style={{ color: G }}>{part.priceOriginal.toLocaleString()} ج.م</span></div>
+                    <div className="text-xs"><span className="text-slate-400">أصلي </span><span className="font-black" style={{ color: G }}>{part.priceOriginal.toLocaleString()} ج.م</span></div>
                   )}
                   {part.priceTurkish != null && (
-                    <div className="text-xs"><span className="text-white/40">تركي </span><span className="font-black text-sky-400">{part.priceTurkish.toLocaleString()} ج.م</span></div>
+                    <div className="text-xs"><span className="text-slate-400">تركي </span><span className="font-black text-sky-600">{part.priceTurkish.toLocaleString()} ج.م</span></div>
                   )}
                 </div>
               </div>
@@ -274,7 +276,7 @@ export default function AdminParts() {
                       type="number"
                       value={editStockVal}
                       onChange={e => setEditStockVal(e.target.value)}
-                      className="w-16 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-sm text-center outline-none focus:border-[#C8974A]/50"
+                      className="w-16 rounded-xl border border-slate-200 bg-white px-2 py-1 text-center text-sm text-slate-900 outline-none focus:border-[#C8974A] focus:ring-4 focus:ring-[#C8974A]/10"
                       min="0"
                       autoFocus
                     />
@@ -288,7 +290,7 @@ export default function AdminParts() {
                     </button>
                     <button
                       onClick={() => setEditStockId(null)}
-                      className="w-7 h-7 rounded-lg bg-white/5 text-white/40 hover:bg-white/10 flex items-center justify-center"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50"
                     >
                       <X size={11} />
                     </button>
@@ -296,7 +298,7 @@ export default function AdminParts() {
                 ) : (
                   <button
                     onClick={() => { setEditStockId(part.id); setEditStockVal(String(part.stockQty)); }}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 text-xs font-bold transition-all"
+                    className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                   >
                     <Edit2 size={10} /> مخزون
                   </button>
@@ -318,19 +320,19 @@ export default function AdminParts() {
 
       {/* ── Add Part Modal ── */}
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setShowAdd(false)}>
+        <div className={adminUi.modalOverlay} onClick={() => setShowAdd(false)}>
           <div
-            className="bg-[#0F1625] border border-[#C8974A]/20 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
+            className={`${adminUi.modalPanel} max-h-[90vh] max-w-2xl overflow-y-auto`}
             onClick={e => e.stopPropagation()}
             style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}
           >
             <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C8974A] to-transparent" />
-            <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#0F1625] z-10">
+            <div className={`${adminUi.modalHeader} sticky top-0 z-10 bg-white/95 backdrop-blur-sm`}>
               <div>
-                <h2 className="text-xl font-black text-white">قطعة جديدة</h2>
-                <p className="text-white/40 text-sm mt-0.5">أضف قطعة غيار للمنصة</p>
+                <h2 className="text-xl font-black text-slate-950">قطعة جديدة</h2>
+                <p className="mt-0.5 text-sm text-slate-500">أضف قطعة غيار للمنصة</p>
               </div>
-              <button onClick={() => setShowAdd(false)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center">
+              <button onClick={() => setShowAdd(false)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X size={14} />
               </button>
             </div>
@@ -338,16 +340,15 @@ export default function AdminParts() {
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">اسم القطعة *</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">اسم القطعة *</label>
                   {inp('زيت موبيل 5W-30', addState.name, v => setAddState(s => ({ ...s, name: v })))}
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">نوع القطعة *</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">نوع القطعة *</label>
                   <select
                     value={addState.type}
                     onChange={e => setAddState(s => ({ ...s, type: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50"
-                    style={{ background: '#0F1625' }}
+                    className={adminUi.select}
                   >
                     {PART_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -356,61 +357,61 @@ export default function AdminParts() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">سعر أصلي (ج.م)</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">سعر أصلي (ج.م)</label>
                   {inp('850', addState.priceOriginal, v => setAddState(s => ({ ...s, priceOriginal: v })), { type: 'number' })}
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">سعر تركي (ج.م)</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">سعر تركي (ج.م)</label>
                   {inp('550', addState.priceTurkish, v => setAddState(s => ({ ...s, priceTurkish: v })), { type: 'number' })}
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">سعر صيني (ج.م)</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">سعر صيني (ج.م)</label>
                   {inp('350', addState.priceChinese, v => setAddState(s => ({ ...s, priceChinese: v })), { type: 'number' })}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">المورد / المصدر</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">المورد / المصدر</label>
                   {inp('ماكرو، حلايل، دسوقي...', addState.supplier, v => setAddState(s => ({ ...s, supplier: v })))}
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">الكمية في المخزن</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">الكمية في المخزن</label>
                   {inp('10', addState.stockQty, v => setAddState(s => ({ ...s, stockQty: v })), { type: 'number' })}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">كود OEM</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">كود OEM</label>
                   {inp('8200768913', addState.oemCode, v => setAddState(s => ({ ...s, oemCode: v })), { dir: 'ltr' })}
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">موديلات متوافقة</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">موديلات متوافقة</label>
                   {inp('Clio 4, Duster...', addState.compatibleModels, v => setAddState(s => ({ ...s, compatibleModels: v })), { dir: 'ltr' })}
                 </div>
               </div>
 
               <div>
-                <label className="text-white/50 text-xs font-bold mb-1 block">رابط صورة (Image URL)</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">رابط صورة (Image URL)</label>
                 {inp('https://example.com/part.jpg', addState.imageUrl, v => setAddState(s => ({ ...s, imageUrl: v })), { dir: 'ltr' })}
                 {addState.imageUrl && (
-                  <div className="mt-2 w-16 h-16 rounded-xl overflow-hidden border border-white/10">
+                  <div className="mt-2 h-16 w-16 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                     <img src={addState.imageUrl} alt="preview" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="px-6 pb-6 flex gap-3 sticky bottom-0 bg-[#0F1625] pt-3 border-t border-white/5">
-              <button onClick={() => setShowAdd(false)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-sm hover:bg-white/10 transition-all">
+            <div className={`${adminUi.modalFooter} sticky bottom-0`}>
+              <button onClick={() => setShowAdd(false)} className={`${adminUi.secondaryButton} flex-1 justify-center`}>
                 إلغاء
               </button>
               <button
                 onClick={handleAdd}
                 disabled={adding}
-                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
-                style={{ background: `linear-gradient(135deg,${G},#DEB06C)`, color: BG, opacity: adding ? 0.7 : 1 }}
+                className={`${adminUi.primaryButton} flex-1 justify-center`}
+                style={{ opacity: adding ? 0.7 : 1, color: INK }}
               >
                 {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 {adding ? 'جاري الإضافة...' : 'إضافة القطعة'}
