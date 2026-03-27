@@ -1627,6 +1627,74 @@ router.get(
 );
 
 router.get(
+  "/admin/employee/technical/returns/orders/:orderId/context",
+  requireAuth,
+  requireRolePermission("returns.create", "هذه العملية متاحة للمرتجعات فقط"),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const orderId = Number(req.params.orderId);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      res.status(400).json({ error: "رقم الطلب غير صحيح" });
+      return;
+    }
+
+    const [order] = await db
+      .select({
+        id: ordersTable.id,
+        userId: ordersTable.userId,
+        packageId: ordersTable.packageId,
+        status: ordersTable.status,
+        total: ordersTable.total,
+        createdAt: ordersTable.createdAt,
+        customerName: usersTable.name,
+        customerPhone: usersTable.phone,
+        customerEmail: usersTable.email,
+        customerArea: usersTable.area,
+        packageName: packagesTable.name,
+      })
+      .from(ordersTable)
+      .innerJoin(usersTable, eq(ordersTable.userId, usersTable.id))
+      .innerJoin(packagesTable, eq(ordersTable.packageId, packagesTable.id))
+      .where(eq(ordersTable.id, orderId))
+      .limit(1);
+
+    if (!order) {
+      res.status(404).json({ error: "الطلب غير موجود" });
+      return;
+    }
+
+    const parts = await db
+      .select({
+        id: partsTable.id,
+        name: partsTable.name,
+        type: partsTable.type,
+      })
+      .from(packagePartsTable)
+      .innerJoin(partsTable, eq(packagePartsTable.partId, partsTable.id))
+      .where(eq(packagePartsTable.packageId, order.packageId))
+      .orderBy(asc(partsTable.name));
+
+    res.json({
+      orderId: order.id,
+      status: order.status,
+      total: Number(order.total),
+      createdAt: toIso(order.createdAt),
+      customer: {
+        id: order.userId,
+        name: order.customerName,
+        phone: order.customerPhone,
+        email: order.customerEmail,
+        area: order.customerArea,
+      },
+      package: {
+        id: order.packageId,
+        name: order.packageName,
+      },
+      parts,
+    });
+  },
+);
+
+router.get(
   "/admin/employee/technical/returns",
   requireAuth,
   requireRolePermission("returns.view", "هذه الصفحة متاحة للمرتجعات فقط"),

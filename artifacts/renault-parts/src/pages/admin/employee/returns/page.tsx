@@ -78,6 +78,29 @@ type ReturnLookupResult = {
   label: string;
 };
 
+type ReturnOrderContext = {
+  orderId: number;
+  status: string;
+  total: number;
+  createdAt?: string | null;
+  customer: {
+    id: number;
+    name: string;
+    phone?: string | null;
+    email?: string | null;
+    area?: string | null;
+  };
+  package: {
+    id: number;
+    name: string;
+  };
+  parts: Array<{
+    id: number;
+    name: string;
+    type?: string | null;
+  }>;
+};
+
 const sourceLabels: Record<string, string> = {
   sales_self: "جاءت من المبيعات",
   sales_visit: "جاءت من زيارة ميدانية",
@@ -215,6 +238,8 @@ export default function EmployeeReturnsPage() {
   const [lookupQuery, setLookupQuery] = React.useState("");
   const [lookupLoading, setLookupLoading] = React.useState(false);
   const [lookupResults, setLookupResults] = React.useState<ReturnLookupResult[]>([]);
+  const [orderContextLoading, setOrderContextLoading] = React.useState(false);
+  const [orderContext, setOrderContext] = React.useState<ReturnOrderContext | null>(null);
 
   const loadCases = React.useCallback(async () => {
     if (!token) {
@@ -317,6 +342,49 @@ export default function EmployeeReturnsPage() {
     };
   }, [base, createOpen, lookupQuery, token]);
 
+  React.useEffect(() => {
+    if (!createOpen || !token || !createForm.convertedOrderId) {
+      setOrderContext(null);
+      setOrderContextLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setOrderContextLoading(true);
+
+    fetch(`${base}/api/admin/employee/technical/returns/orders/${createForm.convertedOrderId}/context`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(result?.error || "تعذر تحميل تفاصيل الطلب المرتبط.");
+        }
+        if (!cancelled) {
+          setOrderContext(result);
+          setCreateForm((current) => ({
+            ...current,
+            returnPackageName: result?.package?.name ?? current.returnPackageName,
+            registeredUserId: result?.customer?.id ? String(result.customer.id) : current.registeredUserId,
+          }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOrderContext(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setOrderContextLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [base, createForm.convertedOrderId, createOpen, token]);
+
   const updateDraft = (caseId: number, patch: Partial<DraftState>) => {
     setDrafts((current) => ({
       ...current,
@@ -389,6 +457,7 @@ export default function EmployeeReturnsPage() {
       setCreateForm(emptyCreateReturn());
       setLookupQuery("");
       setLookupResults([]);
+      setOrderContext(null);
       setCreateOpen(false);
       await loadCases();
     } catch (error) {
@@ -598,7 +667,18 @@ export default function EmployeeReturnsPage() {
             </div>
             <div>
               <label className="block text-white/50 text-xs font-bold mb-2">اسم القطعة</label>
-              <input value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: فلتر زيت" />
+              {orderContext?.parts?.length ? (
+                <select value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
+                  <option value="" className="bg-[#111826]">اختر قطعة من الطلب</option>
+                  {orderContext.parts.map((part) => (
+                    <option key={part.id} value={part.name} className="bg-[#111826]">
+                      {part.name}{part.type ? ` · ${part.type}` : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: فلتر زيت" />
+              )}
             </div>
             <div>
               <label className="block text-white/50 text-xs font-bold mb-2">الباكدج المرتبط</label>
@@ -614,9 +694,49 @@ export default function EmployeeReturnsPage() {
             </div>
           </div>
 
+          {orderContextLoading ? (
+            <div className="bg-[#10182C] border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-2 text-white/55 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin text-[#F9E795]" />
+              جارٍ تحميل تفاصيل الطلب والباكدج المرتبط...
+            </div>
+          ) : orderContext ? (
+            <div className="bg-[#10182C] border border-[#F9E795]/15 rounded-2xl p-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                  طلب #{orderContext.orderId}
+                </span>
+                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
+                  {orderContext.package.name}
+                </span>
+                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
+                  {orderContext.total.toLocaleString("ar-EG")} ج.م
+                </span>
+              </div>
+              <p className="text-white/55 text-sm">
+                هذا المرتجع صار مرتبطًا بطلب قائم للعميل <span className="text-white font-bold">{orderContext.customer.name}</span>، ويمكنك اختيار القطعة من الباكدج الفعلي بدل إدخالها يدويًا.
+              </p>
+              {orderContext.parts.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {orderContext.parts.map((part) => (
+                    <button
+                      key={part.id}
+                      type="button"
+                      onClick={() => updateCreateForm({ returnPartName: part.name })}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${createForm.returnPartName === part.name ? "bg-[#F9E795] text-[#0D1220] border-[#F9E795]" : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10"}`}
+                    >
+                      {part.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/40 text-xs">لا توجد قطع مرتبطة بالباكدج لهذا الطلب داخل البيانات الحالية.</p>
+              )}
+            </div>
+          ) : null}
+
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <p className="text-white/40 text-xs leading-6">
-              المرتجع يُسجل هنا كمصدر واحد للحقيقة، ثم يمكن لاحقًا فتح نفس النموذج من الطلبات أو المبيعات بشكل تلقائي التعبئة.
+              المرتجع يُسجل هنا كمصدر واحد للحقيقة، ثم يمكن لاحقًا فتح نفس النموذج من الطلبات أو المبيعات بشكل تلقائي التعبئة، مع ربط أوضح بالطلب والباكدج والقطع.
             </p>
             <button
               onClick={handleCreateReturn}
