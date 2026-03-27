@@ -3,11 +3,8 @@ import { useListAdminPackages, useUpdatePackage, useListParts } from '@workspace
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { adminSemantic, adminUi } from '@/components/admin/admin-ui';
 import { Package2, Edit2, Check, X, Loader2, Plus, ChevronDown, Shield, Zap, Disc, Battery, Settings, Wind, Wrench, Droplets, Tag, Trash2, AlertTriangle } from 'lucide-react';
-
-const G  = '#C8974A';
-const BG = '#0D1220';
-const CARD = '#1E2761';
 
 type EditState = {
   name: string;
@@ -57,40 +54,40 @@ function PackagePartsPanel({ pkgId, headers }: { pkgId: number; headers: { heade
 
   if (isLoading) {
     return (
-      <div className="space-y-2 pt-3 border-t border-white/10">
-        {[...Array(3)].map((_, i) => <div key={i} className="h-10 rounded-lg bg-white/5 animate-pulse" />)}
+      <div className="space-y-2 border-t border-slate-200 pt-4">
+        {[...Array(3)].map((_, i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />)}
       </div>
     );
   }
 
   if (!parts || parts.length === 0) {
     return (
-      <div className="pt-3 border-t border-white/10 text-center py-4">
-        <p className="text-white/30 text-xs font-bold">لا توجد قطع مرتبطة بهذا الباكدج</p>
+      <div className="border-t border-slate-200 py-4 pt-4 text-center">
+        <p className="text-xs font-bold text-slate-400">لا توجد قطع مرتبطة بهذا الباكدج</p>
       </div>
     );
   }
 
   return (
-    <div className="pt-3 border-t border-white/10">
-      <div className="flex items-center gap-2 mb-2">
-        <Wrench size={12} className="text-[#C8974A]" />
-        <span className="text-white/50 text-xs font-bold">القطع المشمولة ({parts.length})</span>
+    <div className="border-t border-slate-200 pt-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Wrench size={12} className="text-amber-700" />
+        <span className="text-xs font-bold text-slate-500">القطع المشمولة ({parts.length})</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {parts.map(p => {
+        {parts.map((p) => {
           const Icon = PART_ICONS[p.type] ?? PART_ICONS.default;
           return (
-            <div key={p.id} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/5">
-              <div className="w-7 h-7 rounded-md bg-[#C8974A]/10 flex items-center justify-center flex-shrink-0">
-                <Icon size={12} className="text-[#C8974A]" />
+            <div key={p.id} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-amber-50">
+                <Icon size={12} className="text-amber-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-white text-xs font-bold truncate">{p.name}</div>
+                <div className="truncate text-xs font-bold text-slate-900">{p.name}</div>
                 <div className="flex items-center gap-1">
-                  <Tag size={8} className="text-white/30" />
-                  <span className="text-white/40 text-[10px] font-bold">{PART_TYPE_LABELS[p.type] ?? p.type}</span>
-                  <span className="text-[#C8974A] text-[10px] font-bold mr-auto">{(p.priceOriginal ?? p.priceTurkish)?.toLocaleString()} ج.م</span>
+                  <Tag size={8} className="text-slate-400" />
+                  <span className="text-[10px] font-bold text-slate-500">{PART_TYPE_LABELS[p.type] ?? p.type}</span>
+                  <span className="mr-auto text-[10px] font-bold text-amber-700">{(p.priceOriginal ?? p.priceTurkish)?.toLocaleString()} ج.م</span>
                 </div>
               </div>
             </div>
@@ -248,26 +245,27 @@ export default function AdminPackages() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-3xl font-black text-white mb-1">إدارة الباكدجات</h1>
-          <p className="text-white/50 text-sm">تعديل أسعار ومحتوى باكدجات الصيانة</p>
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
+          <div>
+            <h1 className={adminUi.title}>إدارة الباكدجات</h1>
+            <p className={adminUi.subtitle}>تعديل الأسعار والمحتوى وإدارة حالة التوفر لكل باكدج.</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className={adminUi.primaryButton}
+          >
+            <Plus size={15} />
+            إضافة باكدج
+          </button>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', boxShadow: '0 4px 18px rgba(200,151,74,0.35)' }}
-        >
-          <Plus size={15} />
-          إضافة باكدج
-        </button>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />
+            <div key={i} className="h-40 animate-pulse rounded-[28px] bg-slate-100" />
           ))}
         </div>
       ) : (
@@ -278,52 +276,40 @@ export default function AdminPackages() {
             const partsExpanded = expandedParts.has(pkg.id);
 
             return (
-              <div key={pkg.id} className="bg-[#1E2761]/60 rounded-2xl border border-white/10 p-4 sm:p-6 space-y-4">
-                {/* Card header: name row + actions */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                  {/* Icon + name */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 bg-[#F9E795]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Package2 className="w-5 h-5 text-[#F9E795]" />
+              <div key={pkg.id} className={adminUi.card}>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50">
+                      <Package2 className="h-5 w-5 text-amber-700" />
                     </div>
                     <div className="min-w-0">
                       {isEditing ? (
                         <input
                           value={editState.name}
-                          onChange={e => setEditState(s => ({ ...s, name: e.target.value }))}
-                          className="bg-white/10 text-white font-bold text-base px-3 py-1 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 w-full"
+                          onChange={(e) => setEditState((s) => ({ ...s, name: e.target.value }))}
+                          className={adminUi.inputSm}
                         />
                       ) : (
-                        <h3 className="text-white font-bold text-base sm:text-lg truncate">{pkg.name}</h3>
+                        <h3 className="truncate text-lg font-black text-slate-950">{pkg.name}</h3>
                       )}
-                      <span className="text-[#F9E795] text-xs font-bold bg-[#F9E795]/10 px-2 py-0.5 rounded-full">
+                      <span className={`${adminUi.badgeBase} ${adminSemantic.brand} mt-2`}>
                         {KM_LABELS[pkg.kmService] ?? `${pkg.kmService.toLocaleString()} كم`}
                       </span>
                     </div>
                   </div>
 
-                  {/* Action buttons — wrap on mobile */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {/* Availability toggle */}
                     <button
                       onClick={() => toggleAvailability(pkg.id, pkg.isAvailable ?? true)}
                       disabled={togglingAvailId === pkg.id}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all border"
-                      style={{
-                        background: (pkg.isAvailable ?? true) ? '#22c55e15' : '#ef444415',
-                        borderColor: (pkg.isAvailable ?? true) ? '#22c55e40' : '#ef444440',
-                        color: (pkg.isAvailable ?? true) ? '#22c55e' : '#ef4444',
-                      }}
+                      className={`${adminUi.badgeBase} ${(pkg.isAvailable ?? true) ? adminSemantic.success : adminSemantic.danger}`}
                     >
-                      {togglingAvailId === pkg.id
-                        ? <Loader2 size={10} className="animate-spin" />
-                        : <span className="w-1.5 h-1.5 rounded-full" style={{ background: (pkg.isAvailable ?? true) ? '#22c55e' : '#ef4444' }} />
-                      }
+                      {togglingAvailId === pkg.id ? <Loader2 size={10} className="animate-spin" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
                       {(pkg.isAvailable ?? true) ? 'متاح' : 'موقف'}
                     </button>
                     <button
                       onClick={() => toggleParts(pkg.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all text-xs font-bold"
+                      className={adminUi.softButton}
                     >
                       <Wrench size={12} />
                       القطع
@@ -333,247 +319,227 @@ export default function AdminPackages() {
                       <>
                         <button
                           onClick={cancelEdit}
-                          className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                          className={adminUi.secondaryButton}
                         >
-                          <X className="w-4 h-4" />
+                          <X className="h-4 w-4" />
+                          إلغاء
                         </button>
                         <button
                           onClick={() => saveEdit(pkg.id)}
                           disabled={isSaving}
-                          className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-all disabled:opacity-50"
+                          className={adminUi.primaryButton}
                         >
-                          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          حفظ
                         </button>
                       </>
                     ) : confirmDeleteId === pkg.id ? (
-                      /* Confirm delete row */
                       <>
-                        <span className="flex items-center gap-1 text-red-400 text-xs font-bold">
+                        <span className={`${adminUi.badgeBase} ${adminSemantic.danger}`}>
                           <AlertTriangle size={11} />
                           تأكيد الحذف؟
                         </span>
                         <button
                           onClick={() => handleDeletePkg(pkg.id)}
                           disabled={deletingId === pkg.id}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-all text-xs font-bold disabled:opacity-50"
+                          className={adminUi.destructiveButton}
                         >
                           {deletingId === pkg.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
                           حذف
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                          className={adminUi.secondaryButton}
                         >
-                          <X className="w-4 h-4" />
+                          تراجع
                         </button>
                       </>
                     ) : (
                       <>
                         <button
                           onClick={() => startEdit(pkg)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all text-xs font-bold"
+                          className={adminUi.softButton}
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="h-3.5 w-3.5" />
                           تعديل
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(pkg.id)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-400/60 hover:bg-red-500/20 hover:text-red-400 transition-all"
+                          className={adminUi.destructiveButton}
                           title="حذف الباكدج"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
+                          حذف
                         </button>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Description */}
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="md:col-span-2">
-                    <label className="text-white/40 text-xs font-bold mb-1 block">الوصف</label>
+                    <label className="mb-1 block text-xs font-bold text-slate-500">الوصف</label>
                     {isEditing ? (
                       <textarea
                         value={editState.description}
-                        onChange={e => setEditState(s => ({ ...s, description: e.target.value }))}
+                        onChange={(e) => setEditState((s) => ({ ...s, description: e.target.value }))}
                         rows={2}
-                        className="w-full bg-white/10 text-white text-sm px-3 py-2 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50 resize-none"
+                        className={`${adminUi.textarea} resize-none`}
                       />
                     ) : (
-                      <p className="text-white/70 text-sm leading-relaxed">{pkg.description}</p>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">{pkg.description}</div>
                     )}
                   </div>
 
                   <div className="space-y-3">
-                    {/* Sell Price */}
-                    <div>
-                      <label className="text-white/40 text-xs font-bold mb-1 block">سعر البيع (ج.م)</label>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <label className="mb-1 block text-xs font-bold text-slate-500">سعر البيع (ج.م)</label>
                       {isEditing ? (
                         <input
                           type="number"
                           value={editState.sellPrice}
-                          onChange={e => setEditState(s => ({ ...s, sellPrice: e.target.value }))}
-                          className="w-full bg-white/10 text-[#F9E795] font-bold text-lg px-3 py-1.5 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50"
+                          onChange={(e) => setEditState((s) => ({ ...s, sellPrice: e.target.value }))}
+                          className={`${adminUi.inputSm} font-black text-amber-700`}
                         />
                       ) : (
-                        <p className="text-[#F9E795] font-black text-xl">{pkg.sellPrice.toLocaleString()} ج.م</p>
+                        <p className="text-xl font-black text-amber-700">{pkg.sellPrice.toLocaleString()} ج.م</p>
                       )}
                     </div>
 
-                    {/* Warranty */}
-                    <div>
-                      <label className="text-white/40 text-xs font-bold mb-1 block">الضمان (شهر)</label>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <label className="mb-1 block text-xs font-bold text-slate-500">الضمان (شهر)</label>
                       {isEditing ? (
                         <input
                           type="number"
                           value={editState.warrantyMonths}
-                          onChange={e => setEditState(s => ({ ...s, warrantyMonths: e.target.value }))}
-                          className="w-full bg-white/10 text-white font-bold px-3 py-1.5 rounded-lg border border-white/20 outline-none focus:border-[#F9E795]/50"
+                          onChange={(e) => setEditState((s) => ({ ...s, warrantyMonths: e.target.value }))}
+                          className={adminUi.inputSm}
                         />
                       ) : (
                         <div className="flex items-center gap-1.5">
-                          <Shield size={12} className="text-[#3DA882]" />
-                          <p className="text-white font-bold">{pkg.warrantyMonths} شهر</p>
+                          <Shield size={12} className="text-emerald-700" />
+                          <p className="font-bold text-slate-900">{pkg.warrantyMonths} شهر</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Parts panel */}
-                {partsExpanded && (
-                  <PackagePartsPanel pkgId={pkg.id} headers={headers} />
-                )}
+                {partsExpanded && <PackagePartsPanel pkgId={pkg.id} headers={headers} />}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* ── Add Package Modal ── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-[#0F1625] border border-[#C8974A]/20 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()} style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
-            <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C8974A] to-transparent" />
-            <div className="p-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-black text-white">باكدج جديد</h2>
-                  <p className="text-white/40 text-sm mt-0.5">أضف باكدج صيانة للمتجر</p>
-                </div>
-                <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-lg bg-white/10 text-white/50 hover:bg-white/20 flex items-center justify-center transition-all">
-                  <X size={14} />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              {/* Name */}
+        <div className={adminUi.modalOverlay} onClick={() => setShowAddModal(false)}>
+          <div className={`${adminUi.modalPanel} max-w-lg`} onClick={(e) => e.stopPropagation()} style={{ direction: 'rtl', fontFamily: "'Almarai',sans-serif" }}>
+            <div className={adminUi.modalHeader}>
               <div>
-                <label className="text-white/50 text-xs font-bold mb-1 block">اسم الباكدج *</label>
+                <h2 className="text-xl font-black text-slate-950">باكدج جديد</h2>
+                <p className="mt-0.5 text-sm text-slate-500">أضف باكدج صيانة جديد للمتجر.</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="space-y-4 p-6">
+              <div>
+                <label className="mb-1 block text-xs font-bold text-slate-500">اسم الباكدج *</label>
                 <input
                   value={addState.name}
                   onChange={e => setAddState(s => ({ ...s, name: e.target.value }))}
                   placeholder="مثال: صيانة 40 ألف كم الشاملة"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20"
+                  className={adminUi.input}
                 />
               </div>
-
-              {/* Description */}
               <div>
-                <label className="text-white/50 text-xs font-bold mb-1 block">الوصف</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">الوصف</label>
                 <textarea
                   value={addState.description}
                   onChange={e => setAddState(s => ({ ...s, description: e.target.value }))}
                   rows={2}
                   placeholder="وصف مختصر للباكدج..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20 resize-none"
+                  className={`${adminUi.textarea} resize-none`}
                 />
               </div>
-
-              {/* Prices */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">سعر البيع (ج.م) *</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">سعر البيع (ج.م) *</label>
                   <input
                     type="number"
                     value={addState.sellPrice}
                     onChange={e => setAddState(s => ({ ...s, sellPrice: e.target.value }))}
                     placeholder="1299"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-[#C8974A] font-black text-lg outline-none focus:border-[#C8974A]/50 placeholder-white/10"
+                    className={`${adminUi.input} font-black text-amber-700`}
                   />
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">السعر الأصلي (ج.م)</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">السعر الأصلي (ج.م)</label>
                   <input
                     type="number"
                     value={addState.basePrice}
                     onChange={e => setAddState(s => ({ ...s, basePrice: e.target.value }))}
                     placeholder="1599"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/60 font-bold text-lg outline-none focus:border-[#C8974A]/50 placeholder-white/10"
+                    className={adminUi.input}
                   />
                 </div>
               </div>
-
-              {/* KM + Warranty */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">نوع الصيانة</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">نوع الصيانة</label>
                   <select
                     value={addState.kmService}
                     onChange={e => setAddState(s => ({ ...s, kmService: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50"
+                    className={adminUi.select}
                   >
-                    {KM_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: '#0F1625' }}>{o.label}</option>)}
+                    {KM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-white/50 text-xs font-bold mb-1 block">مدة الضمان (شهر)</label>
+                  <label className="mb-1 block text-xs font-bold text-slate-500">مدة الضمان (شهر)</label>
                   <input
                     type="number"
                     value={addState.warrantyMonths}
                     onChange={e => setAddState(s => ({ ...s, warrantyMonths: e.target.value }))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-bold text-sm outline-none focus:border-[#C8974A]/50"
+                    className={adminUi.input}
                   />
                 </div>
               </div>
-
-              {/* Slug */}
               <div>
-                <label className="text-white/50 text-xs font-bold mb-1 block">الـ Slug (رابط الباكدج)</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">الـ Slug (رابط الباكدج)</label>
                 <input
                   value={addState.slug}
                   onChange={e => setAddState(s => ({ ...s, slug: e.target.value }))}
                   placeholder={addState.name ? generateSlug(addState.name) : 'سيتم إنشاؤه تلقائياً'}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/50 font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20 font-mono"
+                  className={adminUi.input}
                   dir="ltr"
                 />
               </div>
-
-              {/* Image URL */}
               <div>
-                <label className="text-white/50 text-xs font-bold mb-1 block">رابط صورة الباكدج (Image URL)</label>
+                <label className="mb-1 block text-xs font-bold text-slate-500">رابط صورة الباكدج</label>
                 <input
                   value={addState.imageUrl}
                   onChange={e => setAddState(s => ({ ...s, imageUrl: e.target.value }))}
                   placeholder="https://example.com/package.jpg"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/70 font-bold text-sm outline-none focus:border-[#C8974A]/50 placeholder-white/20 font-mono"
+                  className={adminUi.input}
                   dir="ltr"
                 />
               </div>
             </div>
-            <div className="px-6 pb-6 flex gap-3">
+            <div className={adminUi.modalFooter}>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 font-bold text-sm hover:bg-white/10 transition-all"
+                className={`flex-1 ${adminUi.secondaryButton}`}
               >
                 إلغاء
               </button>
               <button
                 onClick={handleAddPkg}
-                className="flex-1 py-3 rounded-xl font-bold text-sm transition-all"
-                style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', boxShadow: '0 4px 14px rgba(200,151,74,0.35)' }}
+                className={`flex-1 ${adminUi.primaryButton}`}
               >
-                <Plus size={14} style={{ display: 'inline', marginLeft: 4 }} />
+                <Plus size={14} />
                 إضافة الباكدج
               </button>
             </div>

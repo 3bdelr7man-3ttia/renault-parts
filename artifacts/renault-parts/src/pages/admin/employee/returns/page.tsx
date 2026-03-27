@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 import { ArrowRightLeft, ClipboardCheck, Loader2, Package2, Plus, RefreshCcw, Save, Search, ShieldAlert, WalletCards, Wrench } from "lucide-react";
 
 type ReturnCase = {
@@ -530,22 +531,22 @@ export default function EmployeeReturnsPage() {
   const resolved = cases.filter((item) => ["approved_exchange", "approved_refund", "rejected", "closed"].includes(item.returnStatus ?? "")).length;
 
   return (
-    <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
+        <div className={adminUi.toolbar}>
           <div>
-            <p className="text-[#F9E795] text-sm font-bold mb-2">المرتجعات</p>
-            <h1 className="text-3xl font-black text-white mb-3">مسار إدارة المرتجع</h1>
-            <p className="text-white/60 text-sm leading-7 max-w-4xl">
-              الأفضل أن يكون المرتجع له صفحة مركزية هنا، ثم نربطه بالطلب والقطعة والباكدج. وبعد ذلك يمكن إضافة اختصارات من الطلبات أو المبيعات تفتح نفس النموذج بشكل مسبق التعبئة.
+            <p className="mb-2 text-sm font-black text-[#C8974A]">المرتجعات</p>
+            <h1 className={adminUi.title}>مسار إدارة المرتجع</h1>
+            <p className={`${adminUi.subtitle} max-w-4xl`}>
+              هنا يتحول المرتجع من مجرد شكوى إلى Workflow واضح: بلاغ، استلام، فحص، قرار استبدال أو رد مالي أو رفض، ثم تحويل الإجراء التالي للجهة المناسبة.
             </p>
           </div>
           {hasPermission("returns.create") ? (
             <button
               onClick={() => setCreateOpen((current) => !current)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all self-start"
+              className={adminUi.primaryButton}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
               {createOpen ? "إخفاء نموذج المرتجع" : "إضافة مرتجع"}
             </button>
           ) : null}
@@ -553,53 +554,57 @@ export default function EmployeeReturnsPage() {
       </div>
 
       {createOpen ? (
-        <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6 space-y-5">
+        <div className={`${adminUi.card} space-y-5`}>
           <div className="flex items-center gap-3">
-            <Plus className="w-5 h-5 text-[#F9E795]" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#C8974A]/10 text-[#9a6e2e]">
+              <Plus className="h-5 w-5" />
+            </div>
             <div>
-              <h2 className="text-white font-black text-xl">تسجيل مرتجع جديد</h2>
-              <p className="text-white/45 text-sm mt-1">من هنا نفتح المرتجع أول مرة ونربطه بالطلب أو القطعة إن أمكن، ثم يدخل بعدها في المسار الفني والمتابعة.</p>
+              <h2 className="text-xl font-black text-slate-950">تسجيل مرتجع جديد</h2>
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                افتح المرتجع مرة واحدة من هنا، واربطه بالطلب أو القطعة أو الباكدج ثم أدخله في المسار الفني والتشغيلي الصحيح.
+              </p>
             </div>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">ابحث عن عميل أو طلب أو ورشة موجودة</label>
+              <label className="mb-2 block text-xs font-black text-slate-500">ابحث عن عميل أو طلب أو ورشة موجودة</label>
               <div className="relative">
-                <Search className="w-4 h-4 text-white/35 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={lookupQuery}
                   onChange={(e) => setLookupQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-3 text-white outline-none"
+                  className={`${adminUi.input} pr-11`}
                   placeholder="اكتب الاسم أو الهاتف أو الإيميل أو رقم الطلب"
                 />
               </div>
-              <p className="text-white/35 text-xs mt-2">
+              <p className="mt-2 text-xs font-medium leading-6 text-slate-500">
                 عند اختيار عميل أو طلب موجود سيتم تعبئة البيانات الأساسية تلقائيًا وربط المرتجع به قدر الإمكان.
               </p>
             </div>
 
             {lookupLoading ? (
-              <div className="bg-[#10182C] border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-2 text-white/55 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin text-[#F9E795]" />
+              <div className={`${adminUi.subtleCard} flex items-center gap-2 text-sm font-medium text-slate-600`}>
+                <Loader2 className="h-4 w-4 animate-spin text-[#C8974A]" />
                 جارٍ البحث في العملاء والطلبات الحالية...
               </div>
             ) : lookupResults.length ? (
-              <div className="bg-[#10182C] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
                 {lookupResults.map((result) => (
                   <button
                     key={result.id}
                     onClick={() => selectLookupResult(result)}
-                    className="w-full text-right px-4 py-3 border-b last:border-b-0 border-white/5 hover:bg-white/5 transition-colors"
+                    className="w-full border-b border-slate-100 px-4 py-3 text-right transition last:border-b-0 hover:bg-slate-50"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-white font-bold text-sm">{result.label}</p>
-                        <p className="text-white/40 text-xs mt-1">
+                        <p className="text-sm font-bold text-slate-900">{result.label}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
                           {result.type === "workshop" ? "ورشة" : "عميل"} {result.phone ? `· ${result.phone}` : ""} {result.area ? `· ${result.area}` : ""}
                         </p>
                       </div>
-                      <span className="px-3 py-1 rounded-xl text-[11px] font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+                      <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>
                         {result.sourceType === "existing_order" ? "طلب سابق" : "بيانات موجودة"}
                       </span>
                     </div>
@@ -607,306 +612,299 @@ export default function EmployeeReturnsPage() {
                 ))}
               </div>
             ) : lookupQuery.trim().length >= 2 ? (
-              <div className="bg-[#10182C] border border-dashed border-white/10 rounded-2xl px-4 py-3 text-white/40 text-sm">
+              <div className={`${adminUi.emptyState} px-4 py-6 text-sm font-medium text-slate-500`}>
                 لا توجد نتيجة مطابقة الآن. يمكنك إدخال المرتجع يدويًا إذا كانت الحالة جديدة.
               </div>
             ) : null}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">نوع الجهة</label>
-              <select value={createForm.type} onChange={(e) => updateCreateForm({ type: e.target.value as "customer" | "workshop" })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                <option value="customer" className="bg-[#111826]">عميل</option>
-                <option value="workshop" className="bg-[#111826]">ورشة</option>
+              <label className="mb-2 block text-xs font-black text-slate-500">نوع الجهة</label>
+              <select value={createForm.type} onChange={(e) => updateCreateForm({ type: e.target.value as "customer" | "workshop" })} className={adminUi.select}>
+                <option value="customer">عميل</option>
+                <option value="workshop">ورشة</option>
               </select>
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">الاسم</label>
-              <input value={createForm.name} onChange={(e) => updateCreateForm({ name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اسم العميل أو الورشة" />
+              <label className="mb-2 block text-xs font-black text-slate-500">الاسم</label>
+              <input value={createForm.name} onChange={(e) => updateCreateForm({ name: e.target.value })} className={adminUi.input} placeholder="اسم العميل أو الورشة" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">الهاتف</label>
-              <input value={createForm.phone} onChange={(e) => updateCreateForm({ phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="رقم الهاتف" />
+              <label className="mb-2 block text-xs font-black text-slate-500">الهاتف</label>
+              <input value={createForm.phone} onChange={(e) => updateCreateForm({ phone: e.target.value })} className={adminUi.input} placeholder="رقم الهاتف" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">الإيميل</label>
-              <input value={createForm.email} onChange={(e) => updateCreateForm({ email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اختياري" />
+              <label className="mb-2 block text-xs font-black text-slate-500">الإيميل</label>
+              <input value={createForm.email} onChange={(e) => updateCreateForm({ email: e.target.value })} className={adminUi.input} placeholder="اختياري" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">المنطقة</label>
-              <input value={createForm.area} onChange={(e) => updateCreateForm({ area: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="اختياري" />
+              <label className="mb-2 block text-xs font-black text-slate-500">المنطقة</label>
+              <input value={createForm.area} onChange={(e) => updateCreateForm({ area: e.target.value })} className={adminUi.input} placeholder="اختياري" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">مصدر المرتجع</label>
-              <select value={createForm.source} onChange={(e) => updateCreateForm({ source: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                {returnCreateSourceOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              <label className="mb-2 block text-xs font-black text-slate-500">مصدر المرتجع</label>
+              <select value={createForm.source} onChange={(e) => updateCreateForm({ source: e.target.value })} className={adminUi.select}>
+                {returnCreateSourceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">رقم الطلب المرتبط</label>
-              <input value={createForm.convertedOrderId} onChange={(e) => updateCreateForm({ convertedOrderId: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: 1024" />
+              <label className="mb-2 block text-xs font-black text-slate-500">رقم الطلب المرتبط</label>
+              <input value={createForm.convertedOrderId} onChange={(e) => updateCreateForm({ convertedOrderId: e.target.value })} className={adminUi.input} placeholder="مثال: 1024" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">نوع طلب المرتجع</label>
-              <select value={createForm.returnRequestType} onChange={(e) => updateCreateForm({ returnRequestType: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                {returnRequestTypeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              <label className="mb-2 block text-xs font-black text-slate-500">نوع طلب المرتجع</label>
+              <select value={createForm.returnRequestType} onChange={(e) => updateCreateForm({ returnRequestType: e.target.value })} className={adminUi.select}>
+                {returnRequestTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">أولوية الحالة</label>
-              <select value={createForm.technicalPriority} onChange={(e) => updateCreateForm({ technicalPriority: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                {priorityOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              <label className="mb-2 block text-xs font-black text-slate-500">أولوية الحالة</label>
+              <select value={createForm.technicalPriority} onChange={(e) => updateCreateForm({ technicalPriority: e.target.value })} className={adminUi.select}>
+                {priorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">أسلوب التعامل الفني</label>
-              <select value={createForm.technicalActionMode} onChange={(e) => updateCreateForm({ technicalActionMode: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                {technicalActionModeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
+              <label className="mb-2 block text-xs font-black text-slate-500">أسلوب التعامل الفني</label>
+              <select value={createForm.technicalActionMode} onChange={(e) => updateCreateForm({ technicalActionMode: e.target.value })} className={adminUi.select}>
+                {technicalActionModeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">اسم القطعة</label>
+              <label className="mb-2 block text-xs font-black text-slate-500">اسم القطعة</label>
               {orderContext?.parts?.length ? (
-                <select value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                  <option value="" className="bg-[#111826]">اختر قطعة من الطلب</option>
+                <select value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className={adminUi.select}>
+                  <option value="">اختر قطعة من الطلب</option>
                   {orderContext.parts.map((part) => (
-                    <option key={part.id} value={part.name} className="bg-[#111826]">
+                    <option key={part.id} value={part.name}>
                       {part.name}{part.type ? ` · ${part.type}` : ""}
                     </option>
                   ))}
                 </select>
               ) : (
-                <input value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: فلتر زيت" />
+                <input value={createForm.returnPartName} onChange={(e) => updateCreateForm({ returnPartName: e.target.value })} className={adminUi.input} placeholder="مثال: فلتر زيت" />
               )}
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">الباكدج المرتبط</label>
-              <input value={createForm.returnPackageName} onChange={(e) => updateCreateForm({ returnPackageName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: باكدج 20 ألف" />
+              <label className="mb-2 block text-xs font-black text-slate-500">الباكدج المرتبط</label>
+              <input value={createForm.returnPackageName} onChange={(e) => updateCreateForm({ returnPackageName: e.target.value })} className={adminUi.input} placeholder="مثال: باكدج 20 ألف" />
             </div>
             <div>
-              <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
-              <input type="datetime-local" value={createForm.nextFollowUpAt} onChange={(e) => updateCreateForm({ nextFollowUpAt: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
+              <label className="mb-2 block text-xs font-black text-slate-500">موعد المتابعة القادم</label>
+              <input type="datetime-local" value={createForm.nextFollowUpAt} onChange={(e) => updateCreateForm({ nextFollowUpAt: e.target.value })} className={adminUi.input} />
             </div>
             <div className="md:col-span-2 xl:col-span-4">
-              <label className="block text-white/50 text-xs font-bold mb-2">تفاصيل البلاغ</label>
-              <textarea value={createForm.notes} onChange={(e) => updateCreateForm({ notes: e.target.value })} className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="ما المشكلة؟ هل القطعة غير مطابقة؟ هل هناك طلب استبدال أو فحص أو رد مالي؟" />
+              <label className="mb-2 block text-xs font-black text-slate-500">تفاصيل البلاغ</label>
+              <textarea value={createForm.notes} onChange={(e) => updateCreateForm({ notes: e.target.value })} className={`${adminUi.textarea} min-h-[110px] resize-none`} placeholder="ما المشكلة؟ هل القطعة غير مطابقة؟ هل هناك طلب استبدال أو فحص أو رد مالي؟" />
             </div>
           </div>
 
           {orderContextLoading ? (
-            <div className="bg-[#10182C] border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-2 text-white/55 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin text-[#F9E795]" />
+            <div className={`${adminUi.subtleCard} flex items-center gap-2 text-sm font-medium text-slate-600`}>
+              <Loader2 className="h-4 w-4 animate-spin text-[#C8974A]" />
               جارٍ تحميل تفاصيل الطلب والباكدج المرتبط...
             </div>
           ) : orderContext ? (
-            <div className="bg-[#10182C] border border-[#F9E795]/15 rounded-2xl p-4 space-y-3">
+            <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
-                  طلب #{orderContext.orderId}
-                </span>
-                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
-                  {orderContext.package.name}
-                </span>
-                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/5 text-white/70 border border-white/10">
-                  {orderContext.total.toLocaleString("ar-EG")} ج.م
-                </span>
+                <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>طلب #{orderContext.orderId}</span>
+                <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>{orderContext.package.name}</span>
+                <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>{orderContext.total.toLocaleString("ar-EG")} ج.م</span>
               </div>
-              <p className="text-white/55 text-sm">
-                هذا المرتجع صار مرتبطًا بطلب قائم للعميل <span className="text-white font-bold">{orderContext.customer.name}</span>، ويمكنك اختيار القطعة من الباكدج الفعلي بدل إدخالها يدويًا.
+              <p className="mt-3 text-sm font-medium leading-6 text-slate-600">
+                هذا المرتجع مرتبط بطلب قائم للعميل <span className="font-bold text-slate-900">{orderContext.customer.name}</span>، ويمكنك اختيار القطعة من الباكدج الفعلي بدل إدخالها يدويًا.
               </p>
               {orderContext.parts.length ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   {orderContext.parts.map((part) => (
                     <button
                       key={part.id}
                       type="button"
                       onClick={() => updateCreateForm({ returnPartName: part.name })}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${createForm.returnPartName === part.name ? "bg-[#F9E795] text-[#0D1220] border-[#F9E795]" : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10"}`}
+                      className={`${adminUi.badgeBase} ${createForm.returnPartName === part.name ? adminSemantic.brand : adminSemantic.neutral}`}
                     >
                       {part.name}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-white/40 text-xs">لا توجد قطع مرتبطة بالباكدج لهذا الطلب داخل البيانات الحالية.</p>
+                <p className="mt-3 text-xs font-medium text-slate-500">لا توجد قطع مرتبطة بالباكدج لهذا الطلب داخل البيانات الحالية.</p>
               )}
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-white/40 text-xs leading-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-3xl text-xs font-medium leading-6 text-slate-500">
               المرتجع يُسجل هنا كمصدر واحد للحقيقة، ثم يمكن لاحقًا فتح نفس النموذج من الطلبات أو المبيعات بشكل تلقائي التعبئة، مع ربط أوضح بالطلب والباكدج والقطع.
             </p>
-            <button
-              onClick={handleCreateReturn}
-              disabled={creating}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
-            >
-              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            <button onClick={handleCreateReturn} disabled={creating} className={adminUi.primaryButton}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {creating ? "جارٍ إنشاء المرتجع..." : "حفظ المرتجع"}
             </button>
           </div>
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
-          { icon: ArrowRightLeft, label: "إجمالي المرتجعات", value: totalReturns },
-          { icon: Package2, label: "بانتظار الاستلام", value: awaitingReceipt },
-          { icon: Wrench, label: "تحت الفحص", value: underInspection },
-          { icon: ShieldAlert, label: "بانتظار القرار", value: awaitingDecision },
-          { icon: WalletCards, label: "محسومة", value: resolved },
+          { icon: ArrowRightLeft, label: "إجمالي المرتجعات", value: totalReturns, tone: adminSemantic.brand },
+          { icon: Package2, label: "بانتظار الاستلام", value: awaitingReceipt, tone: adminSemantic.warning },
+          { icon: Wrench, label: "تحت الفحص", value: underInspection, tone: adminSemantic.info },
+          { icon: ShieldAlert, label: "بانتظار القرار", value: awaitingDecision, tone: adminSemantic.danger },
+          { icon: WalletCards, label: "محسومة", value: resolved, tone: adminSemantic.success },
         ].map((card) => (
-          <div key={card.label} className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-            <card.icon className="w-5 h-5 text-[#F9E795] mb-4" />
-            <p className="text-white/40 text-xs font-bold mb-2">{card.label}</p>
-            <p className="text-white font-black text-2xl">{card.value}</p>
+          <div key={card.label} className={adminUi.statCard}>
+            <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border ${card.tone}`}>
+              <card.icon className="h-5 w-5" />
+            </div>
+            <p className="mb-1 text-xs font-black text-slate-500">{card.label}</p>
+            <p className="text-2xl font-black text-slate-950">{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+      <div className={adminUi.card}>
         {loading ? (
-          <div className="py-10 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-[#C8974A]" />
           </div>
         ) : totalReturns === 0 ? (
-          <p className="text-white/50 text-sm text-center py-10">لا توجد مرتجعات مسندة لهذا الحساب الآن.</p>
+          <div className={adminUi.emptyState}>
+            <ArrowRightLeft className="mx-auto mb-4 h-9 w-9 text-slate-300" />
+            <p className="text-sm font-bold text-slate-600">لا توجد مرتجعات مسندة لهذا الحساب الآن.</p>
+          </div>
         ) : (
           <div className="space-y-6">
             {cases.map((item) => {
               const draft = drafts[item.id] ?? emptyDraft();
               return (
-                <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5 space-y-5">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-white font-black text-lg">{item.name}</h2>
-                        <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
-                          {requestTypeLabels[draft.returnRequestType] ?? "مرتجع"}
+                <div key={item.id} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-black text-slate-950">{item.name}</h2>
+                          <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>
+                            {requestTypeLabels[draft.returnRequestType] ?? "مرتجع"}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm font-medium text-slate-500">
+                          {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">مصدر البلاغ: {sourceLabels[item.source] ?? item.source}</p>
+                        {item.createdByUserName ? <p className="mt-1 text-xs font-medium text-slate-500">أُنشئت بواسطة: {item.createdByUserName}</p> : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>
+                          {priorityLabels[draft.technicalPriority] ?? "متوسطة"}
+                        </span>
+                        <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
+                          {receiptStatusLabels[draft.returnReceiptStatus] ?? "غير محدد"}
+                        </span>
+                        <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
+                          {resolutionLabels[draft.returnResolution] ?? "بانتظار القرار"}
                         </span>
                       </div>
-                      <p className="text-white/45 text-sm mt-2">
-                        {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
-                      </p>
-                      <p className="text-white/35 text-xs mt-1">مصدر البلاغ: {sourceLabels[item.source] ?? item.source}</p>
-                      {item.createdByUserName ? <p className="text-white/35 text-xs mt-1">أُنشئت بواسطة: {item.createdByUserName}</p> : null}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70">
-                        {priorityLabels[draft.technicalPriority] ?? "متوسطة"}
-                      </span>
-                      <span className="px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
-                        {receiptStatusLabels[draft.returnReceiptStatus] ?? "غير محدد"}
-                      </span>
-                      <span className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
-                        {resolutionLabels[draft.returnResolution] ?? "بانتظار القرار"}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">مرحلة المرتجع</label>
-                      <select value={draft.returnStatus} onChange={(e) => updateDraft(item.id, { returnStatus: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {returnStatusOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">مرحلة المرتجع</label>
+                        <select value={draft.returnStatus} onChange={(e) => updateDraft(item.id, { returnStatus: e.target.value })} className={adminUi.select}>
+                          {returnStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">حالة الاستلام</label>
+                        <select value={draft.returnReceiptStatus} onChange={(e) => updateDraft(item.id, { returnReceiptStatus: e.target.value })} className={adminUi.select}>
+                          {returnReceiptStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">قرار المرتجع</label>
+                        <select value={draft.returnResolution} onChange={(e) => updateDraft(item.id, { returnResolution: e.target.value })} className={adminUi.select}>
+                          {returnResolutionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">نوع طلب المرتجع</label>
+                        <select value={draft.returnRequestType} onChange={(e) => updateDraft(item.id, { returnRequestType: e.target.value })} className={adminUi.select}>
+                          {returnRequestTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">أولوية الحالة</label>
+                        <select value={draft.technicalPriority} onChange={(e) => updateDraft(item.id, { technicalPriority: e.target.value })} className={adminUi.select}>
+                          {priorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">أسلوب التعامل</label>
+                        <select value={draft.technicalActionMode} onChange={(e) => updateDraft(item.id, { technicalActionMode: e.target.value })} className={adminUi.select}>
+                          {technicalActionModeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">قرار التحويل</label>
+                        <select value={draft.transferDecision} onChange={(e) => updateDraft(item.id, { transferDecision: e.target.value })} className={adminUi.select}>
+                          {transferDecisionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">موعد المتابعة القادم</label>
+                        <input type="datetime-local" value={draft.nextFollowUpAt} onChange={(e) => updateDraft(item.id, { nextFollowUpAt: e.target.value })} className={adminUi.input} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">اسم القطعة</label>
+                        <input value={draft.returnPartName} onChange={(e) => updateDraft(item.id, { returnPartName: e.target.value })} className={adminUi.input} placeholder="مثال: طلمبة مياه" />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-black text-slate-500">الباكدج المرتبط</label>
+                        <input value={draft.returnPackageName} onChange={(e) => updateDraft(item.id, { returnPackageName: e.target.value })} className={adminUi.input} placeholder="مثال: باكدج 60 ألف كم" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-xs font-black text-slate-500">نتيجة فحص القطعة / سبب القبول أو الرفض</label>
+                        <textarea value={draft.returnInspectionNotes} onChange={(e) => updateDraft(item.id, { returnInspectionNotes: e.target.value })} className={`${adminUi.textarea} min-h-[100px] resize-none`} placeholder="مثال: القطعة مركبة فعليًا وعليها آثار استخدام، أو العبوة سليمة والقطعة لم تُستخدم..." />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-xs font-black text-slate-500">سجل المعرفة الفنية</label>
+                        <textarea value={draft.knowledgeNotes} onChange={(e) => updateDraft(item.id, { knowledgeNotes: e.target.value })} className={`${adminUi.textarea} min-h-[100px] resize-none`} placeholder="السياسة المعتمدة، بدائل القطعة، شروط القبول، ملاحظات الضمان..." />
+                      </div>
+                      <div className="md:col-span-2 xl:col-span-4">
+                        <label className="mb-2 block text-xs font-black text-slate-500">ملاحظات التشغيل والمتابعة</label>
+                        <textarea value={draft.notes} onChange={(e) => updateDraft(item.id, { notes: e.target.value })} className={`${adminUi.textarea} min-h-[100px] resize-none`} placeholder="من تواصل مع العميل؟ هل تم الاستلام؟ هل يحتاج قرار إداري أو تحويل لمسؤول القطع؟" />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">حالة الاستلام</label>
-                      <select value={draft.returnReceiptStatus} onChange={(e) => updateDraft(item.id, { returnReceiptStatus: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {returnReceiptStatusOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">قرار المرتجع</label>
-                      <select value={draft.returnResolution} onChange={(e) => updateDraft(item.id, { returnResolution: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {returnResolutionOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">نوع طلب المرتجع</label>
-                      <select value={draft.returnRequestType} onChange={(e) => updateDraft(item.id, { returnRequestType: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {returnRequestTypeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">أولوية الحالة</label>
-                      <select value={draft.technicalPriority} onChange={(e) => updateDraft(item.id, { technicalPriority: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {priorityOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">أسلوب التعامل</label>
-                      <select value={draft.technicalActionMode} onChange={(e) => updateDraft(item.id, { technicalActionMode: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {technicalActionModeOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">قرار التحويل</label>
-                      <select value={draft.transferDecision} onChange={(e) => updateDraft(item.id, { transferDecision: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none">
-                        {transferDecisionOptions.map((option) => <option key={option.value} value={option.value} className="bg-[#111826]">{option.label}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
-                      <input type="datetime-local" value={draft.nextFollowUpAt} onChange={(e) => updateDraft(item.id, { nextFollowUpAt: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">اسم القطعة</label>
-                      <input value={draft.returnPartName} onChange={(e) => updateDraft(item.id, { returnPartName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: طلمبة مياه" />
-                    </div>
-                    <div>
-                      <label className="block text-white/50 text-xs font-bold mb-2">الباكدج المرتبط</label>
-                      <input value={draft.returnPackageName} onChange={(e) => updateDraft(item.id, { returnPackageName: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" placeholder="مثال: باكدج 60 ألف كم" />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-white/50 text-xs font-bold mb-2">نتيجة فحص القطعة / سبب القبول أو الرفض</label>
-                      <textarea value={draft.returnInspectionNotes} onChange={(e) => updateDraft(item.id, { returnInspectionNotes: e.target.value })} className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="مثال: القطعة مركبة فعليًا وعليها آثار استخدام، أو العبوة سليمة والقطعة لم تُستخدم..." />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-white/50 text-xs font-bold mb-2">سجل المعرفة الفنية</label>
-                      <textarea value={draft.knowledgeNotes} onChange={(e) => updateDraft(item.id, { knowledgeNotes: e.target.value })} className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="السياسة المعتمدة، بدائل القطعة، شروط القبول، ملاحظات الضمان..." />
-                    </div>
-                    <div className="md:col-span-2 xl:col-span-4">
-                      <label className="block text-white/50 text-xs font-bold mb-2">ملاحظات التشغيل والمتابعة</label>
-                      <textarea value={draft.notes} onChange={(e) => updateDraft(item.id, { notes: e.target.value })} className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="من تواصل مع العميل؟ هل تم الاستلام؟ هل يحتاج قرار إداري أو تحويل لمسؤول القطع؟" />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <p className="text-white/35 text-xs mb-2">سير العمل</p>
-                      <p className="text-white">{returnStatusLabels[draft.returnStatus] ?? draft.returnStatus}</p>
+                    <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-4">
+                      <div className={adminUi.subtleCard}>
+                        <p className="mb-2 text-xs font-black text-slate-500">سير العمل</p>
+                        <p className="font-bold text-slate-900">{returnStatusLabels[draft.returnStatus] ?? draft.returnStatus}</p>
+                      </div>
+                      <div className={adminUi.subtleCard}>
+                        <p className="mb-2 text-xs font-black text-slate-500">الاستلام</p>
+                        <p className="font-bold text-slate-900">{receiptStatusLabels[draft.returnReceiptStatus] ?? draft.returnReceiptStatus}</p>
+                      </div>
+                      <div className={adminUi.subtleCard}>
+                        <p className="mb-2 text-xs font-black text-slate-500">الإجراء التالي</p>
+                        <p className="font-bold text-slate-900">{decisionLabels[draft.transferDecision] ?? "تبقى مع الخبير الفني"}</p>
+                      </div>
+                      <div className={adminUi.subtleCard}>
+                        <p className="mb-2 text-xs font-black text-slate-500">النتيجة الحالية</p>
+                        <p className="font-bold text-slate-900">{resolutionLabels[draft.returnResolution] ?? "بانتظار القرار"}</p>
+                      </div>
                     </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <p className="text-white/35 text-xs mb-2">الاستلام</p>
-                      <p className="text-white">{receiptStatusLabels[draft.returnReceiptStatus] ?? draft.returnReceiptStatus}</p>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <p className="text-white/35 text-xs mb-2">الإجراء التالي</p>
-                      <p className="text-white">{decisionLabels[draft.transferDecision] ?? "تبقى مع الخبير الفني"}</p>
-                    </div>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                      <p className="text-white/35 text-xs mb-2">النتيجة الحالية</p>
-                      <p className="text-white">{resolutionLabels[draft.returnResolution] ?? "بانتظار القرار"}</p>
-                    </div>
-                  </div>
 
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <div className="text-white/35 text-xs inline-flex items-center gap-2">
-                      <ClipboardCheck className="w-4 h-4" />
-                      {item.createdAt ? `تم البلاغ ${new Date(item.createdAt).toLocaleDateString("ar-EG")}` : "مرتجع داخل المسار الفني"}
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                      <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+                        <ClipboardCheck className="h-4 w-4" />
+                        {item.createdAt ? `تم البلاغ ${new Date(item.createdAt).toLocaleDateString("ar-EG")}` : "مرتجع داخل المسار الفني"}
+                      </div>
+                      <button onClick={() => handleSave(item.id)} disabled={savingId === item.id} className={adminUi.primaryButton}>
+                        {savingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        {savingId === item.id ? "جارٍ الحفظ..." : "حفظ الإجراء"}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleSave(item.id)}
-                      disabled={savingId === item.id}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
-                    >
-                      {savingId === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      {savingId === item.id ? "جارٍ الحفظ..." : "حفظ الإجراء"}
-                    </button>
                   </div>
                 </div>
               );
@@ -915,12 +913,14 @@ export default function EmployeeReturnsPage() {
         )}
       </div>
 
-      <div className="bg-[#151D33] border border-white/10 rounded-3xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <RefreshCcw className="w-5 h-5 text-[#F9E795]" />
-          <h2 className="text-white font-black text-xl">خطوات المرتجع على النظام</h2>
+      <div className={adminUi.card}>
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#C8974A]/10 text-[#9a6e2e]">
+            <RefreshCcw className="h-5 w-5" />
+          </div>
+          <h2 className="text-xl font-black text-slate-950">خطوات المرتجع على النظام</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">
+        <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-5">
           {[
             "1. تبليغ من المبيعات أو العميل أو الورشة",
             "2. تسجيل نوع المرتجع وترتيب الاستلام",
@@ -928,7 +928,7 @@ export default function EmployeeReturnsPage() {
             "4. قرار استبدال أو رد مالي أو رفض",
             "5. إنشاء مهمة تلقائية للجهة المنفذة",
           ].map((step) => (
-            <div key={step} className="bg-[#10182C] border border-white/10 rounded-2xl p-4 text-white/70 leading-7">
+            <div key={step} className={`${adminUi.subtleCard} font-medium leading-7 text-slate-600`}>
               {step}
             </div>
           ))}
