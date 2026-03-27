@@ -116,6 +116,42 @@ const sourceLabels: Record<string, string> = {
   workshop_referral: "جاءت من إحالة ورشة",
 };
 
+function getRequiredActionLabel(actionMode: string, type: TechnicalCase["type"]) {
+  if (actionMode === "contact_directly") {
+    return type === "workshop"
+      ? "المطلوب الآن: تواصل مباشرة مع الورشة وحدد المعلومة أو القرار الفني المطلوب."
+      : "المطلوب الآن: تواصل مباشرة مع العميل وافهم تفاصيل الشكوى أو الحالة الفنية.";
+  }
+  if (actionMode === "coordinate_with_workshop") {
+    return "المطلوب الآن: نسّق مع الورشة وحدد هل الحالة تحتاج تنفيذًا أو مراجعة على الأرض.";
+  }
+  if (actionMode === "escalate_management") {
+    return "المطلوب الآن: جهّز ملخصًا فنيًا واضحًا وارفعه للإدارة لاتخاذ قرار.";
+  }
+  return "المطلوب الآن: اكتب رأيك الفني المنظم ليصل إلى المبيعات أو الفريق المسؤول بشكل واضح.";
+}
+
+function getTransferEffectLabel(decision: string) {
+  if (decision === "sales") return "بعد الحفظ: سيتم إنشاء إجراء منظم للمبيعات للرد على العميل أو المتابعة التجارية.";
+  if (decision === "workshop") return "بعد الحفظ: سيتم إنشاء إجراء متابعة للورشة لتنفيذ الخطوة الفنية المطلوبة.";
+  if (decision === "management") return "بعد الحفظ: سترتفع الحالة إلى الإدارة بملخص فني واضح لاتخاذ القرار.";
+  if (decision === "parts") return "بعد الحفظ: ستذهب التوصية لمسؤول القطع/الداتا لمراجعة القطعة أو البديل أو المرتجع.";
+  return "بعد الحفظ: ستظل الحالة عندك كخبير فني حتى تقرر الخطوة التالية.";
+}
+
+function buildStructuredResponsePreview(item: TechnicalCase, draft: DraftState) {
+  return [
+    `مصدر الحالة: ${sourceLabels[item.source] ?? item.source}`,
+    `التصنيف الفني: ${technicalCategoryLabels[draft.technicalCategory] ?? "غير محدد"}`,
+    `الأولوية: ${priorityLabels[draft.technicalPriority] ?? "متوسطة"}`,
+    `أسلوب التعامل: ${technicalActionModeLabels[draft.technicalActionMode] ?? "غير محدد"}`,
+    draft.notes ? `التشخيص الفني: ${draft.notes}` : "التشخيص الفني: لم يُكتب بعد",
+    draft.knowledgeNotes ? `الرأي الفني والتوصية: ${draft.knowledgeNotes}` : "الرأي الفني والتوصية: لم تُكتب بعد",
+    `قرار التحويل: ${transferDecisionLabels[draft.transferDecision] ?? "بدون قرار"}`,
+    draft.nextFollowUpAt ? `المتابعة القادمة: ${new Date(draft.nextFollowUpAt).toLocaleString("ar-EG")}` : "المتابعة القادمة: غير محددة",
+  ];
+}
+
 const taskTypeLabels: Record<string, string> = {
   issue_resolution: "حل مشكلة",
   quotation: "عرض سعر",
@@ -267,7 +303,7 @@ export default function EmployeeTechnicalPage() {
 
       toast({
         title: "تم الحفظ",
-        description: result?.transferAction?.message || "تم تحديث الحالة الفنية وقرارها التشغيلي بنجاح.",
+        description: result?.transferAction?.message || "تم حفظ الرد الفني المنظم، والحالة أصبحت جاهزة للتنفيذ أو المتابعة حسب قرارك.",
       });
       await loadCases();
     } catch (error) {
@@ -290,6 +326,9 @@ export default function EmployeeTechnicalPage() {
 
   const renderCaseCard = (item: TechnicalCase) => {
     const draft = drafts[item.id] ?? emptyDraft();
+    const responsePreview = buildStructuredResponsePreview(item, draft);
+    const requiredAction = getRequiredActionLabel(draft.technicalActionMode, item.type);
+    const transferEffect = getTransferEffectLabel(draft.transferDecision);
 
     return (
       <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5 space-y-5">
@@ -322,6 +361,24 @@ export default function EmployeeTechnicalPage() {
             <span className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
               {transferDecisionLabels[draft.transferDecision] ?? "بدون قرار"}
             </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="bg-[#1B2440] border border-[#F9E795]/20 rounded-2xl p-4 space-y-2">
+            <p className="text-[#F9E795] text-xs font-black">المطلوب الآن من الخبير الفني</p>
+            <p className="text-white text-sm leading-7">{requiredAction}</p>
+            <p className="text-white/45 text-xs leading-6">
+              {item.createdByUserName ? `الحالة محوّلة من ${item.createdByUserName}.` : "الحالة محوّلة من أحد أفراد الفريق."}{" "}
+              الهدف هنا ليس مجرد تنفيذ مهمة، بل إصدار رد فني واضح قابل للتنفيذ.
+            </p>
+          </div>
+          <div className="bg-[#131C33] border border-sky-400/15 rounded-2xl p-4 space-y-2">
+            <p className="text-sky-300 text-xs font-black">ما الذي سيحدث بعد الحفظ</p>
+            <p className="text-white text-sm leading-7">{transferEffect}</p>
+            <p className="text-white/45 text-xs leading-6">
+              لو كانت الحالة مرتبطة بمرتجع أو قطعة، سيُستخدم هذا الرد الفني كأساس للقرار التنفيذي وليس كملاحظة عامة فقط.
+            </p>
           </div>
         </div>
 
@@ -397,21 +454,21 @@ export default function EmployeeTechnicalPage() {
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-white/50 text-xs font-bold mb-2">ملاحظات الخبير الفني</label>
+            <label className="block text-white/50 text-xs font-bold mb-2">التشخيص الفني</label>
             <textarea
               value={draft.notes}
               onChange={(event) => updateDraft(item.id, { notes: event.target.value })}
               className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
-              placeholder="اكتب التشخيص الأولي أو ما الذي يحتاج مراجعة أو موافقة..."
+              placeholder="اكتب التشخيص الفني: ما المشكلة؟ ما السبب المرجح؟ وهل الحالة تحتاج فحص أو استبدال أو تصعيد؟"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-white/50 text-xs font-bold mb-2">سجل المعرفة الفنية / اقتراحات قطع وبدائل ومرتجعات</label>
+            <label className="block text-white/50 text-xs font-bold mb-2">الرأي الفني المنظم / التوصية التنفيذية</label>
             <textarea
               value={draft.knowledgeNotes}
               onChange={(event) => updateDraft(item.id, { knowledgeNotes: event.target.value })}
               className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
-              placeholder="مثال: القطعة الأصلية يفضل استبدالها بالبديل التركي X عند عدم التوفر، أو المرتجع يقبل إذا كانت العبوة سليمة..."
+              placeholder="اكتب الرد الذي سيصل للفريق: ماذا تقول للمبيعات أو للقطع أو للإدارة؟ مثال: يفضّل استبدال القطعة، أو يقبل المرتجع بشرط كذا، أو البديل المناسب هو..."
             />
           </div>
           <div className="md:col-span-2 xl:col-span-1">
@@ -429,6 +486,23 @@ export default function EmployeeTechnicalPage() {
               <p>الحالة الحالية: <span className="text-[#F9E795]">{statusLabels[item.status] ?? item.status}</span></p>
               <p>آخر متابعة: <span className="text-white">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("ar-EG") : "غير متاحة"}</span></p>
               <p>المتابعة القادمة: <span className="text-white">{item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toLocaleString("ar-EG") : "غير محددة"}</span></p>
+            </div>
+          </div>
+          <div className="md:col-span-2 xl:col-span-4">
+            <div className="bg-[#0F172A] border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[#F9E795] text-xs font-black">الرد الفني المنظم الذي سيصل للفريق</p>
+                  <p className="text-white/45 text-xs mt-1">هذه الصياغة تساعد المبيعات أو القطع أو الإدارة أن تتحرك فورًا بدون الرجوع لنفس الحالة أكثر من مرة.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                {responsePreview.map((line) => (
+                  <div key={line} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 leading-6">
+                    {line}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -543,7 +617,7 @@ export default function EmployeeTechnicalPage() {
             <section className="space-y-4">
               <div>
                 <h2 className="text-white font-black text-xl">مشاكل القطع والمرتجعات</h2>
-                <p className="text-white/45 text-sm mt-1">المهام التي تتعلق بحل مشاكل القطع، مراجعة المرتجعات، أو قرارات التسعير والإغلاق الفني.</p>
+                <p className="text-white/45 text-sm mt-1">هذه ليست “مهام عامة” فقط، بل إشعارات تنفيذية مرتبطة بحالات القطع والمرتجعات التي تحتاج منك حسمًا أو متابعة.</p>
               </div>
               {issueTasks.length ? (
                 <div className="space-y-4">

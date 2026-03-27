@@ -81,6 +81,22 @@ const emptyTaskForm: TaskFormState = {
   notes: "",
 };
 
+function getTechnicalAssignmentHint(taskType: TaskFormState["taskType"]) {
+  if (taskType === "parts_return_review") {
+    return "سيظهر للخبير كحالة مرتجع/قطعة ليحدد هل تُقبل أو تُراجع أو تُستبدل.";
+  }
+  if (taskType === "workshop_support") {
+    return "سيظهر للخبير كحالة دعم ورشة ليكتب الرأي الفني أو ينسق القرار مع الورشة.";
+  }
+  if (taskType === "issue_resolution") {
+    return "سيظهر للخبير كحالة مشكلة قائمة تحتاج تشخيصًا وخطوة تنفيذية واضحة.";
+  }
+  if (taskType === "expert_opinion") {
+    return "سيظهر للخبير كطلب رأي فني مباشر، ثم يخرج رده منظمًا للفريق.";
+  }
+  return "سيظهر للخبير داخل مساحة الحالات الفنية كحالة جاهزة للرد، وليس كمهمة عامة فقط.";
+}
+
 const taskTypeLabels: Record<TaskFormState["taskType"], string> = {
   call: "مكالمة",
   visit: "زيارة",
@@ -180,6 +196,9 @@ export default function EmployeeTeamPage() {
   const [taskForm, setTaskForm] = React.useState<TaskFormState>(emptyTaskForm);
   const selectedEmployee = React.useMemo(() => employees.find((employee) => String(employee.id) === taskForm.employeeId) ?? null, [employees, taskForm.employeeId]);
   const taskTypeOptions = React.useMemo(() => getTaskTypesForAssignee(selectedEmployee?.employeeRole ?? null), [selectedEmployee?.employeeRole]);
+  const allLeads = React.useMemo(() => [...customerLeads, ...workshopLeads], [customerLeads, workshopLeads]);
+  const selectedLead = React.useMemo(() => allLeads.find((lead) => String(lead.id) === taskForm.leadId) ?? null, [allLeads, taskForm.leadId]);
+  const isTechnicalAssignee = selectedEmployee?.employeeRole === "technical_expert";
 
   const loadPage = React.useCallback(async () => {
     if (!token) {
@@ -251,6 +270,19 @@ export default function EmployeeTeamPage() {
     }
   }, [taskForm.taskType, taskTypeOptions]);
 
+  React.useEffect(() => {
+    if (!isTechnicalAssignee || !selectedLead) return;
+
+    setTaskForm((prev) => ({
+      ...prev,
+      title:
+        prev.title.trim().length > 0 && !prev.title.startsWith("إحالة فنية:")
+          ? prev.title
+          : `إحالة فنية: ${selectedLead.name}`,
+      area: prev.area || selectedLead.area || "",
+    }));
+  }, [isTechnicalAssignee, selectedLead]);
+
   const saveAssignment = async (lead: TeamLead) => {
     if (!token) return;
 
@@ -290,6 +322,14 @@ export default function EmployeeTeamPage() {
       toast({ variant: "destructive", title: "بيانات ناقصة", description: "اختر الموظف وأدخل عنوان المهمة وموعدها." });
       return;
     }
+    if (isTechnicalAssignee && !taskForm.leadId) {
+      toast({
+        variant: "destructive",
+        title: "حالة فنية ناقصة",
+        description: "لازم تختار عميلًا أو ورشة مرتبطة حتى تظهر للخبير مباشرة داخل مساحة الحالات الفنية.",
+      });
+      return;
+    }
 
     setSavingTask(true);
     try {
@@ -315,8 +355,12 @@ export default function EmployeeTeamPage() {
       }
 
       toast({
-        title: "تمت إضافة المهمة",
-        description: result?.technicalCaseSync?.message || "المهمة أصبحت مسندة ضمن جدول الموظف المحدد.",
+        title: isTechnicalAssignee ? "تم تحويل الحالة الفنية" : "تمت إضافة المهمة",
+        description:
+          result?.technicalCaseSync?.message ||
+          (isTechnicalAssignee
+            ? "ظهرت الحالة داخل مساحة الخبير الفني وأصبحت جاهزة للرد الفني المنظم."
+            : "المهمة أصبحت مسندة ضمن جدول الموظف المحدد."),
       });
       setShowTaskModal(false);
       setTaskForm(emptyTaskForm);
@@ -332,7 +376,6 @@ export default function EmployeeTeamPage() {
     }
   };
 
-  const allLeads = [...customerLeads, ...workshopLeads];
   const unassignedCustomers = customerLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const unassignedWorkshops = workshopLeads.filter((lead) => !lead.assignedEmployeeId).length;
   const registeredCustomers = customerLeads.filter((lead) => lead.registeredUserId).length;
@@ -693,8 +736,12 @@ export default function EmployeeTeamPage() {
           <div className="w-full max-w-2xl bg-[#111826] border border-white/10 rounded-3xl p-6 md:p-8" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-white text-2xl font-black">إسناد مهمة جديدة</h2>
-                <p className="text-white/45 text-sm mt-1">اختر عضو الفريق والفرصة المرتبطة ثم احفظ المهمة.</p>
+                <h2 className="text-white text-2xl font-black">{isTechnicalAssignee ? "تحويل إلى حالة فنية" : "إسناد مهمة جديدة"}</h2>
+                <p className="text-white/45 text-sm mt-1">
+                  {isTechnicalAssignee
+                    ? "اختر الحالة المرتبطة وحدد ما الذي تريد من الخبير الفني أن يحسمه أو يرد عليه."
+                    : "اختر عضو الفريق والفرصة المرتبطة ثم احفظ المهمة."}
+                </p>
               </div>
               <button onClick={() => setShowTaskModal(false)} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 flex items-center justify-center">
                 <X className="w-4 h-4" />
@@ -714,28 +761,45 @@ export default function EmployeeTeamPage() {
                   </option>
                 ))}
               </select>
-              {selectedEmployee?.employeeRole === "technical_expert" ? (
-                <p className="md:col-span-2 text-[11px] text-[#F9E795] leading-6 -mt-1">
-                  لو أسندت المهمة لخبير فني مع اختيار عميل أو ورشة مرتبطة، ستظهر له مباشرة داخل مساحة الحالات الفنية، وليس كمهمة عامة فقط.
-                </p>
+              {isTechnicalAssignee ? (
+                <div className="md:col-span-2 rounded-2xl border border-[#F9E795]/20 bg-[#F9E795]/5 px-4 py-4">
+                  <p className="text-[#F9E795] text-xs font-black mb-2">هذه ليست مهمة عامة</p>
+                  <p className="text-white/75 text-sm leading-7">
+                    بمجرد الحفظ ستتحول هذه الإحالة إلى حالة داخل مساحة الخبير الفني، وسيظهر له العميل أو الورشة المطلوب الرد عليها مباشرة.
+                  </p>
+                  <p className="text-white/45 text-xs leading-6 mt-2">
+                    {getTechnicalAssignmentHint(taskForm.taskType)}
+                  </p>
+                </div>
               ) : null}
 
-              <select
-                value={taskForm.leadId}
-                onChange={(event) => setTaskForm((prev) => ({ ...prev, leadId: event.target.value }))}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
-              >
-                <option value="" className="bg-[#111826]">بدون فرصة مرتبطة</option>
-                {allLeads.map((lead) => (
-                  <option key={`${lead.type}-${lead.id}`} value={lead.id} className="bg-[#111826]">
-                    {lead.name} · {lead.type === "customer" ? "عميل" : "ورشة"}
-                  </option>
-                ))}
-              </select>
+              <div className="md:col-span-2">
+                <label className="block text-white/50 text-xs font-bold mb-2">
+                  {isTechnicalAssignee ? "الحالة المرتبطة المطلوبة للخبير" : "الفرصة المرتبطة"}
+                </label>
+                <select
+                  value={taskForm.leadId}
+                  onChange={(event) => setTaskForm((prev) => ({ ...prev, leadId: event.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                >
+                  {!isTechnicalAssignee ? <option value="" className="bg-[#111826]">بدون فرصة مرتبطة</option> : null}
+                  {allLeads.map((lead) => (
+                    <option key={`${lead.type}-${lead.id}`} value={lead.id} className="bg-[#111826]">
+                      {lead.name} · {lead.type === "customer" ? "عميل" : "ورشة"}
+                    </option>
+                  ))}
+                </select>
+                {isTechnicalAssignee && selectedLead ? (
+                  <p className="text-white/45 text-xs mt-2 leading-6">
+                    ستظهر للخبير كحالة تخص {selectedLead.type === "workshop" ? "ورشة" : "عميل"} باسم {selectedLead.name}
+                    {selectedLead.area ? ` في ${selectedLead.area}` : ""}.
+                  </p>
+                ) : null}
+              </div>
 
               <input
                 className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none"
-                placeholder="عنوان المهمة"
+                placeholder={isTechnicalAssignee ? "عنوان الإحالة الفنية" : "عنوان المهمة"}
                 value={taskForm.title}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, title: event.target.value }))}
               />
@@ -771,7 +835,7 @@ export default function EmployeeTeamPage() {
 
               <textarea
                 className="md:col-span-2 min-h-[120px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
-                placeholder="ملاحظات المهمة"
+                placeholder={isTechnicalAssignee ? "اشرح ما المطلوب من الخبير: تشخيص، رأي فني، حسم مرتجع، أو تنسيق مع ورشة..." : "ملاحظات المهمة"}
                 value={taskForm.notes}
                 onChange={(event) => setTaskForm((prev) => ({ ...prev, notes: event.target.value }))}
               />
@@ -782,7 +846,7 @@ export default function EmployeeTeamPage() {
                 إلغاء
               </button>
               <button onClick={handleCreateTask} disabled={savingTask} className="flex-1 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black hover:opacity-90 transition-all disabled:opacity-50">
-                {savingTask ? "جارٍ الحفظ..." : "حفظ المهمة"}
+                {savingTask ? "جارٍ الحفظ..." : isTechnicalAssignee ? "تحويل إلى حالة فنية" : "حفظ المهمة"}
               </button>
             </div>
           </div>

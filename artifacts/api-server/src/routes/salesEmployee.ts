@@ -368,6 +368,42 @@ const SOURCE_LABELS: Record<string, string> = {
   workshop_referral: "جاءت من إحالة ورشة",
 };
 
+const TECHNICAL_CATEGORY_LABELS: Record<string, string> = {
+  engine: "محرك",
+  electrical: "كهرباء",
+  cooling: "تبريد",
+  suspension: "عفشة",
+  brakes: "فرامل",
+  transmission: "ناقل حركة",
+  diagnostics: "فحص وتشخيص",
+  parts_return: "قطع ومرتجعات",
+  warranty: "ضمان",
+  workshop_relation: "علاقة ورشة",
+  other: "أخرى",
+};
+
+const TECHNICAL_PRIORITY_LABELS: Record<string, string> = {
+  low: "منخفضة",
+  medium: "متوسطة",
+  high: "مرتفعة",
+  critical: "حرجة",
+};
+
+const TECHNICAL_ACTION_MODE_LABELS: Record<string, string> = {
+  contact_directly: "الخبير يتواصل مباشرة",
+  write_opinion_for_sales: "يكتب رأيًا للمبيعات",
+  coordinate_with_workshop: "ينسق مع الورشة مباشرة",
+  escalate_management: "يرفعها للإدارة",
+};
+
+const TRANSFER_DECISION_LABELS: Record<string, string> = {
+  keep_with_technical: "تبقى مع الخبير الفني",
+  sales: "تحويل إلى المبيعات",
+  workshop: "تحويل إلى ورشة",
+  management: "رفع للإدارة",
+  parts: "رفع لمسؤول القطع",
+};
+
 const TRANSFER_TARGET_CONFIG = {
   sales: {
     targetRole: "sales" as const,
@@ -969,6 +1005,47 @@ function getTechnicalCategoryFromTaskType(taskType: CreateManagedTaskInput["task
   return "other";
 }
 
+function getTechnicalActionModeFromTaskType(taskType: CreateManagedTaskInput["taskType"]): string {
+  if (taskType === "workshop_support") return "coordinate_with_workshop";
+  if (taskType === "issue_resolution") return "contact_directly";
+  if (taskType === "expert_opinion" || taskType === "technical_review" || taskType === "parts_return_review") {
+    return "write_opinion_for_sales";
+  }
+  return "write_opinion_for_sales";
+}
+
+function buildStructuredTechnicalResponse(params: {
+  leadSource: string;
+  leadType: string;
+  technicalCategory: string | null;
+  technicalPriority: string;
+  technicalActionMode: string;
+  transferDecision: string | null;
+  notes: string | null;
+  knowledgeNotes: string | null;
+}) {
+  const sourceLabel = SOURCE_LABELS[params.leadSource] ?? params.leadSource;
+  const leadTypeLabel = params.leadType === "workshop" ? "ورشة" : "عميل";
+  const categoryLabel = TECHNICAL_CATEGORY_LABELS[params.technicalCategory ?? "other"] ?? params.technicalCategory ?? "غير محدد";
+  const priorityLabel = TECHNICAL_PRIORITY_LABELS[params.technicalPriority] ?? params.technicalPriority ?? "متوسطة";
+  const actionModeLabel = TECHNICAL_ACTION_MODE_LABELS[params.technicalActionMode] ?? params.technicalActionMode;
+  const transferLabel = params.transferDecision ? TRANSFER_DECISION_LABELS[params.transferDecision] ?? params.transferDecision : "تبقى مع الخبير الفني";
+
+  return [
+    "ملخص الرد الفني",
+    `- مصدر الحالة: ${sourceLabel}`,
+    `- نوع السجل: ${leadTypeLabel}`,
+    `- التصنيف الفني: ${categoryLabel}`,
+    `- الأولوية: ${priorityLabel}`,
+    `- أسلوب التعامل: ${actionModeLabel}`,
+    params.notes ? `- التشخيص الفني: ${params.notes}` : "- التشخيص الفني: لم يُكتب بعد",
+    params.knowledgeNotes ? `- التوصية الفنية: ${params.knowledgeNotes}` : "- التوصية الفنية: لم تُكتب بعد",
+    `- القرار النهائي: ${transferLabel}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 async function syncLeadIntoTechnicalWorkflow(params: {
   leadId: number;
   employeeId: number;
@@ -999,7 +1076,7 @@ async function syncLeadIntoTechnicalWorkflow(params: {
       assignedEmployeeId: params.employeeId,
       technicalCategory: lead.technicalCategory ?? getTechnicalCategoryFromTaskType(params.taskType),
       technicalPriority: lead.technicalPriority ?? "medium",
-      technicalActionMode: lead.technicalActionMode ?? "write_opinion_for_sales",
+      technicalActionMode: lead.technicalActionMode ?? getTechnicalActionModeFromTaskType(params.taskType),
       transferDecision: lead.transferDecision ?? "keep_with_technical",
       nextFollowUpAt: lead.nextFollowUpAt ?? new Date(params.dueAt),
       notes: mergedNotes || null,
@@ -1051,18 +1128,16 @@ async function maybeCreateTechnicalTransferTask(params: {
   }
 
   const dueAt = params.nextFollowUpAt ? new Date(params.nextFollowUpAt) : new Date(Date.now() + 2 * 60 * 60 * 1000);
-  const sourceLabel = SOURCE_LABELS[params.leadSource] ?? params.leadSource;
-  const leadTypeLabel = params.leadType === "workshop" ? "ورشة" : "عميل";
-  const categoryLabel = params.technicalCategory ?? "غير محدد";
-  const priorityLabel = params.technicalPriority ?? "medium";
-  const actionModeLabel =
-    params.technicalActionMode === "contact_directly"
-      ? "الخبير سيتواصل مباشرة"
-      : params.technicalActionMode === "coordinate_with_workshop"
-        ? "تنسيق مباشر مع ورشة"
-        : params.technicalActionMode === "escalate_management"
-          ? "تصعيد للإدارة"
-          : "رأي فني للمبيعات";
+  const structuredResponse = buildStructuredTechnicalResponse({
+    leadSource: params.leadSource,
+    leadType: params.leadType,
+    technicalCategory: params.technicalCategory,
+    technicalPriority: params.technicalPriority,
+    technicalActionMode: params.technicalActionMode,
+    transferDecision: decision,
+    knowledgeNotes: params.knowledgeNotes,
+    notes: params.notes,
+  });
 
   const [createdTask] = await db
     .insert(employeeTasksTable)
@@ -1075,13 +1150,7 @@ async function maybeCreateTechnicalTransferTask(params: {
       dueAt,
       status: "pending",
       notes: [
-        `مصدر الحالة: ${sourceLabel}`,
-        `نوع السجل: ${leadTypeLabel}`,
-        `التصنيف الفني: ${categoryLabel}`,
-        `الأولوية: ${priorityLabel}`,
-        `أسلوب التعامل الفني: ${actionModeLabel}`,
-        params.notes ? `ملاحظات الخبير الفني: ${params.notes}` : null,
-        params.knowledgeNotes ? `سجل المعرفة الفنية: ${params.knowledgeNotes}` : null,
+        structuredResponse,
       ]
         .filter(Boolean)
         .join("\n"),
@@ -1099,6 +1168,7 @@ async function maybeCreateTechnicalTransferTask(params: {
     employeeId: assignee.id,
     employeeName: assignee.name,
     targetRole: targetConfig.targetRole,
+    responseSummary: structuredResponse,
     message: `تم إنشاء مهمة تلقائيًا وتحويلها إلى ${assignee.name}.`,
   };
 }
@@ -2414,10 +2484,22 @@ router.patch(
       previousDecision: lead.transferDecision,
     });
 
+    const responseSummary = buildStructuredTechnicalResponse({
+      leadSource: lead.source,
+      leadType: lead.type,
+      technicalCategory: parsed.data.technicalCategory,
+      technicalPriority: parsed.data.technicalPriority,
+      technicalActionMode: parsed.data.technicalActionMode,
+      transferDecision: parsed.data.transferDecision,
+      knowledgeNotes: parsed.data.knowledgeNotes,
+      notes: parsed.data.notes,
+    });
+
     res.json({
       ...updated,
       nextFollowUpAt: toIso(updated?.nextFollowUpAt),
       transferAction,
+      responseSummary,
     });
   },
 );
