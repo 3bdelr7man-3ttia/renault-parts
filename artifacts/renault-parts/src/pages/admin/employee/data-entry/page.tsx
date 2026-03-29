@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { BadgeCheck, Database, Loader2, Plus, Users, Wrench, X } from "lucide-react";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 
 type DataEntrySummary = {
   total: number;
@@ -206,180 +207,172 @@ export default function EmployeeDataEntryPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-[#F9E795] text-sm font-bold mb-2">إدخال البيانات</p>
-            <h1 className="text-3xl font-black text-white mb-3">مساحة تجهيز العملاء والورش</h1>
-            <p className="text-white/60 text-sm leading-7 max-w-3xl">
+            <p className="text-[#C8974A] text-sm font-black mb-2">إدخال البيانات</p>
+            <h1 className={adminUi.title}>مساحة تجهيز العملاء والورش</h1>
+            <p className={`${adminUi.subtitle} max-w-3xl`}>
               هذه المساحة مخصصة لإدخال العملاء والورش الجديدة، وتجهيز بياناتها، ثم تمريرها إلى المبيعات أو الخبير الفني أو مدير الفريق حسب الحالة.
             </p>
           </div>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all"
-          >
+          <button onClick={() => setShowAdd(true)} className={adminUi.primaryButton}>
             <Plus className="w-4 h-4" />
             إضافة سجل
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Database className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">إجمالي السجلات</p>
-          <p className="text-white font-black text-2xl">{summary?.total ?? 0}</p>
-        </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Users className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">أضيفت اليوم</p>
-          <p className="text-white font-black text-2xl">{summary?.addedToday ?? 0}</p>
-        </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">غير مسندة</p>
-          <p className="text-white font-black text-2xl">{summary?.unassigned ?? 0}</p>
-        </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">تم تسجيلها على المنصة</p>
-          <p className="text-white font-black text-2xl">{summary?.registered ?? 0}</p>
-        </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">قرارات فنية وصلت للقطع</p>
-          <p className="text-white font-black text-2xl">{technicalDecisionCount}</p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {[
+          { label: "إجمالي السجلات", value: summary?.total ?? 0, icon: Database, tone: adminSemantic.neutral },
+          { label: "أضيفت اليوم", value: summary?.addedToday ?? 0, icon: Users, tone: adminSemantic.info },
+          { label: "غير مسندة", value: summary?.unassigned ?? 0, icon: BadgeCheck, tone: adminSemantic.warning },
+          { label: "تم تسجيلها على المنصة", value: summary?.registered ?? 0, icon: BadgeCheck, tone: adminSemantic.success },
+          { label: "قرارات فنية وصلت للقطع", value: technicalDecisionCount, icon: BadgeCheck, tone: adminSemantic.brand },
+        ].map((card) => (
+          <div key={card.label} className={adminUi.statCard}>
+            <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border ${card.tone}`}>
+              <card.icon className="h-5 w-5" />
+            </div>
+            <p className="mb-2 text-xs font-black text-slate-500">{card.label}</p>
+            <p className="text-2xl font-black text-slate-950">{card.value}</p>
+          </div>
+        ))}
       </div>
 
       {loading ? (
-        <div className="bg-[#151D33] border border-white/10 rounded-3xl p-10 flex justify-center">
-          <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+        <div className={`${adminUi.card} flex justify-center p-10`}>
+          <Loader2 className="h-8 w-8 animate-spin text-[#C8974A]" />
         </div>
       ) : (
         sections.map((section) => (
-          <div key={section.label} className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
-            <h2 className="text-white font-black text-xl mb-4">{section.label}</h2>
+          <div key={section.label} className={adminUi.card}>
+            <div className="mb-4 flex items-center gap-3">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${section.label.includes("ورش") ? adminSemantic.info : adminSemantic.brand}`}>
+                <section.icon className="h-5 w-5" />
+              </div>
+              <h2 className="text-xl font-black text-slate-950">{section.label}</h2>
+            </div>
             <div className="space-y-4">
               {section.rows.map((lead) => (
-                <div key={lead.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
+                <div key={lead.id} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
                   {(() => {
                     const structuredNote = parseStructuredTechnicalNote(lead.notes);
                     return (
                       <>
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <p className="text-white font-black text-lg">{lead.name}</p>
-                      <p className="text-white/45 text-sm mt-2">
+                      <p className="text-lg font-black text-slate-950">{lead.name}</p>
+                      <p className="mt-2 text-sm text-slate-500">
                         {lead.area ?? "بدون منطقة"} · {lead.phone} {lead.email ? `· ${lead.email}` : ""}
                       </p>
-                      {lead.contactPerson && <p className="text-white/35 text-xs mt-1">المسؤول: {lead.contactPerson}</p>}
+                      {lead.contactPerson && <p className="mt-1 text-xs text-slate-400">المسؤول: {lead.contactPerson}</p>}
                     </div>
-                    <div className="text-sm text-white/55 space-y-2">
-                      <p>الحالة: <span className="text-[#F9E795]">{lead.status}</span></p>
-                      <p>المسند إليه: <span className="text-white">{lead.assignedEmployeeName ?? "غير مسند"}</span></p>
-                      <p>أُضيف بواسطة: <span className="text-white">{lead.createdByUserName ?? "—"}</span></p>
-                      {lead.registeredUserName && <p>العميل المسجل: <span className="text-emerald-300">{lead.registeredUserName}</span></p>}
+                    <div className="space-y-2 text-sm text-slate-500">
+                      <p>الحالة: <span className="font-bold text-[#9a6e2e]">{lead.status}</span></p>
+                      <p>المسند إليه: <span className="font-semibold text-slate-800">{lead.assignedEmployeeName ?? "غير مسند"}</span></p>
+                      <p>أُضيف بواسطة: <span className="font-semibold text-slate-800">{lead.createdByUserName ?? "—"}</span></p>
+                      {lead.registeredUserName && <p>العميل المسجل: <span className="font-semibold text-emerald-700">{lead.registeredUserName}</span></p>}
                     </div>
                   </div>
                   {structuredNote ? (
-                    <div className="mt-4 rounded-2xl border border-[#F9E795]/20 bg-[#F9E795]/5 p-4 space-y-3">
+                    <div className="mt-4 space-y-3 rounded-2xl border border-[#C8974A]/20 bg-[#C8974A]/5 p-4">
                       <div>
-                        <p className="text-[#F9E795] text-xs font-black">قرار فني وصل لمسؤول القطع/الداتا</p>
-                        <p className="text-white/55 text-xs mt-1">
+                        <p className="text-xs font-black text-[#9a6e2e]">قرار فني وصل لمسؤول القطع/الداتا</p>
+                        <p className="mt-1 text-xs text-slate-500">
                           هذا الرد قادم من الخبير الفني، ويحتاج منك تنفيذ القرار أو تجهيز القطعة أو مراجعة المرتجع.
                         </p>
                       </div>
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                         {structuredNote.items.map((line) => (
-                          <div key={line} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 leading-6">
+                          <div key={line} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">
                             {line.replace(/^- /, "")}
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : lead.notes ? (
-                    <p className="mt-4 text-sm text-white/55 leading-7">{lead.notes}</p>
+                    <p className="mt-4 text-sm leading-7 text-slate-600">{lead.notes}</p>
                   ) : null}
                       </>
                     );
                   })()}
                 </div>
               ))}
-              {section.rows.length === 0 && <p className="text-white/45 text-sm text-center py-8">لا توجد عناصر في هذا القسم الآن.</p>}
+              {section.rows.length === 0 && <p className="py-8 text-center text-sm text-slate-500">لا توجد عناصر في هذا القسم الآن.</p>}
             </div>
           </div>
         ))
       )}
 
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={() => setShowAdd(false)}>
-          <div className="w-full max-w-3xl bg-[#111826] border border-white/10 rounded-3xl p-6 md:p-8" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
+        <div className={adminUi.modalOverlay} onClick={() => setShowAdd(false)}>
+          <div className={`${adminUi.modalPanel} max-w-3xl`} onClick={(event) => event.stopPropagation()}>
+            <div className={adminUi.modalHeader}>
               <div>
-                <h2 className="text-white text-2xl font-black">إضافة سجل جديد</h2>
-                <p className="text-white/45 text-sm mt-1">سجل عميلًا أو ورشة، وحدد إن كنت تريد إسناده مباشرة.</p>
+                <h2 className="text-2xl font-black text-slate-950">إضافة سجل جديد</h2>
+                <p className="mt-1 text-sm text-slate-500">سجل عميلًا أو ورشة، وحدد إن كنت تريد إسناده مباشرة.</p>
               </div>
-              <button onClick={() => setShowAdd(false)} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 flex items-center justify-center">
+              <button onClick={() => setShowAdd(false)} className={`${adminUi.softButton} h-11 w-11 justify-center p-0`}>
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 px-6 py-6 md:grid-cols-2">
               <select
                 value={form.type}
                 onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value as LeadFormState["type"] }))}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                className={adminUi.select}
               >
-                <option value="customer" className="bg-[#111826]">عميل</option>
-                <option value="workshop" className="bg-[#111826]">ورشة</option>
+                <option value="customer">عميل</option>
+                <option value="workshop">ورشة</option>
               </select>
 
               <select
                 value={form.assignedEmployeeId}
                 onChange={(event) => setForm((prev) => ({ ...prev, assignedEmployeeId: event.target.value }))}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+                className={adminUi.select}
               >
-                <option value="" className="bg-[#111826]">بدون إسناد</option>
+                <option value="">بدون إسناد</option>
                 {assignees.map((employee) => (
-                  <option key={employee.id} value={employee.id} className="bg-[#111826]">
+                  <option key={employee.id} value={employee.id}>
                     {employee.name} {employee.employeeRole ? `· ${employeeRoleLabels[employee.employeeRole]}` : ""}
                   </option>
                 ))}
               </select>
 
-              <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder={form.type === "customer" ? "اسم العميل" : "اسم الورشة"} value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
-              <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="رقم الهاتف" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))} />
-              <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="البريد الإلكتروني" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} />
-              <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="المنطقة" value={form.area} onChange={(event) => setForm((prev) => ({ ...prev, area: event.target.value }))} />
-              <input className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="العنوان" value={form.address} onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))} />
+              <input className={adminUi.input} placeholder={form.type === "customer" ? "اسم العميل" : "اسم الورشة"} value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
+              <input className={adminUi.input} placeholder="رقم الهاتف" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))} />
+              <input className={adminUi.input} placeholder="البريد الإلكتروني" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} />
+              <input className={adminUi.input} placeholder="المنطقة" value={form.area} onChange={(event) => setForm((prev) => ({ ...prev, area: event.target.value }))} />
+              <input className={`${adminUi.input} md:col-span-2`} placeholder="العنوان" value={form.address} onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))} />
 
               {form.type === "customer" ? (
                 <>
-                  <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="موديل السيارة" value={form.carModel} onChange={(event) => setForm((prev) => ({ ...prev, carModel: event.target.value }))} />
-                  <input className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="سنة السيارة" value={form.carYear} onChange={(event) => setForm((prev) => ({ ...prev, carYear: event.target.value }))} />
+                  <input className={adminUi.input} placeholder="موديل السيارة" value={form.carModel} onChange={(event) => setForm((prev) => ({ ...prev, carModel: event.target.value }))} />
+                  <input className={adminUi.input} placeholder="سنة السيارة" value={form.carYear} onChange={(event) => setForm((prev) => ({ ...prev, carYear: event.target.value }))} />
                 </>
               ) : (
                 <>
-                  <input className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none" placeholder="الشخص المسؤول داخل الورشة" value={form.contactPerson} onChange={(event) => setForm((prev) => ({ ...prev, contactPerson: event.target.value }))} />
+                  <input className={`${adminUi.input} md:col-span-2`} placeholder="الشخص المسؤول داخل الورشة" value={form.contactPerson} onChange={(event) => setForm((prev) => ({ ...prev, contactPerson: event.target.value }))} />
                 </>
               )}
 
               <div className="md:col-span-2">
-                <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
-                <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none" type="datetime-local" value={form.nextFollowUpAt} onChange={(event) => setForm((prev) => ({ ...prev, nextFollowUpAt: event.target.value }))} />
+                <label className="mb-2 block text-xs font-bold text-slate-500">موعد المتابعة القادم</label>
+                <input className={adminUi.input} type="datetime-local" value={form.nextFollowUpAt} onChange={(event) => setForm((prev) => ({ ...prev, nextFollowUpAt: event.target.value }))} />
               </div>
 
-              <textarea className="md:col-span-2 min-h-[120px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none" placeholder="ملاحظات" value={form.notes} onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))} />
+              <textarea className={`${adminUi.textarea} md:col-span-2 min-h-[120px] resize-none`} placeholder="ملاحظات" value={form.notes} onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))} />
             </div>
 
-            <div className="mt-6 flex flex-col-reverse md:flex-row gap-3">
-              <button onClick={() => setShowAdd(false)} className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 font-bold hover:bg-white/10 transition-all">
+            <div className={adminUi.modalFooter}>
+              <button onClick={() => setShowAdd(false)} className={`${adminUi.secondaryButton} flex-1 justify-center`}>
                 إلغاء
               </button>
-              <button onClick={handleCreate} disabled={saving} className="flex-1 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black hover:opacity-90 transition-all disabled:opacity-50">
+              <button onClick={handleCreate} disabled={saving} className={`${adminUi.primaryButton} flex-1 justify-center disabled:translate-y-0`}>
                 {saving ? "جارٍ الحفظ..." : "حفظ السجل"}
               </button>
             </div>

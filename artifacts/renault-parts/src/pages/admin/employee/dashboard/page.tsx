@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { getRoleLabel, normalizeEmployeeRole } from "@/lib/permissions";
 import { AlertTriangle, ArrowLeft, ArrowRightLeft, BarChart2, Building2, ClipboardList, Database, FileText, Loader2, Package2, PhoneCall, Star, Stethoscope, Target, Users, Wrench } from "lucide-react";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 
 type SalesSummary = {
   totalCustomers: number;
@@ -200,28 +201,28 @@ type Tone = "amber" | "sky" | "red" | "violet" | "emerald" | "slate";
 
 const toneClasses: Record<Tone, { chip: string; icon: string }> = {
   amber: {
-    chip: "bg-amber-500/12 text-amber-300 border-amber-500/25",
-    icon: "bg-amber-500/12 text-amber-300 border-amber-500/25",
+    chip: `border ${adminSemantic.warning}`,
+    icon: `border ${adminSemantic.warning}`,
   },
   sky: {
-    chip: "bg-sky-500/12 text-sky-300 border-sky-500/25",
-    icon: "bg-sky-500/12 text-sky-300 border-sky-500/25",
+    chip: `border ${adminSemantic.info}`,
+    icon: `border ${adminSemantic.info}`,
   },
   red: {
-    chip: "bg-red-500/12 text-red-300 border-red-500/25",
-    icon: "bg-red-500/12 text-red-300 border-red-500/25",
+    chip: `border ${adminSemantic.danger}`,
+    icon: `border ${adminSemantic.danger}`,
   },
   violet: {
-    chip: "bg-violet-500/12 text-violet-300 border-violet-500/25",
-    icon: "bg-violet-500/12 text-violet-300 border-violet-500/25",
+    chip: "border border-violet-200 bg-violet-50 text-violet-700",
+    icon: "border border-violet-200 bg-violet-50 text-violet-700",
   },
   emerald: {
-    chip: "bg-emerald-500/12 text-emerald-300 border-emerald-500/25",
-    icon: "bg-emerald-500/12 text-emerald-300 border-emerald-500/25",
+    chip: `border ${adminSemantic.success}`,
+    icon: `border ${adminSemantic.success}`,
   },
   slate: {
-    chip: "bg-slate-50 text-slate-700 border-slate-200",
-    icon: "bg-slate-50 text-slate-700 border-slate-200",
+    chip: `border ${adminSemantic.neutral}`,
+    icon: `border ${adminSemantic.neutral}`,
   },
 };
 
@@ -237,10 +238,10 @@ function DashboardHero({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-[28px] border border-slate-200 shadow-sm p-6 md:p-8">
-      <p className="text-[#C8974A] text-sm font-black mb-2">{eyebrow}</p>
-      <h1 className="text-3xl font-black text-slate-950 mb-3">{title}</h1>
-      <p className="text-slate-500 text-sm leading-7 max-w-4xl">{description}</p>
+    <div className={adminUi.hero}>
+      <p className="mb-2 text-sm font-black text-[#C8974A]">{eyebrow}</p>
+      <h1 className={adminUi.title}>{title}</h1>
+      <p className={`${adminUi.subtitle} max-w-4xl`}>{description}</p>
       {children ? <div className="mt-5 flex flex-wrap gap-3">{children}</div> : null}
     </div>
   );
@@ -258,14 +259,14 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-[28px] shadow-sm p-6">
+    <div className={adminUi.card}>
       <div className="flex items-start justify-between gap-3 mb-5">
         <div>
           <h2 className="text-slate-950 text-xl font-black">{title}</h2>
           {subtitle ? <p className="text-slate-500 text-sm mt-1 leading-6">{subtitle}</p> : null}
         </div>
         {Icon ? (
-          <div className="w-11 h-11 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 flex items-center justify-center shrink-0">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${adminSemantic.neutral}`}>
             <Icon className="w-5 h-5" />
           </div>
         ) : null}
@@ -289,7 +290,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-5 min-h-[154px] flex flex-col">
+    <div className={`${adminUi.statCard} flex min-h-[154px] flex-col`}>
       <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center mb-4 ${toneClasses[tone].icon}`}>
         <Icon className="w-5 h-5" />
       </div>
@@ -311,7 +312,7 @@ function ActionLink({
 }) {
   return (
     <Link href={href}>
-      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-950 text-white font-black text-sm cursor-pointer hover:bg-slate-800 transition-all shadow-sm">
+      <div className={`${adminUi.secondaryButton} cursor-pointer border-slate-950 bg-slate-950 text-white hover:bg-slate-800 hover:text-white`}>
         <Icon className="w-4 h-4" />
         {label}
       </div>
@@ -332,8 +333,8 @@ function ActionTile({
 }) {
   return (
     <Link href={href}>
-      <div className="group bg-white border border-slate-200 rounded-[28px] p-6 cursor-pointer hover:border-[#C8974A]/30 hover:shadow-md transition-all h-full">
-        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center mb-4">
+      <div className={`${adminUi.card} group h-full cursor-pointer p-6 transition-all hover:border-[#C8974A]/30 hover:shadow-md`}>
+        <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border ${adminSemantic.neutral}`}>
           <Icon className="w-5 h-5" />
         </div>
         <h2 className="text-slate-950 font-black text-lg mb-2">{label}</h2>
@@ -348,7 +349,7 @@ function ActionTile({
 }
 
 function StatusBadge({ label, tone = "slate" }: { label: string; tone?: Tone }) {
-  return <span className={`px-3 py-2 rounded-xl text-xs font-black border w-fit ${toneClasses[tone].chip}`}>{label}</span>;
+  return <span className={`w-fit rounded-xl px-3 py-2 text-xs font-black ${toneClasses[tone].chip}`}>{label}</span>;
 }
 
 function useSalesSummary(token: string | null, enabled: boolean) {
