@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 import { CalendarDays, FileText, Loader2, Save } from "lucide-react";
 
 type DailyReport = {
@@ -118,52 +119,52 @@ export default function EmployeeReportsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-        <p className="text-[#F9E795] text-sm font-bold mb-2">التقرير اليومي</p>
-        <h1 className="text-3xl font-black text-white mb-3">تقاريري اليومية</h1>
-        <p className="text-white/60 text-sm leading-7 max-w-3xl">
+    <div className={adminUi.page}>
+      <div className={adminUi.hero}>
+        <p className="mb-2 text-sm font-black text-[#C8974A]">التقرير اليومي</p>
+        <h1 className={adminUi.title}>تقاريري اليومية</h1>
+        <p className={`${adminUi.subtitle} max-w-3xl`}>
           سجّل ما أنجزته اليوم، المعوقات التي واجهتها، والخطوات التالية المطلوبة. هذه الصفحة هي مرجع التنفيذ اليومي لكل موظف.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
-        <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6 space-y-4">
+        <div className={`${adminUi.card} space-y-4`}>
           <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-[#F9E795]" />
-            <h2 className="text-white font-black text-xl">تقرير اليوم</h2>
+            <FileText className="w-5 h-5 text-[#C8974A]" />
+            <h2 className="text-slate-950 font-black text-xl">تقرير اليوم</h2>
           </div>
 
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">تاريخ التقرير</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">تاريخ التقرير</label>
             <input
               type="date"
               value={form.reportDate}
               onChange={(event) => setForm((prev) => ({ ...prev, reportDate: event.target.value }))}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.input}
             />
           </div>
 
           <textarea
-            className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+            className={`${adminUi.textarea} min-h-[110px] resize-none`}
             placeholder="ملخص اليوم"
             value={form.summary}
             onChange={(event) => setForm((prev) => ({ ...prev, summary: event.target.value }))}
           />
           <textarea
-            className="w-full min-h-[90px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+            className={`${adminUi.textarea} min-h-[90px] resize-none`}
             placeholder="أهم الإنجازات"
             value={form.achievements}
             onChange={(event) => setForm((prev) => ({ ...prev, achievements: event.target.value }))}
           />
           <textarea
-            className="w-full min-h-[90px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+            className={`${adminUi.textarea} min-h-[90px] resize-none`}
             placeholder="المعوقات أو المشاكل"
             value={form.blockers}
             onChange={(event) => setForm((prev) => ({ ...prev, blockers: event.target.value }))}
           />
           <textarea
-            className="w-full min-h-[90px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+            className={`${adminUi.textarea} min-h-[90px] resize-none`}
             placeholder="الخطوات التالية"
             value={form.nextSteps}
             onChange={(event) => setForm((prev) => ({ ...prev, nextSteps: event.target.value }))}
@@ -172,34 +173,36 @@ export default function EmployeeReportsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm disabled:opacity-50"
+            className={adminUi.primaryButton}
           >
             <Save className="w-4 h-4" />
             {saving ? "جارٍ الحفظ..." : "حفظ التقرير"}
           </button>
         </div>
 
-        <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+        <div className={adminUi.card}>
           <div className="flex items-center gap-3 mb-4">
-            <CalendarDays className="w-5 h-5 text-[#F9E795]" />
-            <h2 className="text-white font-black text-xl">آخر التقارير</h2>
+            <CalendarDays className="w-5 h-5 text-[#C8974A]" />
+            <h2 className="text-slate-950 font-black text-xl">آخر التقارير</h2>
           </div>
 
           {loading ? (
             <div className="py-10 flex justify-center">
-              <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[#C8974A] animate-spin" />
             </div>
           ) : reports.length === 0 ? (
-            <p className="text-white/45 text-sm text-center py-10">لا توجد تقارير مسجلة بعد.</p>
+            <div className={adminUi.emptyState}>
+              <p className="text-sm font-bold text-slate-500">لا توجد تقارير مسجلة بعد.</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {reports.map((report) => (
-                <div key={report.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-4">
-                  <p className="text-[#F9E795] text-xs font-bold mb-2">{report.reportDate}</p>
-                  <p className="text-white font-black">{report.summary}</p>
-                  {report.achievements && <p className="text-white/60 text-sm mt-3">الإنجازات: {report.achievements}</p>}
-                  {report.blockers && <p className="text-white/60 text-sm mt-2">المعوقات: {report.blockers}</p>}
-                  {report.nextSteps && <p className="text-white/60 text-sm mt-2">الخطوات التالية: {report.nextSteps}</p>}
+                <div key={report.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>{report.reportDate}</span>
+                  <p className="mt-3 text-slate-950 font-black">{report.summary}</p>
+                  {report.achievements && <p className="text-slate-600 text-sm mt-3">الإنجازات: {report.achievements}</p>}
+                  {report.blockers && <p className="text-slate-600 text-sm mt-2">المعوقات: {report.blockers}</p>}
+                  {report.nextSteps && <p className="text-slate-600 text-sm mt-2">الخطوات التالية: {report.nextSteps}</p>}
                 </div>
               ))}
             </div>

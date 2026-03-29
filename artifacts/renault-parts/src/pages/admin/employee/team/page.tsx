@@ -513,12 +513,12 @@ export default function EmployeeTeamPage() {
                   </span>
                 </div>
                 {quickAssignCustomerLeads.length ? quickAssignCustomerLeads.map((lead) => (
-                  <div key={`customer-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="font-black text-slate-950">{lead.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
-                    </p>
-                    <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                    <div key={`customer-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <p className="font-black text-slate-950">{lead.name}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                      </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -534,7 +534,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                        className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -556,12 +556,12 @@ export default function EmployeeTeamPage() {
                   </span>
                 </div>
                 {quickAssignWorkshopLeads.length ? quickAssignWorkshopLeads.map((lead) => (
-                  <div key={`workshop-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="font-black text-slate-950">{lead.name}</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
-                    </p>
-                    <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                    <div key={`workshop-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <p className="font-black text-slate-950">{lead.name}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
+                      </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -577,7 +577,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                        className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -677,9 +677,9 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[280px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[240px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -695,7 +695,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                              className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>
@@ -758,9 +758,9 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[280px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[240px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_72px]">
+                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -776,7 +776,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className={`${adminUi.primaryButton} h-10 px-3 text-sm`}
+                              className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>

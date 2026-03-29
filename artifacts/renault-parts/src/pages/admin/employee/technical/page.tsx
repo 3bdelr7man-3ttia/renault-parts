@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { adminSemantic, adminUi } from "@/components/admin/admin-ui";
 import { AlertTriangle, ArrowRightLeft, BadgeCheck, BookOpenText, Building2, CalendarClock, ClipboardList, Loader2, Save, Stethoscope, Users } from "lucide-react";
 
 type TechnicalCase = {
@@ -331,52 +332,52 @@ export default function EmployeeTechnicalPage() {
     const transferEffect = getTransferEffectLabel(draft.transferDecision);
 
     return (
-      <div key={item.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5 space-y-5">
+      <div key={item.id} className={`${adminUi.card} space-y-5`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-white font-black text-lg">{item.name}</h2>
-              <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20">
+              <h2 className="text-slate-950 font-black text-lg">{item.name}</h2>
+              <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>
                 {item.type === "workshop" ? "ورشة" : "عميل"}
               </span>
-              {item.registeredUserId ? <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">مسجل على المنصة</span> : null}
+              {item.registeredUserId ? <span className={`${adminUi.badgeBase} ${adminSemantic.success}`}>مسجل على المنصة</span> : null}
             </div>
-              <p className="text-white/45 text-sm mt-2">
+              <p className="text-slate-500 text-sm mt-2">
                 {item.area ?? "بدون منطقة"} · {item.phone} {item.email ? `· ${item.email}` : ""}
               </p>
-              {item.contactPerson ? <p className="text-white/35 text-xs mt-1">المسؤول: {item.contactPerson}</p> : null}
-              <p className="text-white/35 text-xs mt-1">مصدر الطلب الفني: {sourceLabels[item.source] ?? item.source}</p>
-              {item.createdByUserName ? <p className="text-white/35 text-xs mt-1">أُنشئت بواسطة: {item.createdByUserName}</p> : null}
+              {item.contactPerson ? <p className="text-slate-400 text-xs mt-1">المسؤول: {item.contactPerson}</p> : null}
+              <p className="text-slate-400 text-xs mt-1">مصدر الطلب الفني: {sourceLabels[item.source] ?? item.source}</p>
+              {item.createdByUserName ? <p className="text-slate-400 text-xs mt-1">أُنشئت بواسطة: {item.createdByUserName}</p> : null}
             </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70">
+            <span className={`${adminUi.badgeBase} ${adminSemantic.neutral}`}>
               {technicalCategoryLabels[draft.technicalCategory] ?? "بدون تصنيف"}
             </span>
-            <span className="px-3 py-1.5 rounded-xl bg-[#F9E795]/10 border border-[#F9E795]/20 text-[#F9E795]">
+            <span className={`${adminUi.badgeBase} ${adminSemantic.warning}`}>
               {priorityLabels[draft.technicalPriority] ?? "متوسطة"}
             </span>
-            <span className="px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+            <span className={`${adminUi.badgeBase} border-indigo-200 bg-indigo-50 text-indigo-700`}>
               {technicalActionModeLabels[draft.technicalActionMode] ?? "أسلوب غير محدد"}
             </span>
-            <span className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
+            <span className={`${adminUi.badgeBase} ${adminSemantic.info}`}>
               {transferDecisionLabels[draft.transferDecision] ?? "بدون قرار"}
             </span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="bg-[#1B2440] border border-[#F9E795]/20 rounded-2xl p-4 space-y-2">
-            <p className="text-[#F9E795] text-xs font-black">المطلوب الآن من الخبير الفني</p>
-            <p className="text-white text-sm leading-7">{requiredAction}</p>
-            <p className="text-white/45 text-xs leading-6">
+          <div className={`${adminUi.subtleCard} border-amber-200 bg-amber-50/70 space-y-2`}>
+            <p className="text-amber-700 text-xs font-black">المطلوب الآن من الخبير الفني</p>
+            <p className="text-slate-900 text-sm leading-7">{requiredAction}</p>
+            <p className="text-slate-500 text-xs leading-6">
               {item.createdByUserName ? `الحالة محوّلة من ${item.createdByUserName}.` : "الحالة محوّلة من أحد أفراد الفريق."}{" "}
               الهدف هنا ليس مجرد تنفيذ مهمة، بل إصدار رد فني واضح قابل للتنفيذ.
             </p>
           </div>
-          <div className="bg-[#131C33] border border-sky-400/15 rounded-2xl p-4 space-y-2">
-            <p className="text-sky-300 text-xs font-black">ما الذي سيحدث بعد الحفظ</p>
-            <p className="text-white text-sm leading-7">{transferEffect}</p>
-            <p className="text-white/45 text-xs leading-6">
+          <div className={`${adminUi.subtleCard} border-sky-200 bg-sky-50/70 space-y-2`}>
+            <p className="text-sky-700 text-xs font-black">ما الذي سيحدث بعد الحفظ</p>
+            <p className="text-slate-900 text-sm leading-7">{transferEffect}</p>
+            <p className="text-slate-500 text-xs leading-6">
               لو كانت الحالة مرتبطة بمرتجع أو قطعة، سيُستخدم هذا الرد الفني كأساس للقرار التنفيذي وليس كملاحظة عامة فقط.
             </p>
           </div>
@@ -384,121 +385,121 @@ export default function EmployeeTechnicalPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">حالة المتابعة</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">حالة المتابعة</label>
             <select
               value={draft.status}
               onChange={(event) => updateDraft(item.id, { status: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.select}
             >
               {statusOptions.map((status) => (
-                <option key={status.value} value={status.value} className="bg-[#111826]">
+                <option key={status.value} value={status.value}>
                   {status.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">التصنيف الفني</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">التصنيف الفني</label>
             <select
               value={draft.technicalCategory}
               onChange={(event) => updateDraft(item.id, { technicalCategory: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.select}
             >
               {technicalCategoryOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-[#111826]">
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">أولوية الحالة</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">أولوية الحالة</label>
             <select
               value={draft.technicalPriority}
               onChange={(event) => updateDraft(item.id, { technicalPriority: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.select}
             >
               {priorityOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-[#111826]">
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">أسلوب التعامل الفني</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">أسلوب التعامل الفني</label>
             <select
               value={draft.technicalActionMode}
               onChange={(event) => updateDraft(item.id, { technicalActionMode: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.select}
             >
               {technicalActionModeOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-[#111826]">
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-white/50 text-xs font-bold mb-2">قرار التحويل</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">قرار التحويل</label>
             <select
               value={draft.transferDecision}
               onChange={(event) => updateDraft(item.id, { transferDecision: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.select}
             >
               {transferDecisionOptions.map((option) => (
-                <option key={option.value} value={option.value} className="bg-[#111826]">
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-white/50 text-xs font-bold mb-2">التشخيص الفني</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">التشخيص الفني</label>
             <textarea
               value={draft.notes}
               onChange={(event) => updateDraft(item.id, { notes: event.target.value })}
-              className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+              className={`${adminUi.textarea} min-h-[110px] resize-none`}
               placeholder="اكتب التشخيص الفني: ما المشكلة؟ ما السبب المرجح؟ وهل الحالة تحتاج فحص أو استبدال أو تصعيد؟"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-white/50 text-xs font-bold mb-2">الرأي الفني المنظم / التوصية التنفيذية</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">الرأي الفني المنظم / التوصية التنفيذية</label>
             <textarea
               value={draft.knowledgeNotes}
               onChange={(event) => updateDraft(item.id, { knowledgeNotes: event.target.value })}
-              className="w-full min-h-[110px] bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/25 outline-none resize-none"
+              className={`${adminUi.textarea} min-h-[110px] resize-none`}
               placeholder="اكتب الرد الذي سيصل للفريق: ماذا تقول للمبيعات أو للقطع أو للإدارة؟ مثال: يفضّل استبدال القطعة، أو يقبل المرتجع بشرط كذا، أو البديل المناسب هو..."
             />
           </div>
           <div className="md:col-span-2 xl:col-span-1">
-            <label className="block text-white/50 text-xs font-bold mb-2">موعد المتابعة القادم</label>
+            <label className="block text-slate-500 text-xs font-bold mb-2">موعد المتابعة القادم</label>
             <input
               type="datetime-local"
               value={draft.nextFollowUpAt}
               onChange={(event) => updateDraft(item.id, { nextFollowUpAt: event.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
+              className={adminUi.input}
             />
           </div>
           <div className="md:col-span-2 xl:col-span-1">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 h-full text-sm text-white/65 space-y-2">
-              <p>المصدر: <span className="text-white">{item.source}</span></p>
-              <p>الحالة الحالية: <span className="text-[#F9E795]">{statusLabels[item.status] ?? item.status}</span></p>
-              <p>آخر متابعة: <span className="text-white">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("ar-EG") : "غير متاحة"}</span></p>
-              <p>المتابعة القادمة: <span className="text-white">{item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toLocaleString("ar-EG") : "غير محددة"}</span></p>
+            <div className={`${adminUi.subtleCard} h-full text-sm text-slate-600 space-y-2`}>
+              <p>المصدر: <span className="text-slate-950">{item.source}</span></p>
+              <p>الحالة الحالية: <span className="text-[#9a6e2e]">{statusLabels[item.status] ?? item.status}</span></p>
+              <p>آخر متابعة: <span className="text-slate-950">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("ar-EG") : "غير متاحة"}</span></p>
+              <p>المتابعة القادمة: <span className="text-slate-950">{item.nextFollowUpAt ? new Date(item.nextFollowUpAt).toLocaleString("ar-EG") : "غير محددة"}</span></p>
             </div>
           </div>
           <div className="md:col-span-2 xl:col-span-4">
-            <div className="bg-[#0F172A] border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className={`${adminUi.subtleCard} border-indigo-200 bg-indigo-50/70 space-y-3`}>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[#F9E795] text-xs font-black">الرد الفني المنظم الذي سيصل للفريق</p>
-                  <p className="text-white/45 text-xs mt-1">هذه الصياغة تساعد المبيعات أو القطع أو الإدارة أن تتحرك فورًا بدون الرجوع لنفس الحالة أكثر من مرة.</p>
+                  <p className="text-indigo-700 text-xs font-black">الرد الفني المنظم الذي سيصل للفريق</p>
+                  <p className="text-slate-500 text-xs mt-1">هذه الصياغة تساعد المبيعات أو القطع أو الإدارة أن تتحرك فورًا بدون الرجوع لنفس الحالة أكثر من مرة.</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                 {responsePreview.map((line) => (
-                  <div key={line} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 leading-6">
+                  <div key={line} className="rounded-2xl border border-indigo-100 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">
                     {line}
                   </div>
                 ))}
@@ -508,14 +509,14 @@ export default function EmployeeTechnicalPage() {
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-3">
-          <div className="text-white/35 text-xs inline-flex items-center gap-2">
+          <div className="text-slate-400 text-xs inline-flex items-center gap-2">
             <CalendarClock className="w-4 h-4" />
             {item.createdAt ? `أضيفت ${new Date(item.createdAt).toLocaleDateString("ar-EG")}` : "سجل موجود داخل المسار الفني"}
           </div>
           <button
             onClick={() => handleSave(item.id)}
             disabled={savingId === item.id}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#F9E795] text-[#0D1220] font-black text-sm hover:opacity-90 transition-all disabled:opacity-50"
+            className={adminUi.primaryButton}
           >
             <Save className="w-4 h-4" />
             {savingId === item.id ? "جارٍ الحفظ..." : "حفظ التحديث"}
@@ -526,125 +527,127 @@ export default function EmployeeTechnicalPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="bg-[#1E2761]/60 rounded-3xl border border-white/10 p-6 md:p-8">
-        <p className="text-[#F9E795] text-sm font-bold mb-2">الحالات الفنية</p>
-        <h1 className="text-3xl font-black text-white mb-3">مساحة الخبير الفني</h1>
-        <p className="text-white/60 text-sm leading-7 max-w-4xl">
+    <div className={`${adminUi.page} pb-8`}>
+      <div className={adminUi.hero}>
+        <p className="text-[#C8974A] text-sm font-bold mb-2">الحالات الفنية</p>
+        <h1 className={adminUi.title}>مساحة الخبير الفني</h1>
+        <p className={`${adminUi.subtitle} max-w-4xl`}>
           هذه المساحة تجمع الحالات التي تحتاج رأيًا فنيًا، مع تصنيف فني واضح، أولوية، قرار تحويل، وسجل معرفة خاص بالقطع والبدائل والمرتجعات حتى لا تتحول المتابعة إلى ملاحظات متناثرة.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Stethoscope className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">إجمالي الحالات</p>
-          <p className="text-white font-black text-2xl">{totalCases}</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className={adminUi.statCard}>
+          <Stethoscope className="w-5 h-5 text-[#C8974A] mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">إجمالي الحالات</p>
+          <p className="text-slate-950 font-black text-2xl">{totalCases}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <AlertTriangle className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">أولوية عالية أو حرجة</p>
-          <p className="text-white font-black text-2xl">{urgentCases}</p>
+        <div className={adminUi.statCard}>
+          <AlertTriangle className="w-5 h-5 text-rose-600 mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">أولوية عالية أو حرجة</p>
+          <p className="text-slate-950 font-black text-2xl">{urgentCases}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <ArrowRightLeft className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">تنتظر قرار تحويل</p>
-          <p className="text-white font-black text-2xl">{pendingTransferCases}</p>
+        <div className={adminUi.statCard}>
+          <ArrowRightLeft className="w-5 h-5 text-violet-600 mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">تنتظر قرار تحويل</p>
+          <p className="text-slate-950 font-black text-2xl">{pendingTransferCases}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BookOpenText className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">مشاكل قطع ومرتجعات</p>
-          <p className="text-white font-black text-2xl">{issueTasks.length}</p>
+        <div className={adminUi.statCard}>
+          <BookOpenText className="w-5 h-5 text-sky-600 mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">مشاكل قطع ومرتجعات</p>
+          <p className="text-slate-950 font-black text-2xl">{issueTasks.length}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Users className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">أسئلة وحالات العملاء</p>
-          <p className="text-white font-black text-2xl">{customerCases.length}</p>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className={adminUi.statCard}>
+          <Users className="w-5 h-5 text-emerald-600 mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">أسئلة وحالات العملاء</p>
+          <p className="text-slate-950 font-black text-2xl">{customerCases.length}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <Building2 className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">شبكة الورش والعلاقات</p>
-          <p className="text-white font-black text-2xl">{workshopCases.length}</p>
+        <div className={adminUi.statCard}>
+          <Building2 className="w-5 h-5 text-sky-600 mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">شبكة الورش والعلاقات</p>
+          <p className="text-slate-950 font-black text-2xl">{workshopCases.length}</p>
         </div>
-        <div className="bg-[#151D33] border border-white/10 rounded-2xl p-5">
-          <BadgeCheck className="w-5 h-5 text-[#F9E795] mb-4" />
-          <p className="text-white/40 text-xs font-bold mb-2">حالات سُجلت أو تحولت</p>
-          <p className="text-white font-black text-2xl">{cases.filter((item) => item.registeredUserId || item.convertedOrderId || item.convertedWorkshopId).length}</p>
+        <div className={adminUi.statCard}>
+          <BadgeCheck className="w-5 h-5 text-[#C8974A] mb-4" />
+          <p className="text-slate-500 text-xs font-bold mb-2">حالات سُجلت أو تحولت</p>
+          <p className="text-slate-950 font-black text-2xl">{cases.filter((item) => item.registeredUserId || item.convertedOrderId || item.convertedWorkshopId).length}</p>
         </div>
       </div>
 
       <Link href="/admin/employee/returns">
-        <div className="bg-[#151D33] border border-[#F9E795]/15 rounded-2xl p-5 cursor-pointer hover:border-[#F9E795]/35 transition-all">
+        <div className={`${adminUi.card} cursor-pointer transition-all hover:-translate-y-0.5 hover:border-[#C8974A]/35`}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[#F9E795] text-xs font-bold mb-2">مسار مستقل</p>
-              <h2 className="text-white font-black text-lg mb-2">صفحة المرتجعات وقرارات الاستبدال</h2>
-              <p className="text-white/50 text-sm leading-7">ادخل هنا لو الحالة مرتبطة باسترجاع قطعة أو استبدال أو رد مالي، بدل متابعة المرتجع من داخل الملاحظات العامة فقط.</p>
+              <p className="text-[#C8974A] text-xs font-bold mb-2">مسار مستقل</p>
+              <h2 className="text-slate-950 font-black text-lg mb-2">صفحة المرتجعات وقرارات الاستبدال</h2>
+              <p className="text-slate-500 text-sm leading-7">ادخل هنا لو الحالة مرتبطة باسترجاع قطعة أو استبدال أو رد مالي، بدل متابعة المرتجع من داخل الملاحظات العامة فقط.</p>
             </div>
-            <ArrowRightLeft className="w-6 h-6 text-[#F9E795] flex-shrink-0" />
+            <ArrowRightLeft className="w-6 h-6 text-[#C8974A] flex-shrink-0" />
           </div>
         </div>
       </Link>
 
-      <div className="bg-[#1A233B] border border-white/10 rounded-3xl p-6">
+      <div className={adminUi.card}>
         {loading ? (
           <div className="py-10 flex justify-center">
-            <Loader2 className="w-8 h-8 text-[#F9E795] animate-spin" />
+            <Loader2 className="w-8 h-8 text-[#C8974A] animate-spin" />
           </div>
         ) : totalCases === 0 && issueTasks.length === 0 ? (
-          <p className="text-white/50 text-sm text-center py-10">لا توجد عناصر تشغيلية مسندة لهذا الحساب الآن.</p>
+          <div className={adminUi.emptyState}>
+            <p className="text-slate-500 text-sm font-bold">لا توجد عناصر تشغيلية مسندة لهذا الحساب الآن.</p>
+          </div>
         ) : (
           <div className="space-y-8">
             <section className="space-y-4">
               <div>
-                <h2 className="text-white font-black text-xl">حالات العملاء الفنية</h2>
-                <p className="text-white/45 text-sm mt-1">استفسارات العملاء الفنية، الأعطال المبدئية، وما يحتاج رأيًا فنيًا قبل تحويله للمبيعات أو الطلب.</p>
+                <h2 className="text-slate-950 font-black text-xl">حالات العملاء الفنية</h2>
+                <p className="text-slate-500 text-sm mt-1">استفسارات العملاء الفنية، الأعطال المبدئية، وما يحتاج رأيًا فنيًا قبل تحويله للمبيعات أو الطلب.</p>
               </div>
-              {customerCases.length ? customerCases.map(renderCaseCard) : <p className="text-white/45 text-sm text-center py-6">لا توجد حالات عملاء فنية الآن.</p>}
+              {customerCases.length ? customerCases.map(renderCaseCard) : <p className="text-slate-500 text-sm text-center py-6">لا توجد حالات عملاء فنية الآن.</p>}
             </section>
 
             <section className="space-y-4">
               <div>
-                <h2 className="text-white font-black text-xl">شبكة الورش والعلاقات</h2>
-                <p className="text-white/45 text-sm mt-1">ورش ومعارف تحتاج تقييمًا فنيًا أو رأيًا تشغيليًا أو دعمًا قبل التصعيد أو الاعتماد.</p>
+                <h2 className="text-slate-950 font-black text-xl">شبكة الورش والعلاقات</h2>
+                <p className="text-slate-500 text-sm mt-1">ورش ومعارف تحتاج تقييمًا فنيًا أو رأيًا تشغيليًا أو دعمًا قبل التصعيد أو الاعتماد.</p>
               </div>
-              {workshopCases.length ? workshopCases.map(renderCaseCard) : <p className="text-white/45 text-sm text-center py-6">لا توجد حالات ورش مسندة الآن.</p>}
+              {workshopCases.length ? workshopCases.map(renderCaseCard) : <p className="text-slate-500 text-sm text-center py-6">لا توجد حالات ورش مسندة الآن.</p>}
             </section>
 
             <section className="space-y-4">
               <div>
-                <h2 className="text-white font-black text-xl">مشاكل القطع والمرتجعات</h2>
-                <p className="text-white/45 text-sm mt-1">هذه ليست “مهام عامة” فقط، بل إشعارات تنفيذية مرتبطة بحالات القطع والمرتجعات التي تحتاج منك حسمًا أو متابعة.</p>
+                <h2 className="text-slate-950 font-black text-xl">مشاكل القطع والمرتجعات</h2>
+                <p className="text-slate-500 text-sm mt-1">هذه ليست “مهام عامة” فقط، بل إشعارات تنفيذية مرتبطة بحالات القطع والمرتجعات التي تحتاج منك حسمًا أو متابعة.</p>
               </div>
               {issueTasks.length ? (
                 <div className="space-y-4">
                   {issueTasks.map((task) => (
-                    <div key={task.id} className="bg-[#10182C] border border-white/10 rounded-2xl p-5">
+                    <div key={task.id} className={`${adminUi.subtleCard} border-slate-200 bg-white p-5 shadow-sm`}>
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
-                          <h3 className="text-white font-black text-lg">{task.title}</h3>
-                          <p className="text-white/45 text-sm mt-2">
+                          <h3 className="text-slate-950 font-black text-lg">{task.title}</h3>
+                          <p className="text-slate-500 text-sm mt-2">
                             {taskTypeLabels[task.taskType] ?? task.taskType} {task.area ? `· ${task.area}` : ""} {task.dueAt ? `· ${new Date(task.dueAt).toLocaleString("ar-EG")}` : ""}
                           </p>
                           {(task.leadName || task.leadType) ? (
-                            <p className="text-white/35 text-xs mt-1">
+                            <p className="text-slate-400 text-xs mt-1">
                               مرتبطة بـ: {task.leadName ?? "حالة غير مسماة"} {task.leadType ? `· ${task.leadType === "workshop" ? "ورشة" : "عميل"}` : ""}
                             </p>
                           ) : null}
                         </div>
-                        <span className="px-3 py-2 rounded-xl text-xs font-bold bg-[#F9E795]/10 text-[#F9E795] border border-[#F9E795]/20 w-fit">
+                        <span className={`${adminUi.badgeBase} ${adminSemantic.warning} w-fit`}>
                           {taskStatusLabels[task.status] ?? task.status}
                         </span>
                       </div>
-                      {task.result ? <p className="text-white/55 text-sm mt-3">النتيجة: {task.result}</p> : null}
+                      {task.result ? <p className="text-slate-500 text-sm mt-3">النتيجة: {task.result}</p> : null}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-white/45 text-sm text-center py-6">لا توجد مهام قطع أو مرتجعات حالية.</p>
+                <p className="text-slate-500 text-sm text-center py-6">لا توجد مهام قطع أو مرتجعات حالية.</p>
               )}
             </section>
           </div>
