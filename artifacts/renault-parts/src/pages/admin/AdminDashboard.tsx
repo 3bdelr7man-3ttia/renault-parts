@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { adminSemantic, adminUi } from '@/components/admin/admin-ui';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   pending:    { label: 'قيد المراجعة', color: 'bg-amber-50 text-amber-700 border border-amber-200' },
@@ -144,7 +145,7 @@ export default function AdminDashboard() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Link href="/admin/employee/team">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 cursor-pointer hover:border-[#C8974A]/30 hover:shadow-md transition-all">
+          <div className="rounded-3xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,248,229,0.95),rgba(255,255,255,0.98)_55%,rgba(255,244,214,0.88))] p-5 shadow-[0_16px_34px_rgba(200,151,74,0.12)] cursor-pointer hover:border-[#C8974A]/40 hover:shadow-[0_22px_44px_rgba(200,151,74,0.16)] transition-all">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[#C8974A] text-xs font-black mb-2">إدارة الفريق والتوزيع</p>
@@ -161,7 +162,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.92),rgba(255,255,255,0.98)_52%,rgba(245,243,255,0.9))] p-5 shadow-[0_16px_34px_rgba(59,130,246,0.08)]">
           <p className="text-slate-400 text-xs font-black mb-2">دورة التشغيل الحالية</p>
           <h2 className="text-slate-950 text-lg font-black mb-3">Admin → Team Manager → Specialists</h2>
           <p className="text-slate-500 text-sm leading-7">
@@ -183,7 +184,7 @@ export default function AdminDashboard() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map((card, i) => (
-            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={i} className={adminUi.statCard}>
               <div className="mb-4 flex items-start justify-between">
                 <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${card.iconTone}`}>
                   <card.icon className="h-5 w-5" />
@@ -200,7 +201,7 @@ export default function AdminDashboard() {
       {!statsLoading && stats && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Weekly Sales Chart */}
-          <div className="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          <div className="lg:col-span-1 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BarChart2 className="w-5 h-5 text-[#C8974A]" />
@@ -218,7 +219,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Top Packages */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          <div className="rounded-3xl border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.78),rgba(255,255,255,0.98))] shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
               <Package2 className="w-5 h-5 text-[#C8974A]" />
               <h2 className="text-slate-950 font-bold">أكثر الباكدجات مبيعاً</h2>
@@ -249,7 +250,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Top Workshops */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(180deg,rgba(239,246,255,0.82),rgba(255,255,255,0.98))] shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
               <Wrench className="w-5 h-5 text-[#C8974A]" />
               <h2 className="text-slate-950 font-bold">الورش الأكثر نشاطاً</h2>
@@ -281,7 +282,7 @@ export default function AdminDashboard() {
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="rounded-3xl border border-violet-100 bg-[linear-gradient(180deg,rgba(245,243,255,0.8),rgba(255,255,255,0.98))] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-slate-950 font-bold">الحالات الفنية والمرتجعات</h2>
@@ -293,19 +294,19 @@ export default function AdminDashboard() {
             <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 text-[#F9E795] animate-spin" /></div>
           ) : technicalOverview ? (
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+              <div className={`rounded-2xl p-4 ${adminSemantic.neutral}`}>
                 <p className="text-slate-400 text-xs font-bold mb-2">إجمالي الحالات</p>
                 <p className="text-slate-950 font-black text-2xl">{technicalOverview.totalCases}</p>
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+              <div className={`rounded-2xl p-4 ${adminSemantic.brand}`}>
                 <p className="text-slate-400 text-xs font-bold mb-2">مرتجعات ومشاكل قطع</p>
                 <p className="text-slate-950 font-black text-2xl">{technicalOverview.returnsCases}</p>
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+              <div className={`rounded-2xl p-4 ${adminSemantic.warning}`}>
                 <p className="text-slate-400 text-xs font-bold mb-2">أولوية مرتفعة/حرجة</p>
                 <p className="text-slate-950 font-black text-2xl">{technicalOverview.urgentCases}</p>
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+              <div className={`rounded-2xl p-4 ${adminSemantic.info}`}>
                 <p className="text-slate-400 text-xs font-bold mb-2">تحتاج قرارًا</p>
                 <p className="text-slate-950 font-black text-2xl">{technicalOverview.pendingTransferCases}</p>
               </div>
@@ -315,7 +316,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-slate-950 font-bold">أكثر الأنماط تكرارًا</h2>
@@ -331,7 +332,7 @@ export default function AdminDashboard() {
                 {technicalOverview.topCategories.length === 0 ? (
                   <p className="text-slate-400 text-sm">لا توجد تصنيفات فنية كافية بعد.</p>
                 ) : technicalOverview.topCategories.map((item, index) => (
-                  <div key={`${item.category ?? 'unknown'}-${index}`} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                  <div key={`${item.category ?? 'unknown'}-${index}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.46),rgba(248,250,252,0.92))] px-4 py-3">
                     <span className="text-slate-700 text-sm font-bold">{item.category ? (technicalCategoryLabels[item.category] ?? item.category) : 'غير مصنف'}</span>
                     <span className="text-[#C8974A] text-sm font-black">{item.count}</span>
                   </div>
@@ -355,7 +356,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       {/* Recent Orders */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <h2 className="text-slate-950 font-bold text-lg">آخر الطلبات</h2>
           <Link href="/admin/orders">

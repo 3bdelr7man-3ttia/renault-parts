@@ -257,7 +257,14 @@ export default function EmployeeDataEntryPage() {
             </div>
             <div className="space-y-4">
               {section.rows.map((lead) => (
-                <div key={lead.id} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
+                <div
+                  key={lead.id}
+                  className={`rounded-[24px] border p-5 ${
+                    lead.type === "workshop"
+                      ? "border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(239,246,255,0.58))]"
+                      : "border-amber-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.6))]"
+                  }`}
+                >
                   {(() => {
                     const structuredNote = parseStructuredTechnicalNote(lead.notes);
                     return (
@@ -278,7 +285,7 @@ export default function EmployeeDataEntryPage() {
                     </div>
                   </div>
                   {structuredNote ? (
-                    <div className="mt-4 space-y-3 rounded-2xl border border-[#C8974A]/20 bg-[#C8974A]/5 p-4">
+                    <div className="mt-4 space-y-3 rounded-2xl border border-violet-200 bg-[linear-gradient(180deg,rgba(245,243,255,0.82),rgba(255,255,255,0.98))] p-4">
                       <div>
                         <p className="text-xs font-black text-[#9a6e2e]">قرار فني وصل لمسؤول القطع/الداتا</p>
                         <p className="mt-1 text-xs text-slate-500">
