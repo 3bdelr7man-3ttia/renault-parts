@@ -213,8 +213,8 @@ const toneClasses: Record<Tone, { chip: string; icon: string }> = {
     icon: `border ${adminSemantic.danger}`,
   },
   violet: {
-    chip: "border border-violet-200 bg-violet-50 text-violet-700",
-    icon: "border border-violet-200 bg-violet-50 text-violet-700",
+    chip: "border border-indigo-200 bg-indigo-50 text-indigo-700",
+    icon: "border border-indigo-200 bg-indigo-50 text-indigo-700",
   },
   emerald: {
     chip: `border ${adminSemantic.success}`,
@@ -312,7 +312,7 @@ function ActionLink({
 }) {
   return (
     <Link href={href}>
-      <div className={`${adminUi.secondaryButton} cursor-pointer border-slate-950 bg-slate-950 text-white hover:bg-slate-800 hover:text-white`}>
+      <div className={`${adminUi.secondaryButton} cursor-pointer`}>
         <Icon className="w-4 h-4" />
         {label}
       </div>

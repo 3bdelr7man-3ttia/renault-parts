@@ -437,29 +437,29 @@ export default function EmployeeTeamPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] px-4 py-3 shadow-sm">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">أعضاء الفريق المتاحون</p>
             <p className="mt-1 text-lg font-black text-slate-950">{employees.length}</p>
           </div>
           <Users className="h-5 w-5 text-slate-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">عملاء يحتاجون إسنادًا</p>
             <p className="mt-1 text-lg font-black text-slate-950">{unassignedCustomers}</p>
           </div>
           <BadgeCheck className="h-5 w-5 text-amber-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">ورش تحتاج إسنادًا</p>
             <p className="mt-1 text-lg font-black text-slate-950">{unassignedWorkshops}</p>
           </div>
           <Building2 className="h-5 w-5 text-violet-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">مهام مفتوحة الآن</p>
             <p className="mt-1 text-lg font-black text-slate-950">{openTasks.length}</p>
@@ -483,18 +483,18 @@ export default function EmployeeTeamPage() {
               </div>
             </div>
 
-            <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.8),rgba(255,255,255,0.99))] p-4">
+            <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <div className="rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.8),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">الإسنادات العاجلة</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
                 <p className="mt-2 text-xs text-slate-500">عملاء وورش بلا مسؤول مباشر حتى الآن.</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.8),rgba(255,255,255,0.99))] p-4">
+              <div className="rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.8),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">قرارات متابعة اليوم</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{quickFollowUpLeads.length}</p>
                 <p className="mt-2 text-xs text-slate-500">عناصر مسندة لكن تحتاج تدخل المدير الآن.</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,247,247,0.82),rgba(255,255,255,0.99))] p-4">
+              <div className="rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,247,247,0.82),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">مهام قد تتأخر</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{urgentTasks.length}</p>
                 <p className="mt-2 text-xs text-slate-500">مهام مفتوحة قريبة الاستحقاق أو متأخرة.</p>
@@ -502,7 +502,7 @@ export default function EmployeeTeamPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.64),rgba(255,255,255,0.99))] p-4">
+              <div className="space-y-3 rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.64),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">إسناد العملاء الآن</p>
@@ -518,11 +518,11 @@ export default function EmployeeTeamPage() {
                       <p className="mt-1 text-sm text-slate-500">
                         عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                       </p>
-                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                        className={adminUi.selectSm}
+                        className={`${adminUi.selectSm} sm:flex-1`}
                       >
                         <option value="">اختر المسؤول الآن</option>
                         {employees.map((employee) => (
@@ -534,7 +534,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[92px]"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -545,7 +545,7 @@ export default function EmployeeTeamPage() {
                 )}
               </div>
 
-              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.64),rgba(255,255,255,0.99))] p-4">
+              <div className="space-y-3 rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.64),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">إسناد الورش الآن</p>
@@ -561,11 +561,11 @@ export default function EmployeeTeamPage() {
                       <p className="mt-1 text-sm text-slate-500">
                         ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                       </p>
-                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                        className={adminUi.selectSm}
+                        className={`${adminUi.selectSm} sm:flex-1`}
                       >
                         <option value="">اختر المسؤول الآن</option>
                         {employees.map((employee) => (
@@ -577,7 +577,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[92px]"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -588,7 +588,7 @@ export default function EmployeeTeamPage() {
                 )}
               </div>
 
-              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.62),rgba(255,255,255,0.99))] p-4">
+              <div className="space-y-3 rounded-[22px] border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.62),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">متابعات تحتاج قرارًا الآن</p>
@@ -677,13 +677,13 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[220px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[196px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                              className={adminUi.selectSm}
+                              className={`${adminUi.selectSm} sm:flex-1`}
                             >
                               <option value="">غير مسند</option>
                               {employees.map((employee) => (
@@ -695,7 +695,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[84px]"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>
@@ -758,13 +758,13 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[220px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[196px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
-                              className={adminUi.selectSm}
+                              className={`${adminUi.selectSm} sm:flex-1`}
                             >
                               <option value="">غير مسند</option>
                               {employees.map((employee) => (
@@ -776,7 +776,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[84px]"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>

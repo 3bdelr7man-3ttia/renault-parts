@@ -129,10 +129,10 @@ export default function AdminWorkshops() {
   };
 
   const STATUS_COLORS: Record<string, string> = {
-    active:   'bg-green-500/20 text-green-400 border-green-500/30',
-    inactive: 'bg-red-500/20 text-red-400 border-red-500/30',
-    pending:  'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    blocked:  'bg-red-700/20 text-red-300 border-red-700/40',
+    active:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+    inactive: 'bg-slate-100 text-slate-600 border-slate-200',
+    pending:  'bg-amber-50 text-amber-700 border-amber-200',
+    blocked:  'bg-rose-50 text-rose-700 border-rose-200',
   };
   const STATUS_LABELS: Record<string, string> = {
     active:   'نشطة',

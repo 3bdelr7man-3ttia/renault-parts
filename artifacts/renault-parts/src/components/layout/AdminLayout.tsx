@@ -267,7 +267,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* ── Sidebar ── */}
       <aside style={{
         position: 'fixed', insetBlock: 0, right: 0, zIndex: 50,
-        width: 286, background: S,
+        width: 292, background: S,
         borderLeft: '1px solid rgba(15,23,42,0.08)',
         display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100vh',
         transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -328,7 +328,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       <div
                         onClick={() => setSidebarOpen(false)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 14,
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 14,
                           cursor: 'pointer', transition: 'all .18s',
                           background: active ? 'rgba(200,151,74,0.14)' : 'transparent',
                           color: active ? '#0F172A' : 'rgba(15,23,42,0.72)',
@@ -414,7 +414,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: isMobile ? '14px 12px 80px' : 24 }}>
+        <main style={{ flex: 1, padding: isMobile ? '14px 12px 88px' : 24, maxWidth: '100%', overflowX: 'hidden' }}>
           {children}
         </main>
       </div>

@@ -36,7 +36,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-amber-50 text-amber-700 border-amber-200',
-  employee: 'bg-violet-50 text-violet-700 border-violet-200',
+  employee: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   customer: 'bg-slate-50 text-slate-600 border-slate-200',
   workshop_owner: 'bg-sky-50 text-sky-700 border-sky-200',
   workshop: 'bg-sky-50 text-sky-700 border-sky-200',
@@ -255,7 +255,7 @@ export default function AdminUsers() {
                           {ROLE_LABELS[normalizedRole] ?? getRoleLabel(u.role, u.employeeRole)}
                         </span>
                         {normalizedRole === 'employee' && u.employeeRole && (
-                          <p className="mt-2 text-[11px] font-bold text-violet-700">{EMPLOYEE_ROLE_LABELS[u.employeeRole]}</p>
+                          <p className="mt-2 text-[11px] font-bold text-indigo-700">{EMPLOYEE_ROLE_LABELS[u.employeeRole]}</p>
                         )}
                       </td>
                       <td className="px-4 py-4 text-xs whitespace-nowrap text-slate-400">
