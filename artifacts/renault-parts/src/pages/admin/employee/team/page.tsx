@@ -518,7 +518,7 @@ export default function EmployeeTeamPage() {
                       <p className="mt-1 text-sm text-slate-500">
                         عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                       </p>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -534,7 +534,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -561,7 +561,7 @@ export default function EmployeeTeamPage() {
                       <p className="mt-1 text-sm text-slate-500">
                         ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
                       </p>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
                       <select
                         value={assignmentDrafts[lead.id] ?? ""}
                         onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -577,7 +577,7 @@ export default function EmployeeTeamPage() {
                       <button
                         onClick={() => saveAssignment(lead)}
                         disabled={savingLeadId === lead.id || !(assignmentDrafts[lead.id] ?? "")}
-                        className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {savingLeadId === lead.id ? "..." : "إسناد"}
                       </button>
@@ -677,9 +677,9 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[240px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[220px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -695,7 +695,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>
@@ -758,9 +758,9 @@ export default function EmployeeTeamPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 xl:min-w-[240px]">
+                        <div className="flex flex-col gap-2 xl:min-w-[220px]">
                           <label className="text-xs font-bold text-slate-500">الموظف المسؤول</label>
-                          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_88px]">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_96px]">
                             <select
                               value={assignmentDrafts[lead.id] ?? ""}
                               onChange={(event) => setAssignmentDrafts((current) => ({ ...current, [lead.id]: event.target.value }))}
@@ -776,7 +776,7 @@ export default function EmployeeTeamPage() {
                             <button
                               onClick={() => saveAssignment(lead)}
                               disabled={savingLeadId === lead.id}
-                              className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-black text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingLeadId === lead.id ? "..." : "حفظ"}
                             </button>
@@ -851,7 +851,7 @@ export default function EmployeeTeamPage() {
                     : "اختر عضو الفريق والفرصة المرتبطة ثم احفظ المهمة."}
                 </p>
               </div>
-              <button onClick={() => setShowTaskModal(false)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition-all hover:bg-slate-100">
+              <button onClick={() => setShowTaskModal(false)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition-all hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>

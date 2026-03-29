@@ -428,7 +428,7 @@ export default function AdminWorkshops() {
                   </div>
                 )}
               </div>
-              <button onClick={() => setOrdersModal(null)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+              <button onClick={() => setOrdersModal(null)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X className="w-4 h-4" />
               </button>
             </div>

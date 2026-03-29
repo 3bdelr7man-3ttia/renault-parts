@@ -309,7 +309,7 @@ export default function AdminParts() {
               <button
                 onClick={() => handleDelete(part.id)}
                 disabled={deletingId === part.id}
-                className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 flex items-center justify-center flex-shrink-0 transition-all"
+                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-500 transition-all hover:bg-red-500/20"
               >
                 {deletingId === part.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
@@ -332,7 +332,7 @@ export default function AdminParts() {
                 <h2 className="text-xl font-black text-slate-950">قطعة جديدة</h2>
                 <p className="mt-0.5 text-sm text-slate-500">أضف قطعة غيار للمنصة</p>
               </div>
-              <button onClick={() => setShowAdd(false)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+              <button onClick={() => setShowAdd(false)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X size={14} />
               </button>
             </div>

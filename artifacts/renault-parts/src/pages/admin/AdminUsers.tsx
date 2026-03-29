@@ -215,7 +215,7 @@ export default function AdminUsers() {
                       <td className="px-6 py-4 font-mono text-xs text-slate-400">{u.id}</td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50"
+                          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50"
                             style={{ background: isWorkshop ? '#e0f2fe' : undefined }}>
                             {isWorkshop
                               ? <Wrench className="w-4 h-4 text-sky-600" />
@@ -267,7 +267,7 @@ export default function AdminUsers() {
                           {!isMe && !isAdmin && (
                             <button
                               onClick={() => openLinkModal(u)}
-                              className="rounded-lg bg-sky-50 p-1.5 text-sky-700 transition-all hover:bg-sky-100"
+                              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-700 transition-all hover:bg-sky-100"
                               title="ربط بورشة"
                             >
                               <LinkIcon className="w-3.5 h-3.5" />
@@ -344,7 +344,7 @@ export default function AdminUsers() {
                 <h2 className="text-xl font-black text-slate-950">ربط بورشة</h2>
                 <p className="mt-0.5 text-sm text-slate-500">{linkModal.name} — صلاحية ورشة</p>
               </div>
-              <button onClick={() => setLinkModal(null)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+              <button onClick={() => setLinkModal(null)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
                 <X size={14} />
               </button>
             </div>

@@ -272,7 +272,7 @@ export default function EmployeeCustomersPage() {
                 <h2 className="text-slate-950 text-2xl font-black">إضافة عميل جديد</h2>
                 <p className="text-slate-500 text-sm mt-1">العميل سيُسجل باسمك ويظهر مباشرة ضمن قائمتك.</p>
               </div>
-              <button onClick={() => setShowAdd(false)} className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 flex items-center justify-center">
+              <button onClick={() => setShowAdd(false)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>

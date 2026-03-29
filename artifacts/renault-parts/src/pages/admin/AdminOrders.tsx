@@ -127,8 +127,8 @@ export default function AdminOrders() {
       </div>
 
       <div className={`${adminUi.card} space-y-4`}>
-        <div className="flex flex-wrap gap-3">
-          <div className={`${adminUi.searchShell} min-w-[220px]`}>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className={`${adminUi.searchShell} min-w-0`}>
             <Filter className="h-4 w-4 text-slate-400" />
             <select
               value={filterStatus}
@@ -143,7 +143,7 @@ export default function AdminOrders() {
             </select>
           </div>
 
-          <div className={`${adminUi.searchShell} min-w-[190px]`}>
+          <div className={`${adminUi.searchShell} min-w-0`}>
             <Calendar className="h-4 w-4 text-slate-400" />
             <label className="text-xs font-bold text-slate-500">من</label>
             <input
@@ -154,7 +154,7 @@ export default function AdminOrders() {
             />
           </div>
 
-          <div className={`${adminUi.searchShell} min-w-[190px]`}>
+          <div className={`${adminUi.searchShell} min-w-0`}>
             <Calendar className="h-4 w-4 text-slate-400" />
             <label className="text-xs font-bold text-slate-500">إلى</label>
             <input
@@ -176,7 +176,7 @@ export default function AdminOrders() {
           <div className="p-12 text-center font-bold text-slate-400">لا توجد طلبات مطابقة للفلاتر الحالية.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="min-w-[920px] w-full text-sm">
               <thead>
                 <tr className={`${adminUi.tableHead} border-b border-slate-200`}>
                   <th className="px-6 py-4 text-right">#</th>
@@ -234,8 +234,8 @@ export default function AdminOrders() {
                                 onClick={() => handleStatusChange(order.id, action.value)}
                                 className={
                                   action.value === 'cancelled'
-                                    ? 'rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100'
-                                    : 'rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-100'
+                                    ? 'inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100'
+                                    : 'inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100'
                                 }
                               >
                                 {action.label}

@@ -482,7 +482,7 @@ export default function EmployeeTasksPage() {
                 <h2 className="text-2xl font-black text-slate-950">إضافة مهمة جديدة</h2>
                 <p className="mt-1 text-sm text-slate-500">هذه المهمة ستسجل كمهمة أنشأتها بنفسك داخل جدول اليوم.</p>
               </div>
-              <button onClick={() => setShowAdd(false)} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
+              <button onClick={() => setShowAdd(false)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
