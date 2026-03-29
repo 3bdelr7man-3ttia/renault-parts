@@ -445,21 +445,21 @@ export default function EmployeeTeamPage() {
           </div>
           <Users className="h-5 w-5 text-slate-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-[linear-gradient(180deg,rgba(255,248,229,0.94),rgba(255,255,255,0.98))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">عملاء يحتاجون إسنادًا</p>
             <p className="mt-1 text-lg font-black text-slate-950">{unassignedCustomers}</p>
           </div>
           <BadgeCheck className="h-5 w-5 text-amber-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-sky-200 bg-[linear-gradient(180deg,rgba(239,246,255,0.94),rgba(255,255,255,0.98))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">ورش تحتاج إسنادًا</p>
             <p className="mt-1 text-lg font-black text-slate-950">{unassignedWorkshops}</p>
           </div>
           <Building2 className="h-5 w-5 text-violet-600" />
         </div>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-violet-200 bg-[linear-gradient(180deg,rgba(245,243,255,0.94),rgba(255,255,255,0.98))] px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.82),rgba(255,255,255,0.99))] px-4 py-3 shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-500">مهام مفتوحة الآن</p>
             <p className="mt-1 text-lg font-black text-slate-950">{openTasks.length}</p>
@@ -484,17 +484,17 @@ export default function EmployeeTeamPage() {
             </div>
 
             <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="rounded-3xl border border-amber-200 bg-[linear-gradient(180deg,rgba(255,248,229,0.92),rgba(255,255,255,0.98))] p-4">
+              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.8),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">الإسنادات العاجلة</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{unassignedCustomers + unassignedWorkshops}</p>
                 <p className="mt-2 text-xs text-slate-500">عملاء وورش بلا مسؤول مباشر حتى الآن.</p>
               </div>
-              <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(180deg,rgba(239,246,255,0.92),rgba(255,255,255,0.98))] p-4">
+              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.8),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">قرارات متابعة اليوم</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{quickFollowUpLeads.length}</p>
                 <p className="mt-2 text-xs text-slate-500">عناصر مسندة لكن تحتاج تدخل المدير الآن.</p>
               </div>
-              <div className="rounded-3xl border border-rose-200 bg-[linear-gradient(180deg,rgba(255,241,242,0.92),rgba(255,255,255,0.98))] p-4">
+              <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,247,247,0.82),rgba(255,255,255,0.99))] p-4">
                 <p className="text-xs font-bold text-slate-500">مهام قد تتأخر</p>
                 <p className="mt-2 text-2xl font-black text-slate-950">{urgentTasks.length}</p>
                 <p className="mt-2 text-xs text-slate-500">مهام مفتوحة قريبة الاستحقاق أو متأخرة.</p>
@@ -502,7 +502,7 @@ export default function EmployeeTeamPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-              <div className="space-y-3 rounded-3xl border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.72),rgba(255,255,255,0.98))] p-4">
+              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.64),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">إسناد العملاء الآن</p>
@@ -513,7 +513,7 @@ export default function EmployeeTeamPage() {
                   </span>
                 </div>
                 {quickAssignCustomerLeads.length ? quickAssignCustomerLeads.map((lead) => (
-                    <div key={`customer-assign-${lead.id}`} className="rounded-2xl border border-amber-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.72))] p-4 shadow-sm">
+                    <div key={`customer-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,252,245,0.65))] p-4 shadow-sm">
                       <p className="font-black text-slate-950">{lead.name}</p>
                       <p className="mt-1 text-sm text-slate-500">
                         عميل · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
@@ -545,7 +545,7 @@ export default function EmployeeTeamPage() {
                 )}
               </div>
 
-              <div className="space-y-3 rounded-3xl border border-sky-100 bg-[linear-gradient(180deg,rgba(239,246,255,0.68),rgba(255,255,255,0.98))] p-4">
+              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.64),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">إسناد الورش الآن</p>
@@ -556,7 +556,7 @@ export default function EmployeeTeamPage() {
                   </span>
                 </div>
                 {quickAssignWorkshopLeads.length ? quickAssignWorkshopLeads.map((lead) => (
-                    <div key={`workshop-assign-${lead.id}`} className="rounded-2xl border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(239,246,255,0.72))] p-4 shadow-sm">
+                    <div key={`workshop-assign-${lead.id}`} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.65))] p-4 shadow-sm">
                       <p className="font-black text-slate-950">{lead.name}</p>
                       <p className="mt-1 text-sm text-slate-500">
                         ورشة · {lead.area ?? "بدون منطقة"} · {leadStatusLabels[lead.status] ?? lead.status}
@@ -588,7 +588,7 @@ export default function EmployeeTeamPage() {
                 )}
               </div>
 
-              <div className="space-y-3 rounded-3xl border border-violet-100 bg-[linear-gradient(180deg,rgba(245,243,255,0.7),rgba(255,255,255,0.98))] p-4">
+              <div className="space-y-3 rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.62),rgba(255,255,255,0.99))] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black text-slate-950">متابعات تحتاج قرارًا الآن</p>
@@ -603,7 +603,7 @@ export default function EmployeeTeamPage() {
                 ) : (
                   <>
                     {quickFollowUpLeads.map((lead) => (
-                      <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-violet-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(245,243,255,0.7))] p-4 shadow-sm">
+                      <div key={`followup-${lead.type}-${lead.id}`} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(249,248,255,0.62))] p-4 shadow-sm">
                         <p className="font-black text-slate-950">{lead.name}</p>
                         <p className="mt-1 text-sm text-slate-500">
                           {lead.assignedEmployeeName ?? "غير محدد"} · {lead.type === "customer" ? "عميل" : "ورشة"}
@@ -614,7 +614,7 @@ export default function EmployeeTeamPage() {
                       </div>
                     ))}
                     {urgentTasks.map((task) => (
-                      <div key={`task-${task.id}`} className="rounded-2xl border border-rose-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,241,242,0.7))] p-4 shadow-sm">
+                      <div key={`task-${task.id}`} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,247,247,0.62))] p-4 shadow-sm">
                         <p className="font-black text-slate-950">{task.title}</p>
                         <p className="mt-1 text-sm text-slate-500">
                           {task.employeeName ?? "بدون موظف"} · {taskTypeLabels[task.taskType as TaskFormState["taskType"]] ?? task.taskType}
@@ -650,7 +650,7 @@ export default function EmployeeTeamPage() {
                     return aTime - bTime;
                   })
                   .map((lead) => (
-                    <div key={lead.id} className="rounded-2xl border border-amber-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.6))] p-5">
+                    <div key={lead.id} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,252,245,0.55))] p-5">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
@@ -731,7 +731,7 @@ export default function EmployeeTeamPage() {
                     return aTime - bTime;
                   })
                   .map((lead) => (
-                    <div key={lead.id} className="rounded-2xl border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(239,246,255,0.6))] p-5">
+                    <div key={lead.id} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.55))] p-5">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">

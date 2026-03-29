@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Link href="/admin/employee/team">
-          <div className="rounded-3xl border border-amber-200 bg-[linear-gradient(135deg,rgba(255,248,229,0.95),rgba(255,255,255,0.98)_55%,rgba(255,244,214,0.88))] p-5 shadow-[0_16px_34px_rgba(200,151,74,0.12)] cursor-pointer hover:border-[#C8974A]/40 hover:shadow-[0_22px_44px_rgba(200,151,74,0.16)] transition-all">
+          <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,rgba(255,252,245,0.96),rgba(255,255,255,0.99)_60%,rgba(250,250,249,0.96))] p-5 shadow-sm cursor-pointer hover:border-[#C8974A]/25 hover:shadow-md transition-all">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[#C8974A] text-xs font-black mb-2">إدارة الفريق والتوزيع</p>
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.92),rgba(255,255,255,0.98)_52%,rgba(245,243,255,0.9))] p-5 shadow-[0_16px_34px_rgba(59,130,246,0.08)]">
+        <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(135deg,rgba(248,250,252,0.98),rgba(255,255,255,0.99)_58%,rgba(250,250,255,0.96))] p-5 shadow-sm">
           <p className="text-slate-400 text-xs font-black mb-2">دورة التشغيل الحالية</p>
           <h2 className="text-slate-950 text-lg font-black mb-3">Admin → Team Manager → Specialists</h2>
           <p className="text-slate-500 text-sm leading-7">
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Top Packages */}
-          <div className="rounded-3xl border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.78),rgba(255,255,255,0.98))] shadow-sm p-5">
+          <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.75),rgba(255,255,255,0.99))] shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
               <Package2 className="w-5 h-5 text-[#C8974A]" />
               <h2 className="text-slate-950 font-bold">أكثر الباكدجات مبيعاً</h2>
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Top Workshops */}
-          <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(180deg,rgba(239,246,255,0.82),rgba(255,255,255,0.98))] shadow-sm p-5">
+          <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(247,250,252,0.78),rgba(255,255,255,0.99))] shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
               <Wrench className="w-5 h-5 text-[#C8974A]" />
               <h2 className="text-slate-950 font-bold">الورش الأكثر نشاطاً</h2>
@@ -282,7 +282,7 @@ export default function AdminDashboard() {
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
-        <div className="rounded-3xl border border-violet-100 bg-[linear-gradient(180deg,rgba(245,243,255,0.8),rgba(255,255,255,0.98))] shadow-sm p-5">
+        <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.72),rgba(255,255,255,0.99))] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-slate-950 font-bold">الحالات الفنية والمرتجعات</h2>
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.95))] shadow-sm p-5">
+          <div className="rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(249,250,252,0.96))] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-slate-950 font-bold">أكثر الأنماط تكرارًا</h2>

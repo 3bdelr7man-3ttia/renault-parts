@@ -129,7 +129,7 @@ export default function EmployeeReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
-        <div className="space-y-4 rounded-[28px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.8),rgba(255,255,255,0.98))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+        <div className="space-y-4 rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,252,245,0.72),rgba(255,255,255,0.99))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-[#C8974A]" />
             <h2 className="text-slate-950 font-black text-xl">تقرير اليوم</h2>
@@ -180,7 +180,7 @@ export default function EmployeeReportsPage() {
           </button>
         </div>
 
-        <div className="rounded-[28px] border border-sky-100 bg-[linear-gradient(180deg,rgba(239,246,255,0.72),rgba(255,255,255,0.98))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+        <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.7),rgba(255,255,255,0.99))] p-5 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
           <div className="flex items-center gap-3 mb-4">
             <CalendarDays className="w-5 h-5 text-[#C8974A]" />
             <h2 className="text-slate-950 font-black text-xl">آخر التقارير</h2>
@@ -197,7 +197,7 @@ export default function EmployeeReportsPage() {
           ) : (
             <div className="space-y-4">
               {reports.map((report) => (
-                <div key={report.id} className="rounded-2xl border border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(239,246,255,0.5))] p-4">
+                <div key={report.id} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.45))] p-4">
                   <span className={`${adminUi.badgeBase} ${adminSemantic.brand}`}>{report.reportDate}</span>
                   <p className="mt-3 text-slate-950 font-black">{report.summary}</p>
                   {report.achievements && <p className="text-slate-600 text-sm mt-3">الإنجازات: {report.achievements}</p>}

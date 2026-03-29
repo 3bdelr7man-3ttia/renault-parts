@@ -285,7 +285,7 @@ export default function EmployeeDataEntryPage() {
                     </div>
                   </div>
                   {structuredNote ? (
-                    <div className="mt-4 space-y-3 rounded-2xl border border-violet-200 bg-[linear-gradient(180deg,rgba(245,243,255,0.82),rgba(255,255,255,0.98))] p-4">
+                    <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,rgba(249,248,255,0.62),rgba(255,255,255,0.99))] p-4">
                       <div>
                         <p className="text-xs font-black text-[#9a6e2e]">قرار فني وصل لمسؤول القطع/الداتا</p>
                         <p className="mt-1 text-xs text-slate-500">
