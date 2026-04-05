@@ -16,12 +16,17 @@ import { RENAULT_MODELS, CAR_YEARS, useCar } from '@/lib/car-context';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 
 const G = '#C8974A';
-const NV = '#1A2356';
-const BG = '#0D1220';
-const B2 = '#111826';
-const B3 = '#161E30';
+const NV = publicTheme.text;
+const BG = publicTheme.page;
+const B2 = publicTheme.surface;
+const B3 = publicTheme.surfaceAlt;
+const TX = publicTheme.text;
+const TS = publicTheme.textSoft;
+const TD = publicTheme.muted;
+const BORDER = publicTheme.border;
 
 const ALEX_AREAS = [
   'المنتزه', 'سيدي جابر', 'سموحة', 'العجمي', 'المنشية',
@@ -296,7 +301,7 @@ export default function Checkout() {
     return (
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: "'Almarai',sans-serif" }}>
         <AlertCircle style={{ color: '#ef4444', width: 48, height: 48 }} />
-        <p style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>
+        <p style={{ fontSize: 20, fontWeight: 800, color: TX }}>
           {isCustom ? 'لم يتم العثور على بيانات الباكدج المخصص' : 'الباكدج غير موجود'}
         </p>
         <Link href="/packages" style={{ color: G, fontWeight: 700 }}>تصفح الباكدجات</Link>
@@ -354,19 +359,20 @@ export default function Checkout() {
   };
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', paddingBottom: isMobile ? 80 : 80, paddingTop: isMobile ? 20 : 40, fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
+    <div style={{ background: BG, minHeight: '100vh', paddingBottom: 80, paddingTop: isMobile ? 20 : 40, fontFamily: "'Almarai',sans-serif", direction: 'rtl' }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '0 12px' : '0 16px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: isMobile ? 20 : 32, gap: 10 }}>
+        <div style={{ ...publicStyles.hero, border: `1px solid ${BORDER}`, borderRadius: isMobile ? 24 : 32, display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: isMobile ? 20 : 32, gap: 10, padding: isMobile ? '22px 18px' : '28px 24px', boxShadow: publicTheme.shadowSoft }}>
           <RenoPackLogo size="md" />
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', margin: 0 }}>إتمام الطلب</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: TX, margin: 0 }}>إتمام الطلب</h1>
+          <p style={{ margin: 0, fontSize: 13, color: TD }}>أكمل بيانات الطلب خطوة بخطوة بطريقة أوضح وأهدأ</p>
         </div>
 
         <StepProgress step={step} userHasCar={hasCar} />
 
         <div style={{ maxWidth: 680, margin: isMobile ? '20px auto 0' : '32px auto 0' }}>
           <div>
-            <div style={{ background: B2, borderRadius: isMobile ? 18 : 24, border: `1px solid ${G}20`, padding: isMobile ? 16 : 28 }}>
+            <div style={{ ...publicStyles.cardMuted, borderRadius: isMobile ? 18 : 24, border: `1px solid ${BORDER}`, padding: isMobile ? 16 : 28 }}>
 
               {step === 1 && (
                 <Step1Car
@@ -453,7 +459,7 @@ function StepProgress({ step, userHasCar }: { step: Step; userHasCar: boolean })
   const icons = [CarFront, Package2, Store, CreditCard, Calendar, CheckCircle2];
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', padding: '0 8px' }}>
-      <div style={{ position: 'absolute', top: 22, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.08)', zIndex: 0 }} />
+      <div style={{ position: 'absolute', top: 22, left: 0, right: 0, height: 2, background: publicTheme.border, zIndex: 0 }} />
       <div style={{ position: 'absolute', top: 22, right: 0, height: 2, background: G, zIndex: 1, width: `${((step - 1) / 5) * 100}%`, transition: 'width 0.4s ease' }} />
       {STEP_LABELS.map((label, i) => {
         const num = (i + 1) as Step;
@@ -466,16 +472,16 @@ function StepProgress({ step, userHasCar }: { step: Step; userHasCar: boolean })
             <div style={{
               width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 800, fontSize: 15, transition: 'all 0.3s',
-              background: isDone || isSkipped ? '#22c55e' : isActive ? G : 'rgba(255,255,255,0.06)',
-              color: isDone || isSkipped ? '#fff' : isActive ? NV : 'rgba(255,255,255,0.3)',
-              border: `2px solid ${isDone || isSkipped ? '#22c55e' : isActive ? G : 'rgba(255,255,255,0.1)'}`,
-              boxShadow: isActive ? `0 0 20px ${G}50` : 'none',
+              background: isDone || isSkipped ? '#22c55e' : isActive ? G : publicTheme.surface,
+              color: isDone || isSkipped ? '#fff' : isActive ? NV : TD,
+              border: `2px solid ${isDone || isSkipped ? '#22c55e' : isActive ? G : publicTheme.borderStrong}`,
+              boxShadow: isActive ? `0 8px 20px ${G}28` : 'none',
             }}>
               {isDone || isSkipped ? <CheckCircle2 size={20} /> : <Icon size={18} />}
             </div>
             <span style={{
               fontSize: 11, fontWeight: 700,
-              color: isActive ? G : isDone || isSkipped ? '#22c55e' : 'rgba(255,255,255,0.3)',
+              color: isActive ? G : isDone || isSkipped ? '#22c55e' : TD,
               whiteSpace: 'nowrap'
             }}>
               {label}{isSkipped ? ' ✓' : ''}
@@ -493,11 +499,12 @@ function Btn({ children, onClick, disabled, variant = 'primary', style: extraSty
 }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      padding: '14px 24px', borderRadius: 14, fontSize: 15, fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer',
-      border: variant === 'outline' ? '2px solid rgba(255,255,255,0.15)' : 'none',
-      background: variant === 'outline' ? 'transparent' : disabled ? '#333' : G,
-      color: variant === 'outline' ? 'rgba(255,255,255,0.6)' : disabled ? '#666' : NV,
+      minHeight: 46, padding: '14px 24px', borderRadius: 14, fontSize: 15, fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer',
+      border: variant === 'outline' ? `1.5px solid ${publicTheme.borderStrong}` : 'none',
+      background: variant === 'outline' ? publicTheme.surface : disabled ? publicTheme.borderStrong : G,
+      color: variant === 'outline' ? TX : disabled ? TD : NV,
       fontFamily: "'Almarai',sans-serif", transition: 'opacity 0.2s', opacity: 1,
+      boxShadow: variant === 'outline' ? 'none' : publicTheme.shadowSoft,
       ...extraStyle,
     }}>
       {children}
@@ -525,14 +532,14 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>سيارتك</h2>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>اتحددت تلقائياً من بياناتك</p>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: TX, margin: '0 0 4px' }}>سيارتك</h2>
+          <p style={{ fontSize: 13, color: TD, margin: 0 }}>اتحددت تلقائياً من بياناتك</p>
         </div>
 
-        <div style={{ background: `${G}0D`, border: `2px solid ${G}50`, borderRadius: 20, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ background: publicTheme.surfaceSoft, border: `2px solid ${G}35`, borderRadius: 20, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 18 }}>
           <span style={{ fontSize: 48 }}>{MODEL_ICONS[formData.carModel] ?? '🚗'}</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#E8F0F8', marginBottom: 4 }}>{formData.carModel}</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: TX, marginBottom: 4 }}>{formData.carModel}</div>
             <div style={{ fontSize: 14, color: G, fontWeight: 700 }}>إصدار {formData.carYear}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', background: 'rgba(34,197,94,0.15)' }}>
@@ -548,8 +555,8 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
             onClick={() => setChanging(true)}
             style={{
               padding: '14px 18px', borderRadius: 14, fontSize: 13, fontWeight: 800, cursor: 'pointer',
-              border: '1.5px solid rgba(255,255,255,0.15)', background: 'transparent',
-              color: 'rgba(255,255,255,0.55)', fontFamily: "'Almarai',sans-serif",
+              border: `1.5px solid ${publicTheme.borderStrong}`, background: publicTheme.surface,
+              color: TS, fontFamily: "'Almarai',sans-serif",
               display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
             }}
           >
@@ -566,11 +573,11 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
       {/* Title */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختار سيارتك</h2>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>نضمن لك الباكدج المناسب لموديل وسنة سيارتك بالتحديد</p>
+          <h2 style={{ fontSize: 22, fontWeight: 900, color: TX, margin: '0 0 4px' }}>اختار سيارتك</h2>
+          <p style={{ fontSize: 13, color: TD, margin: 0 }}>نضمن لك الباكدج المناسب لموديل وسنة سيارتك بالتحديد</p>
         </div>
         {carKnown && changing && (
-          <button onClick={() => setChanging(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: "'Almarai',sans-serif", paddingTop: 4 }}>
+          <button onClick={() => setChanging(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: TD, fontSize: 12, fontFamily: "'Almarai',sans-serif", paddingTop: 4 }}>
             إلغاء ←
           </button>
         )}
@@ -578,7 +585,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
 
       {/* ── Model selector ── */}
       <div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: TS, marginBottom: 12 }}>
           <Car size={14} color={G} /> الموديل
           {formData.carModel && (
             <span style={{ marginRight: 6, background: `${G}18`, border: `1px solid ${G}40`, borderRadius: 999, padding: '2px 10px', fontSize: 11, color: G }}>
@@ -595,15 +602,15 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
                 onClick={() => onChange({ ...formData, carModel: model })}
                 style={{
                   padding: '12px 8px', borderRadius: 14, cursor: 'pointer',
-                  border: `1.5px solid ${active ? G : 'rgba(255,255,255,0.07)'}`,
-                  background: active ? `${G}14` : 'rgba(255,255,255,0.025)',
+                  border: `1.5px solid ${active ? G : publicTheme.border}`,
+                  background: active ? publicTheme.surfaceSoft : publicTheme.surface,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                   transition: 'all .18s', fontFamily: "'Almarai',sans-serif",
                   boxShadow: active ? `0 0 18px ${G}22` : 'none',
                 }}
               >
                 <span style={{ fontSize: 22 }}>{MODEL_ICONS[model] ?? '🚗'}</span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: active ? G : '#7A95AA', lineHeight: 1.3 }}>{SHORT(model)}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: active ? G : TD, lineHeight: 1.3 }}>{SHORT(model)}</span>
                 {active && <span style={{ fontSize: 8, color: G }}>✓</span>}
               </button>
             );
@@ -614,7 +621,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
             <select
               value={moreModels.includes(formData.carModel) ? formData.carModel : ''}
               onChange={e => { if (e.target.value) onChange({ ...formData, carModel: e.target.value }); }}
-              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${moreModels.includes(formData.carModel) ? G : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: moreModels.includes(formData.carModel) ? G : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
+              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${moreModels.includes(formData.carModel) ? G : BORDER}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: moreModels.includes(formData.carModel) ? G : TD, fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
             >
               <option value="">موديل آخر...</option>
               {moreModels.map(m => <option key={m} value={m}>{m}</option>)}
@@ -626,7 +633,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
 
       {/* ── Year selector ── */}
       <div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 800, color: TS, marginBottom: 12 }}>
           <span style={{ fontSize: 14 }}>📅</span> سنة الصنع
           {formData.carYear > 0 && (
             <span style={{ marginRight: 6, background: `${G}18`, border: `1px solid ${G}40`, borderRadius: 999, padding: '2px 10px', fontSize: 11, color: G }}>
@@ -643,9 +650,9 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
                 onClick={() => onChange({ ...formData, carYear: year })}
                 style={{
                   padding: '10px 4px', borderRadius: 12, cursor: 'pointer',
-                  border: `1.5px solid ${active ? G : 'rgba(255,255,255,0.07)'}`,
-                  background: active ? `${G}14` : 'rgba(255,255,255,0.025)',
-                  fontSize: 13, fontWeight: 800, color: active ? G : '#7A95AA',
+                  border: `1.5px solid ${active ? G : BORDER}`,
+                  background: active ? publicTheme.surfaceSoft : publicTheme.surface,
+                  fontSize: 13, fontWeight: 800, color: active ? G : TD,
                   transition: 'all .18s', fontFamily: "'Almarai',sans-serif",
                   boxShadow: active ? `0 0 14px ${G}22` : 'none',
                 }}
@@ -660,7 +667,7 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
             <select
               value={olderYears.includes(formData.carYear) ? formData.carYear : ''}
               onChange={e => { if (e.target.value) onChange({ ...formData, carYear: Number(e.target.value) }); }}
-              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${olderYears.includes(formData.carYear) ? G : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: olderYears.includes(formData.carYear) ? G : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
+              style={{ width: '100%', appearance: 'none', background: B3, border: `1.5px solid ${olderYears.includes(formData.carYear) ? G : BORDER}`, borderRadius: 12, padding: '10px 40px 10px 14px', color: olderYears.includes(formData.carYear) ? G : TD, fontSize: 13, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none', cursor: 'pointer', direction: 'rtl' }}
             >
               <option value="">سنة أقدم...</option>
               {olderYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -672,10 +679,10 @@ function Step1Car({ formData, onChange, onNext, canAdvance, carKnown }: {
 
       {/* Selected summary card */}
       {formData.carModel && formData.carYear > 0 && (
-        <div style={{ background: `${G}0A`, border: `1.5px solid ${G}35`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ background: publicTheme.surfaceSoft, border: `1.5px solid ${G}35`, borderRadius: 16, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
           <span style={{ fontSize: 28 }}>{MODEL_ICONS[formData.carModel] ?? '🚗'}</span>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 900, color: '#E8F0F8' }}>{formData.carModel}</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: TX }}>{formData.carModel}</div>
             <div style={{ fontSize: 12, color: G, fontWeight: 700 }}>إصدار {formData.carYear}</div>
           </div>
           <CheckCircle2 size={20} color={G} style={{ marginRight: 'auto' }} />
@@ -750,18 +757,18 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>اختر نوع كل قطعة</h2>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>حدد نوع القطعة (أصلي / تركي / صيني) حسب ميزانيتك</p>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: TX, margin: '0 0 4px' }}>اختر نوع كل قطعة</h2>
+        <p style={{ fontSize: 13, color: TD, margin: 0 }}>حدد نوع القطعة (أصلي / تركي / صيني) حسب ميزانيتك</p>
       </div>
 
       {/* Package header */}
-      <div style={{ background: `${G}10`, border: `1.5px solid ${G}35`, borderRadius: 18, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
+      <div style={{ background: publicTheme.surfaceSoft, border: `1.5px solid ${G}35`, borderRadius: 18, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'center' }}>
         <div style={{ width: 44, height: 44, background: `${G}22`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Package2 size={22} style={{ color: G }} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 900, color: G }}>{pkg.name}</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>ضمان {pkg.warrantyMonths} شهور</div>
+          <div style={{ fontSize: 11, color: TD, marginTop: 2 }}>ضمان {pkg.warrantyMonths} شهور</div>
         </div>
       </div>
 
@@ -772,8 +779,8 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
             const variants = getPartVariants(part);
             const selected = partSelections[part.id] ?? variants[0]?.key;
             return (
-              <div key={part.id} style={{ background: '#0F1928', border: `1.5px solid ${partSelections[part.id] ? `${G}40` : 'rgba(255,255,255,0.08)'}`, borderRadius: 18, padding: 16, transition: 'border-color 0.2s' }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#D4E0EC', marginBottom: 12 }}>
+              <div key={part.id} style={{ background: publicTheme.surface, border: `1.5px solid ${partSelections[part.id] ? `${G}40` : BORDER}`, borderRadius: 18, padding: 16, transition: 'border-color 0.2s' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: TX, marginBottom: 12 }}>
                   {part.name}
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -788,14 +795,14 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
                           flex: 1, minWidth: 90,
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                           padding: '10px 12px', borderRadius: 14, cursor: 'pointer',
-                          border: `2px solid ${isSelected ? meta.color : 'rgba(255,255,255,0.1)'}`,
-                          background: isSelected ? `${meta.color}18` : 'rgba(255,255,255,0.03)',
+                          border: `2px solid ${isSelected ? meta.color : BORDER}`,
+                          background: isSelected ? `${meta.color}18` : publicTheme.surfaceAlt,
                           transition: 'all 0.18s', fontFamily: "'Almarai',sans-serif",
                         }}
                       >
                         <span style={{ fontSize: 18 }}>{meta.flag}</span>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: isSelected ? meta.color : 'rgba(255,255,255,0.45)' }}>{meta.label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 900, color: isSelected ? '#fff' : 'rgba(255,255,255,0.4)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: isSelected ? meta.color : TD }}>{meta.label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: isSelected ? TX : TS }}>
                           {v.price.toLocaleString('ar-EG')} ج.م
                         </span>
                       </button>
@@ -810,16 +817,16 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
 
       {/* Parts with single/no variant - just display */}
       {partsFixed.length > 0 && (
-        <div style={{ background: '#0F1928', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.35)', marginBottom: 10, letterSpacing: 0.5 }}>قطع بسعر ثابت</div>
+        <div style={{ background: publicTheme.surfaceAlt, border: `1px solid ${BORDER}`, borderRadius: 18, padding: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: TD, marginBottom: 10, letterSpacing: 0.5 }}>قطع بسعر ثابت</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {partsFixed.map(part => {
               const variants = getPartVariants(part);
               return (
                 <div key={part.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#7A95AA' }}>{part.name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: TS }}>{part.name}</span>
                   {variants.length === 1 && (
-                    <span style={{ fontSize: 13, fontWeight: 800, color: '#D4E0EC' }}>{variants[0].price.toLocaleString('ar-EG')} ج.م</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: TX }}>{variants[0].price.toLocaleString('ar-EG')} ج.م</span>
                   )}
                 </div>
               );
@@ -830,17 +837,17 @@ function Step2Package({ pkg, partSelections, onSelectPart, onNext, onBack, userH
 
       {/* Car info */}
       {userHasCar && user && (
-        <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ background: publicTheme.successSoft, border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
           <CheckCircle2 size={15} style={{ color: '#22c55e', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: TS, fontWeight: 600 }}>
             سيارتك: {user.carModel} — {user.carYear}
           </span>
         </div>
       )}
 
       {/* Dynamic total */}
-      <div style={{ background: `${G}12`, border: `2px solid ${G}45`, borderRadius: 18, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>الإجمالي المتوقع</span>
+      <div style={{ background: publicTheme.surfaceSoft, border: `2px solid ${G}35`, borderRadius: 18, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 15, fontWeight: 800, color: TS }}>الإجمالي المتوقع</span>
         <span style={{ fontSize: 24, fontWeight: 900, color: G }}>
           {dynamicTotal > 0 ? `${dynamicTotal.toLocaleString('ar-EG')} ج.م` : '—'}
         </span>
@@ -902,8 +909,8 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 4px' }}>استلام الباكدج</h2>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>أنت تستلم الباكدج وتأخذه للورشة الخاصة بك</p>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: TX, margin: '0 0 4px' }}>استلام الباكدج</h2>
+        <p style={{ fontSize: 13, color: TD, margin: 0 }}>أنت تستلم الباكدج وتأخذه للورشة الخاصة بك</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
@@ -915,38 +922,38 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
             key={opt.type}
             onClick={() => onChange({ ...formData, pickupType: opt.type })}
             style={{
-              padding: 18, borderRadius: 18, border: `2px solid ${formData.pickupType === opt.type ? G : 'rgba(255,255,255,0.1)'}`,
-              background: formData.pickupType === opt.type ? `${G}12` : 'rgba(255,255,255,0.03)',
+              padding: 18, borderRadius: 18, border: `2px solid ${formData.pickupType === opt.type ? G : BORDER}`,
+              background: formData.pickupType === opt.type ? publicTheme.surfaceSoft : publicTheme.surface,
               cursor: 'pointer', textAlign: 'right', transition: 'all 0.2s', fontFamily: "'Almarai',sans-serif",
             }}
           >
-            <div style={{ color: formData.pickupType === opt.type ? G : 'rgba(255,255,255,0.3)', marginBottom: 10 }}>{opt.icon}</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: formData.pickupType === opt.type ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: 5 }}>{opt.title}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{opt.desc}</div>
+            <div style={{ color: formData.pickupType === opt.type ? G : TD, marginBottom: 10 }}>{opt.icon}</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: formData.pickupType === opt.type ? TX : TS, marginBottom: 5 }}>{opt.title}</div>
+            <div style={{ fontSize: 11, color: TD, lineHeight: 1.4 }}>{opt.desc}</div>
           </button>
         ))}
       </div>
 
       {formData.pickupType === 'pickup' && (
-        <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}30`, borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ background: publicTheme.surfaceSoft, border: `1px solid ${G}30`, borderRadius: 18, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 40, height: 40, background: `${G}20`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <MapPin size={20} style={{ color: G }} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{DIST_CENTER.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: TX }}>{DIST_CENTER.name}</div>
               <div style={{ fontSize: 11, color: G, fontWeight: 700 }}>{DIST_CENTER.hours}</div>
             </div>
           </div>
 
           {/* Address */}
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '10px 14px' }}>
+          <div style={{ fontSize: 12, color: TS, lineHeight: 1.7, background: publicTheme.surface, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '10px 14px' }}>
             📍 {DIST_CENTER.address}
           </div>
 
           {/* Info notice */}
-          <div style={{ background: 'rgba(200,151,74,0.08)', border: `1px solid ${G}25`, borderRadius: 12, padding: '10px 14px', fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+          <div style={{ background: publicTheme.surface, border: `1px solid ${G}25`, borderRadius: 12, padding: '10px 14px', fontSize: 12, color: TS, lineHeight: 1.7 }}>
             ✅ عند الضغط على <strong style={{ color: G }}>"متابعة للدفع"</strong> سيتم إرسال موقع مركز التوزيع تلقائياً على واتساب.
           </div>
 
@@ -958,8 +965,8 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '11px 0', borderRadius: 14, fontSize: 13, fontWeight: 800, textDecoration: 'none',
-              background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.75)',
-              border: '1.5px solid rgba(255,255,255,0.12)', fontFamily: "'Almarai',sans-serif",
+              background: publicTheme.surface, color: TS,
+              border: `1.5px solid ${BORDER}`, fontFamily: "'Almarai',sans-serif",
             }}
           >
             <MapPin size={15} /> عرض الموقع على الخريطة
@@ -970,27 +977,27 @@ function Step3Pickup({ formData, onChange, onNext, onBack, canAdvance }: {
       {formData.pickupType === 'delivery' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>المنطقة</Label>
+            <Label style={{ color: TS, fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>المنطقة</Label>
             <select
               value={formData.deliveryArea}
               onChange={e => onChange({ ...formData, deliveryArea: e.target.value })}
-              style={{ width: '100%', height: 48, borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)', background: B3, color: formData.deliveryArea ? '#fff' : 'rgba(255,255,255,0.3)', padding: '0 14px', fontSize: 14, fontFamily: "'Almarai',sans-serif", outline: 'none' }}
+              style={{ width: '100%', height: 48, borderRadius: 14, border: `1px solid ${BORDER}`, background: B3, color: formData.deliveryArea ? TX : TD, padding: '0 14px', fontSize: 14, fontFamily: "'Almarai',sans-serif", outline: 'none' }}
             >
               <option value="">اختر منطقتك في الإسكندرية</option>
               {ALEX_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
           </div>
           <div>
-            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>العنوان بالتفصيل</Label>
+            <Label style={{ color: TS, fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>العنوان بالتفصيل</Label>
             <Input value={formData.deliveryAddress} onChange={e => onChange({ ...formData, deliveryAddress: e.target.value })}
               className="h-12 rounded-xl" placeholder="الشارع، رقم العمارة، الدور..."
-              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+              style={{ background: B3, border: `1px solid ${BORDER}`, color: TX }} />
           </div>
           <div>
-            <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم الهاتف للتوصيل</Label>
+            <Label style={{ color: TS, fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم الهاتف للتوصيل</Label>
             <Input value={formData.deliveryPhone} onChange={e => onChange({ ...formData, deliveryPhone: e.target.value })}
               className="h-12 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
-              style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+              style={{ background: B3, border: `1px solid ${BORDER}`, color: TX }} />
           </div>
         </div>
       )}
@@ -1040,7 +1047,7 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>طريقة الدفع</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: TX, margin: 0 }}>طريقة الدفع</h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {methods.map(m => {
@@ -1051,18 +1058,18 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
               onClick={() => onChange({ ...formData, paymentMethod: m.id })}
               style={{
                 padding: '16px 20px', borderRadius: 18,
-                border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`,
-                background: isSelected ? `${G}12` : 'rgba(255,255,255,0.02)',
+                border: `2px solid ${isSelected ? G : BORDER}`,
+                background: isSelected ? publicTheme.surfaceSoft : publicTheme.surface,
                 cursor: 'pointer', textAlign: 'right', display: 'flex', gap: 16, alignItems: 'center',
                 fontFamily: "'Almarai',sans-serif", transition: 'all 0.2s',
-                boxShadow: isSelected ? `0 0 20px ${G}20` : 'none',
+                boxShadow: isSelected ? `0 10px 24px ${G}18` : 'none',
                 position: 'relative', overflow: 'hidden',
               }}
             >
-              <div style={{ color: isSelected ? G : 'rgba(255,255,255,0.3)', flexShrink: 0 }}>{m.icon}</div>
+              <div style={{ color: isSelected ? G : TD, flexShrink: 0 }}>{m.icon}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? '#fff' : 'rgba(255,255,255,0.5)' }}>{m.title}</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? TX : TS }}>{m.title}</span>
                   {m.badge && (
                     <span style={{
                       fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 999,
@@ -1072,7 +1079,7 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
                     }}>{m.badge}</span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{m.desc}</div>
+                <div style={{ fontSize: 12, color: TD }}>{m.desc}</div>
               </div>
               {isSelected && <CheckCircle2 size={22} style={{ color: G, flexShrink: 0 }} />}
             </button>
@@ -1081,16 +1088,16 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
       </div>
 
       {formData.paymentMethod === 'cash_on_delivery' && (
-        <div style={{ background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: 14 }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.8 }}>
+        <div style={{ background: publicTheme.successSoft, border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: 14 }}>
+          <p style={{ fontSize: 12, color: TS, margin: 0, lineHeight: 1.8 }}>
             💵 <strong style={{ color: '#22c55e' }}>الدفع عند الاستلام:</strong> ادفع المبلغ نقداً لمندوب التركيب يوم موعدك في الورشة. لا يلزمك تحويل أي مبلغ مسبقاً.
           </p>
         </div>
       )}
 
       {formData.paymentMethod === 'card' && (
-        <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 14, padding: 14 }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
+        <div style={{ background: publicTheme.infoSoft, border: '1px solid rgba(99,102,241,0.25)', borderRadius: 14, padding: 14 }}>
+          <p style={{ fontSize: 12, color: TS, margin: 0, lineHeight: 1.6 }}>
             🔒 سيتم تحويلك لبوابة الدفع الآمنة. يعود تأكيد الطلب تلقائياً بعد نجاح الدفع.
           </p>
         </div>
@@ -1109,27 +1116,27 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
               <p style={{ fontSize: 13, fontWeight: 700, color: accent, margin: 0 }}>
                 {isVodafone ? '📱 بيانات فودافون كاش' : '⚡ بيانات InstaPay'}
               </p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.6 }}>
-                ارسل <strong style={{ color: '#fff' }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على:{' '}
-                <strong style={{ color: '#fff', direction: 'ltr', display: 'inline-block' }}>{accountNum}</strong>
+              <p style={{ fontSize: 12, color: TS, margin: 0, lineHeight: 1.6 }}>
+                ارسل <strong style={{ color: TX }}>{Number(pkg.sellPrice).toLocaleString('ar-EG')} ج.م</strong> على:{' '}
+                <strong style={{ color: TX, direction: 'ltr', display: 'inline-block' }}>{accountNum}</strong>
               </p>
               {isVodafone && (
                 <div>
-                  <Label style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم فودافون كاش الخاص بك</Label>
+                  <Label style={{ color: TS, fontSize: 12, fontWeight: 700, display: 'block', marginBottom: 6 }}>رقم فودافون كاش الخاص بك</Label>
                   <Input value={formData.vodafonePhone}
                     onChange={e => onChange({ ...formData, vodafonePhone: e.target.value })}
                     className="h-10 rounded-xl" placeholder="01xxxxxxxxx" dir="ltr"
-                    style={{ background: B3, border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+                    style={{ background: B3, border: `1px solid ${BORDER}`, color: TX }} />
                 </div>
               )}
             </div>
 
             {/* Receipt upload */}
-            <div style={{ border: `2px dashed ${receiptFile ? accent : 'rgba(255,255,255,0.15)'}`, borderRadius: 16, padding: 18, background: receiptFile ? `${accent}08` : 'transparent' }}>
-              <p style={{ fontSize: 13, fontWeight: 800, color: receiptFile ? '#fff' : 'rgba(255,255,255,0.55)', margin: '0 0 4px' }}>
+            <div style={{ border: `2px dashed ${receiptFile ? accent : BORDER}`, borderRadius: 16, padding: 18, background: receiptFile ? `${accent}08` : publicTheme.surface }}>
+              <p style={{ fontSize: 13, fontWeight: 800, color: receiptFile ? TX : TS, margin: '0 0 4px' }}>
                 {receiptFile ? '✅ إيصال التحويل محدد' : '📎 ارفع إيصال التحويل (اختياري)'}
               </p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 12px' }}>
+              <p style={{ fontSize: 11, color: TD, margin: '0 0 12px' }}>
                 {receiptFile ? 'سيُرفع الإيصال تلقائياً عند تأكيد الطلب' : 'صورة أو PDF — يسرع تفعيل الطلب'}
               </p>
 
@@ -1140,9 +1147,9 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
                 </div>
               )}
               {receiptFile && !receiptPreviewUrl && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: publicTheme.surfaceAlt, borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>
                   <ImageIcon size={14} color={accent} />
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{receiptFile.name}</span>
+                  <span style={{ fontSize: 12, color: TS, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{receiptFile.name}</span>
                 </div>
               )}
 
@@ -1154,7 +1161,7 @@ function Step4Payment({ formData, onChange, onConfirm, onBack, isPending, pkg, r
                   style={{
                     flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer',
                     background: receiptFile ? `${accent}22` : accent,
-                    color: receiptFile ? accent : '#fff',
+                    color: receiptFile ? accent : TX,
                     border: receiptFile ? `1.5px solid ${accent}` : 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     fontFamily: "'Almarai',sans-serif",
@@ -1203,7 +1210,7 @@ function workshopIcon(color: string, isSelected: boolean) {
   const html = `
     <div style="
       width:${size}px; height:${size}px; border-radius:50% 50% 50% 0;
-      background:${color}; border:3px solid ${isSelected ? '#fff' : '#0D1220'};
+      background:${color}; border:3px solid ${isSelected ? '#fff' : '#f8fafc'};
       transform:rotate(-45deg); box-shadow:0 4px 16px ${color}80;
       display:flex; align-items:center; justify-content:center;
       transition:all 0.3s;
@@ -1338,13 +1345,13 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
           <Calendar size={22} style={{ color: G }} />
         </div>
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#fff' }}>حدد موعد التركيب</h2>
-          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>اختر منطقتك وسنقترح أقرب ورشة</p>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: TX }}>حدد موعد التركيب</h2>
+          <p style={{ margin: 0, fontSize: 13, color: TD }}>اختر منطقتك وسنقترح أقرب ورشة</p>
         </div>
       </div>
 
       {/* Area selector */}
-      <div style={{ background: '#0F1928', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', padding: '14px 16px', marginBottom: 16 }}>
+      <div style={{ background: publicTheme.surface, borderRadius: 16, border: `1px solid ${BORDER}`, padding: '14px 16px', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <Navigation size={15} style={{ color: G }} />
           <span style={{ fontSize: 13, fontWeight: 800, color: G }}>منطقتك في الإسكندرية</span>
@@ -1360,9 +1367,9 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             onChange={e => setLocalArea(e.target.value)}
             style={{
               width: '100%', appearance: 'none', background: B3,
-              border: `1.5px solid ${localArea ? G : 'rgba(255,255,255,0.1)'}`,
+              border: `1.5px solid ${localArea ? G : BORDER}`,
               borderRadius: 12, padding: '10px 40px 10px 14px',
-              color: localArea ? '#fff' : 'rgba(255,255,255,0.35)',
+              color: localArea ? TX : TD,
               fontSize: 14, fontFamily: "'Almarai',sans-serif", fontWeight: 700,
               outline: 'none', cursor: 'pointer', direction: 'rtl',
             }}
@@ -1375,15 +1382,15 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
       </div>
 
       {/* Map — always shown */}
-      <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : 'rgba(255,255,255,0.1)'}`, transition: 'border-color 0.3s' }}>
+      <div style={{ borderRadius: 18, overflow: 'hidden', marginBottom: 16, border: `2px solid ${selectedWorkshop ? selectedWorkshop.color : BORDER}`, transition: 'border-color 0.3s' }}>
         <MapContainer
           center={[31.2001, 29.9187]}
           zoom={11}
-          style={{ height: 280, background: '#0D1220' }}
+          style={{ height: 280, background: '#edf2f7' }}
           zoomControl={true}
           attributionControl={false}
         >
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           {/* Fly to selected workshop / area */}
           <MapFlyTo lat={mapFlyLat} lng={mapFlyLng} zoom={mapFlyZoom} />
 
@@ -1428,7 +1435,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             );
           })}
         </MapContainer>
-        <div style={{ background: '#0F1928', padding: '8px 14px', fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+        <div style={{ background: publicTheme.surface, padding: '8px 14px', fontSize: 11, color: TD, textAlign: 'center' }}>
           {selectedWorkshop ? `✓ الورشة المختارة: ${selectedWorkshop.name}` : 'اضغط على أيقونة الورشة لاختيارها'}
         </div>
       </div>
@@ -1437,7 +1444,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
       <div style={{ marginBottom: 20 }}>
         {!selectedWorkshop ? (
           <>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 10, letterSpacing: 0.5 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: TD, marginBottom: 10, letterSpacing: 0.5 }}>
               {localArea ? `الورش — مرتبة من الأقرب لـ ${localArea}` : 'الورش المتاحة'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1446,19 +1453,19 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
                 const dist = userCoord ? distKm(userCoord[0], userCoord[1], w.lat, w.lng).toFixed(1) : null;
                 return (
                   <div key={w.id} onClick={() => handleWorkshop(w)}
-                    style={{ borderRadius: 16, border: `1.5px solid rgba(255,255,255,0.08)`, background: 'rgba(255,255,255,0.02)', padding: '12px 14px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', gap: 12, alignItems: 'center' }}
+                    style={{ borderRadius: 16, border: `1.5px solid ${BORDER}`, background: publicTheme.surface, padding: '12px 14px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', gap: 12, alignItems: 'center' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = `1.5px solid ${w.color}55`; (e.currentTarget as HTMLElement).style.background = `${w.color}08`; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = '1.5px solid rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = `1.5px solid ${BORDER}`; (e.currentTarget as HTMLElement).style.background = publicTheme.surface; }}
                   >
                     <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: isNearest ? '#22c55e22' : `${w.color}18`, border: `2px solid ${isNearest ? '#22c55e' : w.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: isNearest ? '#22c55e' : w.color }}>
                       {isNearest ? '★' : idx + 1}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{w.name}</span>
+                        <span style={{ fontWeight: 900, fontSize: 14, color: TX }}>{w.name}</span>
                         {isNearest && <span style={{ fontSize: 10, background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: 999, padding: '2px 7px', fontWeight: 800 }}>الأقرب</span>}
                       </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{w.address}</div>
+                      <div style={{ fontSize: 11, color: TD }}>{w.address}</div>
                       <div style={{ display: 'flex', gap: 10, fontSize: 10, marginTop: 3 }}>
                         <span style={{ color: '#f59e0b' }}>★ {w.rating}</span>
                         <span style={{ color: '#22c55e' }}>{w.hours}</span>
@@ -1472,13 +1479,13 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
           </>
         ) : (
           /* Only selected workshop card */
-          <div style={{ borderRadius: 16, border: `2px solid ${selectedWorkshop.color}`, background: `${selectedWorkshop.color}12`, padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'center', boxShadow: `0 0 24px ${selectedWorkshop.color}20` }}>
+          <div style={{ borderRadius: 16, border: `2px solid ${selectedWorkshop.color}`, background: `${selectedWorkshop.color}12`, padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'center', boxShadow: `0 10px 24px ${selectedWorkshop.color}18` }}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, background: `${selectedWorkshop.color}18`, border: `2px solid ${selectedWorkshop.color}60`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <CheckCircle2 size={20} style={{ color: selectedWorkshop.color }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 900, fontSize: 15, color: selectedWorkshop.color, marginBottom: 2 }}>{selectedWorkshop.name}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 3 }}>{selectedWorkshop.address}</div>
+              <div style={{ fontSize: 12, color: TS, marginBottom: 3 }}>{selectedWorkshop.address}</div>
               <div style={{ display: 'flex', gap: 10, fontSize: 11 }}>
                 <span style={{ color: '#f59e0b' }}>★ {selectedWorkshop.rating}</span>
                 <span style={{ color: '#22c55e' }}>{selectedWorkshop.hours}</span>
@@ -1487,7 +1494,7 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
             </div>
             <button
               onClick={() => { onChange(p => ({ ...p, workshopId: 0, workshopName: '', appointmentDate: '', appointmentSlot: '' })); setFullSlots([]); setSlotCounts({}); setAvailableSlots([]); setHasConfig(false); }}
-              style={{ padding: '6px 12px', borderRadius: 10, border: `1px solid rgba(255,255,255,0.15)`, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", whiteSpace: 'nowrap' }}
+              style={{ padding: '6px 12px', borderRadius: 10, border: `1px solid ${BORDER}`, background: publicTheme.surface, color: TS, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", whiteSpace: 'nowrap' }}
             >
               تغيير
             </button>
@@ -1504,9 +1511,9 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
               const isSelected = formData.appointmentDate === d.val;
               return (
                 <div key={d.val} onClick={() => !d.isFriday && handleDate(d.val)}
-                  style={{ minWidth: 62, borderRadius: 14, border: `2px solid ${isSelected ? G : 'rgba(255,255,255,0.08)'}`, background: isSelected ? `${G}20` : d.isFriday ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)', padding: '10px 8px', textAlign: 'center', cursor: d.isFriday ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: d.isFriday ? 0.35 : 1, boxShadow: isSelected ? `0 0 16px ${G}40` : 'none' }}>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 3 }}>{d.dow}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? G : '#fff' }}>{d.label}</div>
+                  style={{ minWidth: 62, borderRadius: 14, border: `2px solid ${isSelected ? G : BORDER}`, background: isSelected ? publicTheme.surfaceSoft : d.isFriday ? publicTheme.surfaceAlt : publicTheme.surface, padding: '10px 8px', textAlign: 'center', cursor: d.isFriday ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: d.isFriday ? 0.45 : 1, boxShadow: isSelected ? `0 0 16px ${G}30` : 'none' }}>
+                  <div style={{ fontSize: 11, color: TD, marginBottom: 3 }}>{d.dow}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? G : TX }}>{d.label}</div>
                   {d.isFriday && <div style={{ fontSize: 9, color: '#ef4444', marginTop: 2 }}>مغلق</div>}
                 </div>
               );
@@ -1520,13 +1527,13 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
         <div style={{ marginBottom: 20 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: G, marginBottom: 12, letterSpacing: 1 }}>
             اختر الوقت
-            {loadingSlots && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginRight: 8 }}>جارٍ التحقق من المواعيد...</span>}
+            {loadingSlots && <span style={{ fontSize: 11, color: TD, marginRight: 8 }}>جارٍ التحقق من المواعيد...</span>}
           </p>
 
           {!loadingSlots && slotsToShow.length === 0 && (
             <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, padding: '16px 20px', textAlign: 'center' }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: '#EF4444' }}>🚫 هذا اليوم غير متاح للحجز</p>
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>اختر يوماً آخر أو ورشة مختلفة</p>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: TD }}>اختر يوماً آخر أو ورشة مختلفة</p>
             </div>
           )}
 
@@ -1539,8 +1546,8 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
               const spotsLeft  = Math.max(0, maxC - count);
               return (
                 <div key={s} onClick={() => !isFull && onChange(p => ({ ...p, appointmentSlot: s }))}
-                  style={{ borderRadius: 12, border: `2px solid ${isSelected ? G : isFull ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.08)'}`, background: isSelected ? `${G}20` : isFull ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)', padding: '12px 8px', textAlign: 'center', cursor: isFull ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isFull ? 0.45 : 1, boxShadow: isSelected ? `0 0 14px ${G}40` : 'none' }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: isSelected ? G : isFull ? '#ef4444' : '#fff' }}>
+                  style={{ borderRadius: 12, border: `2px solid ${isSelected ? G : isFull ? 'rgba(239,68,68,0.25)' : BORDER}`, background: isSelected ? publicTheme.surfaceSoft : isFull ? 'rgba(239,68,68,0.05)' : publicTheme.surface, padding: '12px 8px', textAlign: 'center', cursor: isFull ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isFull ? 0.45 : 1, boxShadow: isSelected ? `0 0 14px ${G}30` : 'none' }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: isSelected ? G : isFull ? '#ef4444' : TX }}>
                     {slotLabel(s)}
                   </div>
                   <div style={{ fontSize: 9, marginTop: 3, fontWeight: 700, color: isFull ? '#ef4444' : count === 1 ? '#f59e0b' : '#22c55e' }}>
@@ -1555,14 +1562,14 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
 
       {/* Appointment summary */}
       {canAdvance && selectedWorkshop && (
-        <div style={{ borderRadius: 16, background: `${G}10`, border: `1px solid ${G}30`, padding: '14px 18px', marginBottom: 20 }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 6 }}>ملخص الموعد</div>
+        <div style={{ borderRadius: 16, background: publicTheme.surfaceSoft, border: `1px solid ${G}30`, padding: '14px 18px', marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: TD, marginBottom: 6 }}>ملخص الموعد</div>
           <div style={{ fontWeight: 900, color: selectedWorkshop.color, fontSize: 15, marginBottom: 3 }}>{formData.workshopName}</div>
-          <div style={{ fontSize: 13, color: '#fff', fontWeight: 700, marginBottom: 2 }}>
+          <div style={{ fontSize: 13, color: TX, fontWeight: 700, marginBottom: 2 }}>
             {new Date(formData.appointmentDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
           <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>الساعة {slotLabel(formData.appointmentSlot)}</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>📍 {selectedWorkshop.address}</div>
+          <div style={{ fontSize: 11, color: TD, marginTop: 4 }}>📍 {selectedWorkshop.address}</div>
         </div>
       )}
 
@@ -1581,10 +1588,10 @@ function Step5Appointment({ formData, onChange, onConfirm, onBack, canAdvance, i
           0%, 100% { transform: scale(1); opacity: 0.7; }
           50% { transform: scale(1.6); opacity: 0.2; }
         }
-        .leaflet-popup-content-wrapper { background: #111826 !important; border: 1px solid rgba(200,151,74,0.3) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; border-radius: 12px !important; }
-        .leaflet-popup-tip { background: #111826 !important; }
+        .leaflet-popup-content-wrapper { background: #ffffff !important; border: 1px solid rgba(200,151,74,0.22) !important; box-shadow: 0 12px 28px rgba(15,23,42,0.12) !important; border-radius: 12px !important; }
+        .leaflet-popup-tip { background: #ffffff !important; }
         .leaflet-popup-content { margin: 12px !important; }
-        .leaflet-control-zoom a { background: #111826 !important; color: #C8974A !important; border-color: rgba(255,255,255,0.1) !important; }
+        .leaflet-control-zoom a { background: #ffffff !important; color: #C8974A !important; border-color: #d7dee8 !important; }
       `}</style>
     </div>
   );
@@ -1659,19 +1666,19 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
       </div>
       <div>
         <h2 style={{ fontSize: 26, fontWeight: 900, color: '#22c55e', margin: '0 0 8px' }}>تم تأكيد الطلب! 🎉</h2>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>رقم الطلب: <strong style={{ color: '#fff' }}>#{orderId}</strong></p>
+        <p style={{ color: TD, fontSize: 14 }}>رقم الطلب: <strong style={{ color: TX }}>#{orderId}</strong></p>
       </div>
 
       {/* Delivery info */}
       <div style={{ background: B3, borderRadius: 18, padding: 18, textAlign: 'right', width: '100%', maxWidth: 420 }}>
         {pickupType === 'pickup' ? (
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: 0 }}>
-            📍 <strong style={{ color: '#fff' }}>استلام من مركز التوزيع</strong><br />
+          <p style={{ fontSize: 13, color: TS, lineHeight: 1.7, margin: 0 }}>
+            📍 <strong style={{ color: TX }}>استلام من مركز التوزيع</strong><br />
             سيتواصل معك فريقنا خلال 24 ساعة لتحديد موعد الاستلام.
           </p>
         ) : (
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, margin: 0 }}>
-            🏠 <strong style={{ color: '#fff' }}>توصيل للبيت</strong><br />
+          <p style={{ fontSize: 13, color: TS, lineHeight: 1.7, margin: 0 }}>
+            🏠 <strong style={{ color: TX }}>توصيل للبيت</strong><br />
             سيتواصل معك فريقنا خلال 24 ساعة لتأكيد موعد التوصيل.
           </p>
         )}
@@ -1701,15 +1708,15 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
         ].filter(Boolean).join('\n');
         return (
           <>
-            <div style={{ background: `${G}12`, border: `1.5px solid ${G}40`, borderRadius: 18, padding: '16px 20px', textAlign: 'right', width: '100%', maxWidth: 420 }}>
+            <div style={{ background: publicTheme.surfaceSoft, border: `1.5px solid ${G}40`, borderRadius: 18, padding: '16px 20px', textAlign: 'right', width: '100%', maxWidth: 420 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <Calendar size={18} style={{ color: G }} />
-                <span style={{ fontWeight: 900, fontSize: 15, color: '#fff' }}>موعد التركيب</span>
+                <span style={{ fontWeight: 900, fontSize: 15, color: TX }}>موعد التركيب</span>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{workshopName}</div>
-              {workshop && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>{workshop.address}</div>}
+              <div style={{ fontSize: 14, fontWeight: 800, color: TX, marginBottom: 4 }}>{workshopName}</div>
+              {workshop && <div style={{ fontSize: 12, color: TD, marginBottom: 4 }}>{workshop.address}</div>}
               <div style={{ fontSize: 13, color: G, fontWeight: 700 }}>{dateLabel}</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>الساعة {timeLabel}</div>
+              <div style={{ fontSize: 13, color: TS, marginTop: 4 }}>الساعة {timeLabel}</div>
               {workshop && (
                 <a href={workshopMapsUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 10, fontSize: 12, color: '#4AABCA', fontWeight: 700, textDecoration: 'none' }}>
                   📍 فتح موقع الورشة على الخريطة ↗
@@ -1741,10 +1748,10 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
           borderRadius: 20, padding: 22, background: `${methodColor}08`,
         }}>
           <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: TX, margin: '0 0 6px' }}>
               {uploadState === 'done' ? '✅ تم رفع إيصال ' + methodLabel : '📎 ارفع إيصال ' + methodLabel}
             </p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: TD, margin: 0 }}>
               {uploadState === 'done'
                 ? 'سيقوم فريقنا بمراجعة الإيصال وتفعيل طلبك خلال ساعات'
                 : 'ارفع صورة أو PDF لإيصال التحويل لتسريع تفعيل الطلب'}
@@ -1762,9 +1769,9 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
           )}
 
           {uploadedFileName && uploadState === 'done' && !previewUrl && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: publicTheme.surfaceAlt, borderRadius: 12, padding: '10px 14px', marginBottom: 14 }}>
               <ImageIcon size={16} style={{ color: '#22c55e' }} />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadedFileName}</span>
+              <span style={{ fontSize: 12, color: TS, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{uploadedFileName}</span>
               <CheckCircle2 size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
             </div>
           )}
@@ -1783,7 +1790,7 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
             style={{
               width: '100%', padding: '13px 0', borderRadius: 14, fontSize: 14, fontWeight: 800,
               background: uploadState === 'done' ? 'rgba(34,197,94,0.15)' : methodColor,
-              color: uploadState === 'done' ? '#22c55e' : '#fff',
+              color: uploadState === 'done' ? '#22c55e' : TX,
               border: uploadState === 'done' ? '2px solid #22c55e' : 'none',
               cursor: uploadState === 'uploading' ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -1812,7 +1819,7 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
       {/* Navigation */}
       <div style={{ display: 'flex', gap: 12 }}>
         <Link href={`/orders/${orderId}`}>
-          <button style={{ padding: '12px 20px', borderRadius: 14, border: '2px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.7)', fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>
+          <button style={{ padding: '12px 20px', borderRadius: 14, border: `2px solid ${BORDER}`, background: publicTheme.surface, color: TS, fontWeight: 700, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>
             تفاصيل الطلب
           </button>
         </Link>
@@ -1842,23 +1849,23 @@ function OrderSummary({ pkg, formData, user, selectedTotal }: {
   const methodLabel: Record<PayMethod, string> = { cash_on_delivery: 'دفع عند الاستلام', card: 'فيزا / ماستر', vodafone_cash: 'فودافون كاش', instapay: 'انستاباى' };
 
   return (
-    <div style={{ background: B2, border: `2px solid ${G}30`, borderRadius: 24, padding: 22, position: 'sticky', top: 28 }}>
+    <div style={{ background: B2, border: `2px solid ${G}24`, borderRadius: 24, padding: 22, position: 'sticky', top: 28, boxShadow: publicTheme.shadowSoft }}>
       <h3 style={{ fontWeight: 800, color: G, fontSize: 16, marginBottom: 18 }}>ملخص الطلب</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
         {rows.map(r => (
           <div key={r.label}>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>{r.label}</p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{r.value}</p>
+            <p style={{ fontSize: 11, color: TD, margin: '0 0 2px' }}>{r.label}</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: TX, margin: 0 }}>{r.value}</p>
           </div>
         ))}
         <div>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>الدفع</p>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', margin: 0 }}>{methodLabel[formData.paymentMethod]}</p>
+          <p style={{ fontSize: 11, color: TD, margin: '0 0 2px' }}>الدفع</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: TX, margin: 0 }}>{methodLabel[formData.paymentMethod]}</p>
         </div>
       </div>
       <div style={{ borderTop: `1px solid ${G}25`, paddingTop: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>الإجمالي</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: TX }}>الإجمالي</span>
           <span style={{ fontSize: 24, fontWeight: 900, color: G }}>
             {selectedTotal != null && selectedTotal > 0
               ? `${selectedTotal.toLocaleString('ar-EG')} ج.م`
@@ -1866,7 +1873,7 @@ function OrderSummary({ pkg, formData, user, selectedTotal }: {
           </span>
         </div>
         {selectedTotal != null && selectedTotal > 0 && (
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '6px 0 0', textAlign: 'left' }}>
+          <p style={{ fontSize: 11, color: TD, margin: '6px 0 0', textAlign: 'left' }}>
             بناءً على اختياراتك للقطع
           </p>
         )}
