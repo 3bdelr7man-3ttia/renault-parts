@@ -16,6 +16,7 @@ import partAirImg    from '@/assets/part-airfilter.jpg';
 import partSparksImg from '@/assets/part-sparks.jpg';
 import partBatImg    from '@/assets/part-battery.jpg';
 import partSuspImg   from '@/assets/part-suspension.jpg';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 
 /* ── Shortcuts ── */
 const G  = '#C8974A'; // gold
@@ -23,13 +24,13 @@ const GL = '#DEB06C'; // gold-lt
 const SK = '#4AABCA'; // sky
 const LV = '#7B72B8'; // lav
 const SG = '#3DA882'; // sage
-const BG = '#0D1220'; // bg
-const B2 = '#111826'; // bg2
-const B3 = '#161E30'; // bg3
+const BG = publicTheme.page; // bg
+const B2 = publicTheme.surfaceAlt; // bg2
+const B3 = publicTheme.surface; // bg3
 const NV = '#1A2356'; // navy
-const TX = '#D4E0EC'; // text
-const TD = '#7A95AA'; // text-dim
-const BD = 'rgba(255,255,255,0.10)'; // border
+const TX = publicTheme.text; // text
+const TD = publicTheme.muted; // text-dim
+const BD = publicTheme.border; // border
 
 /* ── Static data ── */
 const SERVICES = [
@@ -180,8 +181,8 @@ const WORKSHOPS = [
 /* ── Score bar ── */
 function ScoreBar({ score, color }: { score: number; color: string }) {
   return (
-    <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden', width: '100%' }}>
-      <div style={{ height: '100%', width: `${score}%`, background: `linear-gradient(90deg,${color},${color}99)`, borderRadius: 999, transition: 'width .8s ease' }} />
+    <div style={{ height: 6, background: publicTheme.pageAlt, borderRadius: 999, overflow: 'hidden', width: '100%' }}>
+      <div style={{ height: '100%', width: `${score}%`, background: `linear-gradient(90deg,${color},${color}cc)`, borderRadius: 999, transition: 'width .8s ease' }} />
     </div>
   );
 }
@@ -285,26 +286,26 @@ function BakoChat({ context, hideHeader }: { context: ComparePart; hideHeader?: 
   }, [msgs, typing]);
 
   return (
-    <div style={{ background: '#0F1928', border: hideHeader ? 'none' : `1.5px solid rgba(200,151,74,0.25)`, borderRadius: hideHeader ? 0 : 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 240 }}>
+    <div style={{ background: publicTheme.surface, border: hideHeader ? 'none' : `1px solid ${publicTheme.border}`, borderRadius: hideHeader ? 0 : 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 240 }}>
       {/* Header — hidden when parent wrapper provides its own */}
       {!hideHeader && (
-        <div style={{ background: `linear-gradient(135deg,${NV},#243070)`, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.2)`, flexShrink: 0 }}>
-          <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+        <div style={{ background: publicTheme.surfaceSoft, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid ${publicTheme.border}`, flexShrink: 0 }}>
+          <img src={bakoImg} alt="باكو" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: publicTheme.surface, flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — بيكلمك عن {context.label}</div>
-            <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700 }}>اسأله أي سؤال عن القطعتين</div>
+            <div style={{ fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: TX }}>باكو 🤖 — بيكلمك عن {context.label}</div>
+            <div style={{ fontSize: 10, color: G, fontWeight: 700 }}>اسأله أي سؤال عن القطعتين</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite' }} />
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700 }}>متاح</span>
+            <span style={{ color: TD, fontSize: 10, fontWeight: 700 }}>متاح</span>
           </div>
         </div>
       )}
 
       {/* Quick questions */}
-      <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+      <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid ${publicTheme.border}`, background: publicTheme.pageAlt, flexShrink: 0 }}>
         {context.quickQ.map(q => (
-          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, color: '#C4D4E0', fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
+          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, color: publicTheme.textSoft, fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
         ))}
       </div>
 
@@ -313,23 +314,23 @@ function BakoChat({ context, hideHeader }: { context: ComparePart; hideHeader?: 
         {msgs.map((m, i) => (
           <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-end', flexDirection: m.from === 'bako' ? 'row' : 'row-reverse' }}>
             {m.from === 'bako' && (
-              <img src={bakoImg} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />
+              <img src={bakoImg} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: publicTheme.surface }} />
             )}
             <div style={{
               maxWidth: '78%', padding: '9px 13px',
               borderRadius: m.from === 'bako' ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-              background: m.from === 'bako' ? '#1E2E4A' : `linear-gradient(135deg,${G},${GL})`,
-              border: m.from === 'bako' ? `1px solid rgba(200,151,74,0.18)` : 'none',
+              background: m.from === 'bako' ? publicTheme.surfaceAlt : publicTheme.brandSoft,
+              border: `1px solid ${m.from === 'bako' ? publicTheme.border : 'rgba(200,151,74,0.22)'}`,
               fontSize: 12, fontWeight: 700,
-              color: m.from === 'bako' ? '#E0EAF5' : '#0D1220',
+              color: publicTheme.text,
               lineHeight: 1.65,
             }}>{m.text}</div>
           </div>
         ))}
         {typing && (
           <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
-            <img src={bakoImg} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />
-            <div style={{ padding: '10px 14px', borderRadius: '4px 16px 16px 16px', background: '#1E2E4A', border: `1px solid rgba(200,151,74,0.18)`, display: 'flex', gap: 5, alignItems: 'center' }}>
+            <img src={bakoImg} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: publicTheme.surface }} />
+            <div style={{ padding: '10px 14px', borderRadius: '4px 16px 16px 16px', background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.border}`, display: 'flex', gap: 5, alignItems: 'center' }}>
               <div className="rp-dot1" style={{ width: 6, height: 6, borderRadius: '50%', background: G }} />
               <div className="rp-dot2" style={{ width: 6, height: 6, borderRadius: '50%', background: G }} />
               <div className="rp-dot3" style={{ width: 6, height: 6, borderRadius: '50%', background: G }} />
@@ -339,12 +340,12 @@ function BakoChat({ context, hideHeader }: { context: ComparePart; hideHeader?: 
       </div>
 
       {/* Input */}
-      <div style={{ padding: '8px 12px', borderTop: `1px solid rgba(255,255,255,0.07)`, display: 'flex', gap: 8, background: '#0F1928', flexShrink: 0 }}>
+      <div style={{ padding: '8px 12px', borderTop: `1px solid ${publicTheme.border}`, display: 'flex', gap: 8, background: publicTheme.surface, flexShrink: 0 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)}
           placeholder="اسأل باكو..."
-          style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 12, padding: '8px 13px', color: '#E0EAF5', fontSize: 12, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
-        <button onClick={() => send(input)} style={{ background: `linear-gradient(135deg,${G},${GL})`, border: 'none', borderRadius: 12, padding: '8px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-          <Send size={13} color="#0D1220" />
+          style={{ flex: 1, background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.borderStrong}`, borderRadius: 12, padding: '8px 13px', color: TX, fontSize: 12, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
+        <button onClick={() => send(input)} style={{ background: G, border: 'none', borderRadius: 12, padding: '8px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <Send size={13} color="#fff" />
         </button>
       </div>
     </div>
@@ -378,21 +379,21 @@ function BakoChatSimple({ label, initMsg, quickQ }: { label: string; initMsg: st
   }, [msgs, typing]);
 
   return (
-    <div style={{ background: '#0F1928', border: `1.5px solid rgba(200,151,74,0.25)`, borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 270 }}>
+    <div style={{ background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 18, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 270 }}>
       {/* Header */}
-      <div style={{ background: `linear-gradient(135deg,#1A2356,#243070)`, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid rgba(200,151,74,0.2)`, flexShrink: 0 }}>
-        <img src={bakoImg} alt="باكو" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
-        <div style={{ flex: 1, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: '#fff' }}>باكو 🤖 — {label}</div>
+      <div style={{ background: publicTheme.surfaceSoft, padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: `1px solid ${publicTheme.border}`, flexShrink: 0 }}>
+        <img src={bakoImg} alt="باكو" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: publicTheme.surface, flexShrink: 0 }} />
+        <div style={{ flex: 1, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 12, color: TX }}>باكو 🤖 — {label}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>متاح</span>
+          <span style={{ color: TD, fontSize: 10 }}>متاح</span>
         </div>
       </div>
 
       {/* Quick questions */}
-      <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid rgba(255,255,255,0.06)`, background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+      <div style={{ padding: '5px 10px', display: 'flex', gap: 5, flexWrap: 'wrap', borderBottom: `1px solid ${publicTheme.border}`, background: publicTheme.pageAlt, flexShrink: 0 }}>
         {quickQ.map(q => (
-          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, color: '#C4D4E0', fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
+          <button key={q} className="rp-pill" onClick={() => send(q)} style={{ background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, color: publicTheme.textSoft, fontSize: 10, fontWeight: 700, padding: '3px 9px' }}>{q}</button>
         ))}
       </div>
 
@@ -400,22 +401,22 @@ function BakoChatSimple({ label, initMsg, quickQ }: { label: string; initMsg: st
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexDirection: m.from === 'bako' ? 'row' : 'row-reverse' }}>
-            {m.from === 'bako' && <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />}
+            {m.from === 'bako' && <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: publicTheme.surface }} />}
             <div style={{
               maxWidth: '80%', padding: '8px 12px',
               borderRadius: m.from === 'bako' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
-              background: m.from === 'bako' ? '#1E2E4A' : `linear-gradient(135deg,${G},${GL})`,
-              border: m.from === 'bako' ? `1px solid rgba(200,151,74,0.18)` : 'none',
+              background: m.from === 'bako' ? publicTheme.surfaceAlt : publicTheme.brandSoft,
+              border: `1px solid ${m.from === 'bako' ? publicTheme.border : 'rgba(200,151,74,0.22)'}`,
               fontSize: 11, fontWeight: 700,
-              color: m.from === 'bako' ? '#E0EAF5' : '#0D1220',
+              color: TX,
               lineHeight: 1.65,
             }}>{m.text}</div>
           </div>
         ))}
         {typing && (
           <div style={{ display: 'flex', gap: 7, alignItems: 'flex-end' }}>
-            <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: NV }} />
-            <div style={{ padding: '9px 13px', borderRadius: '4px 14px 14px 14px', background: '#1E2E4A', border: `1px solid rgba(200,151,74,0.18)`, display: 'flex', gap: 4, alignItems: 'center' }}>
+            <img src={bakoImg} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', flexShrink: 0, border: `1.5px solid ${G}`, background: publicTheme.surface }} />
+            <div style={{ padding: '9px 13px', borderRadius: '4px 14px 14px 14px', background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.border}`, display: 'flex', gap: 4, alignItems: 'center' }}>
               {[0, 1, 2].map(n => <div key={n} className={`rp-dot${n + 1}`} style={{ width: 5, height: 5, borderRadius: '50%', background: G }} />)}
             </div>
           </div>
@@ -423,12 +424,12 @@ function BakoChatSimple({ label, initMsg, quickQ }: { label: string; initMsg: st
       </div>
 
       {/* Input */}
-      <div style={{ padding: '8px 10px', borderTop: `1px solid rgba(255,255,255,0.07)`, display: 'flex', gap: 7, background: '#0F1928', flexShrink: 0 }}>
+      <div style={{ padding: '8px 10px', borderTop: `1px solid ${publicTheme.border}`, display: 'flex', gap: 7, background: publicTheme.surface, flexShrink: 0 }}>
         <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)}
           placeholder="اسأل باكو..."
-          style={{ flex: 1, background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 10, padding: '7px 12px', color: '#E0EAF5', fontSize: 11, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
-        <button onClick={() => send(input)} style={{ background: `linear-gradient(135deg,${G},${GL})`, border: 'none', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-          <Send size={12} color="#0D1220" />
+          style={{ flex: 1, background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.borderStrong}`, borderRadius: 10, padding: '7px 12px', color: TX, fontSize: 11, fontFamily: "'Almarai',sans-serif", fontWeight: 700, outline: 'none' }} />
+        <button onClick={() => send(input)} style={{ background: G, border: 'none', borderRadius: 10, padding: '7px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <Send size={12} color="#fff" />
         </button>
       </div>
     </div>
@@ -442,8 +443,8 @@ function ScoreRing({ score, color, size = 80 }: { score: number; color: string; 
   const dash = (score / 100) * circ;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray .8s ease', filter: `drop-shadow(0 0 6px ${color}88)` }} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={publicTheme.border} strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray .8s ease' }} />
       <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="middle" style={{ transform: 'rotate(90deg)', transformOrigin: `${size / 2}px ${size / 2}px`, fill: color, fontSize: 16, fontWeight: 800, fontFamily: "'Cairo',sans-serif" }}>{score}</text>
     </svg>
   );
@@ -481,10 +482,10 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
     return v.origin;
   };
 
-  const rowColor = (v: VariantInfo, baseColor: string) => v.available ? baseColor : 'rgba(255,255,255,0.2)';
+  const rowColor = (v: VariantInfo, baseColor: string) => v.available ? baseColor : publicTheme.mutedSoft;
 
   return (
-    <section style={{ padding: '48px 28px', background: `linear-gradient(180deg,${B2},${BG})`, borderTop: `1px solid ${BD}` }}>
+    <section style={{ padding: '48px 28px', background: `linear-gradient(180deg,${publicTheme.pageAlt},${BG})`, borderTop: `1px solid ${BD}` }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
         {/* Header */}
@@ -495,7 +496,7 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
               باكو AI — مقارنة ثلاثية {isFromDB && <span style={{ color: SG }}>• بيانات حقيقية</span>}
             </span>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>أصلي ولا تركي ولا صيني؟ باكو بيحلّلها ليك 🤖</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: TX, marginBottom: 6 }}>أصلي ولا تركي ولا صيني؟ باكو بيحلّلها ليك 🤖</h2>
           <p style={{ color: TD, fontSize: 13 }}>
             {isFromDB ? 'أسعار القطع من قاعدة البيانات الفعلية — متحدثة في الوقت الفعلي' : 'اختار القطعة وشوف الفرق في الجودة والسعر والضمان'}
           </p>
@@ -509,7 +510,7 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
               onChange={e => setSel(Number(e.target.value))}
               style={{
                 width: '100%', appearance: 'none',
-                background: B3, border: `1.5px solid rgba(200,151,74,0.28)`,
+                background: publicTheme.surface, border: `1.5px solid rgba(200,151,74,0.22)`,
                 borderRadius: 14, padding: '11px 44px 11px 18px',
                 color: G, fontSize: 14, fontFamily: "'Almarai',sans-serif",
                 fontWeight: 800, outline: 'none', cursor: 'pointer', direction: 'rtl',
@@ -528,10 +529,10 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
         </div>
 
         {/* Comparison table — 3 columns */}
-        <div style={{ background: B3, border: `1.5px solid rgba(255,255,255,0.07)`, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ ...publicStyles.cardMuted, borderRadius: 18, overflow: 'hidden', marginBottom: 14 }}>
 
           {/* Column headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: GRID, background: 'rgba(255,255,255,0.025)', borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+          <div style={{ display: 'grid', gridTemplateColumns: GRID, background: publicTheme.pageAlt, borderBottom: `1px solid ${publicTheme.border}` }}>
             {COL.map((c, ci) => {
               const v = part[c.key];
               const isBest = ci === bestIdx && v.available;
@@ -539,7 +540,7 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
                 <React.Fragment key={c.key}>
                   <div style={{
                     padding: '13px 14px', textAlign: 'center',
-                    borderLeft: ci > 0 ? `1px solid rgba(255,255,255,0.05)` : undefined,
+                    borderLeft: ci > 0 ? `1px solid ${publicTheme.border}` : undefined,
                     opacity: v.available ? 1 : 0.45,
                   }}>
                     {isBest && (
@@ -555,7 +556,7 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
                         <span style={{ fontSize: 9, fontWeight: 800, color: '#EF4444', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 999, padding: '2px 8px' }}>✗ غير متوفر</span>
                       )}
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: v.available ? c.color : 'rgba(255,255,255,0.25)' }}>{v.badge}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: v.available ? c.color : publicTheme.mutedSoft }}>{v.badge}</div>
                     <div style={{ fontSize: 10, color: TD, marginTop: 2, lineHeight: 1.4 }}>{v.name}</div>
                     {ci > 0 && v.available && part.orig.available && (part.orig.price - v.price) > 0 && (
                       <div style={{ fontSize: 9, color: G, fontWeight: 700, marginTop: 3 }}>💰 وفّر {(part.orig.price - v.price).toLocaleString('ar-EG')} ج.م</div>
@@ -576,17 +577,17 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
             const labels: Record<string, string> = { score: 'الجودة', price: 'السعر', warranty: 'الضمان', origin: 'المنشأ' };
             const baseColors: [string, string, string] = type === 'score' ? [SG, SK, CN] : [TX, TX, TX];
             return (
-              <div key={type} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: ri < 3 ? `1px solid rgba(255,255,255,0.05)` : 'none', background: ri % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+              <div key={type} style={{ display: 'grid', gridTemplateColumns: GRID, borderBottom: ri < 3 ? `1px solid ${publicTheme.border}` : 'none', background: ri % 2 === 0 ? 'transparent' : publicTheme.pageAlt }}>
                 {COL.map((c, vi) => (
                   <React.Fragment key={c.key}>
-                    <div style={{ padding: '10px 14px', textAlign: 'center', borderLeft: vi > 0 ? `1px solid rgba(255,255,255,0.04)` : undefined }}>
+                    <div style={{ padding: '10px 14px', textAlign: 'center', borderLeft: vi > 0 ? `1px solid ${publicTheme.border}` : undefined }}>
                       <span style={{ fontSize: 12, fontWeight: 800, color: rowColor(part[c.key], baseColors[vi]) }}>
                         {rowVal(part[c.key], type)}
                       </span>
                     </div>
                     {vi < 2 && (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.2)' }}>{labels[type]}</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: publicTheme.mutedSoft }}>{labels[type]}</span>
                       </div>
                     )}
                   </React.Fragment>
@@ -597,14 +598,14 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
         </div>
 
         {/* Bako ask section */}
-        <div style={{ border: `1.5px solid rgba(200,151,74,0.28)`, borderRadius: 16, overflow: 'hidden', boxShadow: `0 4px 24px rgba(200,151,74,0.07)` }}>
-          <div style={{ background: `linear-gradient(135deg,rgba(26,35,86,0.9),rgba(36,48,112,0.85))`, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid rgba(200,151,74,0.18)` }}>
-            <img src={bakoImg} alt="باكو" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: NV, flexShrink: 0 }} />
+        <div style={{ border: `1px solid ${publicTheme.border}`, borderRadius: 16, overflow: 'hidden', boxShadow: publicTheme.shadowSoft }}>
+          <div style={{ background: publicTheme.surfaceSoft, padding: '11px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${publicTheme.border}` }}>
+            <img src={bakoImg} alt="باكو" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', objectPosition: '50% 22%', border: `2px solid ${G}`, background: publicTheme.surface, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: 13, color: '#fff', fontFamily: "'Almarai',sans-serif" }}>
+              <div style={{ fontWeight: 800, fontSize: 13, color: TX, fontFamily: "'Almarai',sans-serif" }}>
                 اسأل باكو عن <span style={{ color: G }}>{part.label}</span>
               </div>
-              <div style={{ fontSize: 10, color: `rgba(200,151,74,0.8)`, fontWeight: 700, marginTop: 1 }}>بيجاوبك على أصلي ولا تركي ولا صيني بناءً على المقارنة فوق</div>
+              <div style={{ fontSize: 10, color: TD, fontWeight: 700, marginTop: 1 }}>بيجاوبك على أصلي ولا تركي ولا صيني بناءً على المقارنة فوق</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 999, padding: '3px 10px' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', animation: 'rp-glow-blink 2s infinite', flexShrink: 0 }} />
@@ -620,9 +621,9 @@ function AiCompareSection({ compareData }: { compareData?: ComparePart[] | null 
 
 /* ── 3D Package Box (exact mockup design) ── */
 const PKG_META: Record<string, { topColor: string; sideColor: string; accent: string; frontGrad: string; glow: string; kmNum: string }> = {
-  km20: { topColor: '#1A5A84', sideColor: '#0E3A56', accent: SK,  frontGrad: `linear-gradient(160deg,#1A3A52,${BG} 85%)`, glow: `rgba(74,171,202,0.5)`,   kmNum: '20' },
-  km40: { topColor: '#7A4B0E', sideColor: '#4E3005', accent: G,   frontGrad: `linear-gradient(160deg,#3A2100,${BG} 85%)`, glow: `rgba(200,151,74,0.5)`,  kmNum: '40' },
-  km60: { topColor: '#3A2A86', sideColor: '#241870', accent: LV,  frontGrad: `linear-gradient(160deg,#1E1448,${BG} 85%)`, glow: `rgba(123,114,184,0.5)`, kmNum: '60' },
+  km20: { topColor: '#dbeafe', sideColor: '#bfdbfe', accent: SK,  frontGrad: `linear-gradient(160deg,#ffffff,${publicTheme.pageAlt} 85%)`, glow: `rgba(74,171,202,0.18)`,   kmNum: '20' },
+  km40: { topColor: '#fef3c7', sideColor: '#fde68a', accent: G,   frontGrad: `linear-gradient(160deg,#fffaf1,${publicTheme.pageAlt} 85%)`, glow: `rgba(200,151,74,0.18)`,  kmNum: '40' },
+  km60: { topColor: '#ede9fe', sideColor: '#ddd6fe', accent: LV,  frontGrad: `linear-gradient(160deg,#ffffff,${publicTheme.pageAlt} 85%)`, glow: `rgba(123,114,184,0.16)`, kmNum: '60' },
 };
 
 function PackageBox3D({ pkg, selected, onClick }: { pkg: typeof STATIC_PACKAGES[0]; selected: boolean; onClick: () => void }) {
@@ -639,52 +640,52 @@ function PackageBox3D({ pkg, selected, onClick }: { pkg: typeof STATIC_PACKAGES[
         position: 'relative', width: W + D, cursor: 'pointer', zIndex: selected ? 10 : 1,
         transform: selected ? 'translateY(-30px) scale(1.06)' : 'translateY(0) scale(1)',
         transition: 'transform .5s cubic-bezier(.34,1.4,.64,1), filter .3s ease',
-        filter: selected ? `drop-shadow(0 32px 42px ${m.glow})` : 'drop-shadow(0 10px 22px rgba(0,0,0,0.6))',
+        filter: selected ? `drop-shadow(0 24px 32px ${m.glow})` : 'drop-shadow(0 8px 18px rgba(15,23,42,0.10))',
       }}
     >
       {/* TOP FACE */}
       <div style={{ width: W, height: D, background: `linear-gradient(135deg,${m.topColor}ff,${m.topColor}99)`, borderRadius: '10px 10px 0 0', marginLeft: D, transformOrigin: 'bottom center', transform: 'perspective(250px) rotateX(58deg)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(255,255,255,0.08),transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(255,255,255,0.22),transparent 60%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: 4, left: 0, right: 0, textAlign: 'center', fontSize: 8, letterSpacing: 2.5, fontWeight: 800, color: 'rgba(255,255,255,0.3)' }}>RENOPACK</div>
       </div>
 
       <div style={{ display: 'flex' }}>
         {/* SIDE FACE */}
-        <div style={{ width: D, height: H, background: `linear-gradient(180deg,${m.sideColor}ff,${m.sideColor}66)`, borderRadius: '0 0 0 10px', transformOrigin: 'right center', transform: 'perspective(250px) rotateY(55deg)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(255,255,255,0.05),transparent 50%)', pointerEvents: 'none' }} />
+        <div style={{ width: D, height: H, background: `linear-gradient(180deg,${m.sideColor}ff,${m.sideColor}bb)`, borderRadius: '0 0 0 10px', transformOrigin: 'right center', transform: 'perspective(250px) rotateY(55deg)', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(255,255,255,0.14),transparent 50%)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ writingMode: 'vertical-rl', fontSize: 9, fontWeight: 800, color: `${m.accent}55`, letterSpacing: 3, transform: 'rotate(180deg)' }}>{pkg.name}</div>
+            <div style={{ writingMode: 'vertical-rl', fontSize: 9, fontWeight: 800, color: `${m.accent}88`, letterSpacing: 3, transform: 'rotate(180deg)' }}>{pkg.name}</div>
           </div>
         </div>
 
         {/* FRONT FACE */}
-        <div style={{ width: W, height: H, background: m.frontGrad, border: `1.5px solid ${m.accent}28`, borderTop: `3px solid ${m.accent}55`, borderLeft: 'none', borderRadius: '0 0 12px 0', overflow: 'hidden', position: 'relative', padding: '18px 16px 16px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '45%', height: '100%', background: 'linear-gradient(to right,rgba(255,255,255,0.04),transparent)', pointerEvents: 'none' }} />
+        <div style={{ width: W, height: H, background: m.frontGrad, border: `1.5px solid ${m.accent}22`, borderTop: `3px solid ${m.accent}44`, borderLeft: 'none', borderRadius: '0 0 12px 0', overflow: 'hidden', position: 'relative', padding: '18px 16px 16px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '45%', height: '100%', background: 'linear-gradient(to right,rgba(255,255,255,0.3),transparent)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${m.accent}88,${m.accent}22)`, pointerEvents: 'none' }} />
 
-          <div style={{ fontSize: 9, fontWeight: 800, color: `${m.accent}aa`, letterSpacing: 2.5, marginBottom: 10 }}>RENOPACK ■</div>
+          <div style={{ fontSize: 9, fontWeight: 800, color: `${m.accent}`, letterSpacing: 2.5, marginBottom: 10 }}>RENOPACK ■</div>
 
           <div style={{ position: 'relative', marginBottom: 4, lineHeight: 1 }}>
             <div style={{ fontSize: 72, fontWeight: 900, color: m.accent, opacity: 0.12, position: 'absolute', top: -8, left: -4, fontFamily: 'monospace', letterSpacing: -4 }}>{m.kmNum}</div>
             <div style={{ fontSize: 52, fontWeight: 900, color: m.accent, letterSpacing: -3, position: 'relative' }}>{m.kmNum}</div>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', marginBottom: 14, letterSpacing: .5 }}>ألف كيلومتر</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: TD, marginBottom: 14, letterSpacing: .5 }}>ألف كيلومتر</div>
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${m.accent}12`, border: `1px solid ${m.accent}28`, borderRadius: 999, padding: '3px 10px', marginBottom: 12, width: 'fit-content' }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: m.accent }}>{pkg.sub}</span>
           </div>
 
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#D0DCE8', marginBottom: 'auto' }}>{pkg.name}</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: TX, marginBottom: 'auto' }}>{pkg.name}</div>
 
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#E8F0F8', letterSpacing: -1.5, lineHeight: 1 }}>
+            <div style={{ fontSize: 28, fontWeight: 800, color: TX, letterSpacing: -1.5, lineHeight: 1 }}>
               {pkg.price.toLocaleString()}
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', marginRight: 4 }}> ج.م</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: TD, marginRight: 4 }}> ج.م</span>
             </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700, marginTop: 2 }}>شامل التركيب والضمان</div>
+            <div style={{ fontSize: 9, color: TD, fontWeight: 700, marginTop: 2 }}>شامل التركيب والضمان</div>
           </div>
 
-          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.15)', borderRadius: 8, padding: '5px 9px' }}>
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, background: publicTheme.brandSoft, border: '1px solid rgba(200,151,74,0.18)', borderRadius: 8, padding: '5px 9px' }}>
             <Gift size={10} color={G} /><span style={{ fontSize: 9, fontWeight: 700, color: G }}>🎁 {pkg.gift}</span>
           </div>
 
@@ -760,7 +761,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
     zIndex: 20,
     fontSize: 18,
     fontWeight: 800,
-    boxShadow: `0 4px 16px rgba(0,0,0,0.4)`,
+    boxShadow: `0 8px 18px rgba(15,23,42,0.10)`,
     transition: 'background .2s, transform .2s',
     userSelect: 'none',
     flexShrink: 0,
@@ -775,7 +776,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 18px', marginBottom: 16 }}>
             <Package size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>باكدجات جاهزة</span>
           </div>
-          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
+          <h2 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: TX, marginBottom: 8 }}>اختار الباكدج المناسب لسيارتك 📦</h2>
           <p style={{ color: TD, fontSize: isMobile ? 13 : 14 }}>كل باكدج بيشمل القطع + التركيب + الضمان + هدية</p>
         </div>
 
@@ -788,7 +789,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
               onTouchEnd={handleTouchEnd}
             >
               {/* Shelf glow */}
-              <div style={{ position: 'absolute', bottom: 22, left: '5%', right: '5%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.1) 30%,rgba(255,255,255,0.16) 50%,rgba(255,255,255,0.1) 70%,transparent)', borderRadius: 999 }} />
+              <div style={{ position: 'absolute', bottom: 22, left: '5%', right: '5%', height: 2, background: `linear-gradient(90deg,transparent,${publicTheme.border} 30%,${publicTheme.borderStrong} 50%,${publicTheme.border} 70%,transparent)`, borderRadius: 999 }} />
               <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 40, background: `radial-gradient(ellipse at 50% 0%,${m.glow},transparent 70%)`, filter: 'blur(8px)', transition: 'background .4s' }} />
 
               {/* Prev arrow */}
@@ -813,7 +814,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
                     width: active === p.id ? 22 : 8,
                     height: 8,
                     borderRadius: 999,
-                    background: active === p.id ? m.accent : 'rgba(255,255,255,0.18)',
+                    background: active === p.id ? m.accent : publicTheme.borderStrong,
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all .3s ease',
@@ -834,9 +835,9 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
                     style={{
                       padding: '8px 18px',
                       borderRadius: 999,
-                      border: `1.5px solid ${active === p.id ? pm.accent : 'rgba(255,255,255,0.1)'}`,
-                      background: active === p.id ? `${pm.accent}15` : 'transparent',
-                      color: active === p.id ? pm.accent : 'rgba(255,255,255,0.4)',
+                      border: `1.5px solid ${active === p.id ? pm.accent : publicTheme.border}`,
+                      background: active === p.id ? `${pm.accent}15` : publicTheme.surface,
+                      color: active === p.id ? pm.accent : TD,
                       fontSize: 12,
                       fontWeight: 800,
                       cursor: 'pointer',
@@ -853,7 +854,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
         ) : (
           /* ── DESKTOP: 3D shelf with all 3 boxes ── */
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', gap: 24, alignItems: 'flex-end', paddingBottom: 50 }}>
-            <div style={{ position: 'absolute', bottom: 22, left: '4%', right: '4%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.09) 20%,rgba(255,255,255,0.14) 50%,rgba(255,255,255,0.09) 80%,transparent)', borderRadius: 999 }} />
+            <div style={{ position: 'absolute', bottom: 22, left: '4%', right: '4%', height: 2, background: `linear-gradient(90deg,transparent,${publicTheme.border} 20%,${publicTheme.borderStrong} 50%,${publicTheme.border} 80%,transparent)`, borderRadius: 999 }} />
             <div style={{ position: 'absolute', bottom: 0, left: '15%', right: '15%', height: 40, background: 'radial-gradient(ellipse at 50% 0%,rgba(200,151,74,0.06),transparent 70%)', filter: 'blur(8px)' }} />
             {pkgs.map(p => (
               <PackageBox3D key={p.id} pkg={p} selected={active === p.id} onClick={() => setActive(p.id)} />
@@ -862,18 +863,18 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
         )}
 
         {/* ── Expanded details panel ── */}
-        <div style={{ maxWidth: 700, margin: isMobileOrTablet ? '0 auto 0' : '32px auto 0', background: `linear-gradient(145deg,${m.accent}0a,${B3} 60%)`, border: `1.5px solid ${m.accent}22`, borderRadius: 22, padding: isMobile ? '20px 16px' : '28px 32px', position: 'relative', overflow: 'hidden', transition: 'all .4s ease' }}>
+        <div style={{ maxWidth: 700, margin: isMobileOrTablet ? '0 auto 0' : '32px auto 0', background: `linear-gradient(145deg,${m.accent}08,${publicTheme.surface} 60%)`, border: `1px solid ${publicTheme.border}`, borderRadius: 22, padding: isMobile ? '20px 16px' : '28px 32px', position: 'relative', overflow: 'hidden', transition: 'all .4s ease', boxShadow: publicTheme.shadowSoft }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${m.accent}66,transparent)` }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
             <div>
-              <h3 style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: '#E8F0F8', marginBottom: 6 }}>{pkg.name}</h3>
+              <h3 style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: TX, marginBottom: 6 }}>{pkg.name}</h3>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${m.accent}12`, border: `1px solid ${m.accent}28`, borderRadius: 999, padding: '4px 12px' }}>
                 <Gift size={11} color={m.accent} /><span style={{ color: m.accent, fontSize: 11, fontWeight: 700 }}>هديتك: {pkg.gift}</span>
               </div>
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontSize: isMobile ? 26 : 34, fontWeight: 800, color: m.accent, lineHeight: 1, letterSpacing: -1.5 }}>{pkg.price.toLocaleString()}</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 700 }}>ج.م شامل التركيب</div>
+              <div style={{ color: TD, fontSize: 11, fontWeight: 700 }}>ج.م شامل التركيب</div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', marginBottom: 22 }}>
@@ -884,9 +885,9 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
               </div>
             ))}
           </div>
-          <Link href={`/packages/${pkgSlug}`} style={{ display: 'block', width: '100%', background: `linear-gradient(135deg,${m.accent},${m.accent}bb)`, color: BG, border: 'none', borderRadius: 999, padding: '13px', textAlign: 'center', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 26px ${m.glow}`, textDecoration: 'none', fontFamily: "'Almarai',sans-serif", cursor: 'pointer' }}>
-            احجز الباكدج واستلم الهدية ←
-          </Link>
+            <Link href={`/packages/${pkgSlug}`} style={{ display: 'block', width: '100%', background: m.accent, color: '#fff', border: 'none', borderRadius: 999, padding: '13px', textAlign: 'center', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 22px ${m.glow}`, textDecoration: 'none', fontFamily: "'Almarai',sans-serif", cursor: 'pointer' }}>
+              احجز الباكدج واستلم الهدية ←
+            </Link>
         </div>
 
       </div>
@@ -934,68 +935,50 @@ export default function Home() {
     <div style={{ ...sectionBg, minHeight: '100vh' }}>
 
       {/* ═══ HERO ═══ */}
-      <section style={{ position: 'relative', minHeight: 580, overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
-        {/* Background layers */}
+      <section style={{ position: 'relative', overflow: 'hidden', ...publicStyles.hero }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 120% 100% at 70% 50%, rgba(26,35,86,0.5) 0%, ${BG} 70%)` }} />
-          <div style={{ position: 'absolute', top: '50%', left: '62%', transform: 'translate(-50%,-50%)', width: 560, height: 560, background: `radial-gradient(circle,rgba(200,151,74,0.13) 0%,rgba(200,151,74,0.05) 40%,transparent 70%)`, borderRadius: '50%', animation: 'rp-blob1 8s ease-in-out infinite' }} />
-          <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: 500, height: 500, background: `radial-gradient(circle,rgba(74,171,202,0.07) 0%,transparent 65%)`, animation: 'rp-blob2 12s ease-in-out infinite 4s' }} />
-          {/* Grid floor */}
-          <svg style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: 220, opacity: 0.07 }} viewBox="0 0 1280 220" preserveAspectRatio="none">
-            {[0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1].map((t, i) => {
-              const y = 220 - t * 220;
-              return <line key={i} x1={640 - 640 * t} y1={220} x2={640 + 640 * t} y2={y} stroke="rgba(200,151,74,1)" strokeWidth=".8" />;
-            })}
-            {[...Array(9)].map((_, i) => {
-              const p = (i + 1) / 10; const y = 220 - p * 220;
-              return <line key={i} x1={640 - 640 * p} y1={y} x2={640 + 640 * p} y2={y} stroke="rgba(200,151,74,1)" strokeWidth=".6" />;
-            })}
-          </svg>
-          {/* Logo watermark */}
-          <img src={bakoLogoImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: isMobile ? 320 : 560, height: isMobile ? 320 : 560, objectFit: 'contain', opacity: 0.04, pointerEvents: 'none', userSelect: 'none', filter: 'grayscale(1) brightness(3)', mixBlendMode: 'screen' }} />
-          {/* Particles */}
-          {[{ top: '18%', left: '8%', c: G, d: '0s', sz: 5 }, { top: '72%', left: '14%', c: SK, d: '1.8s', sz: 4 }, { top: '40%', left: '28%', c: LV, d: '3.2s', sz: 3 }, { top: '12%', left: '44%', c: SG, d: '.6s', sz: 4 }, { top: '80%', left: '52%', c: G, d: '2.1s', sz: 3 }, { top: '25%', left: '76%', c: SK, d: '1.2s', sz: 5 }].map((p, i) => (
-            <div key={i} style={{ position: 'absolute', top: p.top, left: p.left, width: p.sz, height: p.sz, borderRadius: '50%', background: p.c, boxShadow: `0 0 ${p.sz * 2}px ${p.c}`, animation: `rp-particle ${4 + i}s ease-in-out infinite ${p.d}` }} />
-          ))}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(250,248,243,0.78) 48%, rgba(246,247,251,1) 100%)' }} />
+          <div style={{ position: 'absolute', top: '12%', left: '55%', width: 460, height: 460, ...publicStyles.heroGlow, opacity: 0.7, transform: 'translateX(-50%)' }} />
+          <img src={bakoLogoImg} alt="" aria-hidden="true" style={{ position: 'absolute', top: '52%', left: '54%', transform: 'translate(-50%,-50%)', width: isMobile ? 240 : 360, height: isMobile ? 240 : 360, objectFit: 'contain', opacity: 0.035, pointerEvents: 'none', userSelect: 'none' }} />
         </div>
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '36px 16px 40px' : isTablet ? '48px 20px 52px' : '60px 28px', position: 'relative', display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : '1.15fr 0.85fr', gap: 0, alignItems: 'center', width: '100%' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: isMobile ? '42px 16px 44px' : isTablet ? '54px 20px 56px' : '64px 28px 70px', position: 'relative', display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : '1.05fr 0.95fr', gap: isMobileOrTablet ? 28 : 40, alignItems: 'center', width: '100%' }}>
 
-          {/* LEFT: Copy */}
           <div style={{ animation: 'rp-fade-up .7s ease both' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.07)', border: '1px solid rgba(200,151,74,0.22)', borderRadius: 999, padding: '6px 18px', marginBottom: 28 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: G, boxShadow: `0 0 8px ${G}`, animation: 'rp-glow-blink 2s infinite' }} />
-              <span style={{ color: G, fontSize: 12, fontWeight: 700, letterSpacing: .3 }}>منصة باكدجات الصيانة الأولى — الإسكندرية</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: publicTheme.brandSoft, border: `1px solid rgba(200,151,74,0.22)`, borderRadius: 999, padding: '7px 18px', marginBottom: 24 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: G, boxShadow: `0 0 8px ${G}55` }} />
+              <span style={{ color: G, fontSize: 12, fontWeight: 700, letterSpacing: .2 }}>منصة باكدجات الصيانة الأولى في الإسكندرية</span>
             </div>
 
-            <h1 style={{ fontSize: isMobile ? 30 : isTablet ? 38 : 46, fontWeight: 800, lineHeight: 1.2, letterSpacing: -1, marginBottom: 10, color: '#E8F0F8' }}>
-              بنقدم لك<br />
-              <span style={{ fontSize: isMobile ? 36 : isTablet ? 44 : 56, background: `linear-gradient(130deg,${G} 30%,${GL} 60%,${SK})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: -2 }}>باكدج كامل</span>
+            <h1 style={{ fontSize: isMobile ? 30 : isTablet ? 38 : 48, fontWeight: 800, lineHeight: 1.15, letterSpacing: -1.2, marginBottom: 12, color: publicTheme.text }}>
+              صيانة رينو
+              <br />
+              <span style={{ color: G }}>بشكل أبسط وأوضح</span>
             </h1>
-            <h2 style={{ fontSize: isMobile ? 16 : isTablet ? 19 : 22, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 8, letterSpacing: -.5, lineHeight: 1.5 }}>
-              قطع الغيار <span style={{ color: G, fontWeight: 800 }}>+ التركيب مجاناً</span><br />
-              <span style={{ fontSize: isMobile ? 13 : 17, color: 'rgba(255,255,255,0.35)', fontWeight: 700 }}>بأقرب ورشة معتمدة ليك في الإسكندرية</span>
+
+            <h2 style={{ fontSize: isMobile ? 16 : isTablet ? 18 : 21, fontWeight: 700, color: publicTheme.textSoft, marginBottom: 12, letterSpacing: -.4, lineHeight: 1.6 }}>
+              القطعة + التركيب + الضمان في طلب واحد،
+              <br />
+              وبأقرب ورشة معتمدة لك.
             </h2>
 
-            <p style={{ color: TD, fontSize: 14, lineHeight: 1.9, marginBottom: 32, maxWidth: 500, borderRight: `3px solid rgba(200,151,74,0.25)`, paddingRight: 16 }}>
-              زي أوبر — إحنا الوسيط بين مراكز قطع الغيار وورش التركيب في الإسكندرية.<br />
-              إنت بتدفع <strong style={{ color: G }}>مرة واحدة</strong> — القطعة، التركيب، والضمان علينا.
+            <p style={{ color: TD, fontSize: 14, lineHeight: 1.9, marginBottom: 28, maxWidth: 560, borderRight: `3px solid rgba(200,151,74,0.22)`, paddingRight: 16 }}>
+              بدل ما تدور على القطعة وتنسق مع الورشة وحدك، RenoPack يجمع لك القرار كله في مسار واحد: اختر الباكدج، استلمها، ثم ركّبها مع ضمان واضح.
             </p>
 
-            {/* Service pills */}
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, fontWeight: 700, marginBottom: 12, letterSpacing: 2 }}>ابدأ بالصيانة اللي محتاجها:</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginBottom: 18 }}>
               {SERVICES.map((s, i) => {
                 const on = activeService === i;
                 return (
                   <button key={i} className="rp-pill" onClick={() => setActiveService(on ? null : i)} style={{
-                    padding: '10px 20px',
-                    background: on ? `${s.color}18` : 'rgba(255,255,255,0.03)',
-                    border: `1.5px solid ${on ? s.color : BD}`,
-                    color: on ? s.color : TD,
-                    fontSize: 13, fontWeight: 700,
-                    boxShadow: on ? `0 0 18px ${s.color}30, inset 0 0 12px ${s.color}08` : 'none',
-                    transform: on ? 'translateY(-2px)' : 'none',
+                    padding: '10px 18px',
+                    background: on ? `${s.color}12` : publicTheme.surface,
+                    border: `1.5px solid ${on ? s.color : publicTheme.borderStrong}`,
+                    color: on ? s.color : publicTheme.textSoft,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    boxShadow: on ? `0 8px 18px ${s.color}14` : publicTheme.shadowSoft,
+                    transform: on ? 'translateY(-1px)' : 'none',
                   }}>
                     <s.icon size={13} style={{ marginLeft: 7, display: 'inline', verticalAlign: 'middle' }} />{s.label}
                   </button>
@@ -1004,67 +987,49 @@ export default function Home() {
             </div>
 
             {activeService !== null && (
-              <div style={{ animation: 'rp-fade-up .25s ease', background: `${SERVICES[activeService].color}08`, border: `1px solid ${SERVICES[activeService].color}22`, borderRadius: 14, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
+              <div style={{ animation: 'rp-fade-up .25s ease', background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 4, boxShadow: publicTheme.shadowSoft }}>
                 <span style={{ color: TX, fontSize: 13, fontWeight: 700 }}>
-                  عندنا باكدج شامل <strong style={{ color: SERVICES[activeService].color }}>{SERVICES[activeService].label}</strong> — قطعة + تركيب + ضمان
+                  عندنا باكدج مناسب لـ <strong style={{ color: SERVICES[activeService].color }}>{SERVICES[activeService].label}</strong> يشمل القطعة والتركيب والضمان.
                 </span>
-                <Link href="/packages" className="rp-pill" style={{ background: SERVICES[activeService].color, color: BG, padding: '7px 16px', fontWeight: 800, fontSize: 12, flexShrink: 0, boxShadow: `0 4px 14px ${SERVICES[activeService].color}40`, textDecoration: 'none', display: 'inline-block' }}>اختار الباكدج</Link>
+                <Link href="/packages" className="rp-pill" style={{ background: SERVICES[activeService].color, color: '#fff', padding: '8px 16px', fontWeight: 800, fontSize: 12, flexShrink: 0, textDecoration: 'none', display: 'inline-block' }}>شاهد الباكدجات</Link>
               </div>
             )}
 
-            {/* Stats row */}
-            <div style={{ display: 'flex', gap: 0, marginTop: 32, paddingTop: 24, borderTop: `1px solid rgba(255,255,255,0.06)` }}>
-              {[{ n: '1,247+', l: 'باكدج اتوصّل', c: G }, { n: '4.9★', l: 'متوسط التقييم', c: SK }, { n: '32', l: 'ورشة معتمدة', c: SG }, { n: '98%', l: 'رضا العملاء', c: LV }].map(({ n, l, c }, i) => (
-                <div key={l} style={{ flex: 1, textAlign: 'center', padding: '0 8px', borderLeft: i > 0 ? `1px solid rgba(255,255,255,0.06)` : 'none' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12, marginTop: 30 }}>
+              {[{ n: '1,247+', l: 'طلب مكتمل', c: G }, { n: '4.9★', l: 'تقييم العملاء', c: SK }, { n: '32', l: 'ورشة معتمدة', c: SG }, { n: '98%', l: 'رضا العملاء', c: LV }].map(({ n, l, c }) => (
+                <div key={l} style={{ ...publicStyles.card, borderRadius: 18, padding: '16px 14px', textAlign: 'center' }}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: c, lineHeight: 1 }}>{n}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700, marginTop: 4 }}>{l}</div>
+                  <div style={{ fontSize: 11, color: publicTheme.muted, fontWeight: 700, marginTop: 6 }}>{l}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* RIGHT: Bako cinematic — hidden on mobile to avoid overflow */}
-          <div style={{ position: 'relative', display: isMobileOrTablet ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', border: '1px solid rgba(200,151,74,0.08)', animation: 'rp-blob1 6s ease-in-out infinite' }} />
-            <div style={{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', border: '1px dashed rgba(200,151,74,0.1)', animation: 'rp-blob2 8s ease-in-out infinite 2s' }} />
-
-            {/* Bako */}
-            <div style={{ position: 'relative', zIndex: 5, animation: 'rp-float 5s ease-in-out infinite' }}>
-              <img src={bakoImg} alt="باكو" style={{ width: 320, height: 320, objectFit: 'contain', filter: `drop-shadow(0 28px 55px rgba(200,151,74,0.45)) drop-shadow(0 0 100px rgba(200,151,74,0.2))`, display: 'block', margin: '0 auto' }} />
-              {/* Speech bubble */}
-              <div style={{ position: 'absolute', top: -62, left: '50%', transform: 'translateX(-38%)', background: 'rgba(13,18,32,0.94)', backdropFilter: 'blur(14px)', border: `1.5px solid rgba(200,151,74,0.38)`, borderRadius: '16px 16px 16px 4px', padding: '10px 18px', whiteSpace: 'nowrap', boxShadow: '0 8px 28px rgba(0,0,0,0.5)', animation: 'rp-glow-blink 3s infinite', zIndex: 10 }}>
-                <div style={{ color: G, fontSize: 12, fontWeight: 800, marginBottom: 2 }}>أهلاً! أنا باكو 👋</div>
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10, fontWeight: 700 }}>هساعدك تختار الباكدج المناسب</div>
-                <div style={{ position: 'absolute', bottom: -8, right: 24, width: 0, height: 0, borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: `8px solid rgba(200,151,74,0.38)` }} />
-              </div>
-            </div>
-
-            {/* Floating stat cards */}
-            {[
-              { top: 30, left: -40,  c: SK, icon: '🛡️', t: 'ضمان 24 شهر',   s: 'على كل القطع'   },
-              { bottom: 40, right: -30, c: SG, icon: '⚡', t: 'تركيب سريع', s: 'خلال 24 ساعة' },
-            ].map(({ top, bottom, left, right, c, icon, t, s }: any, i) => (
-              <div key={i} style={{ position: 'absolute', top, bottom, left, right, background: 'rgba(13,18,32,0.88)', backdropFilter: 'blur(12px)', border: `1px solid ${c}25`, borderRadius: 14, padding: '10px 14px', boxShadow: `0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px ${c}12`, animation: `rp-float ${5 + i}s ease-in-out infinite ${i}s`, zIndex: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 20 }}>{icon}</span>
-                  <div>
-                    <div style={{ color: '#E8F0F8', fontSize: 12, fontWeight: 800 }}>{t}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 700 }}>{s}</div>
-                  </div>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isMobileOrTablet ? 280 : 420 }}>
+            <div style={{ ...publicStyles.cardMuted, width: '100%', maxWidth: 420, padding: isMobile ? '22px 18px' : '26px 24px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${G}, transparent)` }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                <img src={bakoImg} alt="باكو" style={{ width: isMobile ? 72 : 86, height: isMobile ? 72 : 86, objectFit: 'contain' }} />
+                <div>
+                  <div style={{ color: publicTheme.text, fontSize: 17, fontWeight: 800, marginBottom: 4 }}>باكو يساعدك تختار بسرعة</div>
+                  <div style={{ color: publicTheme.muted, fontSize: 12, fontWeight: 700, lineHeight: 1.6 }}>اختيار الباكدج، مقارنة القطع، ثم الذهاب للورشة المناسبة.</div>
                 </div>
               </div>
-            ))}
 
-            {/* How it works bar */}
-            <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 10, background: 'rgba(13,18,32,0.9)', backdropFilter: 'blur(12px)', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 16, padding: '12px 20px', whiteSpace: 'nowrap', zIndex: 6 }}>
-              {[{ Icon: Package, c: SK, l: 'الموردين' }, { Icon: ArrowLeftRight, c: G, l: 'RenoPack' }, { Icon: Wrench, c: G, l: 'ورش التركيب' }, { Icon: BadgeCheck, c: SG, l: 'ضمان كامل' }].map(({ Icon, c, l }, i) => (
-                <React.Fragment key={l}>
-                  {i > 0 && <div style={{ width: 1, background: 'rgba(255,255,255,0.07)', alignSelf: 'stretch' }} />}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px' }}>
-                    <Icon size={13} color={c} /><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700 }}>{l}</span>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {[
+                  { icon: Package, c: SK, l: 'اختر باكدجًا جاهزًا أو ابنِ واحدًا بنفسك' },
+                  { icon: ArrowLeftRight, c: G, l: 'قارن بين الأصلي والتركي والصيني بوضوح' },
+                  { icon: Wrench, c: SG, l: 'اختر الورشة المعتمدة التي تناسب منطقتك' },
+                ].map(({ icon: Icon, c, l }) => (
+                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 14, background: publicTheme.surface, border: `1px solid ${publicTheme.border}` }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 12, background: `${c}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={16} color={c} />
+                    </div>
+                    <span style={{ color: publicTheme.textSoft, fontSize: 12, fontWeight: 700, lineHeight: 1.6 }}>{l}</span>
                   </div>
-                </React.Fragment>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1077,14 +1042,14 @@ export default function Home() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.08)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
               <Zap size={12} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>إزاي بيشتغل RenoPack</span>
             </div>
-            <h2 style={{ fontSize: isMobile ? 20 : 28, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>٣ خطوات — وعربيتك تتصلح</h2>
+            <h2 style={{ fontSize: isMobile ? 20 : 28, fontWeight: 800, color: TX, marginBottom: 8 }}>٣ خطوات — وعربيتك تتصلح</h2>
             <p style={{ color: TD, fontSize: isMobile ? 13 : 14 }}>مش محتاج تدور على قطعة، مش محتاج تتعامل مع الورشة — إحنا بنعمل كل ده عنك</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(3,1fr)' : 'repeat(3,1fr)', gap: isMobile ? 14 : 20, position: 'relative' }}>
             {/* Connector lines */}
-            <div style={{ position: 'absolute', top: 48, right: '33.3%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${G}50,${G}20)`, zIndex: 0, pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', top: 48, right: '66.6%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${SK}50,${SK}20)`, zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 48, right: '33.3%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${G}35,${G}12)`, zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: 48, right: '66.6%', width: '33.3%', height: 2, background: `linear-gradient(90deg,${SK}35,${SK}12)`, zIndex: 0, pointerEvents: 'none' }} />
 
             {[
               {
@@ -1109,8 +1074,8 @@ export default function Home() {
                 tagColor: SG,
               },
             ].map(({ num, icon: Icon, color, title, sub, tags, tagColor }, i) => (
-              <div key={i} style={{ background: B3, border: `1.5px solid ${color}18`, borderRadius: 24, padding: '28px 24px 24px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 40px rgba(0,0,0,0.3), 0 0 0 1.5px ${color}30`}
+              <div key={i} style={{ ...publicStyles.card, borderRadius: 24, padding: '28px 24px 24px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 32px rgba(15,23,42,0.10), 0 0 0 1px ${color}20`}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = ''}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${color},${color}30,transparent)`, borderRadius: '24px 24px 0 0' }} />
 
@@ -1120,7 +1085,7 @@ export default function Home() {
                   </div>
                   <div>
                     <div style={{ fontSize: 10, fontWeight: 700, color: color, letterSpacing: 1, marginBottom: 2 }}>الخطوة {num}</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: '#E8F0F8', lineHeight: 1.2 }}>{title}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: TX, lineHeight: 1.2 }}>{title}</div>
                   </div>
                 </div>
 
@@ -1136,7 +1101,7 @@ export default function Home() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 36 }}>
-            <Link href="/packages" className="rp-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `linear-gradient(135deg,${G},${GL})`, color: BG, border: 'none', padding: '13px 32px', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 24px rgba(200,151,74,0.3)`, textDecoration: 'none' }}>
+            <Link href="/packages" className="rp-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: G, color: '#fff', border: 'none', padding: '13px 32px', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 20px rgba(200,151,74,0.22)`, textDecoration: 'none' }}>
               <Package size={16} />اختار باكدجك دلوقتي
             </Link>
           </div>
@@ -1153,7 +1118,7 @@ export default function Home() {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(200,151,74,0.09)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '5px 16px', marginBottom: 14 }}>
               <Layers size={13} color={G} /><span style={{ color: G, fontSize: 12, fontWeight: 700 }}>ابني باكدجك بنفسك</span>
             </div>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#E8F0F8', marginBottom: 8 }}>البازل — اختار قطعك وجمّع باكدجك 🧩</h2>
+            <h2 style={{ fontSize: 26, fontWeight: 800, color: TX, marginBottom: 8 }}>البازل — اختار قطعك وجمّع باكدجك 🧩</h2>
             <p style={{ color: TD, fontSize: 14 }}>على حسب قيمة الباكدج بتاعك هتاخد هدية تلقائياً</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: isMobileOrTablet ? '1fr' : selected.size >= 2 ? '1fr 270px 260px' : '1fr 270px', gap: isMobile ? 14 : 20, alignItems: 'start', transition: 'grid-template-columns .3s ease' }}>
@@ -1166,16 +1131,16 @@ export default function Home() {
                     <p style={{ color: TD, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, marginBottom: 10 }}>{cat}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 9 }}>
                       {parts.map(p => { const on = selected.has(p.id); return (
-                        <div key={p.id} className="rp-part-tile" onClick={() => togglePart(p.id)} style={{ background: on ? 'rgba(200,151,74,0.07)' : 'var(--rp-card)', border: `1.5px solid ${on ? 'rgba(200,151,74,0.38)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: on ? '0 0 16px rgba(200,151,74,0.1)' : 'none' }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 10, background: on ? 'rgba(200,151,74,0.13)' : 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .25s' }}>
+                        <div key={p.id} className="rp-part-tile" onClick={() => togglePart(p.id)} style={{ background: on ? publicTheme.brandSoft : publicTheme.surface, border: `1.5px solid ${on ? 'rgba(200,151,74,0.32)' : publicTheme.border}`, borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: on ? '0 10px 22px rgba(200,151,74,0.08)' : publicTheme.shadowSoft }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 10, background: on ? 'rgba(200,151,74,0.13)' : publicTheme.pageAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .25s' }}>
                             <p.icon size={15} color={on ? G : TD} />
                           </div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: on ? '#E8F0F8' : TX, marginBottom: 2 }}>{p.label}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: TX, marginBottom: 2 }}>{p.label}</div>
                             <div style={{ fontSize: 12, fontWeight: 800, color: on ? G : TD }}>{p.price} ج.م</div>
                           </div>
-                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: on ? G : 'rgba(255,255,255,0.05)', border: `1.5px solid ${on ? G : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .25s' }}>
-                            {on ? <Minus size={10} color={BG} /> : <Plus size={10} color={TD} />}
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: on ? G : publicTheme.pageAlt, border: `1.5px solid ${on ? G : publicTheme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .25s' }}>
+                            {on ? <Minus size={10} color="#fff" /> : <Plus size={10} color={TD} />}
                           </div>
                         </div>
                       ); })}
@@ -1188,10 +1153,10 @@ export default function Home() {
             {/* ── MIDDLE: Puzzle Visual (shown when ≥2 parts) ── */}
             {selected.size >= 2 && (
               <div style={{ position: 'sticky', top: 80, animation: 'rp-fade-up .3s ease both' }}>
-                <div style={{ background: B3, border: `1.5px solid rgba(200,151,74,0.25)`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+                <div style={{ ...publicStyles.cardMuted, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${G},transparent)` }} />
                   <div style={{ padding: '14px 14px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#E8F0F8' }}>🧩 باكدجك يتشكّل</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: TX }}>🧩 باكدجك يتشكّل</span>
                     <span style={{ fontSize: 10, fontWeight: 700, color: G, background: 'rgba(200,151,74,0.1)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '2px 8px' }}>{selected.size} قطعة</span>
                   </div>
                   <div style={{ padding: '0 14px 14px', display: 'grid', gridTemplateColumns: selected.size >= 4 ? 'repeat(3,1fr)' : 'repeat(2,1fr)', gap: 7 }}>
@@ -1201,15 +1166,15 @@ export default function Home() {
                       const puzColors = [G, SK, LV, SG, GL, TD];
                       const borderCol = puzColors[idx % puzColors.length];
                       return (
-                        <div key={id} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: `2px solid ${borderCol}55`, aspectRatio: '1', cursor: 'pointer', transition: 'transform .2s', boxShadow: `0 4px 14px rgba(0,0,0,0.3), inset 0 0 0 1px ${borderCol}22` }}
+                        <div key={id} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: `2px solid ${borderCol}55`, aspectRatio: '1', cursor: 'pointer', transition: 'transform .2s', boxShadow: `0 8px 18px rgba(15,23,42,0.10), inset 0 0 0 1px ${borderCol}22` }}
                           onClick={() => togglePart(id)}
                           onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)'}
                           onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = ''}>
-                          <img src={p.img} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85)' }} />
-                          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom,transparent 30%,rgba(0,0,0,0.75))` }} />
+                          <img src={p.img} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.96)' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom,transparent 30%,rgba(15,23,42,0.42))` }} />
                           <div style={{ position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: '50%', background: borderCol, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: BG }}>✓</div>
                           <div style={{ position: 'absolute', bottom: 4, right: 0, left: 0, padding: '0 6px' }}>
-                            <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1.2, textAlign: 'center', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{p.label.length > 12 ? p.label.slice(0,12) + '…' : p.label}</div>
+                            <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', lineHeight: 1.2, textAlign: 'center', textShadow: '0 1px 2px rgba(15,23,42,0.45)' }}>{p.label.length > 12 ? p.label.slice(0,12) + '…' : p.label}</div>
                           </div>
                         </div>
                       );
@@ -1221,7 +1186,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  <div style={{ borderTop: `1px solid rgba(255,255,255,0.05)`, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ borderTop: `1px solid ${publicTheme.border}`, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: TD }}>اضغط على صورة لإزالتها 🔧</span>
                     <span style={{ fontSize: 12, fontWeight: 900, color: G }}>{total.toLocaleString()} ج.م</span>
                   </div>
@@ -1231,8 +1196,8 @@ export default function Home() {
 
             {/* ── RIGHT: Summary card (always visible) ── */}
             <div style={{ position: 'sticky', top: 80 }}>
-              <div style={{ background: B3, border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 20, padding: 22 }}>
-                <h4 style={{ fontSize: 15, fontWeight: 800, color: '#E8F0F8', marginBottom: 18 }}>ملخص الباكدج</h4>
+                <div style={{ ...publicStyles.cardMuted, borderRadius: 20, padding: 22 }}>
+                <h4 style={{ fontSize: 15, fontWeight: 800, color: TX, marginBottom: 18 }}>ملخص الباكدج</h4>
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                     <span style={{ color: TD, fontSize: 12, fontWeight: 700 }}>إجمالي الباكدج</span>
@@ -1244,7 +1209,7 @@ export default function Home() {
                         <span style={{ fontSize: 10, color: ok ? G : TD, fontWeight: 700 }}>{tier.icon} {tier.gift}</span>
                         <span style={{ fontSize: 9, color: TD, fontWeight: 700 }}>{tier.min.toLocaleString()} ج.م</span>
                       </div>
-                      <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 999 }}>
+                      <div style={{ height: 4, background: publicTheme.pageAlt, borderRadius: 999 }}>
                         <div style={{ height: '100%', width: `${pct}%`, background: ok ? G : `linear-gradient(90deg,${GL},${G})`, borderRadius: 999, transition: 'width .5s ease', opacity: ok ? 1 : .55 }} />
                       </div>
                     </div>
@@ -1256,7 +1221,7 @@ export default function Home() {
                 </div>
                 <div style={{ maxHeight: 170, overflowY: 'auto', marginBottom: 14 }}>
                   {selected.size === 0
-                    ? <p style={{ color: 'rgba(92,116,136,0.5)', fontSize: 12, textAlign: 'center', padding: '18px 0', fontWeight: 700 }}>اختار من القطع على الشمال</p>
+                    ? <p style={{ color: publicTheme.mutedSoft, fontSize: 12, textAlign: 'center', padding: '18px 0', fontWeight: 700 }}>اختار من القطع على الشمال</p>
                     : [...selected].map(id => { const p = PUZZLE_PARTS.find(x => x.id === id)!; return (
                       <div key={id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: `1px solid ${BD}` }}>
                         <span style={{ color: TX, fontSize: 12, fontWeight: 700 }}>{p.label}</span>
@@ -1266,10 +1231,10 @@ export default function Home() {
                 </div>
                 {selected.size > 0 && <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: `2px solid ${BD}`, marginBottom: 10 }}>
-                    <span style={{ color: '#E8F0F8', fontWeight: 800, fontSize: 14 }}>الإجمالي</span>
+                    <span style={{ color: TX, fontWeight: 800, fontSize: 14 }}>الإجمالي</span>
                     <span style={{ color: G, fontWeight: 800, fontSize: 16 }}>{total.toLocaleString()} ج.م</span>
                   </div>
-                  <button onClick={goToCustomCheckout} className="rp-pill" style={{ width: '100%', background: `linear-gradient(135deg,${G},${GL})`, color: BG, border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.25)`, cursor: 'pointer' }}>
+                  <button onClick={goToCustomCheckout} className="rp-pill" style={{ width: '100%', background: G, color: '#fff', border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.18)`, cursor: 'pointer' }}>
                     احجز الباكدج ده
                   </button>
                 </>}
@@ -1293,10 +1258,10 @@ export default function Home() {
                 <Building2 size={11} color={G} />
                 <span style={{ color: G, fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>الورش المعتمدة</span>
               </div>
-              <h2 style={{ fontSize: 28, fontWeight: 900, color: '#E8F0F8', marginBottom: 6, lineHeight: 1.2 }}>ورشنا في الإسكندرية</h2>
+              <h2 style={{ fontSize: 28, fontWeight: 900, color: TX, marginBottom: 6, lineHeight: 1.2 }}>ورشنا في الإسكندرية</h2>
               <p style={{ color: TD, fontSize: 13, fontWeight: 600 }}>كل ورشة اتختارت بمعايير صارمة للجودة والخدمة</p>
             </div>
-            <Link href="/workshops" style={{ display: 'flex', alignItems: 'center', gap: 6, color: G, background: 'rgba(200,151,74,0.08)', border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '8px 18px', fontWeight: 800, fontSize: 13, textDecoration: 'none', transition: 'background .2s' }}>
+            <Link href="/workshops" style={{ display: 'flex', alignItems: 'center', gap: 6, color: G, background: publicTheme.surface, border: '1.5px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '8px 18px', fontWeight: 800, fontSize: 13, textDecoration: 'none', transition: 'background .2s' }}>
               كل الورش <ArrowLeft size={13} />
             </Link>
           </div>
@@ -1305,9 +1270,9 @@ export default function Home() {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: isMobile ? 12 : 16, marginBottom: 20 }}>
             {WORKSHOPS.map((w, idx) => (
               <div key={w.name}
-                style={{ borderRadius: 20, overflow: 'hidden', border: `1px solid rgba(255,255,255,0.07)`, background: B3, cursor: 'pointer', transition: 'transform .25s, box-shadow .25s, border-color .25s', position: 'relative' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 16px 40px rgba(0,0,0,0.3)`; (e.currentTarget as HTMLDivElement).style.borderColor = `${w.color}40`; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)'; }}
+                style={{ ...publicStyles.card, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', transition: 'transform .25s, box-shadow .25s, border-color .25s', position: 'relative' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = `0 16px 28px rgba(15,23,42,0.10)`; (e.currentTarget as HTMLDivElement).style.borderColor = `${w.color}40`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; (e.currentTarget as HTMLDivElement).style.borderColor = publicTheme.border; }}
               >
                 {/* Top accent bar */}
                 <div style={{ height: 4, background: `linear-gradient(90deg,${w.color},${w.color}55)` }} />
@@ -1319,13 +1284,13 @@ export default function Home() {
                   </div>
                   {/* Rank badge */}
                   {idx === 0 && (
-                    <div style={{ position: 'absolute', top: 10, right: 10, background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 999, padding: '2px 8px', fontSize: 9, fontWeight: 900 }}>الأعلى تقييماً</div>
+                    <div style={{ position: 'absolute', top: 10, right: 10, background: publicTheme.brandSoft, color: G, border: '1px solid rgba(200,151,74,0.24)', borderRadius: 999, padding: '2px 8px', fontSize: 9, fontWeight: 900 }}>الأعلى تقييماً</div>
                   )}
                 </div>
 
                 {/* Info */}
                 <div style={{ padding: '14px 16px 16px' }}>
-                  <h4 style={{ color: '#E8F0F8', fontSize: 14, fontWeight: 900, marginBottom: 6, lineHeight: 1.3 }}>{w.name}</h4>
+                  <h4 style={{ color: TX, fontSize: 14, fontWeight: 900, marginBottom: 6, lineHeight: 1.3 }}>{w.name}</h4>
 
                   {/* Area */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
@@ -1335,11 +1300,11 @@ export default function Home() {
 
                   {/* Stats row */}
                   <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
+                    <div style={{ flex: 1, background: publicTheme.pageAlt, border: `1px solid ${publicTheme.border}`, borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
                       <div style={{ fontSize: 15, fontWeight: 900, color: w.color, lineHeight: 1 }}>{w.jobs.toLocaleString()}</div>
                       <div style={{ fontSize: 9, color: TD, fontWeight: 700, marginTop: 2 }}>سيارة خُدمت</div>
                     </div>
-                    <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
+                    <div style={{ flex: 1, background: publicTheme.pageAlt, border: `1px solid ${publicTheme.border}`, borderRadius: 10, padding: '7px 0', textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
                         <Star size={11} color={G} fill={G} />
                         <span style={{ fontSize: 15, fontWeight: 900, color: G, lineHeight: 1 }}>{w.rating}</span>
@@ -1349,7 +1314,7 @@ export default function Home() {
                   </div>
 
                   {/* Rating bar */}
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 999, overflow: 'hidden', marginBottom: 12 }}>
+                  <div style={{ height: 4, background: publicTheme.pageAlt, borderRadius: 999, overflow: 'hidden', marginBottom: 12 }}>
                     <div style={{ height: '100%', width: `${(w.rating / 5) * 100}%`, background: `linear-gradient(90deg,${w.color},${w.color}88)`, borderRadius: 999 }} />
                   </div>
 
@@ -1359,18 +1324,18 @@ export default function Home() {
           </div>
 
           {/* Join as workshop banner */}
-          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.4))`, border: `1.5px solid rgba(200,151,74,0.2)`, borderRadius: 20, padding: isMobile ? '18px 16px' : '20px 24px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: isMobile ? 14 : 16, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(255,255,255,1))`, border: `1px solid ${publicTheme.border}`, borderRadius: 20, padding: isMobile ? '18px 16px' : '20px 24px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: isMobile ? 14 : 16, position: 'relative', overflow: 'hidden', boxShadow: publicTheme.shadowSoft }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: 140, height: 140, background: `radial-gradient(circle,rgba(200,151,74,0.06),transparent 70%)`, pointerEvents: 'none' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: isMobile ? 48 : 46, height: isMobile ? 48 : 46, borderRadius: 14, background: `rgba(200,151,74,0.12)`, border: `1px solid rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Building2 size={isMobile ? 24 : 22} color={G} />
               </div>
               <div>
-                <div style={{ fontWeight: 900, fontSize: isMobile ? 17 : 15, color: '#E8F0F8', marginBottom: 5 }}>عندك ورشة في الإسكندرية؟</div>
+                <div style={{ fontWeight: 900, fontSize: isMobile ? 17 : 15, color: TX, marginBottom: 5 }}>عندك ورشة في الإسكندرية؟</div>
                 <div style={{ color: TD, fontSize: isMobile ? 13 : 12, fontWeight: 700, lineHeight: 1.5 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر — مجاناً تماماً</div>
               </div>
             </div>
-            <Link href="/join-workshop" style={{ background: `linear-gradient(135deg,${G},${GL})`, color: '#0D1220', borderRadius: 12, padding: isMobile ? '13px 0' : '11px 24px', fontWeight: 900, fontSize: isMobile ? 15 : 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 20px rgba(200,151,74,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+            <Link href="/join-workshop" style={{ background: G, color: '#fff', borderRadius: 12, padding: isMobile ? '13px 0' : '11px 24px', fontWeight: 900, fontSize: isMobile ? 15 : 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 18px rgba(200,151,74,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
               انضم كورشة <ArrowLeft size={isMobile ? 15 : 13} />
             </Link>
           </div>
