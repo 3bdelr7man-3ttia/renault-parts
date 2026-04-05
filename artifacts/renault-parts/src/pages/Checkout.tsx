@@ -1729,7 +1729,7 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
               onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(waMsg)}`, '_blank')}
               style={{
                 width: '100%', maxWidth: 420, padding: '14px 0', borderRadius: 16,
-                background: 'linear-gradient(135deg, #25D366, #128C7E)', color: '#fff',
+                background: 'linear-gradient(135deg, #25D366, #128C7E)', color: '#fffdfa',
                 border: 'none', cursor: 'pointer', fontFamily: "'Almarai',sans-serif",
                 fontSize: 14, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
@@ -1824,7 +1824,7 @@ function Step5Confirmation({ orderId, paymentMethod, pickupType, autoUploadState
           </button>
         </Link>
         <Link href="/my-orders">
-          <button style={{ padding: '12px 20px', borderRadius: 14, border: 'none', background: G, color: NV, fontWeight: 900, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14 }}>
+          <button style={{ padding: '12px 20px', borderRadius: 14, border: 'none', background: publicTheme.brandGradient, color: NV, fontWeight: 900, cursor: 'pointer', fontFamily: "'Almarai',sans-serif", fontSize: 14, boxShadow: publicTheme.shadowSoft }}>
             طلباتي
           </button>
         </Link>

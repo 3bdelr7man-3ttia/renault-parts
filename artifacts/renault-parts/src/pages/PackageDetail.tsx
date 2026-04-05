@@ -11,9 +11,9 @@ import { publicStyles, publicTheme } from '@/components/public/public-ui';
 type Variant = 'original' | 'turkish' | 'chinese';
 
 const G = '#C8974A';
-const BG = '#f6f7fb';
-const B2 = '#ffffff';
-const NV = '#1A2356';
+const BG = publicTheme.page;
+const B2 = publicTheme.surface;
+const NV = publicTheme.text;
 
 const PART_TYPE_LABELS: Record<string, string> = {
   filter: 'فلتر', oil: 'زيت', spark_plugs: 'شمعات إشعال', belt: 'سير',
@@ -28,9 +28,9 @@ function isCompatible(models: string | null | undefined, carModel: string) {
 type OriginBadge = { label: string; color: string; bg: string };
 function getOriginBadges(p: { priceOriginal?: number | null; priceTurkish?: number | null; priceChinese?: number | null }): OriginBadge[] {
   const badges: OriginBadge[] = [];
-  if (p.priceOriginal != null) badges.push({ label: 'أصلي', color: '#1A2356', bg: '#C8974A' });
-  if (p.priceTurkish != null) badges.push({ label: 'تركي', color: '#fff', bg: '#0369a1' });
-  if (p.priceChinese != null) badges.push({ label: 'صيني', color: '#fff', bg: '#555' });
+  if (p.priceOriginal != null) badges.push({ label: 'أصلي', color: publicTheme.text, bg: '#e8c98e' });
+  if (p.priceTurkish != null) badges.push({ label: 'تركي', color: '#fffdfa', bg: '#3f83b9' });
+  if (p.priceChinese != null) badges.push({ label: 'صيني', color: '#fffdfa', bg: '#7c63d6' });
   return badges;
 }
 
@@ -128,7 +128,7 @@ export default function PackageDetail() {
           <Link href="/packages" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: G, fontWeight: 700, fontSize: 13, marginBottom: 20, textDecoration: 'none' }}>
             <ArrowRight size={15} /> عودة للكتالوج
           </Link>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(200,151,74,0.15)', border: `1px solid ${G}40`, borderRadius: 999, padding: '5px 14px', marginBottom: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: publicTheme.brandSoft, border: `1px solid ${G}40`, borderRadius: 999, padding: '5px 14px', marginBottom: 12 }}>
             <Shield size={13} style={{ color: G }} />
             <span style={{ color: G, fontSize: 12, fontWeight: 700 }}>ضمان {pkg.warrantyMonths} شهور</span>
           </div>
@@ -206,11 +206,11 @@ export default function PackageDetail() {
                 onClick={handleOrderClick}
                 style={{
                   width: '100%', padding: isMobile ? '13px 0' : '16px 0', borderRadius: 14, fontSize: isMobile ? 15 : 17, fontWeight: 900,
-                  background: isInCart ? '#22c55e' : G,
+                  background: isInCart ? publicTheme.success : publicTheme.brandGradient,
                   color: isInCart ? '#fff' : NV,
                   border: 'none', cursor: isInCart ? 'default' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: isInCart ? '0 8px 24px rgba(34,197,94,0.4)' : `0 8px 24px ${G}50`,
+                  boxShadow: isInCart ? '0 8px 24px rgba(24,121,78,0.28)' : `0 8px 24px rgba(200,151,74,0.26)`,
                   fontFamily: "'Almarai',sans-serif",
                   transition: 'all 0.3s',
                 }}

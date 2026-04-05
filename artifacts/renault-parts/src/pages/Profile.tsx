@@ -210,7 +210,7 @@ export default function Profile() {
                 <button
                   onClick={saveDelivery}
                   disabled={savingDelivery}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 8, padding: '5px 14px', color: TX, fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 800, cursor: savingDelivery ? 'not-allowed' : 'pointer', opacity: savingDelivery ? 0.7 : 1 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, background: publicTheme.brandGradient, border: 'none', borderRadius: 8, padding: '5px 14px', color: TX, fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 800, cursor: savingDelivery ? 'not-allowed' : 'pointer', opacity: savingDelivery ? 0.7 : 1, boxShadow: publicTheme.shadowSoft }}
                 >
                   {savingDelivery ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={11} />}
                   {savingDelivery ? 'جاري الحفظ...' : 'حفظ'}
@@ -261,7 +261,7 @@ export default function Profile() {
                   <p style={{ color: TD, fontSize: 13, marginBottom: 14 }}>لم تضف عنوان التوصيل بعد</p>
                   <button
                     onClick={openDeliveryEdit}
-                    style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                    style={{ background: publicTheme.brandGradient, border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: publicTheme.shadowSoft }}
                   >
                     أضف عنوان التوصيل
                   </button>
@@ -379,7 +379,7 @@ export default function Profile() {
               <p style={{ color: TD, fontSize: 13, marginBottom: 14 }}>لم تحدد سيارتك بعد</p>
               <button
                 onClick={() => setShowCarModal(true)}
-                    style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer' }}
+                    style={{ background: publicTheme.brandGradient, border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: publicTheme.shadowSoft }}
               >
                 حدد سيارتك
               </button>
@@ -413,7 +413,7 @@ export default function Profile() {
               <Package size={40} color="rgba(200,151,74,0.15)" style={{ margin: '0 auto 10px' }} />
               <p style={{ color: TD, fontSize: 13, marginBottom: 14 }}>لم تقم بأي طلب حتى الآن</p>
               <Link href="/packages">
-                <button style={{ background: 'linear-gradient(135deg,#C8974A,#DEB06C)', border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
+                <button style={{ background: publicTheme.brandGradient, border: 'none', borderRadius: 999, padding: '9px 22px', color: TX, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: publicTheme.shadowSoft }}>
                   تصفح الباكدجات
                 </button>
               </Link>

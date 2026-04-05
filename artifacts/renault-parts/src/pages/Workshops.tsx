@@ -284,7 +284,7 @@ function AlexMap({ workshops, selectedId, onSelect, focusCoords }: {
                   <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>{w.address}</div>
                   <div style={{ display: 'flex', gap: 6, fontSize: 11, alignItems: 'center' }}>
                     {w.rating && <span style={{ fontWeight: 800, color: '#f59e0b' }}>★ {w.rating.toFixed(1)}</span>}
-                    <span style={{ background: 'rgba(61,168,130,0.1)', color: '#3DA882', borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 700 }}>معتمدة</span>
+                    <span style={{ background: publicTheme.successSoft, color: publicTheme.success, borderRadius: 999, padding: '2px 7px', fontSize: 10, fontWeight: 700 }}>معتمدة</span>
                   </div>
                 </div>
               </Popup>
@@ -294,7 +294,7 @@ function AlexMap({ workshops, selectedId, onSelect, focusCoords }: {
       </MapContainer>
 
       {/* Map label */}
-      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', border: '1px solid rgba(200,151,74,0.25)', borderRadius: 10, padding: '5px 12px', fontFamily: F, fontSize: 11, fontWeight: 800, color: '#1A2356', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+      <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000, background: 'rgba(255,253,248,0.92)', backdropFilter: 'blur(8px)', border: '1px solid rgba(200,151,74,0.25)', borderRadius: 10, padding: '5px 12px', fontFamily: F, fontSize: 11, fontWeight: 800, color: publicTheme.text, boxShadow: publicTheme.shadowSoft }}>
         🗺️ ورش رينو باك — الإسكندرية
       </div>
 
@@ -361,7 +361,7 @@ export default function Workshops() {
 
         <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><RenoPackLogo size="md" /></div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(61,168,130,0.08)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 999, padding: '4px 14px', marginBottom: 14 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: publicTheme.successSoft, border: '1px solid rgba(24,121,78,0.18)', borderRadius: 999, padding: '4px 14px', marginBottom: 14 }}>
             <CheckCircle2 size={11} color="#3DA882" />
             <span style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#3DA882' }}>شبكة ورش معتمدة في الإسكندرية</span>
           </div>
@@ -403,7 +403,7 @@ export default function Workshops() {
             const active = area === a;
             return (
               <button key={a} onClick={() => handleAreaChange(a)}
-                style={{ fontFamily: F, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '5px 13px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? G : publicTheme.surface, color: active ? '#0D1220' : publicTheme.textSoft, cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ fontFamily: F, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '5px 13px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? publicTheme.brandGradient : publicTheme.surface, color: active ? publicTheme.text : publicTheme.textSoft, cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 4, boxShadow: active ? publicTheme.shadowSoft : 'none' }}
               >
                 {a !== 'الكل' && active && <Navigation size={9} />}
                 {a}

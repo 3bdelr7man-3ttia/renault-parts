@@ -885,7 +885,7 @@ function ReadyPackagesSection({ realPackages }: { realPackages?: Array<{ id: num
               </div>
             ))}
           </div>
-            <Link href={`/packages/${pkgSlug}`} style={{ display: 'block', width: '100%', background: m.accent, color: '#fff', border: 'none', borderRadius: 999, padding: '13px', textAlign: 'center', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 22px ${m.glow}`, textDecoration: 'none', fontFamily: "'Almarai',sans-serif", cursor: 'pointer' }}>
+            <Link href={`/packages/${pkgSlug}`} style={{ display: 'block', width: '100%', background: m.accent, color: '#fffdfa', border: 'none', borderRadius: 999, padding: '13px', textAlign: 'center', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 22px ${m.glow}`, textDecoration: 'none', fontFamily: "'Almarai',sans-serif", cursor: 'pointer' }}>
               احجز الباكدج واستلم الهدية ←
             </Link>
         </div>
@@ -1101,7 +1101,7 @@ export default function Home() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 36 }}>
-            <Link href="/packages" className="rp-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: G, color: '#fff', border: 'none', padding: '13px 32px', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 20px rgba(200,151,74,0.22)`, textDecoration: 'none' }}>
+            <Link href="/packages" className="rp-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: publicTheme.brandGradient, color: publicTheme.text, border: 'none', padding: '13px 32px', fontWeight: 800, fontSize: 14, boxShadow: `0 8px 20px rgba(200,151,74,0.22)`, textDecoration: 'none' }}>
               <Package size={16} />اختار باكدجك دلوقتي
             </Link>
           </div>
@@ -1234,7 +1234,7 @@ export default function Home() {
                     <span style={{ color: TX, fontWeight: 800, fontSize: 14 }}>الإجمالي</span>
                     <span style={{ color: G, fontWeight: 800, fontSize: 16 }}>{total.toLocaleString()} ج.م</span>
                   </div>
-                  <button onClick={goToCustomCheckout} className="rp-pill" style={{ width: '100%', background: G, color: '#fff', border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.18)`, cursor: 'pointer' }}>
+                  <button onClick={goToCustomCheckout} className="rp-pill" style={{ width: '100%', background: publicTheme.brandGradient, color: publicTheme.text, border: 'none', padding: '11px', fontWeight: 800, fontSize: 13, boxShadow: `0 5px 18px rgba(200,151,74,0.18)`, cursor: 'pointer' }}>
                     احجز الباكدج ده
                   </button>
                 </>}
@@ -1335,7 +1335,7 @@ export default function Home() {
                 <div style={{ color: TD, fontSize: isMobile ? 13 : 12, fontWeight: 700, lineHeight: 1.5 }}>انضم لشبكة RenoPack واستقبل طلبات أكثر — مجاناً تماماً</div>
               </div>
             </div>
-            <Link href="/join-workshop" style={{ background: G, color: '#fff', borderRadius: 12, padding: isMobile ? '13px 0' : '11px 24px', fontWeight: 900, fontSize: isMobile ? 15 : 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 18px rgba(200,151,74,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+            <Link href="/join-workshop" style={{ background: publicTheme.brandGradient, color: publicTheme.text, borderRadius: 12, padding: isMobile ? '13px 0' : '11px 24px', fontWeight: 900, fontSize: isMobile ? 15 : 13, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: `0 6px 18px rgba(200,151,74,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
               انضم كورشة <ArrowLeft size={isMobile ? 15 : 13} />
             </Link>
           </div>

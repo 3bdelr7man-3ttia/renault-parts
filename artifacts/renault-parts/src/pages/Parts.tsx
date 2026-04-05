@@ -160,7 +160,7 @@ function PartCard({ part, origin }: {
         {/* Price pills */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
           {prices.map(p => (
-            <div key={p.key} style={{ background: `${p.color}18`, border: `1px solid ${p.color}40`, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, color: p.color }}>
+            <div key={p.key} style={{ background: `${p.color}12`, border: `1px solid ${p.color}30`, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 700, color: p.color }}>
               {p.label}: {formatPrice(p.val)}
             </div>
           ))}
@@ -176,16 +176,16 @@ function PartCard({ part, origin }: {
             marginTop: 10, marginBottom: 6,
             padding: '9px 16px',
             borderRadius: 12,
-            border: inCart ? '1.5px solid rgba(61,168,130,0.4)' : '1.5px solid rgba(200,151,74,0.3)',
-            background: inCart ? 'rgba(61,168,130,0.1)' : 'rgba(200,151,74,0.08)',
-            color: inCart ? '#3DA882' : G,
+            border: inCart ? '1.5px solid rgba(24,121,78,0.24)' : '1.5px solid rgba(200,151,74,0.28)',
+            background: inCart ? publicTheme.successSoft : publicTheme.brandSoft,
+            color: inCart ? publicTheme.success : G,
             fontFamily: "'Almarai',sans-serif",
             fontWeight: 800, fontSize: 13,
             cursor: 'pointer',
             transition: 'all .2s',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = inCart ? 'rgba(61,168,130,0.18)' : 'rgba(200,151,74,0.16)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = inCart ? 'rgba(61,168,130,0.1)' : 'rgba(200,151,74,0.08)'; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = inCart ? 'rgba(24,121,78,0.18)' : 'rgba(200,151,74,0.16)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = inCart ? publicTheme.successSoft : publicTheme.brandSoft; }}
         >
           {inCart ? <Check size={14} /> : <Plus size={14} />}
           {inCart ? 'اتضافت للباكدج ✓' : 'أضف للباكدج'}
@@ -319,7 +319,7 @@ export default function Parts() {
                     const active = typeFilter === t.value;
                     return (
                       <button key={String(t.value)} onClick={() => setTypeFilter(t.value)}
-                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? 'linear-gradient(135deg,#C8974A,#DEB06C)' : publicTheme.surface, color: active ? '#0D1220' : publicTheme.textSoft, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? publicTheme.brandGradient : publicTheme.surface, color: active ? publicTheme.text : publicTheme.textSoft, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, boxShadow: active ? publicTheme.shadowSoft : 'none' }}
                       >
                         {t.icon}{t.label}
                       </button>
