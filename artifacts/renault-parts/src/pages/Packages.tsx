@@ -77,7 +77,7 @@ export default function Packages() {
       >
         {/* Recommended badge */}
         {car && recommendedKm && (
-          <div style={{ display: 'inline-block', background: 'rgba(200,151,74,0.1)', border: '1px solid rgba(200,151,74,0.25)', borderRadius: 999, padding: '6px 16px', color: '#C8974A', fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700 }}>
+          <div style={{ display: 'inline-block', background: publicTheme.brandSoft, border: '1px solid rgba(200,151,74,0.28)', borderRadius: 999, padding: '6px 16px', color: publicTheme.brandStrong, fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700 }}>
             نرشح لـ {car.model} ({car.year}): باكدج {(recommendedKm / 1000).toLocaleString('ar-EG')},000 كم
           </div>
         )}
@@ -86,7 +86,7 @@ export default function Packages() {
         {car && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 999, padding: '7px 18px', color: publicTheme.textSoft, boxShadow: publicTheme.shadowSoft, fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700 }}>
-              <Car size={13} color="#C8974A" />
+              <Car size={13} color={publicTheme.brandStrong} />
               <span>{car.model} - {car.year}</span>
               <button onClick={() => setShowCarModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: publicTheme.muted, display: 'flex' }}><Pencil size={12} /></button>
               <button onClick={clearCar} style={{ background: 'none', border: 'none', cursor: 'pointer', color: publicTheme.muted, display: 'flex' }}><X size={12} /></button>
@@ -96,7 +96,7 @@ export default function Packages() {
         {!car && (
           <button
             onClick={() => setShowCarModal(true)}
-            style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#C8974A,#DEB06C)', color: '#0D1220', fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 14, borderRadius: 999, padding: '10px 24px', border: 'none', cursor: 'pointer', boxShadow: '0 6px 22px rgba(200,151,74,0.35)' }}
+            style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8, background: publicTheme.brandGradient, color: publicTheme.text, fontFamily: "'Almarai',sans-serif", fontWeight: 800, fontSize: 14, borderRadius: 999, padding: '10px 24px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 20px rgba(200,151,74,0.26)' }}
           >
             <Car size={14} /> حدد سيارتك للحصول على توصيات مخصصة
           </button>
@@ -107,7 +107,7 @@ export default function Packages() {
         {/* Filters card */}
         <div style={{ marginTop: -28, position: 'relative', zIndex: 10, background: publicTheme.surface, border: `1.5px solid ${publicTheme.border}`, borderRadius: 18, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 36, boxShadow: publicTheme.shadow }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: publicTheme.muted, fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
-            <Filter size={15} color="#C8974A" />
+            <Filter size={15} color={publicTheme.brandStrong} />
             تصفية بالمسافة:
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -122,11 +122,11 @@ export default function Packages() {
                     fontWeight: 700, fontSize: 13,
                     borderRadius: 999, padding: '7px 18px',
                     border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`,
-                    background: active ? 'linear-gradient(135deg,#C8974A,#DEB06C)' : 'transparent',
-                    color: active ? '#0D1220' : publicTheme.textSoft,
+                    background: active ? publicTheme.brandGradient : 'transparent',
+                    color: active ? publicTheme.text : publicTheme.textSoft,
                     cursor: 'pointer',
                     transition: 'all .2s',
-                    boxShadow: active ? '0 4px 14px rgba(200,151,74,0.35)' : 'none',
+                    boxShadow: active ? '0 8px 18px rgba(200,151,74,0.24)' : 'none',
                   }}
                 >
                   {f.label}

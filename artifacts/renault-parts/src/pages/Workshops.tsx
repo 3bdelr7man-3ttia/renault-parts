@@ -38,12 +38,12 @@ const AREA_COORDS: Record<string, [number, number]> = {
 
 /* ── Workshop card color palettes (deterministic) ── */
 const WORKSHOP_PALETTES = [
-  { from: '#1A4A6B', to: '#0D2A40', accent: '#4AABCA' },
-  { from: '#4A2D1A', to: '#2A1A0D', accent: '#C8974A' },
-  { from: '#1A3A2D', to: '#0D2018', accent: '#3DA882' },
-  { from: '#2D1A4A', to: '#180D2A', accent: '#7B72B8' },
-  { from: '#3A1A1A', to: '#200D0D', accent: '#E05050' },
-  { from: '#1A2D4A', to: '#0D1828', accent: '#5AA0D8' },
+  { from: '#edf5fb', to: '#dfeef9', accent: '#3f83b9' },
+  { from: '#fff6e7', to: '#f7ead4', accent: '#c8974a' },
+  { from: '#edf8f1', to: '#deefe5', accent: '#2f9162' },
+  { from: '#f5effb', to: '#e8def7', accent: '#7c63d6' },
+  { from: '#fff1ef', to: '#f8dfdb', accent: '#d46464' },
+  { from: '#eef4ff', to: '#dce7fb', accent: '#4e7fe5' },
 ];
 
 /* ── Area filter list ── */
@@ -85,7 +85,7 @@ function Stars({ rating }: { rating: number | null }) {
   return (
     <div style={{ display: 'flex', gap: 1.5 }}>
       {[1, 2, 3, 4, 5].map(s => (
-        <Star key={s} size={11} fill={s <= Math.round(r) ? G : 'transparent'} color={s <= Math.round(r) ? G : '#3A4860'} />
+        <Star key={s} size={11} fill={s <= Math.round(r) ? G : 'transparent'} color={s <= Math.round(r) ? G : publicTheme.borderStrong} />
       ))}
     </div>
   );
@@ -99,21 +99,21 @@ function WorkshopCover({ w, selected }: { w: { id: number; name: string; area: s
     <div style={{
       height: 90, position: 'relative', overflow: 'hidden',
       background: `linear-gradient(135deg,${palette.from},${palette.to})`,
-      borderBottom: `1px solid rgba(255,255,255,0.06)`,
+      borderBottom: `1px solid ${publicTheme.border}`,
     }}>
       {/* Subtle grid texture */}
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)`, backgroundSize: '20px 20px', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(23,32,51,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(23,32,51,0.035) 1px,transparent 1px)`, backgroundSize: '20px 20px', pointerEvents: 'none' }} />
       {/* Glow blob */}
-      <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: `radial-gradient(circle,${palette.accent}30,transparent 70%)`, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: `radial-gradient(circle,${palette.accent}28,transparent 70%)`, pointerEvents: 'none' }} />
       {/* Workshop icon circle */}
       <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', width: 56, height: 56, borderRadius: 16, background: `${palette.accent}18`, border: `1.5px solid ${palette.accent}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
         <Wrench size={18} color={palette.accent} />
         <span style={{ fontSize: 9, fontWeight: 800, color: palette.accent, fontFamily: F }}>{initials}</span>
       </div>
       {/* Area badge */}
-      <div style={{ position: 'absolute', left: 12, bottom: 10, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div style={{ position: 'absolute', left: 12, bottom: 10, background: 'rgba(255,253,248,0.78)', backdropFilter: 'blur(10px)', border: `1px solid ${palette.accent}25`, borderRadius: 999, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
         <MapPin size={9} color={palette.accent} />
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: F }}>{w.area}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, color: publicTheme.textSoft, fontFamily: F }}>{w.area}</span>
       </div>
       {/* Selected shimmer */}
       {selected && (
@@ -143,7 +143,7 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
       transition={{ delay: idx * 0.04 }}
       onClick={onSelect}
       style={{
-        background: selected ? `${palette.accent}10` : CARD,
+        background: selected ? `${palette.accent}0f` : CARD,
         border: `1.5px solid ${selected ? palette.accent + '40' : publicTheme.border}`,
         borderRadius: 24, overflow: 'hidden', fontFamily: F, direction: 'rtl',
         transition: 'all .22s', cursor: 'pointer',
@@ -157,27 +157,27 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
         {/* Name + rating row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(61,168,130,0.1)', border: '1px solid rgba(61,168,130,0.2)', borderRadius: 999, padding: '2px 7px', marginBottom: 5 }}>
-              <CheckCircle2 size={9} color="#3DA882" />
-              <span style={{ fontSize: 9, fontWeight: 800, color: '#3DA882' }}>ورشة معتمدة</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: publicTheme.successSoft, border: '1px solid rgba(24,121,78,0.18)', borderRadius: 999, padding: '2px 7px', marginBottom: 5 }}>
+              <CheckCircle2 size={9} color={publicTheme.success} />
+              <span style={{ fontSize: 9, fontWeight: 800, color: publicTheme.success }}>ورشة معتمدة</span>
             </div>
             <h3 style={{ fontSize: 15, fontWeight: 900, color: publicTheme.text, lineHeight: 1.2, margin: 0 }}>{w.name}</h3>
             <p style={{ fontSize: 11, color: TD, margin: '3px 0 0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.address}</p>
           </div>
           {/* Rating badge */}
           <div style={{ flexShrink: 0, textAlign: 'center', background: CARD2, borderRadius: 14, padding: '6px 10px', border: `1px solid ${selected ? palette.accent + '30' : publicTheme.border}`, marginRight: 10 }}>
-            <div style={{ fontSize: 17, fontWeight: 900, color: G, lineHeight: 1 }}>{w.rating?.toFixed(1) ?? '—'}</div>
+            <div style={{ fontSize: 17, fontWeight: 900, color: palette.accent, lineHeight: 1 }}>{w.rating?.toFixed(1) ?? '—'}</div>
             <Stars rating={w.rating} />
           </div>
         </div>
 
         {/* Hours + status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, background: publicTheme.surfaceAlt, borderRadius: 10, padding: '6px 10px', border: `1px solid ${publicTheme.border}` }}>
-          <Clock size={10} color="#4AABCA" />
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#4AABCA', flex: 1 }}>السبت – الخميس: ٩ص – ٩م</span>
+          <Clock size={10} color={palette.accent} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: palette.accent, flex: 1 }}>السبت – الخميس: ٩ص – ٩م</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#3DA882', boxShadow: '0 0 6px #3DA882' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#3DA882' }}>مفتوح</span>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: publicTheme.success, boxShadow: `0 0 6px ${publicTheme.success}` }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: publicTheme.success }}>مفتوح</span>
           </div>
         </div>
 
@@ -218,7 +218,7 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(61,168,130,0.05)', borderRadius: 10, border: '1px solid rgba(61,168,130,0.12)', fontSize: 11, color: '#3DA882', fontWeight: 700 }}>
+      <div style={{ marginTop: 8, padding: '8px 12px', background: publicTheme.successSoft, borderRadius: 10, border: '1px solid rgba(24,121,78,0.12)', fontSize: 11, color: publicTheme.success, fontWeight: 700 }}>
                 🏆 هذه الورشة جزء من شبكة رينو باك المعتمدة — كل الحجوزات تتم عبر الباكدج
               </div>
             </motion.div>

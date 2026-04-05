@@ -5,12 +5,12 @@ import { CheckCircle2, Shield, Settings, ChevronLeft, Star, Zap } from 'lucide-r
 import { publicTheme } from '@/components/public/public-ui';
 
 const G   = '#C8974A';
-const GL  = '#DEB06C';
-const BG  = '#0f172a';
+const GL  = '#E4B76D';
+const BG  = '#1f1a12';
 const B3  = '#ffffff';
 const TX  = publicTheme.text;
 const TD  = publicTheme.muted;
-const SG  = '#3DA882';
+const SG  = publicTheme.success;
 
 interface PackageCardProps {
   pkg: Package;
@@ -55,6 +55,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
     <div style={{
       position: 'relative',
       background: B3,
+      backgroundImage: recommended ? 'linear-gradient(180deg, rgba(255,248,235,0.72), rgba(255,253,249,1) 42%)' : undefined,
       borderRadius: 24,
       border: recommended
         ? `2px solid rgba(200,151,74,0.55)`
@@ -79,9 +80,9 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
         <div style={{
           position: 'absolute', top: 14, right: 14, zIndex: 20,
           display: 'flex', alignItems: 'center', gap: 5,
-          background: `linear-gradient(135deg,${G},${GL})`,
+          background: publicTheme.brandGradient,
           borderRadius: 999, padding: '5px 12px',
-          boxShadow: `0 4px 16px rgba(200,151,74,0.45)`,
+          boxShadow: `0 8px 20px rgba(200,151,74,0.28)`,
         }}>
           <Star size={11} color={BG} fill={BG} />
           <span style={{ color: BG, fontSize: 11, fontWeight: 900 }}>موصى به لسيارتك</span>
@@ -90,7 +91,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
 
       {/* Background glow for recommended */}
       {recommended && (
-        <div style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 300, height: 200, background: 'radial-gradient(ellipse,rgba(200,151,74,0.07),transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 300, height: 200, background: 'radial-gradient(ellipse,rgba(200,151,74,0.11),transparent 70%)', pointerEvents: 'none' }} />
       )}
 
       {/* Content */}
@@ -98,7 +99,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
 
         {/* Warranty badge + title */}
         <div style={{ marginBottom: 16, marginTop: recommended ? 28 : 0 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: publicTheme.successSoft, border: `1px solid rgba(61,168,130,0.25)`, borderRadius: 999, padding: '4px 11px', marginBottom: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: publicTheme.successSoft, border: `1px solid rgba(24,121,78,0.18)`, borderRadius: 999, padding: '4px 11px', marginBottom: 12 }}>
             <Shield size={12} color={SG} />
             <span style={{ color: SG, fontSize: 11, fontWeight: 800 }}>ضمان {pkg.warrantyMonths} شهور</span>
           </div>
@@ -177,14 +178,14 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
               <button
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  background: `linear-gradient(135deg,${G},${GL})`,
+                  background: publicTheme.brandGradient,
                   border: 'none', borderRadius: 999, padding: '11px 16px',
                   color: BG, fontFamily: "'Almarai',sans-serif", fontWeight: 900, fontSize: 13,
-                  cursor: 'pointer', boxShadow: `0 4px 18px rgba(200,151,74,0.35)`,
+                  cursor: 'pointer', boxShadow: `0 8px 18px rgba(200,151,74,0.26)`,
                   transition: 'box-shadow .2s, transform .2s',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(200,151,74,0.55)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 18px rgba(200,151,74,0.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 10px 26px rgba(200,151,74,0.34)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 18px rgba(200,151,74,0.26)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
               >
                 <Zap size={14} />
                 احجز الآن
