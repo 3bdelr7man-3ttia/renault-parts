@@ -76,12 +76,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const queryClient = useQueryClient();
-  const clearAuthState = React.useCallback(() => {
+  const clearAuthState = React.useCallback((options?: { redirectToLogin?: boolean }) => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     setTokenState(null);
     setLocalUser(null);
     queryClient.clear();
+
+    if (options?.redirectToLogin && typeof window !== 'undefined') {
+      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (!currentPath.startsWith('/login')) {
+        window.location.replace('/login');
+      }
+    }
   }, [queryClient]);
   
   // We pass the token explicitly to the query to ensure it authenticates
@@ -121,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (token && isError && isAuthFailure(error)) {
-      clearAuthState();
+      clearAuthState({ redirectToLogin: true });
     }
   }, [clearAuthState, error, isError, token]);
 
