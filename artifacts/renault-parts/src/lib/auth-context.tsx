@@ -6,6 +6,25 @@ import { type AppRole, type AppUser, type Permission, hasPermission as checkPerm
 const TOKEN_STORAGE_KEY = 'renault_token';
 const USER_STORAGE_KEY = 'renault_user';
 
+function isAuthFailure(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const candidate = error as {
+    status?: number;
+    data?: { error?: string } | null;
+    message?: string;
+  };
+
+  if (candidate.status === 401) return true;
+
+  const apiError = candidate.data?.error;
+  if (apiError === "رمز غير صالح" || apiError === "المستخدم غير موجود" || apiError === "غير مصرح") {
+    return true;
+  }
+
+  return typeof candidate.message === "string" && candidate.message.includes("401");
+}
+
 function normalizeUser(raw: unknown): AppUser | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -57,10 +76,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const queryClient = useQueryClient();
+  const clearAuthState = React.useCallback(() => {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    setTokenState(null);
+    setLocalUser(null);
+    queryClient.clear();
+  }, [queryClient]);
   
   // We pass the token explicitly to the query to ensure it authenticates
   // refetchInterval: re-check every 30s so role changes (e.g. customer→workshop after approval) apply automatically
-  const { data: fetchedUser, isLoading, isFetching, refetch } = useGetCurrentUser({
+  const { data: fetchedUser, error, isError, isLoading, isFetching, refetch } = useGetCurrentUser({
     query: {
       queryKey: getGetCurrentUserQueryKey(),
       enabled: !!token,
@@ -93,6 +119,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [localUser, normalizedFetchedUser, token]);
 
+  useEffect(() => {
+    if (token && isError && isAuthFailure(error)) {
+      clearAuthState();
+    }
+  }, [clearAuthState, error, isError, token]);
+
   const login = (newToken: string, newUser: AppUser) => {
     const normalizedUser = normalizeUser(newUser);
     localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
@@ -106,12 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    setTokenState(null);
-    setLocalUser(null);
-    // Clear all cached query data so stale user info doesn't persist
-    queryClient.clear();
+    clearAuthState();
   };
 
   const getAuthHeaders = () => {
