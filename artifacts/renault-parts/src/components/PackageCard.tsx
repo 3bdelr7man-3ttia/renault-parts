@@ -2,14 +2,14 @@ import React from 'react';
 import { Link } from 'wouter';
 import { type Package } from "@workspace/api-client-react";
 import { CheckCircle2, Shield, Settings, ChevronLeft, Star, Zap } from 'lucide-react';
+import { publicTheme } from '@/components/public/public-ui';
 
 const G   = '#C8974A';
 const GL  = '#DEB06C';
-const BG  = '#0D1220';
-const B3  = '#161E30';
-const NV  = '#1A2356';
-const TX  = '#D4E0EC';
-const TD  = '#7A95AA';
+const BG  = '#0f172a';
+const B3  = '#ffffff';
+const TX  = publicTheme.text;
+const TD  = publicTheme.muted;
 const SG  = '#3DA882';
 
 interface PackageCardProps {
@@ -58,10 +58,10 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
       borderRadius: 24,
       border: recommended
         ? `2px solid rgba(200,151,74,0.55)`
-        : `1.5px solid rgba(255,255,255,0.08)`,
+        : `1.5px solid ${publicTheme.border}`,
       boxShadow: recommended
-        ? `0 0 0 4px rgba(200,151,74,0.12), 0 12px 40px rgba(200,151,74,0.2)`
-        : `0 8px 32px rgba(0,0,0,0.4)`,
+        ? `0 0 0 4px rgba(200,151,74,0.1), 0 18px 40px rgba(200,151,74,0.12)`
+        : publicTheme.shadowSoft,
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
@@ -72,8 +72,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
     >
-      {/* Gold top accent line */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: recommended ? `linear-gradient(90deg,transparent,${G},transparent)` : 'transparent' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: recommended ? `linear-gradient(90deg,transparent,${G},transparent)` : `linear-gradient(90deg,transparent,rgba(200,151,74,0.35),transparent)` }} />
 
       {/* Recommended badge */}
       {recommended && (
@@ -99,7 +98,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
 
         {/* Warranty badge + title */}
         <div style={{ marginBottom: 16, marginTop: recommended ? 28 : 0 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(61,168,130,0.1)', border: `1px solid rgba(61,168,130,0.25)`, borderRadius: 999, padding: '4px 11px', marginBottom: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: publicTheme.successSoft, border: `1px solid rgba(61,168,130,0.25)`, borderRadius: 999, padding: '4px 11px', marginBottom: 12 }}>
             <Shield size={12} color={SG} />
             <span style={{ color: SG, fontSize: 11, fontWeight: 800 }}>ضمان {pkg.warrantyMonths} شهور</span>
           </div>
@@ -119,7 +118,7 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
             {pkg.parts?.slice(0, 4).map((part, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
                 <CheckCircle2 size={15} color={SG} style={{ flexShrink: 0, marginTop: 1 }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: TD, lineHeight: 1.5 }}>{part.name}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: publicTheme.textSoft, lineHeight: 1.5 }}>{part.name}</span>
               </div>
             ))}
             {pkg.parts && pkg.parts.length > 4 && (
@@ -131,10 +130,10 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
         </div>
 
         {/* Price + buttons */}
-        <div style={{ borderTop: `1px solid rgba(255,255,255,0.07)`, paddingTop: 16 }}>
+        <div style={{ borderTop: `1px solid ${publicTheme.border}`, paddingTop: 16 }}>
           {/* Price */}
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: publicTheme.mutedSoft, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>
               {showRange ? 'نطاق السعر (حسب نوع القطع)' : 'سعر الباكدج'}
             </div>
 
@@ -145,11 +144,11 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
               <>
                 {/* Price range */}
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>من</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: publicTheme.muted }}>من</span>
                   <span style={{ fontSize: 24, fontWeight: 900, color: SG, lineHeight: 1 }}>
                     {fmt(range!.min)} ج.م
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>إلى</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: publicTheme.muted }}>إلى</span>
                   <span style={{ fontSize: 24, fontWeight: 900, color: G, lineHeight: 1 }}>
                     {fmt(range!.max)} ج.م
                   </span>
@@ -195,12 +194,12 @@ export function PackageCard({ pkg, recommended }: PackageCardProps) {
             <Link href={`/packages/${pkg.slug}`} style={{ textDecoration: 'none' }}>
               <button style={{
                 height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(255,255,255,0.05)', border: `1px solid rgba(255,255,255,0.12)`,
+                background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.borderStrong}`,
                 borderRadius: 999, padding: '0 14px', cursor: 'pointer', color: TD,
                 transition: 'background .2s, color .2s',
               }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(200,151,74,0.12)'; (e.currentTarget as HTMLElement).style.color = G; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = TD; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = publicTheme.surfaceAlt; (e.currentTarget as HTMLElement).style.color = TD; }}
               >
                 <ChevronLeft size={16} />
               </button>

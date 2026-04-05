@@ -6,12 +6,13 @@ import { useAuth } from '@/lib/auth-context';
 import { useCar } from '@/lib/car-context';
 import { usePartCart } from '@/lib/part-cart-context';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 
 type Variant = 'original' | 'turkish' | 'chinese';
 
 const G = '#C8974A';
-const BG = '#0D1220';
-const B2 = '#111826';
+const BG = '#f6f7fb';
+const B2 = '#ffffff';
 const NV = '#1A2356';
 
 const PART_TYPE_LABELS: Record<string, string> = {
@@ -89,7 +90,7 @@ export default function PackageDetail() {
   if (isError || !pkg) {
     return (
       <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
-        <p style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: "'Almarai',sans-serif" }}>الباكدج غير موجود</p>
+        <p style={{ fontSize: 22, fontWeight: 800, color: publicTheme.text, fontFamily: "'Almarai',sans-serif" }}>الباكدج غير موجود</p>
         <Link href="/packages" style={{ color: G, fontFamily: "'Almarai',sans-serif", fontWeight: 700 }}>العودة للباكدجات</Link>
       </div>
     );
@@ -115,7 +116,7 @@ export default function PackageDetail() {
 
       {/* Hero */}
       <div style={{
-        background: `linear-gradient(135deg, ${NV} 0%, #0F1B3A 100%)`,
+        ...publicStyles.hero,
         paddingTop: isMobile ? 36 : 56,
         paddingBottom: isMobile ? 80 : 120,
         paddingLeft: isMobile ? 16 : 24,
@@ -131,12 +132,12 @@ export default function PackageDetail() {
             <Shield size={13} style={{ color: G }} />
             <span style={{ color: G, fontSize: 12, fontWeight: 700 }}>ضمان {pkg.warrantyMonths} شهور</span>
           </div>
-          <h1 style={{ fontSize: isMobile ? 24 : 'clamp(28px,5vw,52px)', fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: 10 }}>{pkg.name}</h1>
-          {pkg.description && <p style={{ fontSize: isMobile ? 14 : 17, color: 'rgba(255,255,255,0.7)', maxWidth: 600, lineHeight: 1.7 }}>{pkg.description}</p>}
+          <h1 style={{ fontSize: isMobile ? 24 : 'clamp(28px,5vw,52px)', fontWeight: 900, color: publicTheme.text, lineHeight: 1.2, marginBottom: 10 }}>{pkg.name}</h1>
+          {pkg.description && <p style={{ fontSize: isMobile ? 14 : 17, color: publicTheme.muted, maxWidth: 600, lineHeight: 1.7 }}>{pkg.description}</p>}
           {car && (
-            <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '7px 12px' }}>
+            <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 12, padding: '7px 12px', boxShadow: publicTheme.shadowSoft }}>
               <Car size={14} style={{ color: G }} />
-              <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>العرض مخصص لـ {car.model} - {car.year}</span>
+              <span style={{ color: publicTheme.text, fontSize: 12, fontWeight: 700 }}>العرض مخصص لـ {car.model} - {car.year}</span>
             </div>
           )}
         </div>
@@ -147,7 +148,7 @@ export default function PackageDetail() {
 
           {/* Sidebar — shown first on mobile via order */}
           <div style={{ position: isMobileOrTablet ? 'static' : 'sticky', top: 100, order: isMobileOrTablet ? -1 : 1 }}>
-            <div style={{ background: `linear-gradient(160deg, ${NV} 0%, #0A1128 100%)`, borderRadius: isMobile ? 20 : 28, border: `2px solid ${G}35`, padding: cardPad, boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px ${G}15 inset` }}>
+            <div style={{ background: publicTheme.surface, borderRadius: isMobile ? 20 : 28, border: `1.5px solid ${publicTheme.border}`, padding: cardPad, boxShadow: publicTheme.shadow }}>
 
               {/* Badge */}
               <div style={{ background: `${G}15`, border: `1px solid ${G}30`, borderRadius: 10, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: G, textAlign: 'center', marginBottom: 16 }}>
@@ -155,29 +156,29 @@ export default function PackageDetail() {
               </div>
 
               {car && (
-                <div style={{ background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <div style={{ background: publicTheme.surfaceAlt, borderRadius: 10, padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, border: `1px solid ${publicTheme.border}` }}>
                   <Car size={13} style={{ color: G }} />
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 700 }}>{car.model} — {car.year}</span>
+                  <span style={{ fontSize: 12, color: publicTheme.textSoft, fontWeight: 700 }}>{car.model} — {car.year}</span>
                 </div>
               )}
 
               {/* Price row — compact on mobile */}
               <div style={{ marginBottom: isMobile ? 16 : 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>سعر السوق المرجعي</span>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through' }}>
+                  <span style={{ fontSize: 12, color: publicTheme.muted }}>سعر السوق المرجعي</span>
+                  <span style={{ fontSize: 13, color: publicTheme.mutedSoft, textDecoration: 'line-through' }}>
                     {basePrice.toLocaleString('ar-EG')} ج.م
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 14, color: '#fff', fontWeight: 700 }}>إجمالي اختيارك</span>
+                  <span style={{ fontSize: 14, color: publicTheme.text, fontWeight: 700 }}>إجمالي اختيارك</span>
                   <span style={{ fontSize: isMobile ? 22 : 28, fontWeight: 900, color: G, transition: 'all 0.2s' }}>{liveTotal.toLocaleString('ar-EG')} ج.م</span>
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'left', marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: publicTheme.mutedSoft, textAlign: 'left', marginBottom: 10 }}>
                   يتغير حسب الجودة التي تختارها في الجدول ↓
                 </div>
                 {savings > 0 && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ borderTop: `1px solid ${publicTheme.border}`, paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 700 }}>أنت توفر</span>
                     <span style={{ fontSize: 13, fontWeight: 800, color: '#22c55e' }}>{savings.toLocaleString('ar-EG')} ج.م</span>
                   </div>
@@ -194,7 +195,7 @@ export default function PackageDetail() {
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                       <span style={{ fontSize: 15 }}>{item.icon}</span>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{item.text}</span>
+                      <span style={{ fontSize: 12, color: publicTheme.textSoft, lineHeight: 1.5 }}>{item.text}</span>
                     </div>
                   ))}
                 </div>
@@ -227,7 +228,7 @@ export default function PackageDetail() {
                   شوف السلة ← تقدر تضيف قطع زيادة أو تكمل الطلب
                 </p>
               )}
-              <p style={{ textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 8 }}>
+                <p style={{ textAlign: 'center', fontSize: 10, color: publicTheme.mutedSoft, marginTop: 8 }}>
                 فيزا / ماستر / فودافون كاش / انستاباى
               </p>
             </div>
@@ -237,12 +238,12 @@ export default function PackageDetail() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 14 : 24, order: isMobileOrTablet ? 1 : 0 }}>
 
             {/* Parts List */}
-            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${G}25`, padding: cardPad }}>
+            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${publicTheme.border}`, padding: cardPad, boxShadow: publicTheme.shadowSoft }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{ width: 32, height: 32, background: `${G}20`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Wrench size={16} style={{ color: G }} />
                 </div>
-                <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: '#fff', margin: 0 }}>القطع المشمولة في الباكدج</h2>
+                <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: publicTheme.text, margin: 0 }}>القطع المشمولة في الباكدج</h2>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(240px,1fr))', gap: 10 }}>
                 {pkg.parts?.map((part) => {
@@ -250,14 +251,14 @@ export default function PackageDetail() {
                   const origins = getOriginBadges(part);
                   return (
                     <div key={part.id} style={{
-                      background: compatible ? 'rgba(255,255,255,0.04)' : 'rgba(245,158,11,0.07)',
-                      border: `1px solid ${compatible ? 'rgba(255,255,255,0.08)' : 'rgba(245,158,11,0.25)'}`,
+                      background: compatible ? publicTheme.surfaceAlt : 'rgba(245,158,11,0.07)',
+                      border: `1px solid ${compatible ? publicTheme.border : 'rgba(245,158,11,0.25)'}`,
                       borderRadius: 14, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'flex-start'
                     }}>
                       <CheckCircle2 size={18} style={{ color: compatible ? '#22c55e' : '#f59e0b', flexShrink: 0, marginTop: 2 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 800, color: '#fff', fontSize: 13, margin: 0 }}>{part.name}</p>
-                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 5px' }}>
+                        <p style={{ fontWeight: 800, color: publicTheme.text, fontSize: 13, margin: 0 }}>{part.name}</p>
+                        <p style={{ fontSize: 11, color: publicTheme.muted, margin: '2px 0 5px' }}>
                           {getPartTypeLabel(part.type)}
                           {part.oemCode && <span style={{ marginRight: 8 }}>OEM: {part.oemCode}</span>}
                         </p>
@@ -279,10 +280,10 @@ export default function PackageDetail() {
             </div>
 
             {/* Price comparison */}
-            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${G}25`, padding: cardPad }}>
+            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${publicTheme.border}`, padding: cardPad, boxShadow: publicTheme.shadowSoft }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 6 }}>
-                <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: '#fff', margin: 0 }}>اختر جودة كل قطعة</h2>
-                {!isMobile && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>اضغط على السعر لاختياره</span>}
+                <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: publicTheme.text, margin: 0 }}>اختر جودة كل قطعة</h2>
+                {!isMobile && <span style={{ fontSize: 11, color: publicTheme.muted }}>اضغط على السعر لاختياره</span>}
               </div>
 
               {isMobile ? (
@@ -296,17 +297,17 @@ export default function PackageDetail() {
                       { v: 'chinese',  label: 'صيني',  price: part.priceChinese,  color: '#a1a1aa' },
                     ].filter(v => v.price != null);
                     return (
-                      <div key={part.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '12px 14px' }}>
-                        <p style={{ color: '#fff', fontWeight: 800, fontSize: 13, margin: '0 0 4px' }}>{part.name}</p>
-                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '0 0 10px' }}>{getPartTypeLabel(part.type)}</p>
+                      <div key={part.id} style={{ background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.border}`, borderRadius: 14, padding: '12px 14px' }}>
+                        <p style={{ color: publicTheme.text, fontWeight: 800, fontSize: 13, margin: '0 0 4px' }}>{part.name}</p>
+                        <p style={{ color: publicTheme.muted, fontSize: 11, margin: '0 0 10px' }}>{getPartTypeLabel(part.type)}</p>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           {variants.map(({ v, label, price, color }) => {
                             const active = sel === v;
                             return (
                               <button key={v} onClick={() => setPartSelections(s => ({ ...s, [part.id]: v }))}
                                 style={{
-                                  flex: 1, minWidth: 80, padding: '8px 4px', borderRadius: 10, border: `1.5px solid ${active ? color : 'rgba(255,255,255,0.1)'}`,
-                                  background: active ? `${color}18` : 'transparent', color: active ? color : 'rgba(255,255,255,0.4)',
+                                  flex: 1, minWidth: 80, padding: '8px 4px', borderRadius: 10, border: `1.5px solid ${active ? color : publicTheme.border}`,
+                                  background: active ? `${color}18` : 'transparent', color: active ? color : publicTheme.muted,
                                   fontSize: 12, fontWeight: active ? 800 : 600, cursor: 'pointer', transition: 'all .15s',
                                   fontFamily: "'Almarai',sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2
                                 }}>
@@ -319,8 +320,8 @@ export default function PackageDetail() {
                       </div>
                     );
                   })}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    <span style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>الإجمالي</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: `1px solid ${publicTheme.border}` }}>
+                    <span style={{ color: publicTheme.text, fontWeight: 900, fontSize: 14 }}>الإجمالي</span>
                     <span style={{ color: G, fontWeight: 900, fontSize: 20 }}>{liveTotal.toLocaleString('ar-EG')} ج.م</span>
                   </div>
                 </div>
@@ -330,14 +331,14 @@ export default function PackageDetail() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: 380 }}>
                     <thead>
                       <tr>
-                        <th style={{ paddingBottom: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>القطعة</th>
-                        <th style={{ paddingBottom: 12, color: '#C8974A', fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        <th style={{ paddingBottom: 12, color: publicTheme.muted, fontWeight: 700, fontSize: 13, borderBottom: `1px solid ${publicTheme.border}` }}>القطعة</th>
+                        <th style={{ paddingBottom: 12, color: '#C8974A', fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: `1px solid ${publicTheme.border}` }}>
                           أصلي<br/><span style={{ fontSize: 10, fontWeight: 400, opacity: 0.6 }}>الجودة العليا</span>
                         </th>
-                        <th style={{ paddingBottom: 12, color: '#60a5fa', fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        <th style={{ paddingBottom: 12, color: '#60a5fa', fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: `1px solid ${publicTheme.border}` }}>
                           تركي<br/><span style={{ fontSize: 10, fontWeight: 400, opacity: 0.6 }}>جودة عالية</span>
                         </th>
-                        <th style={{ paddingBottom: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                        <th style={{ paddingBottom: 12, color: publicTheme.muted, fontWeight: 700, fontSize: 13, textAlign: 'center', borderBottom: `1px solid ${publicTheme.border}` }}>
                           صيني<br/><span style={{ fontSize: 10, fontWeight: 400, opacity: 0.6 }}>اقتصادي</span>
                         </th>
                       </tr>
@@ -350,13 +351,13 @@ export default function PackageDetail() {
                           fontSize: 13, cursor: avail ? 'pointer' : 'default', transition: 'all 0.15s',
                           background: sel === v ? `${activeColor}18` : 'transparent',
                           borderRadius: 10, border: sel === v ? `1.5px solid ${activeColor}` : '1.5px solid transparent',
-                          color: sel === v ? activeColor : avail ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)',
+                          color: sel === v ? activeColor : avail ? publicTheme.muted : '#cbd5e1',
                         });
                         return (
-                          <tr key={part.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <tr key={part.id} style={{ borderBottom: `1px solid ${publicTheme.border}` }}>
                             <td style={{ padding: '12px 0' }}>
-                              <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{part.name}</span>
-                              <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{getPartTypeLabel(part.type)}</span>
+                              <span style={{ color: publicTheme.text, fontWeight: 700, fontSize: 14 }}>{part.name}</span>
+                              <span style={{ display: 'block', fontSize: 11, color: publicTheme.muted, marginTop: 2 }}>{getPartTypeLabel(part.type)}</span>
                             </td>
                             <td style={cellStyle('original', part.priceOriginal != null, '#C8974A')}
                               onClick={() => part.priceOriginal != null && setPartSelections(s => ({ ...s, [part.id]: 'original' }))}>
@@ -376,7 +377,7 @@ export default function PackageDetail() {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td style={{ paddingTop: 14, fontWeight: 900, color: '#fff', fontSize: 14 }}>الإجمالي</td>
+                        <td style={{ paddingTop: 14, fontWeight: 900, color: publicTheme.text, fontSize: 14 }}>الإجمالي</td>
                         <td colSpan={3} style={{ paddingTop: 14, textAlign: 'center', fontWeight: 900, fontSize: 20, color: G }}>
                           {liveTotal.toLocaleString('ar-EG')} ج.م
                         </td>
@@ -388,8 +389,8 @@ export default function PackageDetail() {
             </div>
 
             {/* Features */}
-            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${G}25`, padding: cardPad }}>
-              <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: '#fff', marginBottom: 16 }}>ماذا تشمل الخدمة؟</h2>
+            <div style={{ background: B2, borderRadius: isMobile ? 20 : 24, border: `1px solid ${publicTheme.border}`, padding: cardPad, boxShadow: publicTheme.shadowSoft }}>
+              <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: publicTheme.text, marginBottom: 16 }}>ماذا تشمل الخدمة؟</h2>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(auto-fill,minmax(170px,1fr))', gap: isMobile ? 10 : 14 }}>
                 {[
                   { icon: '🚗', title: 'تسليم للعميل', desc: 'أنت تختار الورشة المناسبة لك' },
@@ -397,10 +398,10 @@ export default function PackageDetail() {
                   { icon: '📦', title: 'توصيل للبيت', desc: 'نوصل الباكدج في الإسكندرية' },
                   { icon: '💰', title: savings > 0 ? `وفر ${savings.toLocaleString()} ج.م` : 'أفضل سعر', desc: 'أسعارنا أقل من السوق بضمان الجودة' },
                 ].map(f => (
-                  <div key={f.title} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: isMobile ? 14 : 18, textAlign: 'center' }}>
+                  <div key={f.title} style={{ background: publicTheme.surfaceAlt, border: `1px solid ${publicTheme.border}`, borderRadius: 14, padding: isMobile ? 14 : 18, textAlign: 'center' }}>
                     <div style={{ fontSize: isMobile ? 24 : 28, marginBottom: 6 }}>{f.icon}</div>
-                    <p style={{ fontWeight: 800, color: '#fff', fontSize: isMobile ? 12 : 14, marginBottom: 4 }}>{f.title}</p>
-                    <p style={{ fontSize: isMobile ? 11 : 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>{f.desc}</p>
+                    <p style={{ fontWeight: 800, color: publicTheme.text, fontSize: isMobile ? 12 : 14, marginBottom: 4 }}>{f.title}</p>
+                    <p style={{ fontSize: isMobile ? 11 : 12, color: publicTheme.muted, lineHeight: 1.5 }}>{f.desc}</p>
                   </div>
                 ))}
               </div>

@@ -7,13 +7,14 @@ import { RenoPackLogo } from '@/components/layout/AppLayout';
 import { usePartCart } from '@/lib/part-cart-context';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 import bakoNew from '@/assets/bako-new.png';
 
 /* ── Brand colours ── */
 const G = '#C8974A';   // gold
-const BG = '#0D1220';
-const CARD = '#161E30';
-const CARD2 = '#1A2340';
+const BG = publicTheme.page;
+const CARD = publicTheme.surface;
+const CARD2 = publicTheme.surfaceAlt;
 
 /* ── Part type filters ── */
 const PART_TYPES = [
@@ -110,24 +111,40 @@ function PartCard({ part, origin }: {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      style={{ background: CARD, border: `1.5px solid rgba(200,151,74,0.1)`, borderRadius: 20, overflow: 'hidden', fontFamily: "'Almarai',sans-serif", transition: 'border-color .2s, box-shadow .2s' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,151,74,0.28)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(0,0,0,0.4)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,151,74,0.1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+      style={{
+        background: CARD,
+        border: `1px solid ${publicTheme.border}`,
+        borderRadius: 24,
+        overflow: 'hidden',
+        fontFamily: "'Almarai',sans-serif",
+        transition: 'border-color .2s, box-shadow .2s, transform .2s',
+        boxShadow: publicTheme.shadowSoft,
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(200,151,74,0.28)';
+        (e.currentTarget as HTMLElement).style.boxShadow = publicTheme.shadow;
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = publicTheme.border;
+        (e.currentTarget as HTMLElement).style.boxShadow = publicTheme.shadowSoft;
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+      }}
     >
       {/* Image / Type banner */}
       <div style={{ position: 'relative', height: 120, background: CARD2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {imgSrc ? (
-          <img src={imgSrc} alt={part.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+          <img src={imgSrc} alt={part.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.24 }} />
         ) : (
           <span style={{ fontSize: 40 }}>🔩</span>
         )}
         {/* Type badge */}
-        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(13,18,32,0.85)', border: '1px solid rgba(200,151,74,0.2)', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: G }}>
+        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(255,255,255,0.92)', border: `1px solid ${publicTheme.borderStrong}`, borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: G }}>
           {part.type}
         </div>
         {/* Lowest price */}
         {lowestPrice && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent,rgba(13,18,32,0.9))', padding: '20px 14px 10px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent,rgba(255,255,255,0.95))', padding: '20px 14px 10px', display: 'flex', justifyContent: 'flex-end' }}>
             <span style={{ fontSize: 16, fontWeight: 900, color: G }}>من {formatPrice(lowestPrice)}</span>
           </div>
         )}
@@ -135,9 +152,9 @@ function PartCard({ part, origin }: {
 
       {/* Body */}
       <div style={{ padding: '14px 16px 16px' }}>
-        <h3 style={{ fontSize: 15, fontWeight: 800, color: '#E8F0F8', marginBottom: 4, lineHeight: 1.3 }}>{part.name}</h3>
+        <h3 style={{ fontSize: 15, fontWeight: 800, color: publicTheme.text, marginBottom: 4, lineHeight: 1.3 }}>{part.name}</h3>
         {part.oemCode && (
-          <div style={{ fontSize: 11, color: '#7A95AA', fontWeight: 600, marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>OEM: {part.oemCode}</div>
+          <div style={{ fontSize: 11, color: publicTheme.muted, fontWeight: 600, marginBottom: 8, direction: 'ltr', textAlign: 'right' }}>OEM: {part.oemCode}</div>
         )}
 
         {/* Price pills */}
@@ -147,7 +164,7 @@ function PartCard({ part, origin }: {
               {p.label}: {formatPrice(p.val)}
             </div>
           ))}
-          {prices.length === 0 && <span style={{ fontSize: 12, color: '#7A95AA' }}>السعر عند الطلب</span>}
+          {prices.length === 0 && <span style={{ fontSize: 12, color: publicTheme.muted }}>السعر عند الطلب</span>}
         </div>
 
         {/* Add to package button */}
@@ -182,7 +199,7 @@ function PartCard({ part, origin }: {
             <>
               <button
                 onClick={() => setExpanded(x => !x)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: '#7A95AA', fontSize: 12, fontWeight: 600, padding: 0, fontFamily: "'Almarai',sans-serif", marginBottom: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: publicTheme.muted, fontSize: 12, fontWeight: 600, padding: 0, fontFamily: "'Almarai',sans-serif", marginBottom: 0 }}
               >
                 الموديلات المتوافقة ({models.length})
                 {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -227,12 +244,12 @@ export default function Parts() {
     <div style={{ minHeight: '100vh', background: BG, direction: 'rtl' }}>
 
       {/* ── Hero ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '56px 24px 72px', background: `linear-gradient(160deg,#070C18 0%,#0F1828 60%,${BG} 100%)` }}>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '56px 24px 72px', ...publicStyles.hero }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(200,151,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.03) 1px,transparent 1px)', backgroundSize: '36px 36px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 300, background: 'radial-gradient(ellipse,rgba(74,171,202,0.06),transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 300, ...publicStyles.heroGlow, pointerEvents: 'none' }} />
 
         {/* Bako mascot */}
-        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 40, bottom: 0, height: 200, opacity: 0.18, mixBlendMode: 'screen', pointerEvents: 'none' }} />
+        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 40, bottom: 0, height: 200, opacity: 0.1, pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><RenoPackLogo size="md" /></div>
@@ -240,10 +257,10 @@ export default function Parts() {
             <Zap size={12} color="#4AABCA" />
             <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, color: '#4AABCA' }}>كتالوج قطع الغيار الأصلية والبديلة</span>
           </div>
-          <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 38, fontWeight: 900, color: '#E8F0F8', marginBottom: 10, lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 38, fontWeight: 900, color: publicTheme.text, marginBottom: 10, lineHeight: 1.2 }}>
             كل قطعة تحتاجها لـ<span style={{ color: G }}> رينو</span>
           </h1>
-          <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 16, color: '#7A95AA', fontWeight: 500, maxWidth: 500, margin: '0 auto 24px' }}>
+          <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 16, color: publicTheme.muted, fontWeight: 500, maxWidth: 500, margin: '0 auto 24px' }}>
             أصلي أو تركي أو صيني — نوفر ليك الخيار بأسعار شفافة من أفضل الموردين في الإسكندرية.
           </p>
 
@@ -256,7 +273,7 @@ export default function Parts() {
             ].map(s => (
               <div key={s.l} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 900, color: G }}>{s.n}</div>
-                <div style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: '#7A95AA', fontWeight: 600 }}>{s.l}</div>
+                <div style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: publicTheme.muted, fontWeight: 600 }}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -264,21 +281,21 @@ export default function Parts() {
       </div>
 
       {/* ── Sticky search + filter bar ── */}
-      <div style={{ position: 'sticky', top: 68, zIndex: 20, background: 'rgba(13,18,32,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,151,74,0.1)', padding: '12px 24px' }}>
+      <div style={{ position: 'sticky', top: 68, zIndex: 20, background: 'rgba(246,247,251,0.92)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${publicTheme.border}`, padding: '12px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Search */}
           <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
-            <Search size={14} color="#7A95AA" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <Search size={14} color={publicTheme.muted} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="ابحث باسم القطعة أو رقم OEM..."
-              style={{ width: '100%', background: '#111826', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 999, padding: '9px 38px 9px 16px', color: '#D4E0EC', fontSize: 14, fontFamily: "'Almarai',sans-serif", fontWeight: 600, outline: 'none', direction: 'rtl' }}
+              style={{ width: '100%', ...publicStyles.input, borderRadius: 999, padding: '9px 38px 9px 16px', fontSize: 14, fontFamily: "'Almarai',sans-serif", fontWeight: 600, outline: 'none', direction: 'rtl' }}
             />
           </div>
           {/* Filter toggle */}
           <button
             onClick={() => setShowFilters(x => !x)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: showFilters ? 'rgba(200,151,74,0.15)' : '#111826', border: `1.5px solid ${showFilters ? 'rgba(200,151,74,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 999, padding: '9px 18px', color: showFilters ? G : '#A0B4C8', fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0, transition: 'all .2s' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: showFilters ? publicTheme.brandSoft : publicTheme.surface, border: `1.5px solid ${showFilters ? 'rgba(200,151,74,0.35)' : publicTheme.borderStrong}`, borderRadius: 999, padding: '9px 18px', color: showFilters ? G : publicTheme.textSoft, fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0, transition: 'all .2s' }}
           >
             <SlidersHorizontal size={14} /> الفلاتر
           </button>
@@ -297,12 +314,12 @@ export default function Parts() {
               <div style={{ maxWidth: 1200, margin: '12px auto 0', display: 'flex', gap: 20, flexWrap: 'wrap', paddingBottom: 4 }}>
                 {/* Type filters */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: '#7A95AA', fontWeight: 700 }}>النوع:</span>
+                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: publicTheme.muted, fontWeight: 700 }}>النوع:</span>
                   {PART_TYPES.map(t => {
                     const active = typeFilter === t.value;
                     return (
                       <button key={String(t.value)} onClick={() => setTypeFilter(t.value)}
-                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : '1.5px solid rgba(200,151,74,0.2)', background: active ? 'linear-gradient(135deg,#C8974A,#DEB06C)' : 'transparent', color: active ? '#0D1220' : '#A0B4C8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? 'linear-gradient(135deg,#C8974A,#DEB06C)' : publicTheme.surface, color: active ? '#0D1220' : publicTheme.textSoft, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         {t.icon}{t.label}
                       </button>
@@ -311,12 +328,12 @@ export default function Parts() {
                 </div>
                 {/* Origin filters */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: '#7A95AA', fontWeight: 700 }}>الصنف:</span>
+                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: publicTheme.muted, fontWeight: 700 }}>الصنف:</span>
                   {ORIGINS.map(o => {
                     const active = origin === o.value;
                     return (
                       <button key={o.value} onClick={() => setOrigin(o.value)}
-                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : '1.5px solid rgba(74,171,202,0.2)', background: active ? 'rgba(74,171,202,0.15)' : 'transparent', color: active ? '#4AABCA' : '#A0B4C8', cursor: 'pointer' }}
+                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? 'rgba(74,171,202,0.15)' : publicTheme.surface, color: active ? '#4AABCA' : publicTheme.textSoft, cursor: 'pointer' }}
                       >
                         {o.label}
                       </button>
@@ -325,12 +342,12 @@ export default function Parts() {
                 </div>
                 {/* Model filter */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: '#7A95AA', fontWeight: 700 }}>الموديل:</span>
+                  <span style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, color: publicTheme.muted, fontWeight: 700 }}>الموديل:</span>
                   {RENAULT_MODELS.map(m => {
                     const active = modelFilter === m;
                     return (
                       <button key={m} onClick={() => setModelFilter(m)}
-                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : '1.5px solid rgba(123,114,184,0.2)', background: active ? 'rgba(123,114,184,0.2)' : 'transparent', color: active ? '#7B72B8' : '#A0B4C8', cursor: 'pointer' }}
+                        style={{ fontFamily: "'Almarai',sans-serif", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '5px 14px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? 'rgba(123,114,184,0.14)' : publicTheme.surface, color: active ? '#7B72B8' : publicTheme.textSoft, cursor: 'pointer' }}
                       >
                         {m}
                       </button>
@@ -348,14 +365,14 @@ export default function Parts() {
         {isLoading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 20 }}>
             {[...Array(8)].map((_, i) => (
-              <div key={i} style={{ height: 280, background: CARD, borderRadius: 20, opacity: 0.6, animation: 'pulse 1.5s infinite' }} />
+              <div key={i} style={{ height: 280, background: CARD, borderRadius: 24, opacity: 0.6, animation: 'pulse 1.5s infinite', border: `1px solid ${publicTheme.border}` }} />
             ))}
           </div>
         ) : filtered?.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#111826', borderRadius: 24, border: '1.5px dashed rgba(200,151,74,0.15)' }}>
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: publicTheme.surface, borderRadius: 24, border: '1.5px dashed rgba(200,151,74,0.15)', boxShadow: publicTheme.shadowSoft }}>
             <span style={{ fontSize: 48 }}>🔍</span>
-            <h3 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 800, color: '#D4E0EC', margin: '16px 0 8px' }}>لا توجد قطع مطابقة</h3>
-            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 15 }}>جرب تغيير الفلاتر أو البحث بكلمة أخرى.</p>
+            <h3 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 800, color: publicTheme.text, margin: '16px 0 8px' }}>لا توجد قطع مطابقة</h3>
+            <p style={{ fontFamily: "'Almarai',sans-serif", color: publicTheme.muted, fontSize: 15 }}>جرب تغيير الفلاتر أو البحث بكلمة أخرى.</p>
           </div>
         ) : (
           <motion.div layout style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 20 }}>
@@ -369,14 +386,14 @@ export default function Parts() {
       </div>
 
       {/* ── Guarantee strip ── */}
-      <div style={{ background: '#111826', borderTop: '1px solid rgba(200,151,74,0.08)', padding: '28px 24px' }}>
+      <div style={{ background: publicTheme.surface, borderTop: `1px solid ${publicTheme.border}`, padding: '28px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
           {[
             { icon: <Shield size={18} color="#3DA882" />, text: 'ضمان الجودة على جميع القطع' },
             { icon: <Star size={18} color={G} />, text: 'قطع أصلية ومعتمدة' },
             { icon: <Zap size={18} color="#4AABCA" />, text: 'توصيل خلال 24 ساعة بالإسكندرية' },
           ].map(item => (
-            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, color: '#A0B4C8' }}>
+            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, color: publicTheme.textSoft }}>
               {item.icon}{item.text}
             </div>
           ))}

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CarSelectorModal } from '@/components/CarSelectorModal';
 import { useCar, getRecommendedKm } from '@/lib/car-context';
 import { RenoPackLogo } from '@/components/layout/AppLayout';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 
 const KILOMETER_FILTERS = [
   { label: 'الكل',      value: null  },
@@ -19,18 +20,18 @@ const KILOMETER_FILTERS = [
 /* ── Reusable page header ── */
 function PageHero({ title, subtitle, children }: { title: string; subtitle: string; children?: React.ReactNode }) {
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 80px', background: 'linear-gradient(160deg,#0B1220 0%,#131B2E 60%,#0D1A28 100%)' }}>
+    <div style={{ position: 'relative', overflow: 'hidden', padding: '64px 24px 80px', ...publicStyles.hero }}>
       {/* grid lines */}
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(200,151,74,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.035) 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(200,151,74,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.04) 1px,transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
       {/* glow */}
-      <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse,rgba(200,151,74,0.08),transparent 65%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 300, ...publicStyles.heroGlow, pointerEvents: 'none' }} />
 
       <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
           <RenoPackLogo size="md" />
         </div>
-        <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 36, fontWeight: 900, color: '#E8F0F8', marginBottom: 10, lineHeight: 1.2 }}>{title}</h1>
-        <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 16, color: '#7A95AA', fontWeight: 500, maxWidth: 520, margin: '0 auto 20px' }}>{subtitle}</p>
+        <h1 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 36, fontWeight: 900, color: publicTheme.text, marginBottom: 10, lineHeight: 1.2 }}>{title}</h1>
+        <p style={{ fontFamily: "'Almarai',sans-serif", fontSize: 16, color: publicTheme.muted, fontWeight: 500, maxWidth: 520, margin: '0 auto 20px' }}>{subtitle}</p>
         {children}
       </div>
     </div>
@@ -63,7 +64,7 @@ export default function Packages() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D1220', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', ...publicStyles.shell, paddingBottom: 80 }}>
       <AnimatePresence>
         {showCarModal && (
           <CarSelectorModal onComplete={() => setShowCarModal(false)} onSkip={() => setShowCarModal(false)} />
@@ -84,11 +85,11 @@ export default function Packages() {
         {/* Car chip */}
         {car && (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 999, padding: '7px 18px', color: '#D4E0EC', fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 999, padding: '7px 18px', color: publicTheme.textSoft, boxShadow: publicTheme.shadowSoft, fontFamily: "'Almarai',sans-serif", fontSize: 13, fontWeight: 700 }}>
               <Car size={13} color="#C8974A" />
               <span>{car.model} - {car.year}</span>
-              <button onClick={() => setShowCarModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex' }}><Pencil size={12} /></button>
-              <button onClick={clearCar} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex' }}><X size={12} /></button>
+              <button onClick={() => setShowCarModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: publicTheme.muted, display: 'flex' }}><Pencil size={12} /></button>
+              <button onClick={clearCar} style={{ background: 'none', border: 'none', cursor: 'pointer', color: publicTheme.muted, display: 'flex' }}><X size={12} /></button>
             </div>
           </div>
         )}
@@ -104,8 +105,8 @@ export default function Packages() {
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
         {/* Filters card */}
-        <div style={{ marginTop: -28, position: 'relative', zIndex: 10, background: '#161E30', border: '1.5px solid rgba(200,151,74,0.14)', borderRadius: 18, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 36, boxShadow: '0 12px 40px rgba(0,0,0,0.4)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#7A95AA', fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+        <div style={{ marginTop: -28, position: 'relative', zIndex: 10, background: publicTheme.surface, border: `1.5px solid ${publicTheme.border}`, borderRadius: 18, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 36, boxShadow: publicTheme.shadow }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: publicTheme.muted, fontFamily: "'Almarai',sans-serif", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
             <Filter size={15} color="#C8974A" />
             تصفية بالمسافة:
           </div>
@@ -120,9 +121,9 @@ export default function Packages() {
                     fontFamily: "'Almarai',sans-serif",
                     fontWeight: 700, fontSize: 13,
                     borderRadius: 999, padding: '7px 18px',
-                    border: active ? 'none' : '1.5px solid rgba(200,151,74,0.2)',
+                    border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`,
                     background: active ? 'linear-gradient(135deg,#C8974A,#DEB06C)' : 'transparent',
-                    color: active ? '#0D1220' : '#A0B4C8',
+                    color: active ? '#0D1220' : publicTheme.textSoft,
                     cursor: 'pointer',
                     transition: 'all .2s',
                     boxShadow: active ? '0 4px 14px rgba(200,151,74,0.35)' : 'none',
@@ -139,14 +140,14 @@ export default function Packages() {
         {isLoading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 28 }}>
             {[1,2,3,4,5].map(i => (
-              <div key={i} style={{ height: 420, background: '#161E30', borderRadius: 24, animation: 'pulse 1.5s ease-in-out infinite' }} />
+              <div key={i} style={{ height: 420, background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 24, animation: 'pulse 1.5s ease-in-out infinite' }} />
             ))}
           </div>
         ) : filteredPackages?.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '64px 24px', background: '#111826', borderRadius: 24, border: '1.5px dashed rgba(200,151,74,0.15)' }}>
+          <div style={{ textAlign: 'center', padding: '64px 24px', background: publicTheme.surface, borderRadius: 24, border: `1.5px dashed ${publicTheme.borderStrong}` }}>
             <Search size={48} color="rgba(200,151,74,0.2)" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 800, color: '#D4E0EC', marginBottom: 8 }}>لا توجد باكدجات مطابقة</h3>
-            <p style={{ fontFamily: "'Almarai',sans-serif", color: '#7A95AA', fontSize: 15 }}>جرب تغيير فلتر الكيلومترات.</p>
+            <h3 style={{ fontFamily: "'Almarai',sans-serif", fontSize: 22, fontWeight: 800, color: publicTheme.text, marginBottom: 8 }}>لا توجد باكدجات مطابقة</h3>
+            <p style={{ fontFamily: "'Almarai',sans-serif", color: publicTheme.muted, fontSize: 15 }}>جرب تغيير فلتر الكيلومترات.</p>
           </div>
         ) : (
           <motion.div layout style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 28 }}>

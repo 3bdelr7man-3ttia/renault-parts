@@ -7,14 +7,15 @@ import bakoNew from '@/assets/bako-new.png';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { publicStyles, publicTheme } from '@/components/public/public-ui';
 
 /* ── Brand tokens ── */
 const G  = '#C8974A';
 const GL = '#DEB06C';
-const BG = '#0D1220';
-const CARD  = '#161E30';
-const CARD2 = '#111826';
-const TD = '#7A95AA';
+const BG = publicTheme.page;
+const CARD  = publicTheme.surface;
+const CARD2 = publicTheme.surfaceAlt;
+const TD = publicTheme.muted;
 const F  = "'Almarai',sans-serif";
 
 /* ── Area → approximate lat/lng ── */
@@ -143,10 +144,10 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
       onClick={onSelect}
       style={{
         background: selected ? `${palette.accent}10` : CARD,
-        border: `1.5px solid ${selected ? palette.accent + '60' : 'rgba(255,255,255,0.07)'}`,
-        borderRadius: 20, overflow: 'hidden', fontFamily: F, direction: 'rtl',
+        border: `1.5px solid ${selected ? palette.accent + '40' : publicTheme.border}`,
+        borderRadius: 24, overflow: 'hidden', fontFamily: F, direction: 'rtl',
         transition: 'all .22s', cursor: 'pointer',
-        boxShadow: selected ? `0 8px 32px ${palette.accent}20` : '0 2px 12px rgba(0,0,0,0.2)',
+        boxShadow: selected ? `0 12px 28px ${palette.accent}18` : publicTheme.shadowSoft,
       }}
     >
       {/* Cover image / banner */}
@@ -160,18 +161,18 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
               <CheckCircle2 size={9} color="#3DA882" />
               <span style={{ fontSize: 9, fontWeight: 800, color: '#3DA882' }}>ورشة معتمدة</span>
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 900, color: '#E8F0F8', lineHeight: 1.2, margin: 0 }}>{w.name}</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 900, color: publicTheme.text, lineHeight: 1.2, margin: 0 }}>{w.name}</h3>
             <p style={{ fontSize: 11, color: TD, margin: '3px 0 0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.address}</p>
           </div>
           {/* Rating badge */}
-          <div style={{ flexShrink: 0, textAlign: 'center', background: CARD2, borderRadius: 12, padding: '6px 10px', border: `1px solid ${selected ? palette.accent + '30' : 'rgba(200,151,74,0.1)'}`, marginRight: 10 }}>
+          <div style={{ flexShrink: 0, textAlign: 'center', background: CARD2, borderRadius: 14, padding: '6px 10px', border: `1px solid ${selected ? palette.accent + '30' : publicTheme.border}`, marginRight: 10 }}>
             <div style={{ fontSize: 17, fontWeight: 900, color: G, lineHeight: 1 }}>{w.rating?.toFixed(1) ?? '—'}</div>
             <Stars rating={w.rating} />
           </div>
         </div>
 
         {/* Hours + status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '6px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, background: publicTheme.surfaceAlt, borderRadius: 10, padding: '6px 10px', border: `1px solid ${publicTheme.border}` }}>
           <Clock size={10} color="#4AABCA" />
           <span style={{ fontSize: 10, fontWeight: 700, color: '#4AABCA', flex: 1 }}>السبت – الخميس: ٩ص – ٩م</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -191,7 +192,7 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
 
         {/* Details toggle */}
         <button onClick={e => { e.stopPropagation(); setExpanded(x => !x); }}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${palette.accent}0D`, border: `1px solid ${palette.accent}25`, borderRadius: 10, padding: '8px', color: palette.accent, fontFamily: F, fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all .15s' }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: `${palette.accent}0D`, border: `1px solid ${palette.accent}25`, borderRadius: 12, padding: '9px', color: palette.accent, fontFamily: F, fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all .15s' }}
         >
           <Settings size={11} />
           تفاصيل الورشة
@@ -201,18 +202,18 @@ function WorkshopCard({ w, idx, onSelect, selected }: {
         <AnimatePresence>
           {expanded && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} style={{ overflow: 'hidden' }}>
-              <div style={{ marginTop: 10, padding: '12px', background: CARD2, borderRadius: 12, border: `1px solid ${palette.accent}12`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ marginTop: 10, padding: '12px', background: CARD2, borderRadius: 14, border: `1px solid ${palette.accent}12`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[
                   { icon: <Shield size={12} />, label: 'ضمان', val: '30 يوم' },
                   { icon: <Zap size={12} />,    label: 'وقت التركيب', val: '2-4 ساعات' },
                   { icon: <Wrench size={12} />, label: 'قطع أصلية', val: '✓ مضمونة' },
                   { icon: <Star size={12} />,   label: 'تقييمات', val: `${20 + (w.id % 60)} تقييم` },
                 ].map(item => (
-                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '6px 8px' }}>
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, background: publicTheme.surface, borderRadius: 10, padding: '6px 8px', border: `1px solid ${publicTheme.border}` }}>
                     <span style={{ color: palette.accent }}>{item.icon}</span>
                     <div>
                       <div style={{ fontSize: 9, color: TD, fontWeight: 600 }}>{item.label}</div>
-                      <div style={{ fontSize: 11, color: '#D4E0EC', fontWeight: 800 }}>{item.val}</div>
+                      <div style={{ fontSize: 11, color: publicTheme.text, fontWeight: 800 }}>{item.val}</div>
                     </div>
                   </div>
                 ))}
@@ -353,10 +354,10 @@ export default function Workshops() {
     <div style={{ minHeight: '100vh', background: BG, direction: 'rtl' }}>
 
       {/* ── HERO ── */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '44px 24px 52px', background: `linear-gradient(160deg,#070C18 0%,#111826 60%,${BG} 100%)` }}>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '44px 24px 52px', ...publicStyles.hero }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(200,151,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(200,151,74,0.03) 1px,transparent 1px)`, backgroundSize: '36px 36px', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '50%', left: '40%', transform: 'translate(-50%,-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse,rgba(61,168,130,0.06),transparent 65%)', pointerEvents: 'none' }} />
-        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 32, bottom: 0, height: 170, opacity: 0.13, mixBlendMode: 'screen', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '40%', transform: 'translate(-50%,-50%)', width: 600, height: 300, ...publicStyles.heroGlow, pointerEvents: 'none' }} />
+        <img src={bakoNew} alt="باكو" style={{ position: 'absolute', left: 32, bottom: 0, height: 170, opacity: 0.1, pointerEvents: 'none' }} />
 
         <div style={{ maxWidth: 820, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><RenoPackLogo size="md" /></div>
@@ -364,7 +365,7 @@ export default function Workshops() {
             <CheckCircle2 size={11} color="#3DA882" />
             <span style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: '#3DA882' }}>شبكة ورش معتمدة في الإسكندرية</span>
           </div>
-          <h1 style={{ fontFamily: F, fontSize: 30, fontWeight: 900, color: '#E8F0F8', marginBottom: 8, lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: F, fontSize: 30, fontWeight: 900, color: publicTheme.text, marginBottom: 8, lineHeight: 1.2 }}>
             ورش <span style={{ color: G }}>رينو باك</span> في كل الإسكندرية
           </h1>
           <p style={{ fontFamily: F, fontSize: 14, color: TD, fontWeight: 500, maxWidth: 460, margin: '0 auto 20px' }}>
@@ -382,16 +383,16 @@ export default function Workshops() {
       </div>
 
       {/* ── FILTER BAR ── */}
-      <div style={{ position: 'sticky', top: 68, zIndex: 20, background: 'rgba(13,18,32,0.97)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(200,151,74,0.08)', padding: '10px 24px' }}>
+      <div style={{ position: 'sticky', top: 68, zIndex: 20, background: 'rgba(246,247,251,0.92)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${publicTheme.border}`, padding: '10px 24px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 180, position: 'relative' }}>
             <Search size={13} color={TD} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث باسم الورشة أو المنطقة..."
-              style={{ width: '100%', background: '#111826', border: '1.5px solid rgba(255,255,255,0.07)', borderRadius: 999, padding: '8px 36px 8px 14px', color: '#D4E0EC', fontSize: 13, fontFamily: F, fontWeight: 600, outline: 'none', direction: 'rtl' }}
+              style={{ width: '100%', ...publicStyles.input, borderRadius: 999, padding: '8px 36px 8px 14px', fontSize: 13, fontFamily: F, fontWeight: 600, outline: 'none', direction: 'rtl' }}
             />
           </div>
           {!isLoading && (
-            <span style={{ fontFamily: F, fontSize: 12, color: TD, fontWeight: 600, flexShrink: 0, background: 'rgba(200,151,74,0.08)', borderRadius: 999, padding: '4px 12px' }}>
+            <span style={{ fontFamily: F, fontSize: 12, color: publicTheme.textSoft, fontWeight: 600, flexShrink: 0, background: publicTheme.brandSoft, borderRadius: 999, padding: '4px 12px' }}>
               {filtered?.length ?? 0} ورشة
             </span>
           )}
@@ -402,7 +403,7 @@ export default function Workshops() {
             const active = area === a;
             return (
               <button key={a} onClick={() => handleAreaChange(a)}
-                style={{ fontFamily: F, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '5px 13px', border: active ? 'none' : '1.5px solid rgba(255,255,255,0.08)', background: active ? G : 'rgba(255,255,255,0.03)', color: active ? '#0D1220' : TD, cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ fontFamily: F, fontSize: 11, fontWeight: 800, borderRadius: 999, padding: '5px 13px', border: active ? 'none' : `1.5px solid ${publicTheme.borderStrong}`, background: active ? G : publicTheme.surface, color: active ? '#0D1220' : publicTheme.textSoft, cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 {a !== 'الكل' && active && <Navigation size={9} />}
                 {a}
@@ -419,22 +420,22 @@ export default function Workshops() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           {/* Info banner */}
-          <div style={{ background: `linear-gradient(135deg,rgba(200,151,74,0.07),rgba(26,35,86,0.3))`, border: '1.5px solid rgba(200,151,74,0.15)', borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, fontFamily: F }}>
+          <div style={{ background: publicTheme.surface, border: `1px solid ${publicTheme.border}`, borderRadius: 18, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, fontFamily: F, boxShadow: publicTheme.shadowSoft }}>
             <Shield size={20} color={G} style={{ flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#E8F0F8', marginBottom: 1 }}>ضمان الجودة على كل الشغل</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: publicTheme.text, marginBottom: 1 }}>ضمان الجودة على كل الشغل</div>
               <div style={{ fontSize: 11, color: TD, fontWeight: 500 }}>ضمان 30 يوم على اليد العاملة في كل الورش المعتمدة</div>
             </div>
           </div>
 
           {isLoading ? (
             [...Array(4)].map((_, i) => (
-              <div key={i} style={{ height: 190, background: CARD, borderRadius: 20, opacity: 0.5 + i * 0.1, animation: 'shimmer 1.5s infinite' }} />
+              <div key={i} style={{ height: 190, background: CARD, borderRadius: 24, opacity: 0.5 + i * 0.1, animation: 'shimmer 1.5s infinite', border: `1px solid ${publicTheme.border}` }} />
             ))
           ) : filtered?.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 16px', background: CARD, borderRadius: 20, border: '1.5px dashed rgba(200,151,74,0.15)' }}>
+            <div style={{ textAlign: 'center', padding: '48px 16px', background: CARD, borderRadius: 24, border: '1.5px dashed rgba(200,151,74,0.15)', boxShadow: publicTheme.shadowSoft }}>
               <Wrench size={36} color="rgba(200,151,74,0.15)" style={{ margin: '0 auto 12px' }} />
-              <h3 style={{ fontFamily: F, fontSize: 18, fontWeight: 800, color: '#D4E0EC', marginBottom: 6 }}>لا توجد ورش هنا</h3>
+              <h3 style={{ fontFamily: F, fontSize: 18, fontWeight: 800, color: publicTheme.text, marginBottom: 6 }}>لا توجد ورش هنا</h3>
               <p style={{ fontFamily: F, color: TD, fontSize: 13 }}>جرب منطقة أخرى.</p>
             </div>
           ) : (
@@ -455,7 +456,7 @@ export default function Workshops() {
         </div>
 
         {/* Map (left in RTL) */}
-        <div style={{ position: isMobileOrTablet ? 'relative' : 'sticky', top: isMobileOrTablet ? 'auto' : 138, height: isMobile ? 260 : isTablet ? 360 : 620, background: CARD, border: '1.5px solid rgba(200,151,74,0.1)', borderRadius: isMobile ? 16 : 22, overflow: 'hidden', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
+        <div style={{ position: isMobileOrTablet ? 'relative' : 'sticky', top: isMobileOrTablet ? 'auto' : 138, height: isMobile ? 260 : isTablet ? 360 : 620, background: CARD, border: `1px solid ${publicTheme.border}`, borderRadius: isMobile ? 16 : 22, overflow: 'hidden', boxShadow: publicTheme.shadow }}>
           {!isLoading && workshops && workshops.length > 0 ? (
             <AlexMap
               workshops={workshops.map(w => ({ ...w, rating: w.rating ?? null, lat: w.lat ?? null, lng: w.lng ?? null }))}
@@ -488,7 +489,7 @@ export default function Workshops() {
       </div>
 
       {/* ── Footer strip ── */}
-      <div style={{ background: '#111826', borderTop: '1px solid rgba(200,151,74,0.08)', padding: '20px 24px' }}>
+      <div style={{ background: publicTheme.surface, borderTop: `1px solid ${publicTheme.border}`, padding: '20px 24px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
           {[
             { icon: <CheckCircle2 size={15} color="#3DA882" />, text: 'ورش معتمدة ومراجعة' },
@@ -496,7 +497,7 @@ export default function Workshops() {
             { icon: <Clock size={15} color="#4AABCA" />, text: 'خدمة 6 أيام في الأسبوع' },
             { icon: <Zap size={15} color="#7B72B8" />, text: 'تركيب سريع خلال 24 ساعة' },
           ].map(item => (
-            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: F, fontSize: 12, fontWeight: 700, color: TD }}>
+            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: F, fontSize: 12, fontWeight: 700, color: publicTheme.textSoft }}>
               {item.icon}{item.text}
             </div>
           ))}
